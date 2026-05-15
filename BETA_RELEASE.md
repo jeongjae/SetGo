@@ -18,7 +18,7 @@ SetGo mobile beta is prepared as a local-first PWA release candidate.
 ## Verified Versions
 
 - Tailwind CSS: `3.4.17`
-- Service worker cache: `setgo-shell-v6`
+- Service worker cache: `setgo-shell-v7`
 
 ## Beta Tester Flow
 

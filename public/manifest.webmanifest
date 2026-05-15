@@ -2,15 +2,16 @@
   "name": "SetGo",
   "short_name": "SetGo",
   "description": "Local-first workout logging PWA",
-  "start_url": ".",
-  "scope": ".",
+  "id": "/SetGo/",
+  "start_url": "/SetGo/",
+  "scope": "/SetGo/",
   "display": "standalone",
   "background_color": "#111827",
   "theme_color": "#111827",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icon.svg",
+      "src": "/SetGo/icon.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"

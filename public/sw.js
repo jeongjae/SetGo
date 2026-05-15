@@ -1,6 +1,6 @@
-const CACHE_NAME = 'setgo-shell-v6';
+const CACHE_NAME = 'setgo-shell-v7';
 const BASE_PATH = new URL(self.registration.scope).pathname;
-const APP_SHELL = [BASE_PATH, `${BASE_PATH}manifest.webmanifest`, `${BASE_PATH}icon.svg`];
+const APP_SHELL = [BASE_PATH, `${BASE_PATH}index.html`, `${BASE_PATH}manifest.webmanifest`, `${BASE_PATH}icon.svg`];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
