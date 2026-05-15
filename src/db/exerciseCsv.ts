@@ -31,15 +31,15 @@ function escapeCsv(value: unknown): string {
   return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
-function parseCsvRows(csv: string): string[][] {
+function parseDelimitedRows(input: string, delimiter: ',' | '\t'): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = '';
   let inQuotes = false;
 
-  for (let index = 0; index < csv.length; index += 1) {
-    const char = csv[index];
-    const next = csv[index + 1];
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    const next = input[index + 1];
 
     if (char === '"' && inQuotes && next === '"') {
       cell += '"';
@@ -52,7 +52,7 @@ function parseCsvRows(csv: string): string[][] {
       continue;
     }
 
-    if (char === ',' && !inQuotes) {
+    if (char === delimiter && !inQuotes) {
       row.push(cell);
       cell = '';
       continue;
@@ -74,6 +74,12 @@ function parseCsvRows(csv: string): string[][] {
   if (row.some((item) => item.trim())) rows.push(row);
 
   return rows;
+}
+
+function parseCsvRows(csv: string): string[][] {
+  const firstLine = csv.split(/\r?\n/, 1)[0] ?? '';
+  const delimiter = firstLine.includes('\t') && !firstLine.includes(',') ? '\t' : ',';
+  return parseDelimitedRows(csv, delimiter);
 }
 
 function splitTags<T extends string>(value: string, allowed: T[], fallback: T): T[] {
@@ -104,11 +110,11 @@ export async function createExerciseCsv(): Promise<string> {
 }
 
 export async function importExerciseCsv(csv: string): Promise<number> {
-  const rows = parseCsvRows(csv.trim());
+  const rows = parseCsvRows(csv.replace(/^\uFEFF/, '').trim());
   const [headerRow, ...dataRows] = rows;
   if (!headerRow) return 0;
 
-  const headerIndex = new Map(headerRow.map((header, index) => [header.trim(), index]));
+  const headerIndex = new Map(headerRow.map((header, index) => [header.trim().replace(/^\uFEFF/, ''), index]));
   const now = new Date().toISOString();
   const existingExercises = await db.exercises.toArray();
   const existingById = new Map(existingExercises.map((exercise) => [exercise.id, exercise]));

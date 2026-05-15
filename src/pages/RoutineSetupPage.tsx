@@ -435,7 +435,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
           ))}
         </div>
         {editingExercise ? (
-          <div className="mt-4 rounded-md bg-slate-800 p-3">
+          <div key={editingExercise.id} className="mt-4 rounded-md bg-slate-800 p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold text-white">{getExerciseName(editingExercise, locale)}</h3>

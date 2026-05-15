@@ -51,5 +51,10 @@ export const defaultExercises: ExerciseMaster[] = [
 ];
 
 export async function seedDefaultExercises() {
-  await db.exercises.bulkPut(defaultExercises);
+  const existingIds = new Set((await db.exercises.toArray()).map((item) => item.id));
+  const missingExercises = defaultExercises.filter((item) => !existingIds.has(item.id));
+
+  if (missingExercises.length > 0) {
+    await db.exercises.bulkAdd(missingExercises);
+  }
 }
