@@ -1,6 +1,7 @@
 import { ChevronLeft, Copy, Download, Upload } from 'lucide-react';
 import { type ChangeEvent, useEffect, useState } from 'react';
 import { createBackup, restoreBackup } from '../db/backup';
+import { createExerciseCsv, importExerciseCsv } from '../db/exerciseCsv';
 import {
   getRecentWorkoutSummaries,
   getWorkoutCardioRecords,
@@ -23,6 +24,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
   const [backupStatus, setBackupStatus] = useState<'idle' | 'downloaded'>('idle');
   const [restoreStatus, setRestoreStatus] = useState<'idle' | 'restored' | 'cancelled' | 'failed'>('idle');
   const [backupSummary, setBackupSummary] = useState<string | undefined>();
+  const [exerciseCsvStatus, setExerciseCsvStatus] = useState<string | undefined>();
 
   async function loadSummaries(selectedSessionId?: string) {
     const recentSummaries = await getRecentWorkoutSummaries(20);
@@ -125,6 +127,41 @@ export function ExportPage({ onBack }: ExportPageProps) {
     }
   }
 
+  async function handleExerciseCsvExport() {
+    const csv = await createExerciseCsv();
+    const bom = '\uFEFF';
+    const blob = new Blob([bom, csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `setgo-exercises-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setExerciseCsvStatus(locale === 'ko' ? '운동 라이브러리 CSV를 내보냈습니다.' : 'Exercise library CSV exported.');
+    window.setTimeout(() => setExerciseCsvStatus(undefined), 1600);
+  }
+
+  async function handleExerciseCsvImport(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const importedCount = await importExerciseCsv(await file.text());
+      setExerciseCsvStatus(
+        locale === 'ko'
+          ? `${importedCount}개의 운동을 갱신했습니다.`
+          : `${importedCount} exercises updated.`,
+      );
+      window.setTimeout(() => setExerciseCsvStatus(undefined), 1800);
+    } catch (error) {
+      console.error('Failed to import exercise CSV', error);
+      setExerciseCsvStatus(locale === 'ko' ? 'CSV 가져오기에 실패했습니다.' : 'CSV import failed.');
+      window.setTimeout(() => setExerciseCsvStatus(undefined), 1800);
+    } finally {
+      event.target.value = '';
+    }
+  }
+
   return (
     <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
       <header className="flex items-center gap-3">
@@ -207,6 +244,43 @@ export function ExportPage({ onBack }: ExportPageProps) {
               type="file"
               accept="application/json"
               onChange={(event) => void handleRestore(event)}
+              className="sr-only"
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="rounded-lg bg-slate-900 p-5 shadow">
+        <p className="text-sm font-medium text-slate-400">
+          {locale === 'ko' ? '운동 라이브러리' : 'Exercise Library'}
+        </p>
+        <h2 className="mt-1 text-lg font-semibold text-white">
+          {locale === 'ko' ? 'CSV 일괄 수정' : 'Bulk CSV Edit'}
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-slate-300">
+          {exerciseCsvStatus ?? (
+            locale === 'ko'
+              ? 'CSV를 내려받아 한글명, 영문명, 분류, 설명을 수정한 뒤 다시 가져오세요. categoryTags와 stageTags는 | 로 여러 값을 입력할 수 있습니다.'
+              : 'Export the CSV, edit names, tags, and descriptions, then import it back. Use | for multiple categoryTags or stageTags.'
+          )}
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => void handleExerciseCsvExport()}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-lg bg-slate-800 px-3 text-sm font-semibold text-slate-100"
+          >
+            <Download aria-hidden="true" size={16} />
+            <span>{locale === 'ko' ? 'CSV 내보내기' : 'Export CSV'}</span>
+          </button>
+          <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg bg-slate-800 px-3 text-sm font-semibold text-slate-100">
+            <Upload aria-hidden="true" size={16} />
+            <span>{locale === 'ko' ? 'CSV 가져오기' : 'Import CSV'}</span>
+            <input
+              aria-label="Import exercise library CSV"
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(event) => void handleExerciseCsvImport(event)}
               className="sr-only"
             />
           </label>
