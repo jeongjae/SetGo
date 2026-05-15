@@ -2,7 +2,9 @@ export function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || !import.meta.env.PROD) return;
 
   window.addEventListener('load', () => {
-    void navigator.serviceWorker.register('/sw.js').then((registration) => {
+    void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, {
+      scope: import.meta.env.BASE_URL,
+    }).then((registration) => {
       registration.addEventListener('updatefound', () => {
         const installingWorker = registration.installing;
         if (!installingWorker) return;

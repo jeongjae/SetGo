@@ -1,5 +1,6 @@
-const CACHE_NAME = 'setgo-shell-v5';
-const APP_SHELL = ['/', '/manifest.webmanifest', '/icon.svg'];
+const CACHE_NAME = 'setgo-shell-v6';
+const BASE_PATH = new URL(self.registration.scope).pathname;
+const APP_SHELL = [BASE_PATH, `${BASE_PATH}manifest.webmanifest`, `${BASE_PATH}icon.svg`];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -35,11 +36,11 @@ self.addEventListener('fetch', (event) => {
         .then((networkResponse) => {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put('/', responseClone);
+            cache.put(BASE_PATH, responseClone);
           });
           return networkResponse;
         })
-        .catch(() => caches.match('/')),
+        .catch(() => caches.match(BASE_PATH)),
     );
     return;
   }
@@ -56,7 +57,7 @@ self.addEventListener('fetch', (event) => {
           });
           return networkResponse;
         })
-        .catch(() => caches.match('/'));
+        .catch(() => caches.match(BASE_PATH));
     }),
   );
 });
