@@ -1,6 +1,6 @@
 import { ChevronLeft, Copy, Download, Upload } from 'lucide-react';
 import { type ChangeEvent, useEffect, useState } from 'react';
-import { createBackup, restoreBackup } from '../db/backup';
+import { createBackup, createSettingsBackup, restoreBackup, restoreSettingsBackup } from '../db/backup';
 import { createExerciseCsv, importExerciseCsv } from '../db/exerciseCsv';
 import {
   getRecentWorkoutSummaries,
@@ -25,6 +25,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
   const [restoreStatus, setRestoreStatus] = useState<'idle' | 'restored' | 'cancelled' | 'failed'>('idle');
   const [backupSummary, setBackupSummary] = useState<string | undefined>();
   const [exerciseCsvStatus, setExerciseCsvStatus] = useState<string | undefined>();
+  const [settingsBackupStatus, setSettingsBackupStatus] = useState<string | undefined>();
 
   async function loadSummaries(selectedSessionId?: string) {
     const recentSummaries = await getRecentWorkoutSummaries(20);
@@ -127,6 +128,55 @@ export function ExportPage({ onBack }: ExportPageProps) {
     }
   }
 
+  async function handleSettingsBackup() {
+    const backup = await createSettingsBackup();
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `setgo-settings-${backup.exportedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setSettingsBackupStatus(
+      locale === 'ko'
+        ? `${backup.data.routines.length}개 루틴, ${backup.data.exercises.length}개 운동, ${backup.data.weeklySchedules.length}개 주간계획을 저장했습니다.`
+        : `${backup.data.routines.length} routines, ${backup.data.exercises.length} exercises, ${backup.data.weeklySchedules.length} weekly schedule rows exported.`,
+    );
+    window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
+  }
+
+  async function handleSettingsRestore(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const parsedBackup = JSON.parse(await file.text());
+      const routineCount = parsedBackup?.data?.routines?.length ?? 0;
+      const exerciseCount = parsedBackup?.data?.exercises?.length ?? 0;
+      const shouldRestore = window.confirm(
+        locale === 'ko'
+          ? `SetGo 설정 백업을 복원할까요?\n\n현재 루틴, 운동 라이브러리, 주간계획이 ${file.name}의 ${routineCount}개 루틴과 ${exerciseCount}개 운동으로 교체됩니다. 운동 기록은 유지됩니다.`
+          : `Restore SetGo settings?\n\nCurrent routines, exercise library, and weekly plan will be replaced with ${routineCount} routines and ${exerciseCount} exercises from ${file.name}. Workout logs stay untouched.`,
+      );
+
+      if (!shouldRestore) {
+        setSettingsBackupStatus(locale === 'ko' ? '설정 복원을 취소했습니다.' : 'Settings restore cancelled.');
+        window.setTimeout(() => setSettingsBackupStatus(undefined), 1600);
+        return;
+      }
+
+      await restoreSettingsBackup(parsedBackup);
+      setSettingsBackupStatus(locale === 'ko' ? '설정 백업을 복원했습니다.' : 'Settings backup restored.');
+      window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
+    } catch (error) {
+      console.error('Failed to restore SetGo settings backup', error);
+      setSettingsBackupStatus(locale === 'ko' ? '설정 백업 복원에 실패했습니다.' : 'Settings restore failed.');
+      window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
+    } finally {
+      event.target.value = '';
+    }
+  }
+
   async function handleExerciseCsvExport() {
     const csv = await createExerciseCsv();
     const bom = '\uFEFF';
@@ -218,7 +268,13 @@ export function ExportPage({ onBack }: ExportPageProps) {
       <section className="rounded-lg bg-slate-900 p-5 shadow">
         <p className="text-sm font-medium text-slate-400">{t(locale, 'localData')}</p>
         <h2 className="mt-1 text-lg font-semibold text-white">{t(locale, 'backupRestore')}</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-300">{backupSummary ?? t(locale, 'localDataNote')}</p>
+        <p className="mt-2 text-sm leading-6 text-slate-300">
+          {backupSummary ?? (
+            locale === 'ko'
+              ? '전체 JSON 백업에는 운동 기록, 루틴, 운동 라이브러리, 주간계획, 날짜별 계획이 모두 포함됩니다.'
+              : t(locale, 'localDataNote')
+          )}
+        </p>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <button
             type="button"
@@ -244,6 +300,43 @@ export function ExportPage({ onBack }: ExportPageProps) {
               type="file"
               accept="application/json"
               onChange={(event) => void handleRestore(event)}
+              className="sr-only"
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="rounded-lg bg-slate-900 p-5 shadow">
+        <p className="text-sm font-medium text-slate-400">
+          {locale === 'ko' ? '설정 데이터' : 'Settings Data'}
+        </p>
+        <h2 className="mt-1 text-lg font-semibold text-white">
+          {locale === 'ko' ? '루틴 / 운동 / 주간계획 백업' : 'Routine / Exercise / Weekly Plan Backup'}
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-slate-300">
+          {settingsBackupStatus ?? (
+            locale === 'ko'
+              ? '운동 기록은 제외하고 설정에서 저장한 루틴, 루틴별 운동 구성, 운동 라이브러리, 주간계획, 날짜별 계획만 JSON으로 저장합니다.'
+              : 'Export only settings: routines, routine exercise plans, exercise library, weekly plan, and date overrides. Workout logs are not included.'
+          )}
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => void handleSettingsBackup()}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-lg bg-slate-800 px-3 text-sm font-semibold text-slate-100"
+          >
+            <Download aria-hidden="true" size={16} />
+            <span>{locale === 'ko' ? '설정 저장' : 'Export Settings'}</span>
+          </button>
+          <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg bg-slate-800 px-3 text-sm font-semibold text-slate-100">
+            <Upload aria-hidden="true" size={16} />
+            <span>{locale === 'ko' ? '설정 복원' : 'Restore Settings'}</span>
+            <input
+              aria-label="Restore SetGo settings JSON backup"
+              type="file"
+              accept="application/json"
+              onChange={(event) => void handleSettingsRestore(event)}
               className="sr-only"
             />
           </label>
