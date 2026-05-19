@@ -194,7 +194,7 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
   const selectedPlan = plansByDate[selectedDateKey];
   const selectedPlanValue = selectedOverride
     ? selectedOverride.isRestDay ? '' : selectedOverride.routineDayId ?? ''
-    : '__weekly';
+    : selectedPlan?.routineDay ? '__weekly' : '';
   const selectedTodaySession = selectedDateKey === todayKey
     ? selectedSummaries.find((summary) => summary.session.status === 'in_progress')
     : undefined;
@@ -319,22 +319,13 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
           className="mt-4 min-h-11 w-full rounded-md bg-slate-800 px-3 text-sm text-white"
         >
           <option value="__weekly">{t(locale, 'useWeeklySchedule')}</option>
-          <option value="">{t(locale, 'rest')}</option>
+          <option value="">{locale === 'ko' ? '없음' : 'None'}</option>
           {routineDays.map((routineDay) => (
             <option key={routineDay.id} value={routineDay.id}>
               {getRoutineDayDisplayName(routineDay, locale)}
             </option>
           ))}
         </select>
-        <p className="mt-3 text-sm text-slate-300">
-          {selectedSummaries.length > 0
-            ? t(locale, 'workoutSession')
-            : selectedPlan?.routineDay
-              ? `${getRoutineDayDisplayName(selectedPlan.routineDay, locale)} ${t(locale, 'planned')}`
-              : selectedOverride?.isRestDay
-                ? t(locale, 'restDay')
-                : t(locale, 'followingWeeklySchedule')}
-        </p>
         {selectedSummaries.length > 0 ? (
           <div className="mt-3 grid gap-2">
             {selectedSummaries.map((summary) => (

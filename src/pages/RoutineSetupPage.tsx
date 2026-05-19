@@ -16,7 +16,6 @@ import {
   activateRoutineTemplate,
   addExerciseToRoutineDay,
   deleteRoutineExercisePlan,
-  ensureActiveRoutineTemplateVersion,
   getActiveRoutine,
   getActiveRoutineDayPlans,
   getActiveWeeklySchedule,
@@ -73,7 +72,6 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
 
   async function loadSetup() {
     await seedDefaultExercises();
-    await ensureActiveRoutineTemplateVersion();
 
     const [routine, plans, schedule, exerciseMasters, allExerciseMasters] = await Promise.all([
       getActiveRoutine(),

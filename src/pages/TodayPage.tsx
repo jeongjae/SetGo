@@ -2,7 +2,6 @@ import { BarChart3, CalendarDays, Download, Dumbbell, Play, Settings } from 'luc
 import { useEffect, useMemo, useState } from 'react';
 import { db } from '../db/db';
 import {
-  ensureActiveRoutineTemplateVersion,
   getActiveRoutineDays,
   getNextRoutineDayAfterLatestWorkout,
   getRoutineDayDisplayName,
@@ -60,8 +59,6 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
     async function load() {
       try {
         await seedDefaultExercises();
-        await ensureActiveRoutineTemplateVersion();
-
         const [routine, days, todaySchedule, nextDay, todayWorkout, recentWorkouts] = await Promise.all([
           db.routines.filter((routineRecord) => routineRecord.isActive).first(),
           getActiveRoutineDays(),
@@ -122,6 +119,11 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
     : isTodayRestDay
       ? t(locale, 'restDay')
       : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
+  const actionLabel = (labelKey: MessageKey) => {
+    if (locale === 'ko' && labelKey === 'startWorkout') return '운동일지';
+    if (locale === 'ko' && labelKey === 'export') return '내보내기/가져오기';
+    return t(locale, labelKey);
+  };
 
   return (
     <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
@@ -238,7 +240,7 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
             <span>
               {labelKey === 'startWorkout' && !inProgressSession && isTodayRestDay && !selectedRoutineDayId
                 ? t(locale, 'startFreeWorkout')
-                : t(locale, labelKey)}
+                : actionLabel(labelKey)}
             </span>
           </button>
         ))}

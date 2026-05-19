@@ -1,8 +1,8 @@
-import { ArrowDown, ArrowUp, Check, ChevronLeft, ClipboardList, Copy, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronLeft, ClipboardList, Copy, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { db } from '../db/db';
 import { getRoutineDayDisplayName } from '../db/routines';
-import { getExerciseCategories, getExerciseName } from '../domain/exercises';
+import { exerciseCategoryOptions, getExerciseCategories, getExerciseName, labelForCategory } from '../domain/exercises';
 import { getStoredLocale, t } from '../i18n/i18n';
 import {
   addExerciseToWorkout,
@@ -25,7 +25,7 @@ import {
   type ActiveWorkout,
   type WorkoutExerciseLog,
 } from '../db/workouts';
-import type { CardioRecord, ExerciseMaster, WorkoutSet } from '../types';
+import type { CardioRecord, ExerciseCategory, ExerciseMaster, WorkoutSet } from '../types';
 
 type WorkoutPageProps = {
   onBack: () => void;
@@ -39,6 +39,8 @@ export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps
   const [cardioRecords, setCardioRecords] = useState<CardioRecord[]>([]);
   const [exercises, setExercises] = useState<ExerciseMaster[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [exerciseSearch, setExerciseSearch] = useState('');
+  const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState<ExerciseCategory | 'all'>('all');
   const [replacingWorkoutExerciseId, setReplacingWorkoutExerciseId] = useState<string | undefined>();
   const [locale] = useState(() => getStoredLocale());
   const [saveMessage, setSaveMessage] = useState(locale === 'ko' ? '로컬 저장됨' : 'Saved locally');
@@ -196,6 +198,24 @@ export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps
   };
 
   const availableExercises = getAvailableExercises();
+  const filterExercises = (items: ExerciseMaster[]) => {
+    const query = exerciseSearch.trim().toLowerCase();
+    return items.filter((exercise) => {
+      const categories = getExerciseCategories(exercise);
+      const matchesCategory = exerciseCategoryFilter === 'all' || categories.includes(exerciseCategoryFilter);
+      const matchesSearch = !query
+        || exercise.nameKo.toLowerCase().includes(query)
+        || exercise.nameEn?.toLowerCase().includes(query)
+        || exercise.description?.toLowerCase().includes(query);
+
+      return matchesCategory && matchesSearch;
+    });
+  };
+  const filteredAvailableExercises = filterExercises(availableExercises);
+  const categoryFilters: Array<{ label: string; value: ExerciseCategory | 'all' }> = [
+    { label: 'All', value: 'all' },
+    ...exerciseCategoryOptions,
+  ];
   const totalSetCount = logs.reduce((sum, log) => sum + log.sets.length, 0);
   const completedSetCount = logs.reduce(
     (sum, log) => sum + log.sets.filter((set) => set.isCompleted).length,
@@ -303,18 +323,56 @@ export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps
         </div>
 
         {isAdding ? (
-          <div className="mt-4 grid gap-2">
-            {availableExercises.slice(0, 8).map((exercise) => (
-              <button
-                key={exercise.id}
-                type="button"
-                onClick={() => void handleAddExercise(exercise.id)}
-                className="flex items-center justify-between rounded-md bg-slate-800 px-3 py-3 text-left text-sm text-slate-100"
-              >
-                <span>{getExerciseName(exercise, locale)}</span>
-                <span className="text-xs font-semibold text-cyan-300">{exercise.defaultEmoji}</span>
-              </button>
-            ))}
+          <div className="mt-4 rounded-md bg-slate-800 p-3">
+            <div className="flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2">
+              <Search aria-hidden="true" size={16} className="shrink-0 text-slate-400" />
+              <input
+                aria-label="Search exercises to add"
+                type="search"
+                value={exerciseSearch}
+                onChange={(event) => setExerciseSearch(event.target.value)}
+                placeholder={t(locale, 'searchExercises')}
+                className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+              />
+            </div>
+            <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+              {categoryFilters.map((category) => (
+                <button
+                  key={category.value}
+                  type="button"
+                  onClick={() => setExerciseCategoryFilter(category.value)}
+                  className={`min-h-8 rounded-md px-3 text-xs font-semibold ${
+                    exerciseCategoryFilter === category.value
+                      ? 'bg-cyan-400 text-slate-950'
+                      : 'bg-slate-900 text-slate-100'
+                  }`}
+                >
+                  {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-slate-400">
+              {filteredAvailableExercises.length} {t(locale, 'exercises')}
+            </p>
+            <div className="mt-2 max-h-72 overflow-y-auto pr-1">
+              <div className="grid gap-2">
+                {filteredAvailableExercises.length === 0 ? (
+                  <p className="rounded-md bg-slate-900 px-3 py-3 text-sm text-slate-300">
+                    {t(locale, 'noMatchingExercises')}
+                  </p>
+                ) : filteredAvailableExercises.map((exercise) => (
+                  <button
+                    key={exercise.id}
+                    type="button"
+                    onClick={() => void handleAddExercise(exercise.id)}
+                    className="flex items-center justify-between rounded-md bg-slate-900 px-3 py-3 text-left text-sm text-slate-100"
+                  >
+                    <span>{getExerciseName(exercise, locale)}</span>
+                    <span className="text-xs font-semibold text-cyan-300">{exercise.defaultEmoji}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         ) : null}
       </section>
@@ -391,18 +449,18 @@ export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps
           </label>
 
           {replacingWorkoutExerciseId === log.workoutExercise.id ? (
-            <div className="mt-4 grid gap-2">
-              {getAvailableExercises(log.exercise.id).slice(0, 8).map((exercise) => (
-                <button
-                  key={exercise.id}
-                  type="button"
-                  onClick={() => void handleReplaceExercise(log.workoutExercise.id, exercise.id)}
-                  className="flex items-center justify-between rounded-md bg-slate-800 px-3 py-3 text-left text-sm text-slate-100"
-                >
-                  <span>{getExerciseName(exercise, locale)}</span>
-                  <span className="text-xs font-semibold text-cyan-300">{exercise.defaultEmoji}</span>
-                </button>
-              ))}
+            <div className="mt-4 grid max-h-72 gap-2 overflow-y-auto pr-1">
+              {filterExercises(getAvailableExercises(log.exercise.id)).map((exercise) => (
+                  <button
+                    key={exercise.id}
+                    type="button"
+                    onClick={() => void handleReplaceExercise(log.workoutExercise.id, exercise.id)}
+                    className="flex items-center justify-between rounded-md bg-slate-800 px-3 py-3 text-left text-sm text-slate-100"
+                  >
+                    <span>{getExerciseName(exercise, locale)}</span>
+                    <span className="text-xs font-semibold text-cyan-300">{exercise.defaultEmoji}</span>
+                  </button>
+                ))}
             </div>
           ) : null}
 

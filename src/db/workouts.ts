@@ -69,6 +69,11 @@ export async function getOrCreateTodayWorkout(selectedRoutineDayId?: string): Pr
       };
     }
 
+    const existingExerciseCount = await db.workoutExercises.where('sessionId').equals(existingSession.id).count();
+    if (existingExerciseCount === 0 && existingSession.routineDayId) {
+      await seedWorkoutExercisesFromRoutineDay(existingSession.id, existingSession.routineDayId);
+    }
+
     const existingRoutineDay = existingSession.routineDayId
       ? await db.routineDays.get(existingSession.routineDayId)
       : undefined;
@@ -149,6 +154,11 @@ export async function getTodayWorkout(): Promise<ActiveWorkout | undefined> {
     .first();
 
   if (!session) return undefined;
+
+  const existingExerciseCount = await db.workoutExercises.where('sessionId').equals(session.id).count();
+  if (existingExerciseCount === 0 && session.routineDayId) {
+    await seedWorkoutExercisesFromRoutineDay(session.id, session.routineDayId);
+  }
 
   const [routine, routineDay] = await Promise.all([
     session.routineId ? db.routines.get(session.routineId) : undefined,
