@@ -20,7 +20,7 @@ SetGo is a local-first workout logging PWA for strength training and manual card
 | Schedule | Weekly plan plus date-specific calendar overrides |
 | Workout log | Set-level weight, reps, RIR, completion, notes, previous-set copy |
 | Cardio | Manual indoor/outdoor cardio entries |
-| Stats | Recent 30-day volume and top exercises |
+| Stats | 8-week trends, muscle targets, hard-set ratio, exercise PR/1RM history, local automatic analysis |
 | Export | Korean/English Markdown export and JSON backup/restore |
 | PWA | Manifest, service worker, offline shell, install/update status |
 

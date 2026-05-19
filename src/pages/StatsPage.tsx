@@ -33,6 +33,9 @@ type MuscleStat = {
   recommendedMin: number;
   recommendedMax: number;
   status: LoadStatus;
+  targetPct: number;
+  deficitSets: number;
+  excessSets: number;
 };
 
 type ExercisePerformance = {
@@ -44,6 +47,7 @@ type ExercisePerformance = {
   bestVolumeKg: number;
   estimatedOneRmKg: number;
   fourWeekChangePct?: number;
+  oneRmHistory: Array<{ label: string; valueKg: number }>;
 };
 
 type StatsView = {
@@ -57,7 +61,7 @@ type StatsView = {
   muscleStats: MuscleStat[];
   performances: ExercisePerformance[];
   warnings: string[];
-  aiComment: string;
+  analysisComment: string;
 };
 
 const muscleLabels: Record<Locale, Record<MuscleGroup, string>> = {
@@ -107,7 +111,11 @@ const copy = {
     performance: '운동별 성과',
     recoveryWarnings: '회복/부하 경고',
     noWarnings: '현재 주요 경고는 없습니다.',
-    aiComment: 'AI 코멘트',
+    automaticAnalysis: '자동 분석',
+    hardSetRatio: 'Hard Set 비율',
+    weeklyTarget: '주간 목표',
+    trendSummary: '추세 요약',
+    oneRmHistory: '1RM 추세',
     volume: '볼륨',
     sets: '세트',
     recommended: '권장',
@@ -118,7 +126,7 @@ const copy = {
     bestVolume: '최고 볼륨',
     estimatedOneRm: '예상 1RM',
     noPerformance: '완료한 운동 세트가 있으면 운동별 성과가 표시됩니다.',
-    emptyAi: '운동 기록이 쌓이면 주간 부하와 다음 주 조정 제안을 표시합니다.',
+    emptyAnalysis: '운동 기록이 쌓이면 주간 부하와 다음 주 조정 제안을 표시합니다.',
   },
   en: {
     title: 'Workout Stats',
@@ -133,7 +141,11 @@ const copy = {
     performance: 'Exercise performance',
     recoveryWarnings: 'Recovery/load warnings',
     noWarnings: 'No major warnings right now.',
-    aiComment: 'AI Comment',
+    automaticAnalysis: 'Automatic analysis',
+    hardSetRatio: 'Hard set ratio',
+    weeklyTarget: 'Weekly target',
+    trendSummary: 'Trend summary',
+    oneRmHistory: '1RM trend',
     volume: 'Volume',
     sets: 'Sets',
     recommended: 'Recommended',
@@ -144,7 +156,7 @@ const copy = {
     bestVolume: 'Best volume',
     estimatedOneRm: 'Estimated 1RM',
     noPerformance: 'Exercise performance appears after completed sets are logged.',
-    emptyAi: 'Weekly load and next-week adjustment suggestions will appear after workout history accumulates.',
+    emptyAnalysis: 'Weekly load and next-week adjustment suggestions will appear after workout history accumulates.',
   },
 };
 
@@ -210,6 +222,16 @@ function formatPct(value?: number): string {
   return `${sign}${value.toFixed(0)}%`;
 }
 
+function decorateMuscleStat(stat: Omit<MuscleStat, 'status' | 'targetPct' | 'deficitSets' | 'excessSets'>): MuscleStat {
+  return {
+    ...stat,
+    status: statusForSets(stat.sets, stat.recommendedMin, stat.recommendedMax),
+    targetPct: Math.min(100, Math.round((stat.sets / Math.max(1, stat.recommendedMax)) * 100)),
+    deficitSets: Math.max(0, stat.recommendedMin - stat.sets),
+    excessSets: Math.max(0, stat.sets - stat.recommendedMax),
+  };
+}
+
 function buildEmptyStats(locale: Locale): StatsView {
   return {
     workoutDays: 0,
@@ -227,10 +249,13 @@ function buildEmptyStats(locale: Locale): StatsView {
       recommendedMin: recommendedSets[group].min,
       recommendedMax: recommendedSets[group].max,
       status: 'low',
+      targetPct: 0,
+      deficitSets: recommendedSets[group].min,
+      excessSets: 0,
     })),
     performances: [],
     warnings: [],
-    aiComment: copy[locale].emptyAi,
+    analysisComment: copy[locale].emptyAnalysis,
   };
 }
 
@@ -310,6 +335,13 @@ function buildStats(
   const previousWeekSets = setsForSessionIds(previousWeekSessionIds);
   const totalVolumeKg = currentWeekSets.reduce((sum, set) => sum + setVolume(set), 0);
   const previousWeekVolumeKg = previousWeekSets.reduce((sum, set) => sum + setVolume(set), 0);
+  const isWarmupSetForStats = (set: WorkoutSet) => {
+    const workoutExercise = workoutExerciseById.get(set.workoutExerciseId);
+    const exercise = workoutExercise ? exerciseById.get(workoutExercise.exerciseId) : undefined;
+    const warmupOnlyExercise = exercise?.stage === 'warmup' && !exercise.stageTags?.includes('main');
+    return Boolean(set.isWarmup) || Boolean(warmupOnlyExercise);
+  };
+  const currentWeekTrainingSets = currentWeekSets.filter((set) => !isWarmupSetForStats(set));
   const hardSets = currentWeekSets.filter((set) => {
     const workoutExercise = workoutExerciseById.get(set.workoutExerciseId);
     const exercise = workoutExercise ? exerciseById.get(workoutExercise.exerciseId) : undefined;
@@ -325,6 +357,9 @@ function buildStats(
       recommendedMin: recommendedSets[group].min,
       recommendedMax: recommendedSets[group].max,
       status: 'low',
+      targetPct: 0,
+      deficitSets: recommendedSets[group].min,
+      excessSets: 0,
     }]),
   );
 
@@ -336,19 +371,17 @@ function buildStats(
 
       const groups = toMuscleGroups(exercise);
       const sets = (setsByWorkoutExercise.get(workoutExercise.id) ?? []).filter((set) => set.isCompleted);
+      const trainingSets = sets.filter((set) => !isWarmupSetForStats(set));
       groups.forEach((group) => {
         const stat = muscleMap.get(group);
         if (!stat) return;
         stat.volumeKg += sets.reduce((sum, set) => sum + setVolume(set), 0);
-        stat.sets += sets.length;
+        stat.sets += trainingSets.length;
         stat.hardSets += sets.filter((set) => isHardSet(set, exercise)).length;
       });
     });
 
-  const muscleStats = Array.from(muscleMap.values()).map((stat) => ({
-    ...stat,
-    status: statusForSets(stat.sets, stat.recommendedMin, stat.recommendedMax),
-  }));
+  const muscleStats = Array.from(muscleMap.values()).map(decorateMuscleStat);
 
   const performances = Array.from(
     completedWorkoutExercises.reduce<Map<string, WorkoutExercise[]>>((map, item) => {
@@ -365,6 +398,18 @@ function buildStats(
     const latest = sorted[0];
     const latestSets = latest ? (setsByWorkoutExercise.get(latest.id) ?? []).filter((set) => set.isCompleted) : [];
     const allSets = items.flatMap((item) => setsByWorkoutExercise.get(item.id) ?? []).filter((set) => set.isCompleted);
+    const oneRmHistory = sorted
+      .slice(0, 4)
+      .map((item) => {
+        const session = sessionById.get(item.sessionId);
+        const sessionSets = (setsByWorkoutExercise.get(item.id) ?? []).filter((set) => set.isCompleted);
+        return {
+          label: session?.date.slice(5) ?? '',
+          valueKg: Math.max(0, ...sessionSets.map(estimatedOneRm)),
+        };
+      })
+      .filter((item) => item.valueKg > 0)
+      .reverse();
     const currentFourWeekVolume = items
       .filter((item) => (sessionById.get(item.sessionId)?.date ?? '') >= fourWeekStartKey)
       .flatMap((item) => setsByWorkoutExercise.get(item.id) ?? [])
@@ -388,6 +433,7 @@ function buildStats(
       ))),
       estimatedOneRmKg: Math.max(0, ...allSets.map(estimatedOneRm)),
       fourWeekChangePct: pctChange(currentFourWeekVolume, previousFourWeekVolume),
+      oneRmHistory,
     };
   }).sort((a, b) => b.recentVolumeKg - a.recentVolumeKg).slice(0, 12);
 
@@ -431,7 +477,7 @@ function buildStats(
       ? `주간 볼륨이 전주 대비 ${weekChange.toFixed(0)}% 증가했습니다.`
       : `Weekly volume increased ${weekChange.toFixed(0)}% versus last week.`);
   }
-  const hardSetRatio = currentWeekSets.length > 0 ? (hardSets / currentWeekSets.length) * 100 : 0;
+  const hardSetRatio = currentWeekTrainingSets.length > 0 ? (hardSets / currentWeekTrainingSets.length) * 100 : 0;
   if (hardSetRatio > 70) {
     warnings.push(locale === 'ko'
       ? `Hard Set 비율이 ${hardSetRatio.toFixed(0)}%입니다. 피로 누적을 확인하세요.`
@@ -440,15 +486,21 @@ function buildStats(
 
   const lowMuscles = muscleStats.filter((stat) => stat.status === 'low').map((stat) => muscleLabels[locale][stat.group]);
   const highMuscles = muscleStats.filter((stat) => stat.status === 'high' || stat.status === 'caution').map((stat) => muscleLabels[locale][stat.group]);
-  const aiComment = locale === 'ko'
+  const fourWeekAverageVolume = weekStats.slice(-4).reduce((sum, week) => sum + week.volumeKg, 0) / 4;
+  const currentWeekVolumeVsAverage = pctChange(totalVolumeKg, fourWeekAverageVolume);
+  const analysisComment = locale === 'ko'
     ? [
       `이번 주는 ${currentWeekSessions.length}일 운동했고 총 ${Math.round(totalVolumeKg).toLocaleString()}kg, ${currentWeekSets.length}세트를 기록했습니다.`,
+      currentWeekVolumeVsAverage !== undefined ? `최근 4주 평균 대비 볼륨은 ${formatPct(currentWeekVolumeVsAverage)}입니다.` : '최근 4주 평균 비교는 기록이 더 쌓이면 표시됩니다.',
+      `Hard Set 비율은 ${hardSetRatio.toFixed(0)}%입니다.`,
       lowMuscles.length > 0 ? `부족한 근육군은 ${lowMuscles.slice(0, 3).join(', ')}입니다.` : '주요 근육군 세트 수는 대체로 권장 범위 안에 있습니다.',
       highMuscles.length > 0 ? `${highMuscles.slice(0, 3).join(', ')}는 부하를 점검하세요.` : '과도한 부하 신호는 크지 않습니다.',
       warnings.length > 0 ? '다음 주에는 경고 항목을 우선 줄이는 방향으로 계획하세요.' : '다음 주에는 부족한 부위에 2-4세트를 추가하는 정도가 적절합니다.',
     ].join(' ')
     : [
       `This week has ${currentWeekSessions.length} workout days, ${Math.round(totalVolumeKg).toLocaleString()}kg total volume, and ${currentWeekSets.length} sets.`,
+      currentWeekVolumeVsAverage !== undefined ? `Volume is ${formatPct(currentWeekVolumeVsAverage)} versus the recent 4-week average.` : 'The 4-week average comparison will appear after more history accumulates.',
+      `Hard-set ratio is ${hardSetRatio.toFixed(0)}%.`,
       lowMuscles.length > 0 ? `Under-trained groups: ${lowMuscles.slice(0, 3).join(', ')}.` : 'Major muscle groups are mostly within the recommended range.',
       highMuscles.length > 0 ? `Review load for ${highMuscles.slice(0, 3).join(', ')}.` : 'No major overload signal is present.',
       warnings.length > 0 ? 'Next week, prioritize reducing the warning items.' : 'Next week, adding 2-4 sets to lagging areas looks reasonable.',
@@ -465,7 +517,7 @@ function buildStats(
     muscleStats,
     performances,
     warnings,
-    aiComment,
+    analysisComment,
   };
 }
 
@@ -489,9 +541,10 @@ function MiniBarChart({ weeks, metric }: { weeks: WeekStat[]; metric: 'sets' | '
     <div className="mt-4 flex h-28 items-end gap-2">
       {weeks.map((week) => (
         <div key={week.key} className="flex flex-1 flex-col items-center gap-2">
+          <span className="text-[10px] font-semibold text-slate-300">{week[metric]}</span>
           <div
             className="w-full rounded-t bg-cyan-400"
-            style={{ height: `${Math.max(8, (week[metric] / maxValue) * 96)}px` }}
+            style={{ height: `${Math.max(8, (week[metric] / maxValue) * 76)}px` }}
             aria-label={`${week.label} ${week[metric]}`}
           />
           <span className="text-[10px] text-slate-500">{week.label}</span>
@@ -501,24 +554,56 @@ function MiniBarChart({ weeks, metric }: { weeks: WeekStat[]; metric: 'sets' | '
   );
 }
 
-function MiniLineChart({ weeks }: { weeks: WeekStat[] }) {
-  const points = useMemo(() => {
+function MiniLineChart({ weeks, locale }: { weeks: WeekStat[]; locale: Locale }) {
+  const plottedPoints = useMemo(() => {
     const maxValue = Math.max(1, ...weeks.map((week) => week.volumeKg));
     return weeks.map((week, index) => {
       const x = weeks.length === 1 ? 0 : (index / (weeks.length - 1)) * 100;
       const y = 100 - (week.volumeKg / maxValue) * 88 - 6;
-      return `${x},${y}`;
-    }).join(' ');
+      return { x, y, value: week.volumeKg, label: week.label };
+    });
   }, [weeks]);
+  const points = plottedPoints.map((point) => `${point.x},${point.y}`).join(' ');
+  const latest = weeks[weeks.length - 1];
+  const peak = weeks.slice().sort((a, b) => b.volumeKg - a.volumeKg)[0];
 
   return (
     <div className="mt-4">
+      <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
+        <span>{latest ? `${latest.label}: ${Math.round(latest.volumeKg).toLocaleString()}kg` : '0kg'}</span>
+        <span>{peak ? `${locale === 'ko' ? '최고' : 'Peak'} ${peak.label}: ${Math.round(peak.volumeKg).toLocaleString()}kg` : ''}</span>
+      </div>
       <svg viewBox="0 0 100 100" className="h-32 w-full overflow-visible">
+        <line x1="0" y1="94" x2="100" y2="94" stroke="#334155" strokeWidth="1" />
         <polyline points={points} fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        {plottedPoints.map((point) => (
+          <circle key={point.label} cx={point.x} cy={point.y} r="2" fill="#67e8f9" />
+        ))}
       </svg>
       <div className="mt-1 grid grid-cols-8 text-center text-[10px] text-slate-500">
         {weeks.map((week) => <span key={week.key}>{week.label}</span>)}
       </div>
+    </div>
+  );
+}
+
+function MiniSparkBars({ history }: { history: ExercisePerformance['oneRmHistory'] }) {
+  const maxValue = Math.max(1, ...history.map((item) => item.valueKg));
+
+  if (history.length === 0) return null;
+
+  return (
+    <div className="mt-3 flex h-16 items-end gap-2">
+      {history.map((item) => (
+        <div key={`${item.label}_${item.valueKg}`} className="flex flex-1 flex-col items-center gap-1">
+          <div
+            className="w-full rounded-t bg-emerald-300"
+            style={{ height: `${Math.max(8, (item.valueKg / maxValue) * 44)}px` }}
+            aria-label={`${item.label} ${item.valueKg.toFixed(1)}kg`}
+          />
+          <span className="text-[10px] text-slate-500">{item.label}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -543,7 +628,15 @@ export function StatsPage({ onBack }: StatsPageProps) {
     void loadStats();
   }, [locale]);
 
-  const hasData = stats.totalSets > 0 || stats.workoutDays > 0;
+  const hasData = stats.totalSets > 0
+    || stats.workoutDays > 0
+    || stats.performances.length > 0
+    || stats.weeks.some((week) => week.volumeKg > 0 || week.sets > 0 || week.workoutDays > 0);
+  const latestWeek = stats.weeks[stats.weeks.length - 1];
+  const previousWeek = stats.weeks[stats.weeks.length - 2];
+  const latestWeekVolumeChange = latestWeek && previousWeek
+    ? pctChange(latestWeek.volumeKg, previousWeek.volumeKg)
+    : undefined;
 
   return (
     <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
@@ -578,13 +671,14 @@ export function StatsPage({ onBack }: StatsPageProps) {
           [c.totalVolume, `${Math.round(stats.totalVolumeKg).toLocaleString()}kg`],
           [c.totalSets, `${stats.totalSets}`],
           ['Hard Set', `${stats.hardSets}`],
+          [c.hardSetRatio, `${stats.hardSetRatio.toFixed(0)}%`],
         ].map(([label, value]) => (
           <div key={label} className="rounded-lg bg-slate-900 p-4 shadow">
             <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
             <p className="mt-2 text-2xl font-bold text-white">{value}</p>
           </div>
         ))}
-        <div className="col-span-2 rounded-lg bg-slate-900 p-4 shadow">
+        <div className="rounded-lg bg-slate-900 p-4 shadow">
           <p className="text-xs font-semibold uppercase text-slate-500">{c.weekOverWeek}</p>
           <p className={`mt-2 text-3xl font-bold ${stats.weekOverWeekPct !== undefined && stats.weekOverWeekPct >= 25 ? 'text-amber-300' : 'text-white'}`}>
             {formatPct(stats.weekOverWeekPct)}
@@ -595,11 +689,21 @@ export function StatsPage({ onBack }: StatsPageProps) {
       <section className="rounded-lg bg-slate-900 p-5 shadow">
         <h2 className="text-lg font-bold text-white">{c.recentTrend}</h2>
         <p className="mt-4 text-sm font-semibold text-slate-300">{c.totalVolume}</p>
-        <MiniLineChart weeks={stats.weeks} />
+        <MiniLineChart weeks={stats.weeks} locale={locale} />
         <p className="mt-5 text-sm font-semibold text-slate-300">{c.totalSets}</p>
         <MiniBarChart weeks={stats.weeks} metric="sets" />
         <p className="mt-5 text-sm font-semibold text-slate-300">{c.workoutDays}</p>
         <MiniBarChart weeks={stats.weeks} metric="workoutDays" />
+        {latestWeek ? (
+          <div className="mt-5 rounded-md bg-slate-800 px-3 py-3">
+            <p className="text-xs font-semibold uppercase text-slate-500">{c.trendSummary}</p>
+            <p className="mt-1 text-sm leading-6 text-slate-200">
+              {locale === 'ko'
+                ? `${latestWeek.label} 주간은 ${latestWeek.workoutDays}일 운동, ${latestWeek.sets}세트, ${Math.round(latestWeek.volumeKg).toLocaleString()}kg입니다. 전주 대비 ${formatPct(latestWeekVolumeChange)}.`
+                : `${latestWeek.label} has ${latestWeek.workoutDays} workout days, ${latestWeek.sets} sets, and ${Math.round(latestWeek.volumeKg).toLocaleString()}kg. Week-over-week: ${formatPct(latestWeekVolumeChange)}.`}
+            </p>
+          </div>
+        ) : null}
       </section>
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
@@ -615,6 +719,29 @@ export function StatsPage({ onBack }: StatsPageProps) {
                 <div><p className="text-slate-500">{c.volume}</p><p className="font-bold text-white">{Math.round(muscle.volumeKg).toLocaleString()}kg</p></div>
                 <div><p className="text-slate-500">{c.sets}</p><p className="font-bold text-white">{muscle.sets}</p></div>
                 <div><p className="text-slate-500">Hard</p><p className="font-bold text-white">{muscle.hardSets}</p></div>
+              </div>
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-400">{c.weeklyTarget}</span>
+                  <span className="text-slate-300">
+                    {muscle.sets}/{muscle.recommendedMax}{c.perWeek}
+                  </span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-900">
+                  <div
+                    className={`h-full rounded-full ${
+                      muscle.status === 'high' ? 'bg-red-300' : muscle.status === 'normal' ? 'bg-emerald-300' : 'bg-amber-300'
+                    }`}
+                    style={{ width: `${muscle.targetPct}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-slate-400">
+                  {muscle.deficitSets > 0
+                    ? locale === 'ko' ? `최소 목표까지 ${muscle.deficitSets}세트 부족` : `${muscle.deficitSets} sets below minimum`
+                    : muscle.excessSets > 0
+                      ? locale === 'ko' ? `권장 상한보다 ${muscle.excessSets}세트 많음` : `${muscle.excessSets} sets above target`
+                      : locale === 'ko' ? '권장 범위 안에 있습니다' : 'Within target range'}
+                </p>
               </div>
               <p className="mt-2 text-xs text-slate-400">{c.recommended} {muscle.recommendedMin}-{muscle.recommendedMax}{c.perWeek}</p>
             </div>
@@ -640,6 +767,12 @@ export function StatsPage({ onBack }: StatsPageProps) {
                 <p className="text-slate-400">{c.bestVolume} <span className="font-bold text-white">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
                 <p className="col-span-2 text-slate-400">{c.estimatedOneRm} <span className="font-bold text-white">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
               </div>
+              {performance.oneRmHistory.length > 0 ? (
+                <div className="mt-3 border-t border-slate-700 pt-3">
+                  <p className="text-xs font-semibold uppercase text-slate-500">{c.oneRmHistory}</p>
+                  <MiniSparkBars history={performance.oneRmHistory} />
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
@@ -660,8 +793,8 @@ export function StatsPage({ onBack }: StatsPageProps) {
       </section>
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <p className="text-sm font-medium text-cyan-300">{c.aiComment}</p>
-        <p className="mt-2 text-sm leading-6 text-slate-200">{stats.aiComment}</p>
+        <p className="text-sm font-medium text-cyan-300">{c.automaticAnalysis}</p>
+        <p className="mt-2 text-sm leading-6 text-slate-200">{stats.analysisComment}</p>
       </section>
     </section>
   );

@@ -164,8 +164,10 @@ SetGo target:
 2. Hard-set ratio warnings
 3. 8-week trend polish
 4. Exercise PR / 1RM history
-5. AI-style weekly summary based on local calculations
-6. Rename "AI Comment" to local/automatic analysis until an actual AI integration exists
+5. Automatic weekly summary based on local calculations
+6. Keep the label as local/automatic analysis until an actual AI integration exists
+
+Implemented direction: SetGo keeps these analytics local-first. The summary is automatic local analysis, not an external AI call.
 
 ### P3: Later, Only If Needed
 
