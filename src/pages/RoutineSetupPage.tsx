@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Check, ChevronLeft, EyeOff, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { db } from '../db/db';
 import { seedDefaultExercises } from '../db/seed';
 import {
@@ -24,7 +24,6 @@ import {
   getRoutineTemplateSummary,
   getRoutineSplitName,
   moveRoutineExercisePlan,
-  resetActiveRoutinePlansToTemplate,
   routineTemplates,
   saveWeeklyScheduleDay,
   updateActiveRoutineName,
@@ -50,6 +49,12 @@ const exerciseCategories: Array<{ label: string; value: ExerciseCategory | 'all'
 ];
 type SetupTab = 'routine' | 'library' | 'schedule';
 
+type RoutinePlanSnapshot = {
+  routineId: string;
+  routineDayIds: string[];
+  plans: RoutineExercisePlan[];
+};
+
 export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPageProps) {
   const [activeRoutine, setActiveRoutine] = useState<Routine | undefined>();
   const [savingSplitType, setSavingSplitType] = useState<RoutineSplitType | undefined>();
@@ -69,8 +74,10 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
   const [editingExerciseId, setEditingExerciseId] = useState<string | undefined>();
   const [locale, setLocale] = useState<AppLocale>(() => getStoredLocale());
   const [setupTab, setSetupTab] = useState<SetupTab>('routine');
+  const [resetStatus, setResetStatus] = useState<string | undefined>();
+  const initialRoutinePlanSnapshot = useRef<RoutinePlanSnapshot | undefined>(undefined);
 
-  async function loadSetup() {
+  async function loadSetup(captureRoutineSnapshot = false) {
     await seedDefaultExercises();
 
     const [routine, plans, schedule, exerciseMasters, allExerciseMasters] = await Promise.all([
@@ -87,10 +94,18 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
     setExercises(exerciseMasters);
     setExerciseLibrary(allExerciseMasters);
     setSelectedDayId((current) => current ?? plans[0]?.routineDay.id);
+
+    if (captureRoutineSnapshot && routine) {
+      initialRoutinePlanSnapshot.current = {
+        routineId: routine.id,
+        routineDayIds: plans.map((plan) => plan.routineDay.id),
+        plans: plans.flatMap((plan) => plan.plans.map((item) => ({ ...item.plan }))),
+      };
+    }
   }
 
   useEffect(() => {
-    void loadSetup();
+    void loadSetup(true);
   }, []);
 
   async function handleActivate(splitType: RoutineSplitType) {
@@ -103,7 +118,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
     setSelectedDayId(undefined);
     setSavingSplitType(undefined);
     onRoutineSaved();
-    await loadSetup();
+    await loadSetup(true);
   }
 
   async function handleAddExercise(routineDayId: string, exerciseId: string) {
@@ -148,10 +163,26 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
     await loadSetup();
   }
 
-  async function handleResetRoutineTemplate() {
-    await resetActiveRoutinePlansToTemplate();
+  async function handleRevertRoutineChanges() {
+    const snapshot = initialRoutinePlanSnapshot.current;
+    if (!snapshot) return;
+
+    await db.transaction('rw', db.routineExercisePlans, async () => {
+      await Promise.all(
+        snapshot.routineDayIds.map((routineDayId) => (
+          db.routineExercisePlans.where('routineDayId').equals(routineDayId).delete()
+        )),
+      );
+
+      if (snapshot.plans.length > 0) {
+        await db.routineExercisePlans.bulkPut(snapshot.plans.map((plan) => ({ ...plan })));
+      }
+    });
+
+    setResetStatus(locale === 'ko' ? '화면 진입 시점의 루틴 운동으로 되돌렸습니다.' : 'Routine changes reverted to the state from when this screen opened.');
     onRoutineSaved();
     await loadSetup();
+    window.setTimeout(() => setResetStatus(undefined), 1800);
   }
 
   async function handleCreateExercise() {
@@ -606,13 +637,18 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
             <p className="text-sm font-medium text-slate-400">{t(locale, 'routineDays')}</p>
             <button
               type="button"
-              onClick={() => void handleResetRoutineTemplate()}
+              onClick={() => void handleRevertRoutineChanges()}
               className="flex min-h-9 items-center gap-2 rounded-md bg-slate-800 px-3 text-xs font-semibold text-slate-100"
             >
               <RotateCcw aria-hidden="true" size={14} />
-              <span>{locale === 'ko' ? '템플릿 정리' : 'Reset template'}</span>
+              <span>{locale === 'ko' ? '변경 취소' : 'Undo changes'}</span>
             </button>
           </div>
+          {resetStatus ? (
+            <p className="mt-2 rounded-md bg-cyan-950 px-3 py-2 text-xs font-semibold text-cyan-100">
+              {resetStatus}
+            </p>
+          ) : null}
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
             {dayPlans.map((dayPlan) => (
               <button
