@@ -178,7 +178,7 @@ function estimatedOneRm(set: WorkoutSet): number {
 
 function isHardSet(set: WorkoutSet, exercise: ExerciseMaster): boolean {
   const warmupOnly = exercise.stage === 'warmup' && !exercise.stageTags?.includes('main');
-  return set.isCompleted && !warmupOnly && set.rir !== undefined && set.rir <= 3;
+  return set.isCompleted && !set.isWarmup && !warmupOnly && set.rir !== undefined && set.rir <= 3;
 }
 
 function toMuscleGroups(exercise: ExerciseMaster): MuscleGroup[] {

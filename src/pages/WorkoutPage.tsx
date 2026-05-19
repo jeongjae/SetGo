@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Check, ChevronLeft, ClipboardList, Copy, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronLeft, ClipboardList, Clock3, Copy, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { db } from '../db/db';
 import { getRoutineDayDisplayName } from '../db/routines';
@@ -43,6 +43,14 @@ type WorkoutPageProps = {
   onSkipped: () => void;
 };
 
+function formatElapsed(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
 export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
   const [workout, setWorkout] = useState<ActiveWorkout | undefined>();
   const [logs, setLogs] = useState<WorkoutExerciseLog[]>([]);
@@ -55,6 +63,8 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   const [replacingWorkoutExerciseId, setReplacingWorkoutExerciseId] = useState<string | undefined>();
   const [locale] = useState(() => getStoredLocale());
   const [saveMessage, setSaveMessage] = useState(locale === 'ko' ? '로컬 저장됨' : 'Saved locally');
+  const [timerNow, setTimerNow] = useState(() => Date.now());
+  const [restTimerStartedAt, setRestTimerStartedAt] = useState<number | undefined>();
 
   async function loadWorkout() {
     const todayWorkout = sessionId ? await getWorkoutBySessionId(sessionId) : await getTodayWorkout();
@@ -81,6 +91,11 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
     void loadWorkout();
   }, [sessionId]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => setTimerNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   async function handleAddExercise(exerciseId: string) {
     if (!workout) return;
 
@@ -91,10 +106,13 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
   async function handleSetChange(
     set: WorkoutSet,
-    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted'>>,
+    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup'>>,
   ) {
     setSaveMessage(locale === 'ko' ? '저장 중...' : 'Saving...');
     await updateWorkoutSet(set.id, values);
+    if (values.isCompleted === true && !set.isCompleted) {
+      setRestTimerStartedAt(Date.now());
+    }
     await loadWorkout();
     setSaveMessage(`${locale === 'ko' ? '저장됨' : 'Saved'} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
   }
@@ -106,9 +124,56 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
       weightKg: previousSet.weightKg,
       reps: previousSet.reps,
       rir: previousSet.rir,
+      isWarmup: previousSet.isWarmup ?? false,
     });
     await loadWorkout();
     setSaveMessage(locale === 'ko' ? '이전 운동 세트를 복사했습니다' : 'Previous workout set copied');
+  }
+
+  async function handleCopyPreviousExercise(log: WorkoutExerciseLog) {
+    const pairs = log.sets
+      .map((set, index) => ({ set, previousSet: log.previousSets[index] }))
+      .filter((pair): pair is { set: WorkoutSet; previousSet: WorkoutSet } => pair.previousSet !== undefined);
+
+    if (pairs.length === 0) return;
+
+    await Promise.all(pairs.map(({ set, previousSet }) => updateWorkoutSet(set.id, {
+      weightKg: previousSet.weightKg,
+      reps: previousSet.reps,
+      rir: previousSet.rir,
+      isWarmup: previousSet.isWarmup ?? false,
+    })));
+    await loadWorkout();
+    setSaveMessage(locale === 'ko' ? '이전 운동 세트를 모두 복사했습니다' : 'All previous sets copied');
+  }
+
+  async function handleQuickAdjustSet(
+    set: WorkoutSet,
+    field: 'weightKg' | 'reps' | 'rir',
+    delta: number,
+  ) {
+    const currentValue = field === 'rir' ? set.rir ?? 0 : set[field];
+    const nextValue = field === 'weightKg'
+      ? Math.max(0, Number((currentValue + delta).toFixed(1)))
+      : Math.max(0, Math.round(currentValue + delta));
+
+    await handleSetChange(set, { [field]: nextValue });
+  }
+
+  async function handleToggleWarmup(set: WorkoutSet) {
+    await handleSetChange(set, {
+      isWarmup: !set.isWarmup,
+      isCompleted: !set.isWarmup ? true : set.isCompleted,
+    });
+  }
+
+  async function handleToggleHardSet(set: WorkoutSet) {
+    const isHardSet = !set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3;
+    await handleSetChange(set, {
+      isWarmup: false,
+      isCompleted: true,
+      rir: isHardSet ? 4 : Math.min(set.rir ?? 3, 3),
+    });
   }
 
   async function handleCompleteWorkout() {
@@ -232,6 +297,11 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   );
   const workoutRoutineDayName = getRoutineDayDisplayName(workout?.routineDay, locale);
   const completedExerciseCount = logs.filter((log) => log.workoutExercise.status === 'completed').length;
+  const sessionElapsed = workout?.session.startedAt
+    ? formatElapsed(timerNow - new Date(workout.session.startedAt).getTime())
+    : '0:00';
+  const restElapsed = restTimerStartedAt ? formatElapsed(timerNow - restTimerStartedAt) : '--:--';
+  const isCompletedEditMode = workout?.session.status === 'completed' || workout?.session.status === 'skipped';
 
   return (
     <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
@@ -249,6 +319,19 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
           <h1 className="text-2xl font-bold text-white">{locale === 'ko' ? '오늘 운동 세션' : "Today's session"}</h1>
         </div>
       </header>
+
+      {isCompletedEditMode ? (
+        <section className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 p-4">
+          <p className="text-sm font-bold text-cyan-200">
+            {locale === 'ko' ? '완료된 운동기록 편집 중' : 'Editing a finished workout'}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-300">
+            {locale === 'ko'
+              ? '세트, 운동, 메모를 수정하면 통계와 내보내기에 바로 반영됩니다.'
+              : 'Set, exercise, and memo edits update stats and exports immediately.'}
+          </p>
+        </section>
+      ) : null}
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
         <div className="flex items-start gap-3">
@@ -289,6 +372,29 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
           </div>
         </div>
       </section>
+
+      {!isCompletedEditMode ? (
+        <section className="rounded-lg bg-slate-900 p-4 shadow">
+          <div className="flex items-center gap-2 text-cyan-300">
+            <Clock3 aria-hidden="true" size={18} />
+            <p className="text-sm font-semibold">{locale === 'ko' ? '타이머' : 'Timers'}</p>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="rounded-md bg-slate-800 px-3 py-3">
+              <p className="text-xs font-semibold uppercase text-slate-500">{locale === 'ko' ? '운동 시간' : 'Session'}</p>
+              <p className="mt-1 text-2xl font-bold text-white">{sessionElapsed}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRestTimerStartedAt(Date.now())}
+              className="rounded-md bg-slate-800 px-3 py-3 text-left"
+            >
+              <p className="text-xs font-semibold uppercase text-slate-500">{locale === 'ko' ? '휴식 시간' : 'Rest'}</p>
+              <p className="mt-1 text-2xl font-bold text-white">{restElapsed}</p>
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
         <p className="text-sm font-medium text-slate-400">{t(locale, 'routine')}</p>
@@ -470,10 +576,31 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
           </div>
 
           <div className="mt-3 rounded-md bg-slate-800 px-3 py-2">
-            <p className="text-xs font-semibold uppercase text-slate-500">{locale === 'ko' ? '이전 기록' : 'Previous'}</p>
-            <p className="mt-1 text-sm leading-5 text-slate-200">
-              {log.previousSummary ?? (locale === 'ko' ? '아직 이전 완료 기록이 없습니다' : 'No previous completed record yet')}
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-500">{locale === 'ko' ? '이전 기록' : 'Previous'}</p>
+                <p className="mt-1 text-sm leading-5 text-slate-200">
+                  {log.previousSummary ?? (locale === 'ko' ? '아직 이전 완료 기록이 없습니다' : 'No previous completed record yet')}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleCopyPreviousExercise(log)}
+                disabled={log.previousSets.length === 0}
+                className="min-h-9 shrink-0 rounded-md bg-slate-900 px-3 text-xs font-bold text-cyan-300 disabled:text-slate-600"
+              >
+                {locale === 'ko' ? '전체 복사' : 'Copy all'}
+              </button>
+            </div>
+            {log.previousSets.length > 0 ? (
+              <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                {log.previousSets.slice(0, 6).map((previousSet) => (
+                  <span key={previousSet.id} className="shrink-0 rounded bg-slate-900 px-2 py-1 text-[11px] font-semibold text-slate-300">
+                    {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <label className="mt-3 block text-xs font-medium text-slate-400">
@@ -559,67 +686,173 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
           <div className="mt-4 grid gap-2">
             {log.sets.map((set, setIndex) => (
-              <div key={set.id} className="grid grid-cols-[2rem_1fr_1fr_1fr_2rem_2rem_2rem] items-center gap-2">
-                <span className="text-sm font-semibold text-slate-400">{set.setNo}</span>
-                <input
-                  aria-label={`${log.exercise.nameKo} set ${set.setNo} weight`}
-                  type="text"
-                  inputMode="decimal"
-                  enterKeyHint="done"
-                  defaultValue={set.weightKg || ''}
-                  placeholder="kg"
-                  onBlur={(event) => void handleSetChange(set, { weightKg: Number(event.target.value) || 0 })}
-                  className="min-w-0 rounded-md bg-slate-800 px-2 py-3 text-center text-sm text-white"
-                />
-                <input
-                  aria-label={`${log.exercise.nameKo} set ${set.setNo} reps`}
-                  type="text"
-                  inputMode="numeric"
-                  enterKeyHint="done"
-                  defaultValue={set.reps || ''}
-                  placeholder="reps"
-                  onBlur={(event) => void handleSetChange(set, { reps: Number(event.target.value) || 0 })}
-                  className="min-w-0 rounded-md bg-slate-800 px-2 py-3 text-center text-sm text-white"
-                />
-                <input
-                  aria-label={`${log.exercise.nameKo} set ${set.setNo} RIR`}
-                  type="text"
-                  inputMode="numeric"
-                  enterKeyHint="done"
-                  defaultValue={set.rir ?? ''}
-                  placeholder="RIR"
-                  onBlur={(event) => {
-                    const value = event.target.value;
-                    void handleSetChange(set, { rir: value === '' ? undefined : Number(value) || 0 });
-                  }}
-                  className="min-w-0 rounded-md bg-slate-800 px-2 py-3 text-center text-sm text-white"
-                />
-                <input
-                  aria-label={`${log.exercise.nameKo} set ${set.setNo} completed`}
-                  type="checkbox"
-                  checked={Boolean(set.isCompleted)}
-                  onChange={(event) => void handleSetChange(set, { isCompleted: event.target.checked })}
-                  className="h-6 w-6 accent-cyan-400"
-                />
-                <button
-                  type="button"
-                  onClick={() => void handleCopyPreviousSet(set, log.previousSets[setIndex])}
-                  disabled={!log.previousSets[setIndex]}
-                  className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-800 text-slate-100 disabled:text-slate-600"
-                  aria-label={`Copy previous workout values to ${log.exercise.nameKo} set ${set.setNo}`}
-                  title="Copy previous workout set"
-                >
-                  <Copy aria-hidden="true" size={14} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleDeleteSet(set.id)}
-                  disabled={log.sets.length === 1}
-                  className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-800 text-red-300 disabled:text-slate-600"
-                  aria-label={`Delete ${log.exercise.nameKo} set ${set.setNo}`}
-                >
-                  <Trash2 aria-hidden="true" size={14} />
-                </button>
+              <div key={set.id} className="rounded-md bg-slate-800 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-bold text-white">
+                    {locale === 'ko' ? '세트' : 'Set'} {set.setNo}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {set.isWarmup ? (
+                      <span className="rounded bg-amber-400/15 px-2 py-1 text-[11px] font-bold text-amber-200">
+                        {locale === 'ko' ? '준비' : 'Warmup'}
+                      </span>
+                    ) : null}
+                    {!set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3 ? (
+                      <span className="rounded bg-red-400/15 px-2 py-1 text-[11px] font-bold text-red-200">
+                        Hard
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <label className="text-[11px] font-semibold uppercase text-slate-500">
+                    kg
+                    <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-md bg-slate-900">
+                      <button
+                        type="button"
+                        onClick={() => void handleQuickAdjustSet(set, 'weightKg', -2.5)}
+                        className="min-h-10 text-sm font-bold text-slate-300"
+                      >
+                        -
+                      </button>
+                      <input
+                        key={`${set.id}_weight_${set.weightKg}`}
+                        aria-label={`${log.exercise.nameKo} set ${set.setNo} weight`}
+                        type="text"
+                        inputMode="decimal"
+                        enterKeyHint="done"
+                        defaultValue={set.weightKg || ''}
+                        placeholder="kg"
+                        onBlur={(event) => void handleSetChange(set, { weightKg: Number(event.target.value) || 0 })}
+                        className="min-w-0 bg-transparent px-1 py-3 text-center text-sm font-bold text-white outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleQuickAdjustSet(set, 'weightKg', 2.5)}
+                        className="min-h-10 text-sm font-bold text-cyan-300"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </label>
+
+                  <label className="text-[11px] font-semibold uppercase text-slate-500">
+                    reps
+                    <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-md bg-slate-900">
+                      <button
+                        type="button"
+                        onClick={() => void handleQuickAdjustSet(set, 'reps', -1)}
+                        className="min-h-10 text-sm font-bold text-slate-300"
+                      >
+                        -
+                      </button>
+                      <input
+                        key={`${set.id}_reps_${set.reps}`}
+                        aria-label={`${log.exercise.nameKo} set ${set.setNo} reps`}
+                        type="text"
+                        inputMode="numeric"
+                        enterKeyHint="done"
+                        defaultValue={set.reps || ''}
+                        placeholder="reps"
+                        onBlur={(event) => void handleSetChange(set, { reps: Number(event.target.value) || 0 })}
+                        className="min-w-0 bg-transparent px-1 py-3 text-center text-sm font-bold text-white outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleQuickAdjustSet(set, 'reps', 1)}
+                        className="min-h-10 text-sm font-bold text-cyan-300"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </label>
+
+                  <label className="text-[11px] font-semibold uppercase text-slate-500">
+                    RIR
+                    <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-md bg-slate-900">
+                      <button
+                        type="button"
+                        onClick={() => void handleQuickAdjustSet(set, 'rir', -1)}
+                        className="min-h-10 text-sm font-bold text-slate-300"
+                      >
+                        -
+                      </button>
+                      <input
+                        key={`${set.id}_rir_${set.rir ?? ''}`}
+                        aria-label={`${log.exercise.nameKo} set ${set.setNo} RIR`}
+                        type="text"
+                        inputMode="numeric"
+                        enterKeyHint="done"
+                        defaultValue={set.rir ?? ''}
+                        placeholder="RIR"
+                        onBlur={(event) => {
+                          const value = event.target.value;
+                          void handleSetChange(set, { rir: value === '' ? undefined : Number(value) || 0 });
+                        }}
+                        className="min-w-0 bg-transparent px-1 py-3 text-center text-sm font-bold text-white outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleQuickAdjustSet(set, 'rir', 1)}
+                        className="min-h-10 text-sm font-bold text-cyan-300"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="mt-3 grid grid-cols-5 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleToggleWarmup(set)}
+                    className={`min-h-10 rounded-md px-2 text-xs font-bold ${
+                      set.isWarmup ? 'bg-amber-300 text-slate-950' : 'bg-slate-900 text-slate-200'
+                    }`}
+                  >
+                    {locale === 'ko' ? '준비' : 'Warmup'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleToggleHardSet(set)}
+                    className={`min-h-10 rounded-md px-2 text-xs font-bold ${
+                      !set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3
+                        ? 'bg-red-300 text-slate-950'
+                        : 'bg-slate-900 text-slate-200'
+                    }`}
+                  >
+                    Hard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleSetChange(set, { isCompleted: !set.isCompleted })}
+                    className={`min-h-10 rounded-md px-2 text-xs font-bold ${
+                      set.isCompleted ? 'bg-cyan-400 text-slate-950' : 'bg-slate-900 text-slate-200'
+                    }`}
+                  >
+                    {set.isCompleted ? (locale === 'ko' ? '완료' : 'Done') : (locale === 'ko' ? '미완료' : 'Open')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleCopyPreviousSet(set, log.previousSets[setIndex])}
+                    disabled={!log.previousSets[setIndex]}
+                    className="flex min-h-10 items-center justify-center rounded-md bg-slate-900 text-slate-100 disabled:text-slate-600"
+                    aria-label={`Copy previous workout values to ${log.exercise.nameKo} set ${set.setNo}`}
+                    title="Copy previous workout set"
+                  >
+                    <Copy aria-hidden="true" size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleDeleteSet(set.id)}
+                    disabled={log.sets.length === 1}
+                    className="flex min-h-10 items-center justify-center rounded-md bg-slate-900 text-red-300 disabled:text-slate-600"
+                    aria-label={`Delete ${log.exercise.nameKo} set ${set.setNo}`}
+                  >
+                    <Trash2 aria-hidden="true" size={14} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -753,24 +986,36 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
         </div>
       </section>
 
-      <button
-        type="button"
-        onClick={() => void handleCompleteWorkout()}
-        disabled={!workout || logs.length === 0}
-        className="flex min-h-14 items-center justify-center gap-2 rounded-lg bg-emerald-400 px-4 text-sm font-semibold text-slate-950 disabled:bg-slate-800 disabled:text-slate-500"
-      >
-        <Check aria-hidden="true" size={18} />
-        <span>{locale === 'ko' ? '운동 완료' : 'Complete Workout'}</span>
-      </button>
+      {isCompletedEditMode ? (
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex min-h-14 items-center justify-center rounded-lg bg-cyan-400 px-4 text-sm font-semibold text-slate-950"
+        >
+          {locale === 'ko' ? '편집 완료' : 'Done Editing'}
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => void handleCompleteWorkout()}
+            disabled={!workout || logs.length === 0}
+            className="flex min-h-14 items-center justify-center gap-2 rounded-lg bg-emerald-400 px-4 text-sm font-semibold text-slate-950 disabled:bg-slate-800 disabled:text-slate-500"
+          >
+            <Check aria-hidden="true" size={18} />
+            <span>{locale === 'ko' ? '운동 완료' : 'Complete Workout'}</span>
+          </button>
 
-      <button
-        type="button"
-        onClick={() => void handleSkipWorkout()}
-        disabled={!workout}
-        className="flex min-h-12 items-center justify-center rounded-lg bg-slate-800 px-4 text-sm font-semibold text-slate-300 disabled:text-slate-600"
-      >
-        {locale === 'ko' ? '운동 건너뛰기' : 'Skip Workout'}
-      </button>
+          <button
+            type="button"
+            onClick={() => void handleSkipWorkout()}
+            disabled={!workout}
+            className="flex min-h-12 items-center justify-center rounded-lg bg-slate-800 px-4 text-sm font-semibold text-slate-300 disabled:text-slate-600"
+          >
+            {locale === 'ko' ? '운동 건너뛰기' : 'Skip Workout'}
+          </button>
+        </>
+      )}
     </section>
   );
 }

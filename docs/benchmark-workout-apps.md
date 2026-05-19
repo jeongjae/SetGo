@@ -165,6 +165,7 @@ SetGo target:
 3. 8-week trend polish
 4. Exercise PR / 1RM history
 5. AI-style weekly summary based on local calculations
+6. Rename "AI Comment" to local/automatic analysis until an actual AI integration exists
 
 ### P3: Later, Only If Needed
 
@@ -182,4 +183,3 @@ SetGo should not compete by having the largest feature list. It should compete b
 - more private than cloud-first apps
 - easier to install than a native beta
 - good enough for real lifting logs on iPhone Safari
-

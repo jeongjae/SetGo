@@ -126,6 +126,8 @@ async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayI
     for (const [index, plan] of plans.entries()) {
       const workoutExerciseId = `${sessionId}_${plan.exerciseId}_${Date.now()}_${index + 1}`;
       const plannedSets = Math.max(1, plan.plannedSets ?? 3);
+      const exercise = await db.exercises.get(plan.exerciseId);
+      const isWarmup = exercise?.stage === 'warmup' && !exercise.stageTags?.includes('main');
 
       await db.workoutExercises.put({
         id: workoutExerciseId,
@@ -145,6 +147,7 @@ async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayI
           reps: plan.plannedReps ?? 0,
           rir: plan.plannedRir,
           isCompleted: false,
+          isWarmup,
         })),
       );
     }
@@ -340,6 +343,8 @@ export async function addExerciseToWorkout(sessionId: string, exerciseId: string
   if (existing) return;
 
   const order = await db.workoutExercises.where('sessionId').equals(sessionId).count() + 1;
+  const exercise = await db.exercises.get(exerciseId);
+  const isWarmup = exercise?.stage === 'warmup' && !exercise.stageTags?.includes('main');
   const workoutExerciseId = `${sessionId}_${exerciseId}_${Date.now()}`;
   const workoutExercise: WorkoutExercise = {
     id: workoutExerciseId,
@@ -358,6 +363,7 @@ export async function addExerciseToWorkout(sessionId: string, exerciseId: string
     reps: 0,
     rir: undefined,
     isCompleted: false,
+    isWarmup,
   }));
 
   await db.transaction('rw', db.workoutExercises, db.workoutSets, async () => {
@@ -410,16 +416,19 @@ async function refreshExerciseVolume(workoutExerciseId: string): Promise<void> {
 }
 
 export async function addSetToWorkoutExercise(workoutExerciseId: string): Promise<void> {
-  const nextSetNo = await db.workoutSets.where('workoutExerciseId').equals(workoutExerciseId).count() + 1;
+  const existingSets = await db.workoutSets.where('workoutExerciseId').equals(workoutExerciseId).sortBy('setNo');
+  const lastSet = existingSets[existingSets.length - 1];
+  const nextSetNo = existingSets.length + 1;
 
   await db.workoutSets.put({
     id: `${workoutExerciseId}_set_${nextSetNo}`,
     workoutExerciseId,
     setNo: nextSetNo,
-    weightKg: 0,
-    reps: 0,
-    rir: undefined,
+    weightKg: lastSet?.weightKg ?? 0,
+    reps: lastSet?.reps ?? 0,
+    rir: lastSet?.rir,
     isCompleted: false,
+    isWarmup: lastSet?.isWarmup ?? false,
   });
 }
 
@@ -474,7 +483,7 @@ export async function moveWorkoutExercise(workoutExerciseId: string, direction: 
 
 export async function updateWorkoutSet(
   setId: string,
-  values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted'>>,
+  values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup'>>,
 ): Promise<void> {
   const existingSet = await db.workoutSets.get(setId);
   if (!existingSet) return;

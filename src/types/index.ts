@@ -124,6 +124,7 @@ export type WorkoutSet = {
   reps: number;
   rir?: number;
   isCompleted: boolean;
+  isWarmup?: boolean;
 };
 
 export type CardioRecord = {
