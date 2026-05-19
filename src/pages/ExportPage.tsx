@@ -1,7 +1,7 @@
 import { ChevronLeft, Copy, Download, Upload } from 'lucide-react';
 import { type ChangeEvent, useEffect, useState } from 'react';
 import { createBackup, createSettingsBackup, restoreBackup, restoreSettingsBackup } from '../db/backup';
-import { createExerciseCsv, importExerciseCsv } from '../db/exerciseCsv';
+import { createExerciseCsv, ExerciseCsvImportError, importExerciseCsv } from '../db/exerciseCsv';
 import {
   getRecentWorkoutSummaries,
   getWorkoutCardioRecords,
@@ -256,7 +256,15 @@ export function ExportPage({ onBack }: ExportPageProps) {
       window.setTimeout(() => setExerciseCsvStatus(undefined), 1800);
     } catch (error) {
       console.error('Failed to import exercise CSV', error);
-      setExerciseCsvStatus(locale === 'ko' ? 'CSV 가져오기에 실패했습니다.' : 'CSV import failed.');
+      if (error instanceof ExerciseCsvImportError) {
+        setExerciseCsvStatus(
+          locale === 'ko'
+            ? `CSV 검증 실패: ${error.issues.slice(0, 3).join(' / ')}`
+            : `CSV validation failed: ${error.issues.slice(0, 3).join(' / ')}`,
+        );
+      } else {
+        setExerciseCsvStatus(locale === 'ko' ? 'CSV 가져오기에 실패했습니다.' : 'CSV import failed.');
+      }
       window.setTimeout(() => setExerciseCsvStatus(undefined), 1800);
     } finally {
       event.target.value = '';

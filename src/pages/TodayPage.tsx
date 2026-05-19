@@ -21,13 +21,6 @@ type TodayPageProps = {
   onStartWorkout: (routineDayId?: string) => void;
 };
 
-const todayFormatter = new Intl.DateTimeFormat(undefined, {
-  weekday: 'long',
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-});
-
 const actions: Array<{
   labelKey: MessageKey;
   icon: typeof Play;
@@ -53,7 +46,12 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
   const [isTodayRestDay, setIsTodayRestDay] = useState(false);
   const [locale] = useState(() => getStoredLocale());
 
-  const todayLabel = useMemo(() => todayFormatter.format(new Date()), []);
+  const todayLabel = useMemo(() => new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date()), [locale]);
 
   useEffect(() => {
     async function load() {
@@ -120,7 +118,7 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
       ? t(locale, 'restDay')
       : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
   const actionLabel = (labelKey: MessageKey) => {
-    if (locale === 'ko' && labelKey === 'startWorkout') return '운동일지';
+    if (labelKey === 'startWorkout') return locale === 'ko' ? '운동일지' : 'Workout Log';
     if (labelKey === 'export') return locale === 'ko' ? '내보내기/가져오기' : 'Export/Restore';
     return t(locale, labelKey);
   };

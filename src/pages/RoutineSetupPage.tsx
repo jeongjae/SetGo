@@ -4,6 +4,7 @@ import { db } from '../db/db';
 import { seedDefaultExercises } from '../db/seed';
 import {
   exerciseCategoryOptions,
+  exerciseMatchesFilters,
   exerciseStageOptions,
   getExerciseCategories,
   getExerciseName,
@@ -47,6 +48,10 @@ const exerciseCategories: Array<{ label: string; value: ExerciseCategory | 'all'
   { label: 'All', value: 'all' },
   ...exerciseCategoryOptions.map((category) => ({ label: category.label, value: category.value })),
 ];
+const exerciseStages: Array<{ label: string; value: ExerciseStage | 'all' }> = [
+  { label: 'All', value: 'all' },
+  ...exerciseStageOptions.map((stage) => ({ label: stage.label, value: stage.value })),
+];
 type SetupTab = 'routine' | 'library' | 'schedule';
 
 type RoutinePlanSnapshot = {
@@ -66,8 +71,10 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
   const [addingDayId, setAddingDayId] = useState<string | undefined>();
   const [exerciseSearch, setExerciseSearch] = useState('');
   const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState<ExerciseCategory | 'all'>('all');
+  const [exerciseStageFilter, setExerciseStageFilter] = useState<ExerciseStage | 'all'>('all');
   const [routineAddSearch, setRoutineAddSearch] = useState('');
   const [routineAddCategoryFilter, setRoutineAddCategoryFilter] = useState<ExerciseCategory | 'all'>('all');
+  const [routineAddStageFilter, setRoutineAddStageFilter] = useState<ExerciseStage | 'all'>('all');
   const [newExerciseName, setNewExerciseName] = useState('');
   const [newExerciseNameEn, setNewExerciseNameEn] = useState('');
   const [newExerciseCategory, setNewExerciseCategory] = useState<ExerciseCategory>('chest');
@@ -260,26 +267,18 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
   const selectedExerciseIds = new Set(selectedDay?.plans.map((item) => item.exercise.id) ?? []);
   const availableExercises = exercises.filter((exercise) => !selectedExerciseIds.has(exercise.id));
   const filteredExerciseLibrary = exerciseLibrary.filter((exercise) => {
-    const matchesCategory = exerciseCategoryFilter === 'all'
-      || getExerciseCategories(exercise).includes(exerciseCategoryFilter);
-    const query = exerciseSearch.trim().toLowerCase();
-    const matchesSearch = !query
-      || exercise.nameKo.toLowerCase().includes(query)
-      || exercise.nameEn?.toLowerCase().includes(query)
-      || exercise.description?.toLowerCase().includes(query);
-
-    return matchesCategory && matchesSearch;
+    return exerciseMatchesFilters(exercise, {
+      query: exerciseSearch,
+      category: exerciseCategoryFilter,
+      stage: exerciseStageFilter,
+    });
   });
   const filteredAvailableExercises = availableExercises.filter((exercise) => {
-    const matchesCategory = routineAddCategoryFilter === 'all'
-      || getExerciseCategories(exercise).includes(routineAddCategoryFilter);
-    const query = routineAddSearch.trim().toLowerCase();
-    const matchesSearch = !query
-      || exercise.nameKo.toLowerCase().includes(query)
-      || exercise.nameEn?.toLowerCase().includes(query)
-      || exercise.description?.toLowerCase().includes(query);
-
-    return matchesCategory && matchesSearch;
+    return exerciseMatchesFilters(exercise, {
+      query: routineAddSearch,
+      category: routineAddCategoryFilter,
+      stage: routineAddStageFilter,
+    });
   });
   const editingExercise = exerciseLibrary.find((exercise) => exercise.id === editingExerciseId) ?? filteredExerciseLibrary[0];
   const setupSections: Array<{ id: SetupTab; label: string }> = [
@@ -400,6 +399,22 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
               }`}
             >
               {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
+            </button>
+          ))}
+        </div>
+        <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+          {exerciseStages.map((stage) => (
+            <button
+              key={stage.value}
+              type="button"
+              onClick={() => setExerciseStageFilter(stage.value)}
+              className={`min-h-9 rounded-md px-3 text-xs font-semibold ${
+                exerciseStageFilter === stage.value
+                  ? 'bg-cyan-400 text-slate-950'
+                  : 'bg-slate-800 text-slate-100'
+              }`}
+            >
+              {stage.value === 'all' ? t(locale, 'all') : labelForStage(stage.value, locale)}
             </button>
           ))}
         </div>
@@ -684,6 +699,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                     ));
                     setRoutineAddSearch('');
                     setRoutineAddCategoryFilter('all');
+                    setRoutineAddStageFilter('all');
                   }}
                   className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-400 text-slate-950"
                   aria-label={`Add exercise to ${selectedDay.routineDay.name}`}
@@ -719,6 +735,22 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                         }`}
                       >
                         {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                    {exerciseStages.map((stage) => (
+                      <button
+                        key={stage.value}
+                        type="button"
+                        onClick={() => setRoutineAddStageFilter(stage.value)}
+                        className={`min-h-8 rounded-md px-3 text-xs font-semibold ${
+                          routineAddStageFilter === stage.value
+                            ? 'bg-cyan-400 text-slate-950'
+                            : 'bg-slate-900 text-slate-100'
+                        }`}
+                      >
+                        {stage.value === 'all' ? t(locale, 'all') : labelForStage(stage.value, locale)}
                       </button>
                     ))}
                   </div>

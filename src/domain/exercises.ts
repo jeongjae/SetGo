@@ -40,3 +40,28 @@ export function labelForStage(stage: ExerciseStage, locale: 'ko' | 'en' = 'ko'):
   const option = exerciseStageOptions.find((item) => item.value === stage);
   return locale === 'ko' ? option?.labelKo ?? stage : option?.label ?? stage;
 }
+
+export function exerciseMatchesFilters(
+  exercise: ExerciseMaster,
+  filters: {
+    query?: string;
+    category?: ExerciseCategory | 'all';
+    stage?: ExerciseStage | 'all';
+  },
+): boolean {
+  const query = filters.query?.trim().toLowerCase() ?? '';
+  const matchesSearch = !query
+    || exercise.nameKo.toLowerCase().includes(query)
+    || exercise.nameEn?.toLowerCase().includes(query)
+    || exercise.description?.toLowerCase().includes(query)
+    || getExerciseCategories(exercise).some((category) => category.includes(query))
+    || getExerciseStages(exercise).some((stage) => stage.includes(query));
+  const matchesCategory = !filters.category
+    || filters.category === 'all'
+    || getExerciseCategories(exercise).includes(filters.category);
+  const matchesStage = !filters.stage
+    || filters.stage === 'all'
+    || getExerciseStages(exercise).includes(filters.stage);
+
+  return matchesSearch && matchesCategory && matchesStage;
+}

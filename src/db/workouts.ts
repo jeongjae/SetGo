@@ -22,7 +22,11 @@ export type WorkoutExerciseLog = {
   previousSets: WorkoutSet[];
 };
 
-export async function getOrCreateWorkoutForDate(date: string, selectedRoutineDayId?: string): Promise<ActiveWorkout> {
+export async function getOrCreateWorkoutForDate(
+  date: string,
+  selectedRoutineDayId?: string,
+  options: { createNew?: boolean } = {},
+): Promise<ActiveWorkout> {
   const now = new Date();
   const sessionDate = new Date(`${date}T12:00:00`);
   const activeRoutine = await getActiveRoutine();
@@ -37,40 +41,16 @@ export async function getOrCreateWorkoutForDate(date: string, selectedRoutineDay
     .where('date')
     .equals(date)
     .toArray();
-  const existingSession = existingSessions
+  const inProgressSessions = existingSessions
     .filter((session) => session.status === 'in_progress')
-    .sort((a, b) => (b.startedAt ?? b.createdAt).localeCompare(a.startedAt ?? a.createdAt))[0];
+    .sort((a, b) => (b.startedAt ?? b.createdAt).localeCompare(a.startedAt ?? a.createdAt));
+  const existingSession = options.createNew
+    ? undefined
+    : selectedRoutineDayId
+      ? inProgressSessions.find((session) => session.routineDayId === selectedRoutineDayId)
+      : inProgressSessions[0];
 
   if (existingSession) {
-    if (selectedRoutineDayId && existingSession.routineDayId !== selectedRoutineDayId) {
-      await db.transaction('rw', db.workoutSessions, db.workoutExercises, db.workoutSets, async () => {
-        const existingExercises = await db.workoutExercises.where('sessionId').equals(existingSession.id).toArray();
-        if (existingExercises.length > 0) {
-          await db.workoutSets
-            .where('workoutExerciseId')
-            .anyOf(existingExercises.map((exercise) => exercise.id))
-            .delete();
-          await db.workoutExercises.where('sessionId').equals(existingSession.id).delete();
-        }
-
-        await db.workoutSessions.update(existingSession.id, {
-          routineId: activeRoutine?.id,
-          routineDayId: selectedRoutineDayId,
-          totalStrengthVolumeKg: 0,
-          updatedAt: now.toISOString(),
-        });
-      });
-
-      await seedWorkoutExercisesFromRoutineDay(existingSession.id, selectedRoutineDayId);
-      const updatedSession = await db.workoutSessions.get(existingSession.id);
-
-      return {
-        session: updatedSession ?? existingSession,
-        routineName: activeRoutine?.name,
-        routineDay,
-      };
-    }
-
     const existingExerciseCount = await db.workoutExercises.where('sessionId').equals(existingSession.id).count();
     if (existingExerciseCount === 0 && existingSession.routineDayId) {
       await seedWorkoutExercisesFromRoutineDay(existingSession.id, existingSession.routineDayId);

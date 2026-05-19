@@ -2,7 +2,15 @@ import { ArrowDown, ArrowUp, Check, ChevronLeft, ClipboardList, Copy, Plus, Refr
 import { useEffect, useState } from 'react';
 import { db } from '../db/db';
 import { getRoutineDayDisplayName } from '../db/routines';
-import { exerciseCategoryOptions, getExerciseCategories, getExerciseName, labelForCategory } from '../domain/exercises';
+import {
+  exerciseCategoryOptions,
+  exerciseMatchesFilters,
+  exerciseStageOptions,
+  getExerciseCategories,
+  getExerciseName,
+  labelForCategory,
+  labelForStage,
+} from '../domain/exercises';
 import { exerciseCountLabel, getStoredLocale, routineNameLabel, t, timeBandLabel, workoutStatusLabel } from '../i18n/i18n';
 import {
   addExerciseToWorkout,
@@ -26,7 +34,7 @@ import {
   type ActiveWorkout,
   type WorkoutExerciseLog,
 } from '../db/workouts';
-import type { CardioRecord, ExerciseCategory, ExerciseMaster, WorkoutSet } from '../types';
+import type { CardioRecord, ExerciseCategory, ExerciseMaster, ExerciseStage, WorkoutSet } from '../types';
 
 type WorkoutPageProps = {
   sessionId?: string;
@@ -43,6 +51,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   const [isAdding, setIsAdding] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState('');
   const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState<ExerciseCategory | 'all'>('all');
+  const [exerciseStageFilter, setExerciseStageFilter] = useState<ExerciseStage | 'all'>('all');
   const [replacingWorkoutExerciseId, setReplacingWorkoutExerciseId] = useState<string | undefined>();
   const [locale] = useState(() => getStoredLocale());
   const [saveMessage, setSaveMessage] = useState(locale === 'ko' ? '로컬 저장됨' : 'Saved locally');
@@ -201,22 +210,20 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
   const availableExercises = getAvailableExercises();
   const filterExercises = (items: ExerciseMaster[]) => {
-    const query = exerciseSearch.trim().toLowerCase();
-    return items.filter((exercise) => {
-      const categories = getExerciseCategories(exercise);
-      const matchesCategory = exerciseCategoryFilter === 'all' || categories.includes(exerciseCategoryFilter);
-      const matchesSearch = !query
-        || exercise.nameKo.toLowerCase().includes(query)
-        || exercise.nameEn?.toLowerCase().includes(query)
-        || exercise.description?.toLowerCase().includes(query);
-
-      return matchesCategory && matchesSearch;
-    });
+    return items.filter((exercise) => exerciseMatchesFilters(exercise, {
+      query: exerciseSearch,
+      category: exerciseCategoryFilter,
+      stage: exerciseStageFilter,
+    }));
   };
   const filteredAvailableExercises = filterExercises(availableExercises);
   const categoryFilters: Array<{ label: string; value: ExerciseCategory | 'all' }> = [
     { label: 'All', value: 'all' },
     ...exerciseCategoryOptions,
+  ];
+  const stageFilters: Array<{ label: string; value: ExerciseStage | 'all' }> = [
+    { label: 'All', value: 'all' },
+    ...exerciseStageOptions,
   ];
   const totalSetCount = logs.reduce((sum, log) => sum + log.sets.length, 0);
   const completedSetCount = logs.reduce(
@@ -316,7 +323,12 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
           </div>
           <button
             type="button"
-            onClick={() => setIsAdding((current) => !current)}
+            onClick={() => {
+              setIsAdding((current) => !current);
+              setExerciseSearch('');
+              setExerciseCategoryFilter('all');
+              setExerciseStageFilter('all');
+            }}
             className="flex h-11 w-11 items-center justify-center rounded-lg bg-cyan-400 text-slate-950"
             aria-label="Add exercise"
           >
@@ -353,6 +365,22 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                 </button>
               ))}
             </div>
+            <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+              {stageFilters.map((stage) => (
+                <button
+                  key={stage.value}
+                  type="button"
+                  onClick={() => setExerciseStageFilter(stage.value)}
+                  className={`min-h-8 rounded-md px-3 text-xs font-semibold ${
+                    exerciseStageFilter === stage.value
+                      ? 'bg-cyan-400 text-slate-950'
+                      : 'bg-slate-900 text-slate-100'
+                  }`}
+                >
+                  {stage.value === 'all' ? t(locale, 'all') : labelForStage(stage.value, locale)}
+                </button>
+              ))}
+            </div>
             <p className="mt-2 text-xs text-slate-400">
               {exerciseCountLabel(locale, filteredAvailableExercises.length)}
             </p>
@@ -369,7 +397,12 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                     onClick={() => void handleAddExercise(exercise.id)}
                     className="flex items-center justify-between rounded-md bg-slate-900 px-3 py-3 text-left text-sm text-slate-100"
                   >
-                    <span>{getExerciseName(exercise, locale)}</span>
+                    <span>
+                      <span className="block font-semibold">{getExerciseName(exercise, locale)}</span>
+                      <span className="mt-1 block text-xs text-slate-400">
+                        {getExerciseCategories(exercise).map((category) => labelForCategory(category, locale)).join(' / ')}
+                      </span>
+                    </span>
                     <span className="text-xs font-semibold text-cyan-300">{exercise.defaultEmoji}</span>
                   </button>
                 ))}
@@ -419,11 +452,16 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
             <p className="text-sm font-semibold text-slate-200">
               {log.workoutExercise.totalVolumeKg.toLocaleString()} kg
             </p>
-            <button
-              type="button"
-              onClick={() => setReplacingWorkoutExerciseId((current) => (
-                current === log.workoutExercise.id ? undefined : log.workoutExercise.id
-              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setReplacingWorkoutExerciseId((current) => (
+                    current === log.workoutExercise.id ? undefined : log.workoutExercise.id
+                  ));
+                  setExerciseSearch('');
+                  setExerciseCategoryFilter('all');
+                  setExerciseStageFilter('all');
+                }}
               className="flex min-h-9 items-center gap-2 rounded-md bg-slate-800 px-3 text-sm font-semibold text-slate-100"
             >
               <RefreshCw aria-hidden="true" size={14} />
@@ -451,18 +489,71 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
           </label>
 
           {replacingWorkoutExerciseId === log.workoutExercise.id ? (
-            <div className="mt-4 grid max-h-72 gap-2 overflow-y-auto pr-1">
-              {filterExercises(getAvailableExercises(log.exercise.id)).map((exercise) => (
+            <div className="mt-4 rounded-md bg-slate-800 p-3">
+              <div className="flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2">
+                <Search aria-hidden="true" size={16} className="shrink-0 text-slate-400" />
+                <input
+                  aria-label={`Search replacement for ${getExerciseName(log.exercise, locale)}`}
+                  type="search"
+                  value={exerciseSearch}
+                  onChange={(event) => setExerciseSearch(event.target.value)}
+                  placeholder={t(locale, 'searchExercises')}
+                  className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+                />
+              </div>
+              <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                {categoryFilters.map((category) => (
+                  <button
+                    key={category.value}
+                    type="button"
+                    onClick={() => setExerciseCategoryFilter(category.value)}
+                    className={`min-h-8 rounded-md px-3 text-xs font-semibold ${
+                      exerciseCategoryFilter === category.value
+                        ? 'bg-cyan-400 text-slate-950'
+                        : 'bg-slate-900 text-slate-100'
+                    }`}
+                  >
+                    {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                {stageFilters.map((stage) => (
+                  <button
+                    key={stage.value}
+                    type="button"
+                    onClick={() => setExerciseStageFilter(stage.value)}
+                    className={`min-h-8 rounded-md px-3 text-xs font-semibold ${
+                      exerciseStageFilter === stage.value
+                        ? 'bg-cyan-400 text-slate-950'
+                        : 'bg-slate-900 text-slate-100'
+                    }`}
+                  >
+                    {stage.value === 'all' ? t(locale, 'all') : labelForStage(stage.value, locale)}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-slate-400">
+                {exerciseCountLabel(locale, filterExercises(getAvailableExercises(log.exercise.id)).length)}
+              </p>
+              <div className="mt-2 grid max-h-72 gap-2 overflow-y-auto pr-1">
+                {filterExercises(getAvailableExercises(log.exercise.id)).map((exercise) => (
                   <button
                     key={exercise.id}
                     type="button"
                     onClick={() => void handleReplaceExercise(log.workoutExercise.id, exercise.id)}
                     className="flex items-center justify-between rounded-md bg-slate-800 px-3 py-3 text-left text-sm text-slate-100"
                   >
-                    <span>{getExerciseName(exercise, locale)}</span>
+                    <span>
+                      <span className="block font-semibold">{getExerciseName(exercise, locale)}</span>
+                      <span className="mt-1 block text-xs text-slate-400">
+                        {getExerciseCategories(exercise).map((category) => labelForCategory(category, locale)).join(' / ')}
+                      </span>
+                    </span>
                     <span className="text-xs font-semibold text-cyan-300">{exercise.defaultEmoji}</span>
                   </button>
                 ))}
+              </div>
             </div>
           ) : null}
 

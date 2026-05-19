@@ -29,7 +29,7 @@ export function App() {
     setView('calendar');
   }
 
-  async function handleStartWorkout(routineDayId?: string, dateKey?: string, sessionId?: string) {
+  async function handleStartWorkout(routineDayId?: string, dateKey?: string, sessionId?: string, createNew = false) {
     if (sessionId) {
       setActiveWorkoutSessionId(sessionId);
       setView('workout');
@@ -37,7 +37,7 @@ export function App() {
     }
 
     const workout = dateKey
-      ? await getOrCreateWorkoutForDate(dateKey, routineDayId)
+      ? await getOrCreateWorkoutForDate(dateKey, routineDayId, { createNew })
       : await getOrCreateTodayWorkout(routineDayId);
     setActiveWorkoutSessionId(workout.session.id);
     setRefreshKey((current) => current + 1);
@@ -47,7 +47,7 @@ export function App() {
   const content = view === 'routineSetup'
     ? <RoutineSetupPage onBack={() => setView('today')} onRoutineSaved={handleRoutineSaved} />
     : view === 'calendar'
-      ? <CalendarPage onBack={() => setView('today')} onStartWorkout={(routineDayId, dateKey, sessionId) => void handleStartWorkout(routineDayId, dateKey, sessionId)} />
+      ? <CalendarPage onBack={() => setView('today')} onStartWorkout={(routineDayId, dateKey, sessionId, createNew) => void handleStartWorkout(routineDayId, dateKey, sessionId, createNew)} />
       : view === 'export'
         ? <ExportPage onBack={() => setView('today')} />
         : view === 'stats'

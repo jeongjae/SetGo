@@ -11,12 +11,12 @@ import {
 import { getMonthlyWorkoutSummaries, type WorkoutSummary } from '../db/workouts';
 import { formatDateKey } from '../utils/date';
 import { db } from '../db/db';
-import { exerciseCountLabel, getStoredLocale, t } from '../i18n/i18n';
+import { exerciseCountLabel, getStoredLocale, t, workoutStatusLabel } from '../i18n/i18n';
 import type { CalendarPlanOverride, RoutineDay } from '../types';
 
 type CalendarPageProps = {
   onBack: () => void;
-  onStartWorkout: (routineDayId?: string, dateKey?: string, sessionId?: string) => void;
+  onStartWorkout: (routineDayId?: string, dateKey?: string, sessionId?: string, createNew?: boolean) => void;
 };
 
 type CalendarDay = {
@@ -38,13 +38,6 @@ const weekdayLabels = {
 
 function statusLabel(status: CalendarPlan['status'], locale: 'ko' | 'en') {
   return status === 'missed' ? t(locale, 'missed') : t(locale, 'planned');
-}
-
-function workoutStatusLabel(status: WorkoutSummary['session']['status'], locale: 'ko' | 'en') {
-  if (status === 'completed') return t(locale, 'completed');
-  if (status === 'in_progress') return t(locale, 'inProgress');
-  if (status === 'skipped') return locale === 'ko' ? '건너뜀' : 'Skipped';
-  return t(locale, 'planned');
 }
 
 function buildCalendarDays(year: number, monthIndex: number): CalendarDay[] {
@@ -87,7 +80,7 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
   const [selectedDateKey, setSelectedDateKey] = useState(todayKey);
   const [reloadKey, setReloadKey] = useState(0);
   const [locale] = useState(() => getStoredLocale());
-  const monthFormatter = useMemo(() => new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : undefined, {
+  const monthFormatter = useMemo(() => new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
     month: 'long',
     year: 'numeric',
   }), [locale]);
@@ -194,11 +187,9 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
   const selectedTodaySession = selectedDateKey === todayKey
     ? selectedSummaries.find((summary) => summary.session.status === 'in_progress')
     : undefined;
-  const selectedPrimarySession = selectedTodaySession
-    ?? selectedSummaries.find((summary) => summary.session.status === 'in_progress')
-    ?? selectedSummaries[0];
   const selectedOverrideRoutineDayId = selectedPlanValue !== '__weekly' ? selectedPlanValue || undefined : undefined;
-  const startWorkoutRoutineDayId = selectedOverrideRoutineDayId ?? selectedPlan?.routineDay?.id ?? selectedPrimarySession?.session.routineDayId;
+  const startWorkoutRoutineDayId = selectedOverrideRoutineDayId ?? selectedPlan?.routineDay?.id;
+  const shouldContinueTodaySession = selectedDateKey === todayKey && selectedTodaySession !== undefined;
 
   return (
     <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
@@ -269,7 +260,7 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
                     <span
                       key={summary.session.id}
                       className={`h-2 w-2 rounded-full ${statusColor(summary.session.status)}`}
-                      aria-label={`${summary.session.date} ${workoutStatusLabel(summary.session.status, locale)}`}
+                      aria-label={`${summary.session.date} ${workoutStatusLabel(locale, summary.session.status)}`}
                     />
                   ))}
                   {showPlanDot ? (
@@ -329,7 +320,7 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
                     {getRoutineDayDisplayName(summary.routineDay, locale) ?? summary.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}
                   </h3>
                   <span className="rounded-md bg-slate-900 px-2 py-1 text-xs font-semibold text-slate-200">
-                    {workoutStatusLabel(summary.session.status, locale)}
+                    {workoutStatusLabel(locale, summary.session.status)}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-400">
@@ -357,13 +348,18 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
         ) : null}
         <button
           type="button"
-          onClick={() => onStartWorkout(startWorkoutRoutineDayId, selectedDateKey, selectedPrimarySession?.session.id)}
+          onClick={() => onStartWorkout(
+            shouldContinueTodaySession ? selectedTodaySession.session.routineDayId : startWorkoutRoutineDayId,
+            selectedDateKey,
+            shouldContinueTodaySession ? selectedTodaySession.session.id : undefined,
+            selectedDateKey !== todayKey && !shouldContinueTodaySession,
+          )}
           className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 text-sm font-semibold text-slate-950"
         >
           <Play aria-hidden="true" size={17} />
           <span>
-            {selectedPrimarySession
-              ? selectedDateKey === todayKey ? t(locale, 'continueTodayWorkout') : locale === 'ko' ? '운동기록 수정' : 'Edit workout record'
+            {shouldContinueTodaySession
+              ? t(locale, 'continueTodayWorkout')
               : selectedDateKey === todayKey
                 ? startWorkoutRoutineDayId
                   ? t(locale, 'startPlannedWorkout')
