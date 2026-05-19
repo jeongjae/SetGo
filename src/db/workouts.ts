@@ -22,22 +22,24 @@ export type WorkoutExerciseLog = {
   previousSets: WorkoutSet[];
 };
 
-export async function getOrCreateTodayWorkout(selectedRoutineDayId?: string): Promise<ActiveWorkout> {
+export async function getOrCreateWorkoutForDate(date: string, selectedRoutineDayId?: string): Promise<ActiveWorkout> {
   const now = new Date();
-  const date = formatDateKey(now);
+  const sessionDate = new Date(`${date}T12:00:00`);
   const activeRoutine = await getActiveRoutine();
   const routineDays = activeRoutine
     ? await db.routineDays.where('routineId').equals(activeRoutine.id).sortBy('sequence')
     : [];
-  const scheduledRoutineDay = selectedRoutineDayId ? undefined : await getSuggestedRoutineDayForDate(now);
+  const scheduledRoutineDay = selectedRoutineDayId ? undefined : await getSuggestedRoutineDayForDate(sessionDate);
   const routineDay = routineDays.find((day) => day.id === selectedRoutineDayId)
     ?? scheduledRoutineDay;
 
-  const existingSession = await db.workoutSessions
+  const existingSessions = await db.workoutSessions
     .where('date')
     .equals(date)
+    .toArray();
+  const existingSession = existingSessions
     .filter((session) => session.status === 'in_progress')
-    .first();
+    .sort((a, b) => (b.startedAt ?? b.createdAt).localeCompare(a.startedAt ?? a.createdAt))[0];
 
   if (existingSession) {
     if (selectedRoutineDayId && existingSession.routineDayId !== selectedRoutineDayId) {
@@ -86,12 +88,11 @@ export async function getOrCreateTodayWorkout(selectedRoutineDayId?: string): Pr
   }
 
   const timestamp = now.toISOString();
-  const existingSameDayCount = await db.workoutSessions.where('date').equals(date).count();
   const session: WorkoutSession = {
-    id: existingSameDayCount === 0 ? `workout_${date}` : `workout_${date}_${now.getTime()}`,
+    id: existingSessions.length === 0 ? `workout_${date}` : `workout_${date}_${now.getTime()}`,
     date,
-    startedAt: timestamp,
-    timeBand: getTimeBand(now),
+    startedAt: existingSessions.length === 0 ? `${date}T12:00:00.000` : timestamp,
+    timeBand: getTimeBand(sessionDate),
     routineId: activeRoutine?.id,
     routineDayId: routineDay?.id,
     status: 'in_progress',
@@ -106,6 +107,31 @@ export async function getOrCreateTodayWorkout(selectedRoutineDayId?: string): Pr
   return {
     session,
     routineName: activeRoutine?.name,
+    routineDay,
+  };
+}
+
+export async function getOrCreateTodayWorkout(selectedRoutineDayId?: string): Promise<ActiveWorkout> {
+  return getOrCreateWorkoutForDate(formatDateKey(new Date()), selectedRoutineDayId);
+}
+
+export async function getWorkoutBySessionId(sessionId: string): Promise<ActiveWorkout | undefined> {
+  const session = await db.workoutSessions.get(sessionId);
+  if (!session) return undefined;
+
+  const existingExerciseCount = await db.workoutExercises.where('sessionId').equals(session.id).count();
+  if (existingExerciseCount === 0 && session.routineDayId) {
+    await seedWorkoutExercisesFromRoutineDay(session.id, session.routineDayId);
+  }
+
+  const [routine, routineDay] = await Promise.all([
+    session.routineId ? db.routines.get(session.routineId) : undefined,
+    session.routineDayId ? db.routineDays.get(session.routineDayId) : undefined,
+  ]);
+
+  return {
+    session,
+    routineName: routine?.name,
     routineDay,
   };
 }

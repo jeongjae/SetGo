@@ -4,12 +4,13 @@ import { db } from '../db/db';
 import { getExerciseCategories, getExerciseName } from '../domain/exercises';
 import { getStoredLocale, t } from '../i18n/i18n';
 import { formatDateKey } from '../utils/date';
-import type { ExerciseCategory, ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
+import type { ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 
 type StatsPageProps = {
   onBack: () => void;
 };
 
+type Locale = 'ko' | 'en';
 type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulder' | 'biceps' | 'triceps' | 'core';
 type LoadStatus = 'low' | 'normal' | 'high' | 'caution';
 
@@ -59,14 +60,25 @@ type StatsView = {
   aiComment: string;
 };
 
-const muscleLabels: Record<MuscleGroup, string> = {
-  chest: '가슴',
-  back: '등',
-  legs: '하체',
-  shoulder: '어깨',
-  biceps: '이두',
-  triceps: '삼두',
-  core: '코어',
+const muscleLabels: Record<Locale, Record<MuscleGroup, string>> = {
+  ko: {
+    chest: '가슴',
+    back: '등',
+    legs: '하체',
+    shoulder: '어깨',
+    biceps: '이두',
+    triceps: '삼두',
+    core: '코어',
+  },
+  en: {
+    chest: 'Chest',
+    back: 'Back',
+    legs: 'Legs',
+    shoulder: 'Shoulders',
+    biceps: 'Biceps',
+    triceps: 'Triceps',
+    core: 'Core',
+  },
 };
 
 const recommendedSets: Record<MuscleGroup, { min: number; max: number }> = {
@@ -81,19 +93,74 @@ const recommendedSets: Record<MuscleGroup, { min: number; max: number }> = {
 
 const trackedMuscles: MuscleGroup[] = ['chest', 'back', 'legs', 'shoulder', 'biceps', 'triceps', 'core'];
 
+const copy = {
+  ko: {
+    title: '운동 통계',
+    emptyTitle: '아직 분석할 운동 기록이 없습니다',
+    emptyBody: '운동을 완료하면 주간 볼륨, Hard Set, 근육군별 부하가 자동으로 계산됩니다.',
+    workoutDays: '운동일수',
+    totalVolume: '총 볼륨',
+    totalSets: '총 세트',
+    weekOverWeek: '전주 대비 변화율',
+    recentTrend: '최근 8주 추세',
+    muscleAnalysis: '근육군별 분석',
+    performance: '운동별 성과',
+    recoveryWarnings: '회복/부하 경고',
+    noWarnings: '현재 주요 경고는 없습니다.',
+    aiComment: 'AI 코멘트',
+    volume: '볼륨',
+    sets: '세트',
+    recommended: '권장',
+    perWeek: '세트/주',
+    recentWeight: '최근 중량',
+    bestWeight: '최고 중량',
+    recentVolume: '최근 볼륨',
+    bestVolume: '최고 볼륨',
+    estimatedOneRm: '예상 1RM',
+    noPerformance: '완료한 운동 세트가 있으면 운동별 성과가 표시됩니다.',
+    emptyAi: '운동 기록이 쌓이면 주간 부하와 다음 주 조정 제안을 표시합니다.',
+  },
+  en: {
+    title: 'Workout Stats',
+    emptyTitle: 'No workout records to analyze yet',
+    emptyBody: 'Weekly volume, hard sets, and muscle-group load will be calculated after workouts are completed.',
+    workoutDays: 'Workout days',
+    totalVolume: 'Total volume',
+    totalSets: 'Total sets',
+    weekOverWeek: 'Week over week',
+    recentTrend: 'Recent 8-week trend',
+    muscleAnalysis: 'Muscle-group analysis',
+    performance: 'Exercise performance',
+    recoveryWarnings: 'Recovery/load warnings',
+    noWarnings: 'No major warnings right now.',
+    aiComment: 'AI Comment',
+    volume: 'Volume',
+    sets: 'Sets',
+    recommended: 'Recommended',
+    perWeek: 'sets/week',
+    recentWeight: 'Recent weight',
+    bestWeight: 'Best weight',
+    recentVolume: 'Recent volume',
+    bestVolume: 'Best volume',
+    estimatedOneRm: 'Estimated 1RM',
+    noPerformance: 'Exercise performance appears after completed sets are logged.',
+    emptyAi: 'Weekly load and next-week adjustment suggestions will appear after workout history accumulates.',
+  },
+};
+
 function startOfWeek(date: Date): Date {
-  const copy = new Date(date);
-  copy.setHours(0, 0, 0, 0);
-  const day = copy.getDay();
+  const copyDate = new Date(date);
+  copyDate.setHours(0, 0, 0, 0);
+  const day = copyDate.getDay();
   const mondayOffset = day === 0 ? -6 : 1 - day;
-  copy.setDate(copy.getDate() + mondayOffset);
-  return copy;
+  copyDate.setDate(copyDate.getDate() + mondayOffset);
+  return copyDate;
 }
 
 function addDays(date: Date, days: number): Date {
-  const copy = new Date(date);
-  copy.setDate(copy.getDate() + days);
-  return copy;
+  const copyDate = new Date(date);
+  copyDate.setDate(copyDate.getDate() + days);
+  return copyDate;
 }
 
 function pctChange(current: number, previous: number): number | undefined {
@@ -143,7 +210,7 @@ function formatPct(value?: number): string {
   return `${sign}${value.toFixed(0)}%`;
 }
 
-function buildEmptyStats(): StatsView {
+function buildEmptyStats(locale: Locale): StatsView {
   return {
     workoutDays: 0,
     totalVolumeKg: 0,
@@ -163,7 +230,7 @@ function buildEmptyStats(): StatsView {
     })),
     performances: [],
     warnings: [],
-    aiComment: '운동 기록이 쌓이면 주간 부하와 다음 주 조정 제안을 표시합니다.',
+    aiComment: copy[locale].emptyAi,
   };
 }
 
@@ -172,7 +239,7 @@ function buildStats(
   workoutExercises: WorkoutExercise[],
   workoutSets: WorkoutSet[],
   exercises: ExerciseMaster[],
-  locale: 'ko' | 'en',
+  locale: Locale,
 ): StatsView {
   const today = new Date();
   const thisWeekStart = startOfWeek(today);
@@ -331,7 +398,11 @@ function buildStats(
     if (completedDates.includes(formatDateKey(cursor))) streak += 1;
     else if (streak > 0) break;
   }
-  if (streak >= 4) warnings.push(`연속 운동일이 ${streak}일입니다. 하루 회복일을 고려하세요.`);
+  if (streak >= 4) {
+    warnings.push(locale === 'ko'
+      ? `연속 운동일이 ${streak}일입니다. 하루 회복일을 고려하세요.`
+      : `You have trained ${streak} days in a row. Consider a recovery day.`);
+  }
 
   const muscleHistory: Array<{ group: MuscleGroup; date: Date }> = [];
   completedWorkoutExercises.forEach((workoutExercise) => {
@@ -347,22 +418,41 @@ function buildStats(
       .map((item) => item.date)
       .sort((a, b) => a.getTime() - b.getTime());
     const hasShortGap = dates.some((date, index) => index > 0 && date.getTime() - dates[index - 1].getTime() < 48 * 60 * 60 * 1000);
-    if (hasShortGap) warnings.push(`${muscleLabels[group]} 부위가 48시간 미만 간격으로 반복되었습니다.`);
+    if (hasShortGap) {
+      warnings.push(locale === 'ko'
+        ? `${muscleLabels.ko[group]} 부위가 48시간 미만 간격으로 반복되었습니다.`
+        : `${muscleLabels.en[group]} was repeated within 48 hours.`);
+    }
   });
 
   const weekChange = pctChange(totalVolumeKg, previousWeekVolumeKg);
-  if (weekChange !== undefined && weekChange >= 25) warnings.push(`주간 볼륨이 전주 대비 ${weekChange.toFixed(0)}% 증가했습니다.`);
+  if (weekChange !== undefined && weekChange >= 25) {
+    warnings.push(locale === 'ko'
+      ? `주간 볼륨이 전주 대비 ${weekChange.toFixed(0)}% 증가했습니다.`
+      : `Weekly volume increased ${weekChange.toFixed(0)}% versus last week.`);
+  }
   const hardSetRatio = currentWeekSets.length > 0 ? (hardSets / currentWeekSets.length) * 100 : 0;
-  if (hardSetRatio > 70) warnings.push(`Hard Set 비율이 ${hardSetRatio.toFixed(0)}%입니다. 피로 누적을 확인하세요.`);
+  if (hardSetRatio > 70) {
+    warnings.push(locale === 'ko'
+      ? `Hard Set 비율이 ${hardSetRatio.toFixed(0)}%입니다. 피로 누적을 확인하세요.`
+      : `Hard sets are ${hardSetRatio.toFixed(0)}% of sets. Watch accumulated fatigue.`);
+  }
 
-  const lowMuscles = muscleStats.filter((stat) => stat.status === 'low').map((stat) => muscleLabels[stat.group]);
-  const highMuscles = muscleStats.filter((stat) => stat.status === 'high' || stat.status === 'caution').map((stat) => muscleLabels[stat.group]);
-  const aiComment = [
-    `이번 주는 ${currentWeekSessions.length}일 운동했고 총 ${Math.round(totalVolumeKg).toLocaleString()}kg, ${currentWeekSets.length}세트를 기록했습니다.`,
-    lowMuscles.length > 0 ? `부족한 근육군은 ${lowMuscles.slice(0, 3).join(', ')}입니다.` : '주요 근육군 세트 수는 대체로 권장 범위 안에 있습니다.',
-    highMuscles.length > 0 ? `${highMuscles.slice(0, 3).join(', ')}는 부하를 점검하세요.` : '과도한 부하 신호는 크지 않습니다.',
-    warnings.length > 0 ? '다음 주에는 경고 항목을 우선 줄이는 방향으로 계획하세요.' : '다음 주에는 부족한 부위에 2-4세트를 추가하는 정도가 적절합니다.',
-  ].join(' ');
+  const lowMuscles = muscleStats.filter((stat) => stat.status === 'low').map((stat) => muscleLabels[locale][stat.group]);
+  const highMuscles = muscleStats.filter((stat) => stat.status === 'high' || stat.status === 'caution').map((stat) => muscleLabels[locale][stat.group]);
+  const aiComment = locale === 'ko'
+    ? [
+      `이번 주는 ${currentWeekSessions.length}일 운동했고 총 ${Math.round(totalVolumeKg).toLocaleString()}kg, ${currentWeekSets.length}세트를 기록했습니다.`,
+      lowMuscles.length > 0 ? `부족한 근육군은 ${lowMuscles.slice(0, 3).join(', ')}입니다.` : '주요 근육군 세트 수는 대체로 권장 범위 안에 있습니다.',
+      highMuscles.length > 0 ? `${highMuscles.slice(0, 3).join(', ')}는 부하를 점검하세요.` : '과도한 부하 신호는 크지 않습니다.',
+      warnings.length > 0 ? '다음 주에는 경고 항목을 우선 줄이는 방향으로 계획하세요.' : '다음 주에는 부족한 부위에 2-4세트를 추가하는 정도가 적절합니다.',
+    ].join(' ')
+    : [
+      `This week has ${currentWeekSessions.length} workout days, ${Math.round(totalVolumeKg).toLocaleString()}kg total volume, and ${currentWeekSets.length} sets.`,
+      lowMuscles.length > 0 ? `Under-trained groups: ${lowMuscles.slice(0, 3).join(', ')}.` : 'Major muscle groups are mostly within the recommended range.',
+      highMuscles.length > 0 ? `Review load for ${highMuscles.slice(0, 3).join(', ')}.` : 'No major overload signal is present.',
+      warnings.length > 0 ? 'Next week, prioritize reducing the warning items.' : 'Next week, adding 2-4 sets to lagging areas looks reasonable.',
+    ].join(' ');
 
   return {
     workoutDays: currentWeekSessions.length,
@@ -379,15 +469,18 @@ function buildStats(
   };
 }
 
-function Badge({ status }: { status: LoadStatus }) {
-  const label = status === 'low' ? '부족' : status === 'normal' ? '적정' : status === 'high' ? '과다' : '주의';
+function Badge({ status, locale }: { status: LoadStatus; locale: Locale }) {
+  const labels = {
+    ko: { low: '부족', normal: '적정', high: '과다', caution: '주의' },
+    en: { low: 'Low', normal: 'Good', high: 'High', caution: 'Caution' },
+  };
   const className = status === 'normal'
     ? 'bg-emerald-400/15 text-emerald-300'
     : status === 'high'
     ? 'bg-red-400/15 text-red-300'
     : 'bg-amber-400/15 text-amber-300';
 
-  return <span className={`rounded px-2 py-1 text-xs font-bold ${className}`}>{label}</span>;
+  return <span className={`rounded px-2 py-1 text-xs font-bold ${className}`}>{labels[locale][status]}</span>;
 }
 
 function MiniBarChart({ weeks, metric }: { weeks: WeekStat[]; metric: 'sets' | 'workoutDays' }) {
@@ -431,8 +524,9 @@ function MiniLineChart({ weeks }: { weeks: WeekStat[] }) {
 }
 
 export function StatsPage({ onBack }: StatsPageProps) {
-  const [locale] = useState(() => getStoredLocale());
-  const [stats, setStats] = useState<StatsView>(() => buildEmptyStats());
+  const [locale] = useState<Locale>(() => getStoredLocale());
+  const [stats, setStats] = useState<StatsView>(() => buildEmptyStats(locale));
+  const c = copy[locale];
 
   useEffect(() => {
     async function loadStats() {
@@ -464,7 +558,7 @@ export function StatsPage({ onBack }: StatsPageProps) {
         </button>
         <div>
           <p className="text-sm font-medium text-cyan-300">{t(locale, 'stats')}</p>
-          <h1 className="text-2xl font-bold text-white">운동 통계</h1>
+          <h1 className="text-2xl font-bold text-white">{c.title}</h1>
         </div>
       </header>
 
@@ -473,16 +567,16 @@ export function StatsPage({ onBack }: StatsPageProps) {
           <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-cyan-300">
             <BarChart3 aria-hidden="true" size={24} />
           </div>
-          <h2 className="mt-4 text-xl font-bold text-white">아직 분석할 운동 기록이 없습니다</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-300">운동을 완료하면 주간 볼륨, Hard Set, 근육군별 부하가 자동으로 계산됩니다.</p>
+          <h2 className="mt-4 text-xl font-bold text-white">{c.emptyTitle}</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-300">{c.emptyBody}</p>
         </section>
       ) : null}
 
       <section className="grid grid-cols-2 gap-3">
         {[
-          ['운동일수', `${stats.workoutDays}일`],
-          ['총 볼륨', `${Math.round(stats.totalVolumeKg).toLocaleString()}kg`],
-          ['총 세트', `${stats.totalSets}`],
+          [c.workoutDays, locale === 'ko' ? `${stats.workoutDays}일` : `${stats.workoutDays}d`],
+          [c.totalVolume, `${Math.round(stats.totalVolumeKg).toLocaleString()}kg`],
+          [c.totalSets, `${stats.totalSets}`],
           ['Hard Set', `${stats.hardSets}`],
         ].map(([label, value]) => (
           <div key={label} className="rounded-lg bg-slate-900 p-4 shadow">
@@ -491,7 +585,7 @@ export function StatsPage({ onBack }: StatsPageProps) {
           </div>
         ))}
         <div className="col-span-2 rounded-lg bg-slate-900 p-4 shadow">
-          <p className="text-xs font-semibold uppercase text-slate-500">전주 대비 변화율</p>
+          <p className="text-xs font-semibold uppercase text-slate-500">{c.weekOverWeek}</p>
           <p className={`mt-2 text-3xl font-bold ${stats.weekOverWeekPct !== undefined && stats.weekOverWeekPct >= 25 ? 'text-amber-300' : 'text-white'}`}>
             {formatPct(stats.weekOverWeekPct)}
           </p>
@@ -499,40 +593,40 @@ export function StatsPage({ onBack }: StatsPageProps) {
       </section>
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <h2 className="text-lg font-bold text-white">최근 8주 추세</h2>
-        <p className="mt-4 text-sm font-semibold text-slate-300">총 볼륨</p>
+        <h2 className="text-lg font-bold text-white">{c.recentTrend}</h2>
+        <p className="mt-4 text-sm font-semibold text-slate-300">{c.totalVolume}</p>
         <MiniLineChart weeks={stats.weeks} />
-        <p className="mt-5 text-sm font-semibold text-slate-300">총 세트 수</p>
+        <p className="mt-5 text-sm font-semibold text-slate-300">{c.totalSets}</p>
         <MiniBarChart weeks={stats.weeks} metric="sets" />
-        <p className="mt-5 text-sm font-semibold text-slate-300">운동일수</p>
+        <p className="mt-5 text-sm font-semibold text-slate-300">{c.workoutDays}</p>
         <MiniBarChart weeks={stats.weeks} metric="workoutDays" />
       </section>
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <h2 className="text-lg font-bold text-white">근육군별 분석</h2>
+        <h2 className="text-lg font-bold text-white">{c.muscleAnalysis}</h2>
         <div className="mt-4 grid gap-3">
           {stats.muscleStats.map((muscle) => (
             <div key={muscle.group} className="rounded-md bg-slate-800 p-3">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-base font-bold text-white">{muscleLabels[muscle.group]}</p>
-                <Badge status={muscle.status} />
+                <p className="text-base font-bold text-white">{muscleLabels[locale][muscle.group]}</p>
+                <Badge status={muscle.status} locale={locale} />
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                <div><p className="text-slate-500">볼륨</p><p className="font-bold text-white">{Math.round(muscle.volumeKg).toLocaleString()}kg</p></div>
-                <div><p className="text-slate-500">세트</p><p className="font-bold text-white">{muscle.sets}</p></div>
+                <div><p className="text-slate-500">{c.volume}</p><p className="font-bold text-white">{Math.round(muscle.volumeKg).toLocaleString()}kg</p></div>
+                <div><p className="text-slate-500">{c.sets}</p><p className="font-bold text-white">{muscle.sets}</p></div>
                 <div><p className="text-slate-500">Hard</p><p className="font-bold text-white">{muscle.hardSets}</p></div>
               </div>
-              <p className="mt-2 text-xs text-slate-400">권장 {muscle.recommendedMin}-{muscle.recommendedMax}세트/주</p>
+              <p className="mt-2 text-xs text-slate-400">{c.recommended} {muscle.recommendedMin}-{muscle.recommendedMax}{c.perWeek}</p>
             </div>
           ))}
         </div>
       </section>
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <h2 className="text-lg font-bold text-white">운동별 성과</h2>
+        <h2 className="text-lg font-bold text-white">{c.performance}</h2>
         <div className="mt-4 grid gap-3">
           {stats.performances.length === 0 ? (
-            <p className="text-sm text-slate-300">완료한 운동 세트가 있으면 운동별 성과가 표시됩니다.</p>
+            <p className="text-sm text-slate-300">{c.noPerformance}</p>
           ) : stats.performances.map((performance) => (
             <div key={performance.id} className="rounded-md bg-slate-800 p-3">
               <div className="flex items-start justify-between gap-3">
@@ -540,11 +634,11 @@ export function StatsPage({ onBack }: StatsPageProps) {
                 <span className="text-xs font-bold text-cyan-300">{formatPct(performance.fourWeekChangePct)}</span>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <p className="text-slate-400">최근 중량 <span className="font-bold text-white">{performance.recentWeightKg.toFixed(1)}kg</span></p>
-                <p className="text-slate-400">최고 중량 <span className="font-bold text-white">{performance.bestWeightKg.toFixed(1)}kg</span></p>
-                <p className="text-slate-400">최근 볼륨 <span className="font-bold text-white">{Math.round(performance.recentVolumeKg).toLocaleString()}kg</span></p>
-                <p className="text-slate-400">최고 볼륨 <span className="font-bold text-white">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
-                <p className="col-span-2 text-slate-400">예상 1RM <span className="font-bold text-white">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
+                <p className="text-slate-400">{c.recentWeight} <span className="font-bold text-white">{performance.recentWeightKg.toFixed(1)}kg</span></p>
+                <p className="text-slate-400">{c.bestWeight} <span className="font-bold text-white">{performance.bestWeightKg.toFixed(1)}kg</span></p>
+                <p className="text-slate-400">{c.recentVolume} <span className="font-bold text-white">{Math.round(performance.recentVolumeKg).toLocaleString()}kg</span></p>
+                <p className="text-slate-400">{c.bestVolume} <span className="font-bold text-white">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
+                <p className="col-span-2 text-slate-400">{c.estimatedOneRm} <span className="font-bold text-white">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
               </div>
             </div>
           ))}
@@ -554,11 +648,11 @@ export function StatsPage({ onBack }: StatsPageProps) {
       <section className="rounded-lg bg-slate-900 p-5 shadow">
         <div className="flex items-center gap-2">
           <AlertTriangle aria-hidden="true" size={18} className="text-amber-300" />
-          <h2 className="text-lg font-bold text-white">회복/부하 경고</h2>
+          <h2 className="text-lg font-bold text-white">{c.recoveryWarnings}</h2>
         </div>
         <div className="mt-4 grid gap-2">
           {stats.warnings.length === 0 ? (
-            <p className="rounded-md bg-emerald-400/10 px-3 py-3 text-sm text-emerald-300">현재 주요 경고는 없습니다.</p>
+            <p className="rounded-md bg-emerald-400/10 px-3 py-3 text-sm text-emerald-300">{c.noWarnings}</p>
           ) : stats.warnings.map((warning) => (
             <p key={warning} className="rounded-md bg-amber-400/10 px-3 py-3 text-sm leading-6 text-amber-200">{warning}</p>
           ))}
@@ -566,7 +660,7 @@ export function StatsPage({ onBack }: StatsPageProps) {
       </section>
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <p className="text-sm font-medium text-cyan-300">AI 코멘트</p>
+        <p className="text-sm font-medium text-cyan-300">{c.aiComment}</p>
         <p className="mt-2 text-sm leading-6 text-slate-200">{stats.aiComment}</p>
       </section>
     </section>

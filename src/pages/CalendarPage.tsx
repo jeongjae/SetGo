@@ -11,12 +11,12 @@ import {
 import { getMonthlyWorkoutSummaries, type WorkoutSummary } from '../db/workouts';
 import { formatDateKey } from '../utils/date';
 import { db } from '../db/db';
-import { getStoredLocale, t } from '../i18n/i18n';
+import { exerciseCountLabel, getStoredLocale, t } from '../i18n/i18n';
 import type { CalendarPlanOverride, RoutineDay } from '../types';
 
 type CalendarPageProps = {
   onBack: () => void;
-  onStartWorkout: (routineDayId?: string) => void;
+  onStartWorkout: (routineDayId?: string, dateKey?: string, sessionId?: string) => void;
 };
 
 type CalendarDay = {
@@ -37,8 +37,7 @@ const weekdayLabels = {
 };
 
 function statusLabel(status: CalendarPlan['status'], locale: 'ko' | 'en') {
-  if (status === 'missed') return t(locale, 'missed');
-  return t(locale, 'planned');
+  return status === 'missed' ? t(locale, 'missed') : t(locale, 'planned');
 }
 
 function workoutStatusLabel(status: WorkoutSummary['session']['status'], locale: 'ko' | 'en') {
@@ -74,8 +73,7 @@ function statusColor(status: WorkoutSummary['session']['status']) {
 }
 
 function planColor(status: CalendarPlan['status']) {
-  if (status === 'missed') return 'bg-red-400';
-  return 'bg-amber-300';
+  return status === 'missed' ? 'bg-red-400' : 'bg-amber-300';
 }
 
 export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
@@ -145,13 +143,11 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
           const daySchedule = schedule.find((item) => item.weekday === day.date.getDay());
           if (!daySchedule || daySchedule.isRestDay || !daySchedule.routineDayId) return [];
 
-          const plan: CalendarPlan = {
+          return [{
             date: day.key,
             routineDay: routineDayById.get(daySchedule.routineDayId),
             status: day.key < todayKey ? 'missed' : 'planned',
-          };
-
-          return [plan];
+          } satisfies CalendarPlan];
         });
 
       setSummaries(monthlySummaries);
@@ -198,9 +194,11 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
   const selectedTodaySession = selectedDateKey === todayKey
     ? selectedSummaries.find((summary) => summary.session.status === 'in_progress')
     : undefined;
-  const canStartSelectedDate = selectedDateKey === todayKey;
+  const selectedPrimarySession = selectedTodaySession
+    ?? selectedSummaries.find((summary) => summary.session.status === 'in_progress')
+    ?? selectedSummaries[0];
   const selectedOverrideRoutineDayId = selectedPlanValue !== '__weekly' ? selectedPlanValue || undefined : undefined;
-  const startWorkoutRoutineDayId = selectedOverrideRoutineDayId ?? selectedPlan?.routineDay?.id ?? selectedTodaySession?.session.routineDayId;
+  const startWorkoutRoutineDayId = selectedOverrideRoutineDayId ?? selectedPlan?.routineDay?.id ?? selectedPrimarySession?.session.routineDayId;
 
   return (
     <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
@@ -250,7 +248,6 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
           {calendarDays.map((day) => {
             const daySummaries = summariesByDate[day.key] ?? [];
             const dayPlan = plansByDate[day.key];
-            const dayOverride = overridesByDate[day.key];
             const showPlanDot = day.isCurrentMonth && dayPlan && daySummaries.length === 0;
             const totalVolume = daySummaries.reduce((sum, summary) => sum + summary.session.totalStrengthVolumeKg, 0);
 
@@ -259,6 +256,7 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
                 type="button"
                 key={day.key}
                 onClick={() => setSelectedDateKey(day.key)}
+                aria-label={`${day.key} ${dayPlan ? getRoutineDayDisplayName(dayPlan.routineDay, locale) ?? statusLabel(dayPlan.status, locale) : ''}`.trim()}
                 className={`flex aspect-square min-h-14 flex-col rounded-md p-1.5 ${
                   selectedDateKey === day.key
                     ? 'bg-cyan-950 text-white ring-2 ring-cyan-400'
@@ -266,9 +264,6 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
                 }`}
               >
                 <span className="text-xs font-semibold">{day.date.getDate()}</span>
-                {dayOverride ? (
-                  <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-violet-300" aria-label={`${day.key} custom plan`} />
-                ) : null}
                 <div className="mt-auto flex items-center gap-1">
                   {daySummaries.slice(0, 3).map((summary) => (
                     <span
@@ -305,7 +300,6 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
           <span className="flex items-center gap-2"><i className="h-2 w-2 rounded-full bg-cyan-400" />{t(locale, 'inProgress')}</span>
           <span className="flex items-center gap-2"><i className="h-2 w-2 rounded-full bg-amber-300" />{t(locale, 'planned')}</span>
           <span className="flex items-center gap-2"><i className="h-2 w-2 rounded-full bg-red-400" />{t(locale, 'missed')}</span>
-          <span className="flex items-center gap-2"><i className="h-2 w-2 rounded-full bg-violet-300" />{t(locale, 'customPlan')}</span>
         </div>
       </section>
 
@@ -319,7 +313,7 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
           className="mt-4 min-h-11 w-full rounded-md bg-slate-800 px-3 text-sm text-white"
         >
           <option value="__weekly">{t(locale, 'useWeeklySchedule')}</option>
-          <option value="">{locale === 'ko' ? '없음' : 'None'}</option>
+          <option value="">{t(locale, 'rest')}</option>
           {routineDays.map((routineDay) => (
             <option key={routineDay.id} value={routineDay.id}>
               {getRoutineDayDisplayName(routineDay, locale)}
@@ -339,16 +333,18 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-400">
-                  {summary.exerciseCount} {t(locale, 'exercises')} / {summary.session.totalStrengthVolumeKg.toLocaleString()} kg
+                  {exerciseCountLabel(locale, summary.exerciseCount)} / {summary.session.totalStrengthVolumeKg.toLocaleString()} kg
                 </p>
+                <button
+                  type="button"
+                  onClick={() => onStartWorkout(summary.session.routineDayId, selectedDateKey, summary.session.id)}
+                  className="mt-3 min-h-10 w-full rounded-md bg-slate-900 px-3 text-xs font-semibold text-cyan-300"
+                >
+                  {locale === 'ko' ? '운동기록 수정' : 'Edit workout record'}
+                </button>
               </div>
             ))}
           </div>
-        ) : null}
-        {selectedOverride ? (
-          <p className="mt-2 rounded-md bg-violet-950 px-3 py-2 text-xs font-semibold text-violet-100">
-            {locale === 'ko' ? '이 날짜에 사용자 지정 계획이 저장되었습니다.' : 'Custom plan saved for this date.'}
-          </p>
         ) : null}
         {selectedDateKey !== todayKey ? (
           <button
@@ -359,24 +355,23 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
             {t(locale, 'backToToday')}
           </button>
         ) : null}
-        {canStartSelectedDate ? (
-          <button
-            type="button"
-            onClick={() => onStartWorkout(startWorkoutRoutineDayId)}
-            className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 text-sm font-semibold text-slate-950"
-          >
-            <Play aria-hidden="true" size={17} />
-            <span>
-              {selectedTodaySession
-                ? t(locale, 'continueTodayWorkout')
-                : startWorkoutRoutineDayId
+        <button
+          type="button"
+          onClick={() => onStartWorkout(startWorkoutRoutineDayId, selectedDateKey, selectedPrimarySession?.session.id)}
+          className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 text-sm font-semibold text-slate-950"
+        >
+          <Play aria-hidden="true" size={17} />
+          <span>
+            {selectedPrimarySession
+              ? selectedDateKey === todayKey ? t(locale, 'continueTodayWorkout') : locale === 'ko' ? '운동기록 수정' : 'Edit workout record'
+              : selectedDateKey === todayKey
+                ? startWorkoutRoutineDayId
                   ? t(locale, 'startPlannedWorkout')
-                  : t(locale, 'startFreeWorkout')}
-            </span>
-          </button>
-        ) : null}
+                  : t(locale, 'startFreeWorkout')
+                : locale === 'ko' ? '운동기록 추가' : 'Add workout record'}
+          </span>
+        </button>
       </section>
-
     </section>
   );
 }

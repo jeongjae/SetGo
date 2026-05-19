@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { db } from '../db/db';
 import { getRoutineDayDisplayName } from '../db/routines';
 import { exerciseCategoryOptions, getExerciseCategories, getExerciseName, labelForCategory } from '../domain/exercises';
-import { getStoredLocale, t } from '../i18n/i18n';
+import { exerciseCountLabel, getStoredLocale, routineNameLabel, t, timeBandLabel, workoutStatusLabel } from '../i18n/i18n';
 import {
   addExerciseToWorkout,
   addCardioRecordToWorkout,
@@ -13,6 +13,7 @@ import {
   deleteWorkoutExercise,
   deleteWorkoutSet,
   getWorkoutCardioRecords,
+  getWorkoutBySessionId,
   getTodayWorkout,
   getWorkoutExerciseLogs,
   moveWorkoutExercise,
@@ -28,12 +29,13 @@ import {
 import type { CardioRecord, ExerciseCategory, ExerciseMaster, WorkoutSet } from '../types';
 
 type WorkoutPageProps = {
+  sessionId?: string;
   onBack: () => void;
   onCompleted: () => void;
   onSkipped: () => void;
 };
 
-export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps) {
+export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
   const [workout, setWorkout] = useState<ActiveWorkout | undefined>();
   const [logs, setLogs] = useState<WorkoutExerciseLog[]>([]);
   const [cardioRecords, setCardioRecords] = useState<CardioRecord[]>([]);
@@ -46,7 +48,7 @@ export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps
   const [saveMessage, setSaveMessage] = useState(locale === 'ko' ? '로컬 저장됨' : 'Saved locally');
 
   async function loadWorkout() {
-    const todayWorkout = await getTodayWorkout();
+    const todayWorkout = sessionId ? await getWorkoutBySessionId(sessionId) : await getTodayWorkout();
     setWorkout(todayWorkout);
 
     if (!todayWorkout) {
@@ -68,7 +70,7 @@ export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps
 
   useEffect(() => {
     void loadWorkout();
-  }, []);
+  }, [sessionId]);
 
   async function handleAddExercise(exerciseId: string) {
     if (!workout) return;
@@ -249,11 +251,11 @@ export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps
           <div>
             <p className="text-sm font-medium text-slate-400">{locale === 'ko' ? '세션 상태' : 'Session Status'}</p>
             <h2 className="mt-1 text-xl font-semibold text-white">
-              {workout?.session.status ?? (locale === 'ko' ? '불러오는 중...' : 'Loading...')}
+              {workout ? workoutStatusLabel(locale, workout.session.status) : (locale === 'ko' ? '불러오는 중...' : 'Loading...')}
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-300">
               {workout
-                ? `${workout.session.date} / ${workout.session.timeBand} / ${workout.session.totalStrengthVolumeKg.toLocaleString()} kg`
+                ? `${workout.session.date} / ${timeBandLabel(locale, workout.session.timeBand)} / ${workout.session.totalStrengthVolumeKg.toLocaleString()} kg`
                 : locale === 'ko' ? '오늘의 로컬 운동 세션을 불러오는 중입니다.' : "Looking up today's local workout session."}
             </p>
             {workout ? (
@@ -263,7 +265,7 @@ export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps
                   <p className="mt-1 text-sm font-bold text-white">{completedExerciseCount}/{logs.length}</p>
                 </div>
                 <div className="rounded-md bg-slate-800 px-2 py-2 text-center">
-                  <p className="text-[11px] font-semibold uppercase text-slate-500">Sets</p>
+                  <p className="text-[11px] font-semibold uppercase text-slate-500">{locale === 'ko' ? '세트' : 'Sets'}</p>
                   <p className="mt-1 text-sm font-bold text-white">{completedSetCount}/{totalSetCount}</p>
                 </div>
                 <div className="rounded-md bg-slate-800 px-2 py-2 text-center">
@@ -284,7 +286,7 @@ export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps
       <section className="rounded-lg bg-slate-900 p-5 shadow">
         <p className="text-sm font-medium text-slate-400">{t(locale, 'routine')}</p>
         <h2 className="mt-1 text-xl font-semibold text-white">
-          {workout?.routineName ?? t(locale, 'freeWorkout')}
+          {routineNameLabel(locale, workout?.routineName) ?? t(locale, 'freeWorkout')}
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-300">
           {workout?.routineDay
@@ -309,7 +311,7 @@ export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps
           <div>
             <p className="text-sm font-medium text-slate-400">{locale === 'ko' ? '운동 기록' : 'Workout Log'}</p>
             <h2 className="mt-1 text-lg font-semibold text-white">
-              {logs.length === 0 ? (locale === 'ko' ? '첫 운동을 추가하세요' : 'Add your first exercise') : `${logs.length} ${t(locale, 'exercises')}`}
+              {logs.length === 0 ? (locale === 'ko' ? '첫 운동을 추가하세요' : 'Add your first exercise') : exerciseCountLabel(locale, logs.length)}
             </h2>
           </div>
           <button
@@ -352,7 +354,7 @@ export function WorkoutPage({ onBack, onCompleted, onSkipped }: WorkoutPageProps
               ))}
             </div>
             <p className="mt-2 text-xs text-slate-400">
-              {filteredAvailableExercises.length} {t(locale, 'exercises')}
+              {exerciseCountLabel(locale, filteredAvailableExercises.length)}
             </p>
             <div className="mt-2 max-h-72 overflow-y-auto pr-1">
               <div className="grid gap-2">

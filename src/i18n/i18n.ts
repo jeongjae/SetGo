@@ -22,7 +22,7 @@ const messages = {
     addToRoutine: '루틴에 추가',
     all: '전체',
     backToToday: '오늘로 돌아가기',
-    backupJson: 'JSON 백업',
+    backupJson: '백업',
     backupRestore: '백업 / 복원',
     calendar: '캘린더',
     cardio: '유산소',
@@ -37,37 +37,37 @@ const messages = {
     date: '날짜',
     deactivate: '비활성화',
     description: '간단 설명',
-    downloaded: '다운로드 완료',
+    downloaded: '저장 완료',
     editExercise: '운동 편집',
     englishName: '영문명',
     exerciseLibrary: '운동 라이브러리',
     exerciseFinder: '운동 찾기',
     exercises: '운동',
-    export: '내보내기',
+    export: '내보내기/가져오기',
     followingWeeklySchedule: '주간 계획을 따릅니다.',
     freeWorkout: '자유 운동',
     inProgress: '진행 중',
     koreanName: '한글명',
     lastWorkout: '최근 운동',
     localData: '로컬 데이터',
-    localDataNote: '파일로 내보내기 전까지 모든 데이터는 이 기기에만 저장됩니다.',
+    localDataNote: '전체 백업에는 운동 기록, 루틴, 운동 라이브러리, 주간계획, 날짜별 계획이 모두 포함됩니다.',
     markdownWorkoutLog: '마크다운 운동 기록',
     missed: '놓침',
     monthlyWorkoutLog: '월간 운동 기록',
     noActiveRoutine: '아직 활성 루틴이 없습니다',
     noFinishedWorkout: '아직 완료한 운동이 없습니다',
-    noMarkdown: '내보낼 마크다운이 없습니다.',
+    noMarkdown: '내보낼 마크다운 기록이 없습니다.',
     noRoutineDayPlanned: '계획된 루틴이 없습니다',
     planned: '계획',
     plannedExercises: '계획 운동',
-    plannedValues: '계획값이 새 운동 세션에 복사됩니다.',
+    plannedValues: '계획값은 새 운동 세션에 복사됩니다.',
     planDate: '날짜 계획',
     rest: '휴식',
     restDay: '휴식일',
     restoreCancelled: '복원 취소',
     restoreFailed: '복원 실패',
     restored: '복원 완료',
-    restoreJson: 'JSON 복원',
+    restoreJson: '복원',
     routine: '루틴',
     routineDays: '운동 루틴',
     routineSetup: '루틴 설정',
@@ -76,7 +76,7 @@ const messages = {
     searchExercises: '운동 검색',
     setUpTraining: '운동 설정',
     language: '언어',
-    noMatchingExercises: '조건에 맞는 운동이 없습니다.',
+    noMatchingExercises: '일치하는 운동이 없습니다.',
     noPlannedExercises: '아직 계획된 운동이 없습니다.',
     routinePlanFor: '이 주간 계획은 현재 활성 루틴에 적용됩니다.',
     stages: '용도',
@@ -98,7 +98,7 @@ const messages = {
     addToRoutine: 'Add to routine',
     all: 'All',
     backToToday: 'Back to Today',
-    backupJson: 'Backup JSON',
+    backupJson: 'Backup',
     backupRestore: 'Backup / restore',
     calendar: 'Calendar',
     cardio: 'Cardio',
@@ -119,14 +119,14 @@ const messages = {
     exerciseLibrary: 'Exercise Library',
     exerciseFinder: 'Exercise Finder',
     exercises: 'exercises',
-    export: 'Export',
+    export: 'Export/Restore',
     followingWeeklySchedule: 'Following weekly schedule.',
     freeWorkout: 'Free workout',
     inProgress: 'In progress',
     koreanName: 'Korean name',
     lastWorkout: 'Last Workout',
     localData: 'Local Data',
-    localDataNote: 'All data stays on this device unless you export a file.',
+    localDataNote: 'Full backup includes workout logs, routines, exercise library, weekly plans, and date plans.',
     markdownWorkoutLog: 'Markdown workout log',
     missed: 'Missed',
     monthlyWorkoutLog: 'Monthly workout log',
@@ -143,7 +143,7 @@ const messages = {
     restoreCancelled: 'Restore cancelled',
     restoreFailed: 'Restore failed',
     restored: 'Restored',
-    restoreJson: 'Restore JSON',
+    restoreJson: 'Restore',
     routine: 'Routine',
     routineDays: 'Routine Days',
     routineSetup: 'Routine Setup',
@@ -174,4 +174,44 @@ export type MessageKey = keyof typeof messages.ko;
 
 export function t(locale: AppLocale, key: MessageKey): string {
   return messages[locale][key] ?? messages.en[key] ?? key;
+}
+
+export function workoutStatusLabel(locale: AppLocale, status: 'planned' | 'in_progress' | 'completed' | 'skipped'): string {
+  if (status === 'completed') return t(locale, 'completed');
+  if (status === 'in_progress') return t(locale, 'inProgress');
+  if (status === 'skipped') return locale === 'ko' ? '건너뜀' : 'Skipped';
+  return t(locale, 'planned');
+}
+
+export function timeBandLabel(locale: AppLocale, timeBand: string): string {
+  if (locale === 'en') {
+    if (timeBand === 'early') return 'Early';
+    if (timeBand === 'morning') return 'Morning';
+    if (timeBand === 'afternoon') return 'Afternoon';
+    if (timeBand === 'evening') return 'Evening';
+    return timeBand;
+  }
+
+  if (timeBand === 'early') return '새벽';
+  if (timeBand === 'morning') return '오전';
+  if (timeBand === 'afternoon') return '오후';
+  if (timeBand === 'evening') return '저녁';
+  return timeBand;
+}
+
+export function exerciseCountLabel(locale: AppLocale, count: number): string {
+  return locale === 'ko' ? `${count}개 운동` : `${count} exercises`;
+}
+
+export function routineNameLabel(locale: AppLocale, routineName?: string): string | undefined {
+  if (!routineName || locale === 'en') return routineName;
+
+  const labels: Record<string, string> = {
+    '2-Day Upper / Lower': '2분할 상체/하체',
+    '3-Day Chest / Back / Legs': '3분할 가슴/등/하체',
+    '3-Day Push / Pull / Assist': '3분할 푸시/풀/보충운동',
+    '4-Day Upper / Lower': '4분할 상체/하체 (강약)',
+  };
+
+  return labels[routineName] ?? routineName;
 }

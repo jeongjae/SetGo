@@ -1,7 +1,7 @@
 import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 import { getExerciseName } from '../domain/exercises';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg } from '../domain/volume';
-import type { AppLocale } from '../i18n/i18n';
+import { timeBandLabel, type AppLocale } from '../i18n/i18n';
 
 type ExerciseLogInput = {
   workoutExercise: WorkoutExercise;
@@ -29,7 +29,7 @@ export function formatWorkoutMarkdown(input: WorkoutMarkdownInput): string {
   lines.push(isKo ? '# SetGo 운동 기록' : '# SetGo Workout Log');
   lines.push('');
   lines.push(`- ${isKo ? '날짜' : 'Date'}: ${session.date}`);
-  lines.push(`- ${isKo ? '시간대' : 'Time'}: ${session.timeBand}`);
+  lines.push(`- ${isKo ? '시간대' : 'Time'}: ${timeBandLabel(locale, session.timeBand)}`);
   if (routineName) lines.push(`- ${isKo ? '루틴' : 'Routine'}: ${routineName}`);
   if (routineDayName) lines.push(`- ${isKo ? '루틴 데이' : 'Routine Day'}: ${routineDayName}`);
   lines.push(`- ${isKo ? '총 근력 볼륨' : 'Total strength volume'}: ${session.totalStrengthVolumeKg.toLocaleString()} kg`);

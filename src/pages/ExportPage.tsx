@@ -8,12 +8,68 @@ import {
   getWorkoutExerciseLogs,
   type WorkoutSummary,
 } from '../db/workouts';
-import { getStoredLocale, t } from '../i18n/i18n';
+import { getRoutineDayDisplayName } from '../db/routines';
+import { exerciseCountLabel, getStoredLocale, routineNameLabel, t, workoutStatusLabel } from '../i18n/i18n';
 import { formatWorkoutMarkdown } from '../utils/markdown';
 
 type ExportPageProps = {
   onBack: () => void;
 };
+
+type SavePickerWindow = Window & {
+  showSaveFilePicker?: (options: {
+    suggestedName: string;
+    types?: Array<{
+      description: string;
+      accept: Record<string, string[]>;
+    }>;
+  }) => Promise<{
+    createWritable: () => Promise<{
+      write: (blob: Blob) => Promise<void>;
+      close: () => Promise<void>;
+    }>;
+  }>;
+};
+
+async function saveFile(blob: Blob, filename: string, mimeType: string): Promise<'picked' | 'downloaded'> {
+  const picker = window as SavePickerWindow;
+
+  if (picker.showSaveFilePicker) {
+    try {
+      const handle = await picker.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{
+          description: filename.endsWith('.csv') ? 'CSV file' : 'JSON file',
+          accept: { [mimeType]: [filename.endsWith('.csv') ? '.csv' : '.json'] },
+        }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return 'picked';
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return 'downloaded';
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+  return 'downloaded';
+}
+
+function savedMessage(locale: 'ko' | 'en', filename: string, mode: 'picked' | 'downloaded'): string {
+  if (mode === 'picked') {
+    return locale === 'ko' ? `${filename} 파일을 선택한 위치에 저장했습니다.` : `${filename} saved to the selected location.`;
+  }
+
+  return locale === 'ko'
+    ? `${filename} 파일 다운로드를 시작했습니다. 저장 위치는 브라우저/Safari 다운로드 설정을 따릅니다.`
+    : `${filename} download started. The save location follows your browser or Safari download settings.`;
+}
 
 export function ExportPage({ onBack }: ExportPageProps) {
   const [summaries, setSummaries] = useState<WorkoutSummary[]>([]);
@@ -29,7 +85,10 @@ export function ExportPage({ onBack }: ExportPageProps) {
 
   async function loadSummaries(selectedSessionId?: string) {
     const recentSummaries = await getRecentWorkoutSummaries(20);
-    const selectedSummary = recentSummaries.find((item) => item.session.id === selectedSessionId) ?? recentSummaries[0];
+    const selectedSummary = recentSummaries.find((item) => item.session.id === selectedSessionId)
+      ?? recentSummaries.find((item) => item.session.status === 'completed')
+      ?? recentSummaries.find((item) => item.session.status === 'in_progress')
+      ?? recentSummaries[0];
     setSummaries(recentSummaries);
     await loadMarkdown(selectedSummary);
   }
@@ -48,8 +107,8 @@ export function ExportPage({ onBack }: ExportPageProps) {
     ]);
     setMarkdown(formatWorkoutMarkdown({
       session: selectedSummary.session,
-      routineName: selectedSummary.routineName,
-      routineDayName: selectedSummary.routineDay?.name,
+      routineName: routineNameLabel(locale, selectedSummary.routineName),
+      routineDayName: getRoutineDayDisplayName(selectedSummary.routineDay, locale),
       exercises,
       cardioRecords,
       locale,
@@ -79,16 +138,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
   async function handleBackup() {
     const backup = await createBackup();
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `setgo-backup-${backup.exportedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    const filename = `setgo-backup-${backup.exportedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`;
+    const saveMode = await saveFile(blob, filename, 'application/json');
     setBackupSummary(
       locale === 'ko'
-        ? `${backup.data.workoutSessions.length}개 세션, ${backup.data.exercises.length}개 운동, ${backup.data.routineExercisePlans.length}개 루틴 계획을 내보냈습니다.`
-        : `${backup.data.workoutSessions.length} sessions, ${backup.data.exercises.length} exercises, ${backup.data.routineExercisePlans.length} routine plans exported.`,
+        ? `${backup.data.workoutSessions.length}개 세션, ${backup.data.exercises.length}개 운동, ${backup.data.routineExercisePlans.length}개 루틴 계획을 내보냈습니다. ${savedMessage(locale, filename, saveMode)}`
+        : `${backup.data.workoutSessions.length} sessions, ${backup.data.exercises.length} exercises, ${backup.data.routineExercisePlans.length} routine plans exported. ${savedMessage(locale, filename, saveMode)}`,
     );
     setBackupStatus('downloaded');
     window.setTimeout(() => setBackupStatus('idle'), 1200);
@@ -131,16 +186,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
   async function handleSettingsBackup() {
     const backup = await createSettingsBackup();
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `setgo-settings-${backup.exportedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    const filename = `setgo-settings-${backup.exportedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`;
+    const saveMode = await saveFile(blob, filename, 'application/json');
     setSettingsBackupStatus(
       locale === 'ko'
-        ? `${backup.data.routines.length}개 루틴, ${backup.data.exercises.length}개 운동, ${backup.data.weeklySchedules.length}개 주간계획을 저장했습니다.`
-        : `${backup.data.routines.length} routines, ${backup.data.exercises.length} exercises, ${backup.data.weeklySchedules.length} weekly schedule rows exported.`,
+        ? `${backup.data.routines.length}개 루틴, ${backup.data.exercises.length}개 운동, ${backup.data.weeklySchedules.length}개 주간계획을 저장했습니다. ${savedMessage(locale, filename, saveMode)}`
+        : `${backup.data.routines.length} routines, ${backup.data.exercises.length} exercises, ${backup.data.weeklySchedules.length} weekly schedule rows exported. ${savedMessage(locale, filename, saveMode)}`,
     );
     window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
   }
@@ -181,13 +232,13 @@ export function ExportPage({ onBack }: ExportPageProps) {
     const csv = await createExerciseCsv();
     const bom = '\uFEFF';
     const blob = new Blob([bom, csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `setgo-exercises-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-    setExerciseCsvStatus(locale === 'ko' ? '운동 라이브러리 CSV를 내보냈습니다.' : 'Exercise library CSV exported.');
+    const filename = `setgo-exercises-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.csv`;
+    const saveMode = await saveFile(blob, filename, 'text/csv');
+    setExerciseCsvStatus(
+      locale === 'ko'
+        ? `운동 라이브러리 CSV를 내보냈습니다. ${savedMessage(locale, filename, saveMode)}`
+        : `Exercise library CSV exported. ${savedMessage(locale, filename, saveMode)}`,
+    );
     window.setTimeout(() => setExerciseCsvStatus(undefined), 1600);
   }
 
@@ -225,33 +276,43 @@ export function ExportPage({ onBack }: ExportPageProps) {
         </button>
         <div>
           <p className="text-sm font-medium text-cyan-300">{t(locale, 'export')}</p>
-          <h1 className="text-2xl font-bold text-white">{t(locale, 'markdownWorkoutLog')}</h1>
+          <h1 className="text-2xl font-bold text-white">{t(locale, 'export')}</h1>
         </div>
       </header>
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
         <p className="text-sm font-medium text-slate-400">{t(locale, 'workoutSession')}</p>
         <h2 className="mt-1 text-xl font-semibold text-white">
-          {summary ? `${summary.session.date} / ${summary.session.status}` : locale === 'ko' ? '저장된 운동이 없습니다' : 'No workout saved yet'}
+          {summary ? `${summary.session.date} / ${workoutStatusLabel(locale, summary.session.status)}` : locale === 'ko' ? '저장된 운동이 없습니다' : 'No workout saved yet'}
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-300">
           {summary
-            ? `${summary.exerciseCount} exercises / ${summary.session.totalStrengthVolumeKg.toLocaleString()} kg`
+            ? `${exerciseCountLabel(locale, summary.exerciseCount)} / ${summary.session.totalStrengthVolumeKg.toLocaleString()} kg`
             : locale === 'ko' ? '운동을 완료하면 내보낼 기록이 생성됩니다.' : 'Complete a workout to generate an export.'}
         </p>
         {summaries.length > 0 ? (
-          <select
-            aria-label="Export workout session"
-            value={summary?.session.id ?? ''}
-            onChange={(event) => void handleSelectSummary(event.target.value)}
-            className="mt-4 min-h-11 w-full rounded-md bg-slate-800 px-3 text-sm text-white"
-          >
-            {summaries.map((item) => (
-              <option key={item.session.id} value={item.session.id}>
-                {item.session.date} / {item.session.status} / {item.routineDay?.name ?? 'Free'}
-              </option>
-            ))}
-          </select>
+          <div className="mt-4">
+            <select
+              aria-label="Export workout session"
+              value={summary?.session.id ?? ''}
+              onChange={(event) => void handleSelectSummary(event.target.value)}
+              className="min-h-11 w-full rounded-md bg-slate-800 px-3 text-sm text-white"
+            >
+              {summaries.map((item) => {
+                const routineDayName = getRoutineDayDisplayName(item.routineDay, locale) ?? t(locale, 'freeWorkout');
+                return (
+                  <option key={item.session.id} value={item.session.id}>
+                    {item.session.date} / {routineDayName} / {workoutStatusLabel(locale, item.session.status)} / {exerciseCountLabel(locale, item.exerciseCount)}
+                  </option>
+                );
+              })}
+            </select>
+            <p className="mt-2 text-xs leading-5 text-slate-400">
+              {locale === 'ko'
+                ? '완료 기록을 우선 선택합니다. 진행 중인 기록은 운동일지에서 완료 후 내보내는 것을 권장합니다.'
+                : 'Completed records are selected first. For in-progress sessions, finish the workout before exporting when possible.'}
+            </p>
+          </div>
         ) : null}
       </section>
 

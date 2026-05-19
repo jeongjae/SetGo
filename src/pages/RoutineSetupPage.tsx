@@ -11,7 +11,7 @@ import {
   labelForCategory,
   labelForStage,
 } from '../domain/exercises';
-import { getStoredLocale, saveStoredLocale, t, type AppLocale } from '../i18n/i18n';
+import { exerciseCountLabel, getStoredLocale, saveStoredLocale, t, type AppLocale } from '../i18n/i18n';
 import {
   activateRoutineTemplate,
   addExerciseToRoutineDay,
@@ -723,7 +723,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                     ))}
                   </div>
                   <p className="mt-2 text-xs text-slate-400">
-                    {filteredAvailableExercises.length} {t(locale, 'exercises')}
+                    {exerciseCountLabel(locale, filteredAvailableExercises.length)}
                   </p>
                   <div className="mt-2 max-h-72 overflow-y-auto pr-1">
                     <div className="grid gap-2">

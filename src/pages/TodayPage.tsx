@@ -11,7 +11,7 @@ import {
 import { seedDefaultExercises } from '../db/seed';
 import { getRecentWorkoutSummaries, getTodayWorkout, type WorkoutSummary } from '../db/workouts';
 import { getExerciseName } from '../domain/exercises';
-import { getStoredLocale, t, type MessageKey } from '../i18n/i18n';
+import { exerciseCountLabel, getStoredLocale, t, workoutStatusLabel, type MessageKey } from '../i18n/i18n';
 import type { AppView } from '../app/App';
 import type { Routine, RoutineDay, WorkoutSession } from '../types';
 
@@ -121,7 +121,7 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
       : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
   const actionLabel = (labelKey: MessageKey) => {
     if (locale === 'ko' && labelKey === 'startWorkout') return '운동일지';
-    if (locale === 'ko' && labelKey === 'export') return '내보내기/가져오기';
+    if (labelKey === 'export') return locale === 'ko' ? '내보내기/가져오기' : 'Export/Restore';
     return t(locale, labelKey);
   };
 
@@ -193,7 +193,7 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
           <div className="mt-3 rounded-md bg-slate-800 px-3 py-2">
             <p className="text-xs font-semibold uppercase text-slate-500">{t(locale, 'plannedExercises')}</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {plannedExerciseNames.slice(0, 4).map((exerciseName) => (
+              {plannedExerciseNames.slice(0, 6).map((exerciseName) => (
                 <span key={exerciseName} className="rounded-md bg-slate-900 px-2 py-1 text-xs font-semibold text-slate-200">
                   {exerciseName}
                 </span>
@@ -212,7 +212,7 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-300">
           {latestFinishedWorkout
-            ? `${latestFinishedWorkout.session.status} / ${latestFinishedWorkout.exerciseCount} exercises / ${latestFinishedWorkout.session.totalStrengthVolumeKg.toLocaleString()} kg`
+            ? `${workoutStatusLabel(locale, latestFinishedWorkout.session.status)} / ${exerciseCountLabel(locale, latestFinishedWorkout.exerciseCount)} / ${latestFinishedWorkout.session.totalStrengthVolumeKg.toLocaleString()} kg`
             : locale === 'ko' ? '운동을 완료하거나 건너뛰면 기록이 쌓입니다.' : 'Complete or skip a session to build your local history.'}
         </p>
       </section>

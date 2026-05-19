@@ -51,10 +51,61 @@ export const defaultExercises: ExerciseMaster[] = [
 ];
 
 export async function seedDefaultExercises() {
-  const existingIds = new Set((await db.exercises.toArray()).map((item) => item.id));
+  const existingExercises = await db.exercises.toArray();
+  const existingIds = new Set(existingExercises.map((item) => item.id));
   const missingExercises = defaultExercises.filter((item) => !existingIds.has(item.id));
 
   if (missingExercises.length > 0) {
     await db.exercises.bulkAdd(missingExercises);
+  }
+
+  const canonicalById = new Map(defaultExercises.map((item) => [item.id, item]));
+  const defaultExerciseIds = new Set(defaultExercises.map((item) => item.id));
+  const nameEnCounts = existingExercises.reduce<Record<string, number>>((counts, exerciseItem) => {
+    if (!defaultExerciseIds.has(exerciseItem.id)) return counts;
+    const normalizedName = (exerciseItem.nameEn ?? '').trim().toLowerCase();
+    if (!normalizedName) return counts;
+    counts[normalizedName] = (counts[normalizedName] ?? 0) + 1;
+    return counts;
+  }, {});
+
+  const repairCandidates = existingExercises
+    .filter((exerciseItem) => defaultExerciseIds.has(exerciseItem.id))
+    .filter((exerciseItem) => {
+      const canonical = canonicalById.get(exerciseItem.id);
+      if (!canonical) return false;
+
+      const nameEn = (exerciseItem.nameEn ?? '').trim();
+      const nameKo = exerciseItem.nameKo.trim();
+      const duplicatedEnglishName = nameEn ? (nameEnCounts[nameEn.toLowerCase()] ?? 0) > 1 : false;
+      const barbellCurlLeak = canonical.nameEn !== 'Barbell Curl'
+        && (nameEn === 'Barbell Curl' || nameKo === '바벨 컬');
+
+      return !nameEn
+        || !nameKo
+        || duplicatedEnglishName
+        || barbellCurlLeak;
+    })
+    .map((exerciseItem) => {
+      const canonical = canonicalById.get(exerciseItem.id);
+      if (!canonical) return exerciseItem;
+
+      return {
+        ...exerciseItem,
+        nameKo: canonical.nameKo,
+        nameEn: canonical.nameEn,
+        category: canonical.category,
+        categoryTags: canonical.categoryTags,
+        stage: canonical.stage,
+        stageTags: canonical.stageTags,
+        defaultEmoji: canonical.defaultEmoji,
+        description: exerciseItem.description || canonical.description,
+        isActive: true,
+        updatedAt: now(),
+      };
+    });
+
+  if (repairCandidates.length > 0) {
+    await db.exercises.bulkPut(repairCandidates);
   }
 }
