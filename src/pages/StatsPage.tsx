@@ -1,7 +1,7 @@
 import { AlertTriangle, BarChart3, ChevronLeft } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { db } from '../db/db';
-import { getExerciseCategories, getExerciseName } from '../domain/exercises';
+import { getExerciseCategories, getExerciseName, isWarmupOnlyExercise } from '../domain/exercises';
 import { getStoredLocale, t } from '../i18n/i18n';
 import { formatDateKey } from '../utils/date';
 import type { ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
@@ -112,7 +112,9 @@ const copy = {
     recoveryWarnings: '회복/부하 경고',
     noWarnings: '현재 주요 경고는 없습니다.',
     automaticAnalysis: '자동 분석',
+    hardSets: 'Hard Set',
     hardSetRatio: 'Hard Set 비율',
+    peak: '최고',
     weeklyTarget: '주간 목표',
     trendSummary: '추세 요약',
     oneRmHistory: '1RM 추세',
@@ -142,7 +144,9 @@ const copy = {
     recoveryWarnings: 'Recovery/load warnings',
     noWarnings: 'No major warnings right now.',
     automaticAnalysis: 'Automatic analysis',
+    hardSets: 'Hard sets',
     hardSetRatio: 'Hard set ratio',
+    peak: 'Peak',
     weeklyTarget: 'Weekly target',
     trendSummary: 'Trend summary',
     oneRmHistory: '1RM trend',
@@ -189,8 +193,7 @@ function estimatedOneRm(set: WorkoutSet): number {
 }
 
 function isHardSet(set: WorkoutSet, exercise: ExerciseMaster): boolean {
-  const warmupOnly = exercise.stage === 'warmup' && !exercise.stageTags?.includes('main');
-  return set.isCompleted && !set.isWarmup && !warmupOnly && set.rir !== undefined && set.rir <= 3;
+  return set.isCompleted && !set.isWarmup && !isWarmupOnlyExercise(exercise) && set.rir !== undefined && set.rir <= 3;
 }
 
 function toMuscleGroups(exercise: ExerciseMaster): MuscleGroup[] {
@@ -232,7 +235,7 @@ function decorateMuscleStat(stat: Omit<MuscleStat, 'status' | 'targetPct' | 'def
   };
 }
 
-function buildEmptyStats(locale: Locale): StatsView {
+export function buildEmptyStats(locale: Locale): StatsView {
   return {
     workoutDays: 0,
     totalVolumeKg: 0,
@@ -259,7 +262,7 @@ function buildEmptyStats(locale: Locale): StatsView {
   };
 }
 
-function buildStats(
+export function buildStats(
   sessions: WorkoutSession[],
   workoutExercises: WorkoutExercise[],
   workoutSets: WorkoutSet[],
@@ -338,8 +341,7 @@ function buildStats(
   const isWarmupSetForStats = (set: WorkoutSet) => {
     const workoutExercise = workoutExerciseById.get(set.workoutExerciseId);
     const exercise = workoutExercise ? exerciseById.get(workoutExercise.exerciseId) : undefined;
-    const warmupOnlyExercise = exercise?.stage === 'warmup' && !exercise.stageTags?.includes('main');
-    return Boolean(set.isWarmup) || Boolean(warmupOnlyExercise);
+    return Boolean(set.isWarmup) || isWarmupOnlyExercise(exercise);
   };
   const currentWeekTrainingSets = currentWeekSets.filter((set) => !isWarmupSetForStats(set));
   const hardSets = currentWeekSets.filter((set) => {
@@ -554,7 +556,7 @@ function MiniBarChart({ weeks, metric }: { weeks: WeekStat[]; metric: 'sets' | '
   );
 }
 
-function MiniLineChart({ weeks, locale }: { weeks: WeekStat[]; locale: Locale }) {
+function MiniLineChart({ weeks, locale, peakLabel }: { weeks: WeekStat[]; locale: Locale; peakLabel: string }) {
   const plottedPoints = useMemo(() => {
     const maxValue = Math.max(1, ...weeks.map((week) => week.volumeKg));
     return weeks.map((week, index) => {
@@ -571,7 +573,7 @@ function MiniLineChart({ weeks, locale }: { weeks: WeekStat[]; locale: Locale })
     <div className="mt-4">
       <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
         <span>{latest ? `${latest.label}: ${Math.round(latest.volumeKg).toLocaleString()}kg` : '0kg'}</span>
-        <span>{peak ? `${locale === 'ko' ? '최고' : 'Peak'} ${peak.label}: ${Math.round(peak.volumeKg).toLocaleString()}kg` : ''}</span>
+        <span>{peak ? `${peakLabel} ${peak.label}: ${Math.round(peak.volumeKg).toLocaleString()}kg` : ''}</span>
       </div>
       <svg viewBox="0 0 100 100" className="h-32 w-full overflow-visible">
         <line x1="0" y1="94" x2="100" y2="94" stroke="#334155" strokeWidth="1" />
@@ -670,7 +672,7 @@ export function StatsPage({ onBack }: StatsPageProps) {
           [c.workoutDays, locale === 'ko' ? `${stats.workoutDays}일` : `${stats.workoutDays}d`],
           [c.totalVolume, `${Math.round(stats.totalVolumeKg).toLocaleString()}kg`],
           [c.totalSets, `${stats.totalSets}`],
-          ['Hard Set', `${stats.hardSets}`],
+          [c.hardSets, `${stats.hardSets}`],
           [c.hardSetRatio, `${stats.hardSetRatio.toFixed(0)}%`],
         ].map(([label, value]) => (
           <div key={label} className="rounded-lg bg-slate-900 p-4 shadow">
@@ -689,7 +691,7 @@ export function StatsPage({ onBack }: StatsPageProps) {
       <section className="rounded-lg bg-slate-900 p-5 shadow">
         <h2 className="text-lg font-bold text-white">{c.recentTrend}</h2>
         <p className="mt-4 text-sm font-semibold text-slate-300">{c.totalVolume}</p>
-        <MiniLineChart weeks={stats.weeks} locale={locale} />
+        <MiniLineChart weeks={stats.weeks} locale={locale} peakLabel={c.peak} />
         <p className="mt-5 text-sm font-semibold text-slate-300">{c.totalSets}</p>
         <MiniBarChart weeks={stats.weeks} metric="sets" />
         <p className="mt-5 text-sm font-semibold text-slate-300">{c.workoutDays}</p>
@@ -718,7 +720,7 @@ export function StatsPage({ onBack }: StatsPageProps) {
               <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
                 <div><p className="text-slate-500">{c.volume}</p><p className="font-bold text-white">{Math.round(muscle.volumeKg).toLocaleString()}kg</p></div>
                 <div><p className="text-slate-500">{c.sets}</p><p className="font-bold text-white">{muscle.sets}</p></div>
-                <div><p className="text-slate-500">Hard</p><p className="font-bold text-white">{muscle.hardSets}</p></div>
+                <div><p className="text-slate-500">{c.hardSets}</p><p className="font-bold text-white">{muscle.hardSets}</p></div>
               </div>
               <div className="mt-3">
                 <div className="flex items-center justify-between text-xs">

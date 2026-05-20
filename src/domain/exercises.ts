@@ -26,6 +26,13 @@ export function getExerciseStages(exercise: ExerciseMaster): ExerciseStage[] {
   return exercise.stageTags?.length ? exercise.stageTags : [exercise.stage];
 }
 
+export function isWarmupOnlyExercise(exercise: Pick<ExerciseMaster, 'stage' | 'stageTags'> | undefined): boolean {
+  if (!exercise) return false;
+
+  const stages = exercise.stageTags?.length ? exercise.stageTags : [exercise.stage];
+  return stages.includes('warmup') && !stages.includes('main');
+}
+
 export function getExerciseName(exercise: ExerciseMaster, locale: 'ko' | 'en' = 'ko'): string {
   if (locale === 'ko') return exercise.nameKo || exercise.nameEn || exercise.id;
   return exercise.nameEn || exercise.nameKo || exercise.id;

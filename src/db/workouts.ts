@@ -3,6 +3,7 @@ import { getActiveRoutine, getSuggestedRoutineDayForDate } from './routines';
 import type { CardioRecord, ExerciseMaster, RoutineDay, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 import { formatDateKey, getTimeBand } from '../utils/date';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg, calculateSessionStrengthVolumeKg } from '../domain/volume';
+import { isWarmupOnlyExercise } from '../domain/exercises';
 
 export type ActiveWorkout = {
   session: WorkoutSession;
@@ -34,6 +35,22 @@ async function getWorkoutSessionsForDate(date: string): Promise<WorkoutSession[]
   }
 }
 
+export function selectReusableInProgressSession(
+  sessions: WorkoutSession[],
+  selectedRoutineDayId?: string,
+  options: { createNew?: boolean } = {},
+): WorkoutSession | undefined {
+  if (options.createNew) return undefined;
+
+  const inProgressSessions = sessions
+    .filter((session) => session.status === 'in_progress')
+    .sort((a, b) => (b.startedAt ?? b.createdAt).localeCompare(a.startedAt ?? a.createdAt));
+
+  return selectedRoutineDayId
+    ? inProgressSessions.find((session) => session.routineDayId === selectedRoutineDayId)
+    : inProgressSessions[0];
+}
+
 export async function getOrCreateWorkoutForDate(
   date: string,
   selectedRoutineDayId?: string,
@@ -61,14 +78,7 @@ export async function getOrCreateWorkoutForDate(
     ?? scheduledRoutineDay;
 
   const existingSessions = await getWorkoutSessionsForDate(date);
-  const inProgressSessions = existingSessions
-    .filter((session) => session.status === 'in_progress')
-    .sort((a, b) => (b.startedAt ?? b.createdAt).localeCompare(a.startedAt ?? a.createdAt));
-  const existingSession = options.createNew
-    ? undefined
-    : selectedRoutineDayId
-      ? inProgressSessions.find((session) => session.routineDayId === selectedRoutineDayId)
-      : inProgressSessions[0];
+  const existingSession = selectReusableInProgressSession(existingSessions, selectedRoutineDayId, options);
 
   if (existingSession) {
     const existingExerciseCount = await db.workoutExercises.where('sessionId').equals(existingSession.id).count();
@@ -187,7 +197,7 @@ async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayI
       const workoutExerciseId = `${sessionId}_${plan.id}`;
       const plannedSets = Math.max(1, plan.plannedSets ?? 3);
       const exercise = planExercises[index];
-      const isWarmup = exercise?.stage === 'warmup' && !exercise.stageTags?.includes('main');
+      const isWarmup = isWarmupOnlyExercise(exercise);
 
       await db.workoutExercises.put({
         id: workoutExerciseId,
@@ -403,7 +413,7 @@ export async function addExerciseToWorkout(sessionId: string, exerciseId: string
 
   const order = await db.workoutExercises.where('sessionId').equals(sessionId).count() + 1;
   const exercise = await db.exercises.get(exerciseId);
-  const isWarmup = exercise?.stage === 'warmup' && !exercise.stageTags?.includes('main');
+  const isWarmup = isWarmupOnlyExercise(exercise);
   const workoutExerciseId = `${sessionId}_${exerciseId}_${Date.now()}`;
   const workoutExercise: WorkoutExercise = {
     id: workoutExerciseId,
@@ -443,7 +453,15 @@ export async function replaceWorkoutExercise(workoutExerciseId: string, exercise
 
   if (duplicate) return;
 
-  await db.workoutExercises.update(workoutExerciseId, { exerciseId });
+  const exercise = await db.exercises.get(exerciseId);
+  const isWarmup = isWarmupOnlyExercise(exercise);
+
+  await db.transaction('rw', db.workoutExercises, db.workoutSets, db.workoutSessions, async () => {
+    await db.workoutExercises.update(workoutExerciseId, { exerciseId });
+    const sets = await db.workoutSets.where('workoutExerciseId').equals(workoutExerciseId).toArray();
+    await Promise.all(sets.map((set) => db.workoutSets.update(set.id, { isWarmup })));
+    await refreshExerciseVolume(workoutExerciseId);
+  });
 }
 
 async function refreshSessionVolume(sessionId: string): Promise<void> {
