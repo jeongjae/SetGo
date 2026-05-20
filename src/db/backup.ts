@@ -136,6 +136,14 @@ export async function restoreBackup(input: unknown): Promise<void> {
     throw new Error('Invalid SetGo backup file');
   }
 
+  const routines = backup.data.routines ?? [];
+  if (routines.length > 0) {
+    const hasActive = routines.some((r) => r.isActive);
+    if (!hasActive) {
+      routines[0].isActive = true;
+    }
+  }
+
   await db.transaction('rw', [
     db.exercises,
     db.routines,
@@ -162,7 +170,7 @@ export async function restoreBackup(input: unknown): Promise<void> {
       ]);
 
       await db.exercises.bulkPut(backup.data.exercises ?? []);
-      await db.routines.bulkPut(backup.data.routines ?? []);
+      await db.routines.bulkPut(routines);
       await db.routineDays.bulkPut(backup.data.routineDays ?? []);
       await db.weeklySchedules.bulkPut(backup.data.weeklySchedules ?? []);
       await db.calendarPlanOverrides.bulkPut(backup.data.calendarPlanOverrides ?? []);
@@ -179,6 +187,14 @@ export async function restoreSettingsBackup(input: unknown): Promise<void> {
   const backup = input as SetGoSettingsBackup;
   if (backup?.app !== 'SetGo' || backup.kind !== 'settings' || backup.version !== 1 || !backup.data) {
     throw new Error('Invalid SetGo settings backup file');
+  }
+
+  const routines = backup.data.routines ?? [];
+  if (routines.length > 0) {
+    const hasActive = routines.some((r) => r.isActive);
+    if (!hasActive) {
+      routines[0].isActive = true;
+    }
   }
 
   await db.transaction('rw', [
@@ -217,7 +233,7 @@ export async function restoreSettingsBackup(input: unknown): Promise<void> {
     ]);
 
     await db.exercises.bulkPut([...(backup.data.exercises ?? []), ...preservedLogExercises]);
-    await db.routines.bulkPut(backup.data.routines ?? []);
+    await db.routines.bulkPut(routines);
     await db.routineDays.bulkPut(backup.data.routineDays ?? []);
     await db.weeklySchedules.bulkPut(backup.data.weeklySchedules ?? []);
     await db.calendarPlanOverrides.bulkPut(backup.data.calendarPlanOverrides ?? []);
