@@ -183,6 +183,9 @@ export function ExportPage({ onBack }: ExportPageProps) {
       setBackupSummary(locale === 'ko' ? '선택한 JSON 백업에서 로컬 데이터를 복원했습니다.' : 'Local data was restored from the selected JSON backup.');
       setRestoreStatus('restored');
       window.setTimeout(() => setRestoreStatus('idle'), 1200);
+      window.setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error('Failed to restore SetGo backup', error);
       setRestoreStatus('failed');
@@ -228,6 +231,9 @@ export function ExportPage({ onBack }: ExportPageProps) {
       await restoreSettingsBackup(parsedBackup);
       setSettingsBackupStatus(locale === 'ko' ? '설정 백업을 복원했습니다.' : 'Settings backup restored.');
       window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
+      window.setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error('Failed to restore SetGo settings backup', error);
       setSettingsBackupStatus(locale === 'ko' ? '설정 백업 복원에 실패했습니다.' : 'Settings restore failed.');
