@@ -81,6 +81,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
   const [restoreStatus, setRestoreStatus] = useState<'idle' | 'restored' | 'cancelled' | 'failed'>('idle');
   const [backupSummary, setBackupSummary] = useState<string | undefined>();
   const [exerciseCsvStatus, setExerciseCsvStatus] = useState<string | undefined>();
+  const [exerciseCsvIssues, setExerciseCsvIssues] = useState<string[]>([]);
   const [settingsBackupStatus, setSettingsBackupStatus] = useState<string | undefined>();
 
   async function loadSummaries(selectedSessionId?: string) {
@@ -234,6 +235,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
     const blob = new Blob([bom, csv], { type: 'text/csv;charset=utf-8' });
     const filename = `setgo-exercises-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.csv`;
     const saveMode = await saveFile(blob, filename, 'text/csv');
+    setExerciseCsvIssues([]);
     setExerciseCsvStatus(
       locale === 'ko'
         ? `운동 라이브러리 CSV를 내보냈습니다. ${savedMessage(locale, filename, saveMode)}`
@@ -248,6 +250,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
 
     try {
       const importedCount = await importExerciseCsv(await file.text());
+      setExerciseCsvIssues([]);
       setExerciseCsvStatus(
         locale === 'ko'
           ? `${importedCount}개의 운동을 갱신했습니다.`
@@ -257,6 +260,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
     } catch (error) {
       console.error('Failed to import exercise CSV', error);
       if (error instanceof ExerciseCsvImportError) {
+        setExerciseCsvIssues(error.issues);
         setExerciseCsvStatus(
           locale === 'ko'
             ? `CSV 검증 실패: ${error.issues.slice(0, 3).join(' / ')}`
@@ -426,6 +430,25 @@ export function ExportPage({ onBack }: ExportPageProps) {
               : 'Export the CSV, edit names, tags, and descriptions, then import it back. Use | for multiple categoryTags or stageTags.'
           )}
         </p>
+        {exerciseCsvIssues.length > 0 ? (
+          <div className="mt-3 rounded-md bg-red-950/50 px-3 py-3">
+            <p className="text-xs font-bold text-red-100">
+              {locale === 'ko' ? '가져오기 전 수정할 항목' : 'Items to fix before import'}
+            </p>
+            <ul className="mt-2 grid gap-1 text-xs leading-5 text-red-100">
+              {exerciseCsvIssues.slice(0, 8).map((issue) => (
+                <li key={issue}>{issue}</li>
+              ))}
+            </ul>
+            {exerciseCsvIssues.length > 8 ? (
+              <p className="mt-2 text-xs text-red-200">
+                {locale === 'ko'
+                  ? `${exerciseCsvIssues.length - 8}개 항목이 더 있습니다.`
+                  : `${exerciseCsvIssues.length - 8} more issues.`}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <div className="mt-4 grid grid-cols-2 gap-3">
           <button
             type="button"

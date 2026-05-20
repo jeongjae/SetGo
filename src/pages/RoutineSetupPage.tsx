@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, Check, ChevronLeft, EyeOff, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { db } from '../db/db';
 import { seedDefaultExercises } from '../db/seed';
 import {
@@ -273,13 +274,17 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
       stage: exerciseStageFilter,
     });
   });
-  const filteredAvailableExercises = availableExercises.filter((exercise) => {
-    return exerciseMatchesFilters(exercise, {
-      query: routineAddSearch,
-      category: routineAddCategoryFilter,
-      stage: routineAddStageFilter,
-    });
-  });
+  const routineAddFinderState: ExerciseFinderState = {
+    query: routineAddSearch,
+    category: routineAddCategoryFilter,
+    stage: routineAddStageFilter,
+  };
+  const updateRoutineAddFinderState = (state: ExerciseFinderState) => {
+    setRoutineAddSearch(state.query);
+    setRoutineAddCategoryFilter(state.category);
+    setRoutineAddStageFilter(state.stage);
+  };
+  const resetRoutineAddFinderState = () => updateRoutineAddFinderState(emptyExerciseFinderState);
   const editingExercise = exerciseLibrary.find((exercise) => exercise.id === editingExerciseId) ?? filteredExerciseLibrary[0];
   const setupSections: Array<{ id: SetupTab; label: string }> = [
     { id: 'routine', label: t(locale, 'routine') },
@@ -697,9 +702,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                     setAddingDayId((current) => (
                       current === selectedDay.routineDay.id ? undefined : selectedDay.routineDay.id
                     ));
-                    setRoutineAddSearch('');
-                    setRoutineAddCategoryFilter('all');
-                    setRoutineAddStageFilter('all');
+                    resetRoutineAddFinderState();
                   }}
                   className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-400 text-slate-950"
                   aria-label={`Add exercise to ${selectedDay.routineDay.name}`}
@@ -709,75 +712,16 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
               </div>
 
               {addingDayId === selectedDay.routineDay.id ? (
-                <div className="mt-3 rounded-md bg-slate-800 p-3">
-                  <p className="text-xs font-semibold uppercase text-slate-500">{t(locale, 'exerciseFinder')}</p>
-                  <div className="mt-2 flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2">
-                    <Search aria-hidden="true" size={16} className="shrink-0 text-slate-400" />
-                    <input
-                      aria-label="Search exercises to add"
-                      type="search"
-                      value={routineAddSearch}
-                      onChange={(event) => setRoutineAddSearch(event.target.value)}
-                      placeholder={t(locale, 'searchExercises')}
-                      className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-                    />
-                  </div>
-                  <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                    {exerciseCategories.map((category) => (
-                      <button
-                        key={category.label}
-                        type="button"
-                        onClick={() => setRoutineAddCategoryFilter(category.value)}
-                        className={`min-h-8 rounded-md px-3 text-xs font-semibold ${
-                          routineAddCategoryFilter === category.value
-                            ? 'bg-cyan-400 text-slate-950'
-                            : 'bg-slate-900 text-slate-100'
-                        }`}
-                      >
-                        {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                    {exerciseStages.map((stage) => (
-                      <button
-                        key={stage.value}
-                        type="button"
-                        onClick={() => setRoutineAddStageFilter(stage.value)}
-                        className={`min-h-8 rounded-md px-3 text-xs font-semibold ${
-                          routineAddStageFilter === stage.value
-                            ? 'bg-cyan-400 text-slate-950'
-                            : 'bg-slate-900 text-slate-100'
-                        }`}
-                      >
-                        {stage.value === 'all' ? t(locale, 'all') : labelForStage(stage.value, locale)}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-2 text-xs text-slate-400">
-                    {exerciseCountLabel(locale, filteredAvailableExercises.length)}
-                  </p>
-                  <div className="mt-2 max-h-72 overflow-y-auto pr-1">
-                    <div className="grid gap-2">
-                      {filteredAvailableExercises.length === 0 ? (
-                        <p className="rounded-md bg-slate-900 px-3 py-3 text-sm text-slate-300">
-                          {t(locale, 'noMatchingExercises')}
-                        </p>
-                      ) : filteredAvailableExercises.map((exercise) => (
-                        <button
-                          key={exercise.id}
-                          type="button"
-                          onClick={() => void handleAddExercise(selectedDay.routineDay.id, exercise.id)}
-                          className="rounded-md bg-slate-900 px-3 py-3 text-left text-sm text-slate-100"
-                        >
-                          <span className="block font-semibold">{getExerciseName(exercise, locale)}</span>
-                          <span className="mt-1 block text-xs text-slate-400">
-                            {getExerciseCategories(exercise).map((category) => labelForCategory(category, locale)).join(' / ')}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                <div className="mt-3">
+                  <ExerciseFinder
+                    ariaLabel="Search exercises to add"
+                    exercises={availableExercises}
+                    locale={locale}
+                    state={routineAddFinderState}
+                    onChange={updateRoutineAddFinderState}
+                    onSelect={(exercise) => void handleAddExercise(selectedDay.routineDay.id, exercise.id)}
+                    title={t(locale, 'exerciseFinder')}
+                  />
                 </div>
               ) : null}
 

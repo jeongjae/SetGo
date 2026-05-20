@@ -1,15 +1,11 @@
-import { ArrowDown, ArrowUp, Check, ChevronLeft, ClipboardList, Clock3, Copy, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronLeft, ClipboardList, Clock3, Copy, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { db } from '../db/db';
 import { getRoutineDayDisplayName } from '../db/routines';
 import {
-  exerciseCategoryOptions,
-  exerciseMatchesFilters,
-  exerciseStageOptions,
   getExerciseCategories,
   getExerciseName,
-  labelForCategory,
-  labelForStage,
 } from '../domain/exercises';
 import { exerciseCountLabel, getStoredLocale, routineNameLabel, t, timeBandLabel, workoutStatusLabel } from '../i18n/i18n';
 import {
@@ -274,22 +270,17 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   };
 
   const availableExercises = getAvailableExercises();
-  const filterExercises = (items: ExerciseMaster[]) => {
-    return items.filter((exercise) => exerciseMatchesFilters(exercise, {
-      query: exerciseSearch,
-      category: exerciseCategoryFilter,
-      stage: exerciseStageFilter,
-    }));
+  const exerciseFinderState: ExerciseFinderState = {
+    query: exerciseSearch,
+    category: exerciseCategoryFilter,
+    stage: exerciseStageFilter,
   };
-  const filteredAvailableExercises = filterExercises(availableExercises);
-  const categoryFilters: Array<{ label: string; value: ExerciseCategory | 'all' }> = [
-    { label: 'All', value: 'all' },
-    ...exerciseCategoryOptions,
-  ];
-  const stageFilters: Array<{ label: string; value: ExerciseStage | 'all' }> = [
-    { label: 'All', value: 'all' },
-    ...exerciseStageOptions,
-  ];
+  const updateExerciseFinderState = (state: ExerciseFinderState) => {
+    setExerciseSearch(state.query);
+    setExerciseCategoryFilter(state.category);
+    setExerciseStageFilter(state.stage);
+  };
+  const resetExerciseFinderState = () => updateExerciseFinderState(emptyExerciseFinderState);
   const totalSetCount = logs.reduce((sum, log) => sum + log.sets.length, 0);
   const completedSetCount = logs.reduce(
     (sum, log) => sum + log.sets.filter((set) => set.isCompleted).length,
@@ -431,9 +422,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
             type="button"
             onClick={() => {
               setIsAdding((current) => !current);
-              setExerciseSearch('');
-              setExerciseCategoryFilter('all');
-              setExerciseStageFilter('all');
+              resetExerciseFinderState();
             }}
             className="flex h-11 w-11 items-center justify-center rounded-lg bg-cyan-400 text-slate-950"
             aria-label="Add exercise"
@@ -443,77 +432,16 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
         </div>
 
         {isAdding ? (
-          <div className="mt-4 rounded-md bg-slate-800 p-3">
-            <div className="flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2">
-              <Search aria-hidden="true" size={16} className="shrink-0 text-slate-400" />
-              <input
-                aria-label="Search exercises to add"
-                type="search"
-                value={exerciseSearch}
-                onChange={(event) => setExerciseSearch(event.target.value)}
-                placeholder={t(locale, 'searchExercises')}
-                className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-              />
-            </div>
-            <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-              {categoryFilters.map((category) => (
-                <button
-                  key={category.value}
-                  type="button"
-                  onClick={() => setExerciseCategoryFilter(category.value)}
-                  className={`min-h-8 rounded-md px-3 text-xs font-semibold ${
-                    exerciseCategoryFilter === category.value
-                      ? 'bg-cyan-400 text-slate-950'
-                      : 'bg-slate-900 text-slate-100'
-                  }`}
-                >
-                  {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
-                </button>
-              ))}
-            </div>
-            <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-              {stageFilters.map((stage) => (
-                <button
-                  key={stage.value}
-                  type="button"
-                  onClick={() => setExerciseStageFilter(stage.value)}
-                  className={`min-h-8 rounded-md px-3 text-xs font-semibold ${
-                    exerciseStageFilter === stage.value
-                      ? 'bg-cyan-400 text-slate-950'
-                      : 'bg-slate-900 text-slate-100'
-                  }`}
-                >
-                  {stage.value === 'all' ? t(locale, 'all') : labelForStage(stage.value, locale)}
-                </button>
-              ))}
-            </div>
-            <p className="mt-2 text-xs text-slate-400">
-              {exerciseCountLabel(locale, filteredAvailableExercises.length)}
-            </p>
-            <div className="mt-2 max-h-72 overflow-y-auto pr-1">
-              <div className="grid gap-2">
-                {filteredAvailableExercises.length === 0 ? (
-                  <p className="rounded-md bg-slate-900 px-3 py-3 text-sm text-slate-300">
-                    {t(locale, 'noMatchingExercises')}
-                  </p>
-                ) : filteredAvailableExercises.map((exercise) => (
-                  <button
-                    key={exercise.id}
-                    type="button"
-                    onClick={() => void handleAddExercise(exercise.id)}
-                    className="flex items-center justify-between rounded-md bg-slate-900 px-3 py-3 text-left text-sm text-slate-100"
-                  >
-                    <span>
-                      <span className="block font-semibold">{getExerciseName(exercise, locale)}</span>
-                      <span className="mt-1 block text-xs text-slate-400">
-                        {getExerciseCategories(exercise).map((category) => labelForCategory(category, locale)).join(' / ')}
-                      </span>
-                    </span>
-                    <span className="text-xs font-semibold text-cyan-300">{exercise.defaultEmoji}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="mt-4">
+            <ExerciseFinder
+              ariaLabel="Search exercises to add"
+              exercises={availableExercises}
+              locale={locale}
+              state={exerciseFinderState}
+              onChange={updateExerciseFinderState}
+              onSelect={(exercise) => void handleAddExercise(exercise.id)}
+              title={t(locale, 'exerciseFinder')}
+            />
           </div>
         ) : null}
       </section>
@@ -564,9 +492,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                   setReplacingWorkoutExerciseId((current) => (
                     current === log.workoutExercise.id ? undefined : log.workoutExercise.id
                   ));
-                  setExerciseSearch('');
-                  setExerciseCategoryFilter('all');
-                  setExerciseStageFilter('all');
+                  resetExerciseFinderState();
                 }}
               className="flex min-h-9 items-center gap-2 rounded-md bg-slate-800 px-3 text-sm font-semibold text-slate-100"
             >
@@ -616,71 +542,16 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
           </label>
 
           {replacingWorkoutExerciseId === log.workoutExercise.id ? (
-            <div className="mt-4 rounded-md bg-slate-800 p-3">
-              <div className="flex items-center gap-2 rounded-md bg-slate-900 px-3 py-2">
-                <Search aria-hidden="true" size={16} className="shrink-0 text-slate-400" />
-                <input
-                  aria-label={`Search replacement for ${getExerciseName(log.exercise, locale)}`}
-                  type="search"
-                  value={exerciseSearch}
-                  onChange={(event) => setExerciseSearch(event.target.value)}
-                  placeholder={t(locale, 'searchExercises')}
-                  className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-                />
-              </div>
-              <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                {categoryFilters.map((category) => (
-                  <button
-                    key={category.value}
-                    type="button"
-                    onClick={() => setExerciseCategoryFilter(category.value)}
-                    className={`min-h-8 rounded-md px-3 text-xs font-semibold ${
-                      exerciseCategoryFilter === category.value
-                        ? 'bg-cyan-400 text-slate-950'
-                        : 'bg-slate-900 text-slate-100'
-                    }`}
-                  >
-                    {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                {stageFilters.map((stage) => (
-                  <button
-                    key={stage.value}
-                    type="button"
-                    onClick={() => setExerciseStageFilter(stage.value)}
-                    className={`min-h-8 rounded-md px-3 text-xs font-semibold ${
-                      exerciseStageFilter === stage.value
-                        ? 'bg-cyan-400 text-slate-950'
-                        : 'bg-slate-900 text-slate-100'
-                    }`}
-                  >
-                    {stage.value === 'all' ? t(locale, 'all') : labelForStage(stage.value, locale)}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-2 text-xs text-slate-400">
-                {exerciseCountLabel(locale, filterExercises(getAvailableExercises(log.exercise.id)).length)}
-              </p>
-              <div className="mt-2 grid max-h-72 gap-2 overflow-y-auto pr-1">
-                {filterExercises(getAvailableExercises(log.exercise.id)).map((exercise) => (
-                  <button
-                    key={exercise.id}
-                    type="button"
-                    onClick={() => void handleReplaceExercise(log.workoutExercise.id, exercise.id)}
-                    className="flex items-center justify-between rounded-md bg-slate-800 px-3 py-3 text-left text-sm text-slate-100"
-                  >
-                    <span>
-                      <span className="block font-semibold">{getExerciseName(exercise, locale)}</span>
-                      <span className="mt-1 block text-xs text-slate-400">
-                        {getExerciseCategories(exercise).map((category) => labelForCategory(category, locale)).join(' / ')}
-                      </span>
-                    </span>
-                    <span className="text-xs font-semibold text-cyan-300">{exercise.defaultEmoji}</span>
-                  </button>
-                ))}
-              </div>
+            <div className="mt-4">
+              <ExerciseFinder
+                ariaLabel={`Search replacement for ${getExerciseName(log.exercise, locale)}`}
+                exercises={getAvailableExercises(log.exercise.id)}
+                locale={locale}
+                state={exerciseFinderState}
+                onChange={updateExerciseFinderState}
+                onSelect={(exercise) => void handleReplaceExercise(log.workoutExercise.id, exercise.id)}
+                title={locale === 'ko' ? '교체 운동 찾기' : 'Find replacement'}
+              />
             </div>
           ) : null}
 
