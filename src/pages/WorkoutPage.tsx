@@ -30,7 +30,7 @@ import {
   type ActiveWorkout,
   type WorkoutExerciseLog,
 } from '../db/workouts';
-import type { CardioRecord, ExerciseCategory, ExerciseMaster, ExerciseStage, WorkoutSet } from '../types';
+import type { CardioRecord, ExerciseCategory, ExerciseMaster, ExerciseStage, WorkoutSet, WorkoutSetType } from '../types';
 
 type WorkoutPageProps = {
   sessionId?: string;
@@ -61,6 +61,9 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   const [saveMessage, setSaveMessage] = useState(locale === 'ko' ? '로컬 저장됨' : 'Saved locally');
   const [timerNow, setTimerNow] = useState(() => Date.now());
   const [restTimerStartedAt, setRestTimerStartedAt] = useState<number | undefined>();
+  const [restDuration, setRestDuration] = useState(90);
+  const [restRemaining, setRestRemaining] = useState(0);
+  const [isRestTimerActive, setIsRestTimerActive] = useState(false);
 
   async function loadWorkout() {
     const todayWorkout = sessionId ? await getWorkoutBySessionId(sessionId) : await getTodayWorkout();
@@ -92,6 +95,26 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    let interval: number | undefined;
+    if (isRestTimerActive && restTimerStartedAt) {
+      interval = window.setInterval(() => {
+        const elapsedSec = Math.floor((Date.now() - restTimerStartedAt) / 1000);
+        const remaining = Math.max(0, restDuration - elapsedSec);
+        setRestRemaining(remaining);
+        if (remaining <= 0) {
+          setIsRestTimerActive(false);
+          if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]);
+          }
+        }
+      }, 500);
+    }
+    return () => {
+      if (interval) window.clearInterval(interval);
+    };
+  }, [isRestTimerActive, restTimerStartedAt, restDuration]);
+
   async function handleAddExercise(exerciseId: string) {
     if (!workout) return;
 
@@ -102,12 +125,15 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
   async function handleSetChange(
     set: WorkoutSet,
-    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup'>>,
+    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'type'>>,
   ) {
     setSaveMessage(locale === 'ko' ? '저장 중...' : 'Saving...');
     await updateWorkoutSet(set.id, values);
     if (values.isCompleted === true && !set.isCompleted) {
-      setRestTimerStartedAt(Date.now());
+      const now = Date.now();
+      setRestTimerStartedAt(now);
+      setRestRemaining(restDuration);
+      setIsRestTimerActive(true);
     }
     await loadWorkout();
     setSaveMessage(`${locale === 'ko' ? '저장됨' : 'Saved'} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
@@ -157,9 +183,11 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   }
 
   async function handleToggleWarmup(set: WorkoutSet) {
+    const nextWarmup = !set.isWarmup;
     await handleSetChange(set, {
-      isWarmup: !set.isWarmup,
-      isCompleted: !set.isWarmup ? true : set.isCompleted,
+      isWarmup: nextWarmup,
+      type: nextWarmup ? 'warmup' : 'normal',
+      isCompleted: nextWarmup ? true : set.isCompleted,
     });
   }
 
@@ -167,6 +195,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
     const isHardSet = !set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3;
     await handleSetChange(set, {
       isWarmup: false,
+      type: 'normal',
       isCompleted: true,
       rir: isHardSet ? 4 : Math.min(set.rir ?? 3, 3),
     });
@@ -745,6 +774,60 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
           </button>
         </>
       )}
+
+      {isRestTimerActive && restRemaining > 0 && (
+        <div className="fixed bottom-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-slate-700/50 bg-slate-950/90 px-4 py-3 shadow-2xl backdrop-blur-md transition-all duration-300">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 animate-pulse">
+                <Clock3 size={16} />
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold text-slate-400">{t(locale, 'resting')}</p>
+                <p className="text-lg font-bold text-white tracking-wider">
+                  {Math.floor(restRemaining / 60)}:{(restRemaining % 60).toString().padStart(2, '0')}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setRestDuration((prev) => prev + 30);
+                }}
+                className="flex h-8 items-center justify-center rounded-md bg-slate-900 px-2.5 text-xs font-bold text-cyan-300 border border-cyan-400/20 active:bg-cyan-500/20"
+              >
+                +30s
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRestDuration((prev) => Math.max(1, prev - 30));
+                }}
+                className="flex h-8 items-center justify-center rounded-md bg-slate-900 px-2.5 text-xs font-bold text-slate-400 border border-slate-700 active:bg-slate-800"
+              >
+                -30s
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRestTimerActive(false);
+                  setRestRemaining(0);
+                }}
+                className="flex h-8 items-center justify-center rounded-md bg-red-500/25 px-2.5 text-xs font-bold text-red-200 hover:bg-red-500/40"
+              >
+                {t(locale, 'skip')}
+              </button>
+            </div>
+          </div>
+          <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-slate-800">
+            <div
+              className="h-full bg-cyan-400 transition-all duration-500 ease-out"
+              style={{ width: `${(restRemaining / restDuration) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -757,7 +840,7 @@ type WorkoutSetRowProps = {
   handleQuickAdjustSet: (set: WorkoutSet, field: 'weightKg' | 'reps' | 'rir', delta: number) => Promise<void>;
   handleSetChange: (
     set: WorkoutSet,
-    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup'>>,
+    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'type'>>,
   ) => Promise<void>;
   handleToggleWarmup: (set: WorkoutSet) => Promise<void>;
   handleToggleHardSet: (set: WorkoutSet) => Promise<void>;
@@ -793,20 +876,64 @@ function WorkoutSetRow({
     setRir(set.rir !== undefined ? String(set.rir) : '');
   }, [set.rir]);
 
+  const currentType = set.type || (set.isWarmup ? 'warmup' : 'normal');
+
+  const handleToggleSetType = async () => {
+    const NEXT_TYPES: Record<WorkoutSetType, WorkoutSetType> = {
+      normal: 'warmup',
+      warmup: 'drop',
+      drop: 'failure',
+      failure: 'normal',
+    };
+    const nextType = NEXT_TYPES[currentType] || 'normal';
+    const isWarmup = nextType === 'warmup';
+
+    await handleSetChange(set, {
+      type: nextType,
+      isWarmup,
+    });
+  };
+
+  const typeBadges: Record<WorkoutSetType, { labelKo: string; labelEn: string; className: string }> = {
+    normal: {
+      labelKo: '일반',
+      labelEn: 'Normal',
+      className: 'bg-slate-700/50 text-slate-300 border border-slate-600/30'
+    },
+    warmup: {
+      labelKo: '준비',
+      labelEn: 'Warmup',
+      className: 'bg-amber-400/15 text-amber-300 border border-amber-400/20 shadow-[0_0_8px_rgba(251,191,36,0.05)]'
+    },
+    drop: {
+      labelKo: '드롭',
+      labelEn: 'Drop',
+      className: 'bg-cyan-400/15 text-cyan-300 border border-cyan-400/20 shadow-[0_0_8px_rgba(34,211,238,0.05)]'
+    },
+    failure: {
+      labelKo: '실패',
+      labelEn: 'Failure',
+      className: 'bg-rose-500/15 text-rose-300 border border-rose-500/20 shadow-[0_0_8px_rgba(244,63,94,0.05)]'
+    }
+  };
+
   return (
     <div className="rounded-md bg-slate-800 p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-bold text-white">
-          {locale === 'ko' ? '세트' : 'Set'} {set.setNo}
-        </span>
+        <button
+          type="button"
+          onClick={() => void handleToggleSetType()}
+          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-bold transition-all hover:brightness-110 active:scale-95 ${typeBadges[currentType].className}`}
+          aria-label={`Toggle type for Set ${set.setNo}, current: ${currentType}`}
+        >
+          <span>{locale === 'ko' ? '세트' : 'Set'} {set.setNo}</span>
+          <span className="text-[10px] opacity-85 font-medium tracking-wide uppercase">
+            {locale === 'ko' ? typeBadges[currentType].labelKo : typeBadges[currentType].labelEn}
+          </span>
+        </button>
         <div className="flex items-center gap-1">
-          {set.isWarmup ? (
-            <span className="rounded bg-amber-400/15 px-2 py-1 text-[11px] font-bold text-amber-200">
-              {locale === 'ko' ? '준비' : 'Warmup'}
-            </span>
-          ) : null}
           {!set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3 ? (
-            <span className="rounded bg-red-400/15 px-2 py-1 text-[11px] font-bold text-red-200">
+            <span className="rounded bg-red-400/15 px-2 py-1 text-[11px] font-bold text-red-200 border border-red-400/10">
               Hard
             </span>
           ) : null}

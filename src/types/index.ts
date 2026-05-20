@@ -116,6 +116,8 @@ export type WorkoutExercise = {
   memo?: string;
 };
 
+export type WorkoutSetType = 'normal' | 'warmup' | 'drop' | 'failure';
+
 export type WorkoutSet = {
   id: string;
   workoutExerciseId: string;
@@ -125,6 +127,7 @@ export type WorkoutSet = {
   rir?: number;
   isCompleted: boolean;
   isWarmup?: boolean;
+  type?: WorkoutSetType;
 };
 
 export type CardioRecord = {

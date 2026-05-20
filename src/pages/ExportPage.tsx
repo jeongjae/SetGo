@@ -2,6 +2,7 @@ import { ChevronLeft, Copy, Download, Upload } from 'lucide-react';
 import { type ChangeEvent, useEffect, useState } from 'react';
 import { createBackup, createSettingsBackup, restoreBackup, restoreSettingsBackup } from '../db/backup';
 import { createExerciseCsv, ExerciseCsvImportError, importExerciseCsv } from '../db/exerciseCsv';
+import { isStoragePersisted } from '../db/db';
 import {
   getRecentWorkoutSummaries,
   getWorkoutCardioRecords,
@@ -83,15 +84,20 @@ export function ExportPage({ onBack }: ExportPageProps) {
   const [exerciseCsvStatus, setExerciseCsvStatus] = useState<string | undefined>();
   const [exerciseCsvIssues, setExerciseCsvIssues] = useState<string[]>([]);
   const [settingsBackupStatus, setSettingsBackupStatus] = useState<string | undefined>();
+  const [isPersisted, setIsPersisted] = useState(false);
 
   async function loadSummaries(selectedSessionId?: string) {
     const recentSummaries = await getRecentWorkoutSummaries(20);
-    const selectedSummary = recentSummaries.find((item) => item.session.id === selectedSessionId)
+    const selectedSummary = recentSummaries.find((item) => item.session.id === sessionIdForImport(item, selectedSessionId))
       ?? recentSummaries.find((item) => item.session.status === 'completed')
       ?? recentSummaries.find((item) => item.session.status === 'in_progress')
       ?? recentSummaries[0];
     setSummaries(recentSummaries);
     await loadMarkdown(selectedSummary);
+  }
+
+  function sessionIdForImport(item: WorkoutSummary, selectedSessionId?: string) {
+    return selectedSessionId;
   }
 
   async function loadMarkdown(selectedSummary: WorkoutSummary | undefined) {
@@ -119,6 +125,8 @@ export function ExportPage({ onBack }: ExportPageProps) {
   useEffect(() => {
     async function load() {
       await loadSummaries();
+      const persisted = await isStoragePersisted();
+      setIsPersisted(persisted);
     }
 
     void load();
@@ -339,7 +347,25 @@ export function ExportPage({ onBack }: ExportPageProps) {
       </button>
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <p className="text-sm font-medium text-slate-400">{t(locale, 'localData')}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-slate-400">{t(locale, 'localData')}</p>
+          {isPersisted ? (
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-xs font-bold text-emerald-400 border border-emerald-400/20">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+              </span>
+              <span>Persistent 🟢</span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 rounded-full bg-amber-400/15 px-2.5 py-0.5 text-xs font-bold text-amber-400 border border-amber-400/20">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+              </span>
+              <span>Best-effort 🟡</span>
+            </span>
+          )}
+        </div>
         <h2 className="mt-1 text-lg font-semibold text-white">{t(locale, 'backupRestore')}</h2>
         <p className="mt-2 text-sm leading-6 text-slate-300">
           {backupSummary ?? (
@@ -348,6 +374,13 @@ export function ExportPage({ onBack }: ExportPageProps) {
               : t(locale, 'localDataNote')
           )}
         </p>
+        {!isPersisted && (
+          <p className="mt-2 text-xs leading-5 text-amber-300 bg-amber-400/5 border border-amber-400/10 rounded-md p-2">
+            {locale === 'ko'
+              ? '💡 모바일 기기의 Safari/Chrome에서 "홈 화면에 추가"하여 PWA로 설치하면, 브라우저가 데이터를 임의로 지우지 않는 [영구 안심 보존(Persistent)] 권한을 자동으로 획득할 수 있습니다.'
+              : '💡 Add this app to your "Home Screen" (PWA) to automatically gain [Persistent Storage] status, ensuring the browser never auto-deletes your logs.'}
+          </p>
+        )}
         <div className="mt-4 grid grid-cols-2 gap-3">
           <button
             type="button"

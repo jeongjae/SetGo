@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PwaStatus } from './PwaStatus';
 import { CalendarPage } from '../pages/CalendarPage';
 import { ExportPage } from '../pages/ExportPage';
@@ -8,6 +8,7 @@ import { TodayPage } from '../pages/TodayPage';
 import { WorkoutPage } from '../pages/WorkoutPage';
 import { getOrCreateTodayWorkout, getOrCreateWorkoutForDate } from '../db/workouts';
 import { formatDateKey } from '../utils/date';
+import { requestPersistentStorage } from '../db/db';
 
 export type AppView = 'today' | 'calendar' | 'routineSetup' | 'export' | 'stats' | 'workout';
 type WorkoutReturnView = 'today' | 'calendar' | 'export';
@@ -27,6 +28,10 @@ function describeStartupError(error: unknown) {
 export function App() {
   const [view, setView] = useState<AppView>('today');
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    void requestPersistentStorage();
+  }, []);
   const [activeWorkoutSessionId, setActiveWorkoutSessionId] = useState<string | undefined>();
   const [workoutReturnView, setWorkoutReturnView] = useState<WorkoutReturnView>('today');
   const [calendarSelectedDateKey, setCalendarSelectedDateKey] = useState(() => formatDateKey(new Date()));

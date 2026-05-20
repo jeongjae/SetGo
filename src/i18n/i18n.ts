@@ -91,6 +91,10 @@ const messages = {
     workoutSession: '운동 세션',
     workoutSessions: '운동 세션',
     weeklyPlan: '주간 계획',
+    resting: '휴식 중...',
+    restTime: '휴식 시간',
+    skip: '건너뛰기',
+    timerFinished: '휴식 완료!',
     
     // Stats Page Strings (Korean)
     statsTitle: '운동 통계',
@@ -201,6 +205,10 @@ const messages = {
     workoutSession: 'Workout Session',
     workoutSessions: 'workout sessions',
     weeklyPlan: 'Weekly Plan',
+    resting: 'Resting...',
+    restTime: 'Rest Time',
+    skip: 'Skip',
+    timerFinished: 'Rest Finished!',
 
     // Stats Page Strings (English)
     statsTitle: 'Workout Stats',
