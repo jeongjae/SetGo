@@ -8,7 +8,7 @@ import {
   getRoutineDayDisplayName,
   saveCalendarPlanOverride,
 } from '../db/routines';
-import { getMonthlyWorkoutSummaries, type WorkoutSummary } from '../db/workouts';
+import { getMonthlyWorkoutSummaries, getOrCreateWorkoutForDate, skipWorkoutSession, unskipWorkoutSession, type WorkoutSummary } from '../db/workouts';
 import { formatDateKey } from '../utils/date';
 import { db } from '../db/db';
 import { exerciseCountLabel, getStoredLocale, t, workoutStatusLabel } from '../i18n/i18n';
@@ -193,6 +193,22 @@ export function CalendarPage({
     setReloadKey((current) => current + 1);
   }
 
+  async function handleSkipNewSession() {
+    const activeWorkout = await getOrCreateWorkoutForDate(selectedDateKey, startWorkoutRoutineDayId, { createNew: true });
+    await skipWorkoutSession(activeWorkout.session.id);
+    setReloadKey((current) => current + 1);
+  }
+
+  async function handleSkipSession(sessionId: string) {
+    await skipWorkoutSession(sessionId);
+    setReloadKey((current) => current + 1);
+  }
+
+  async function handleUnskipSession(sessionId: string) {
+    await unskipWorkoutSession(sessionId);
+    setReloadKey((current) => current + 1);
+  }
+
   useEffect(() => {
     const isSelectedDateVisible = calendarDays.some((day) => day.key === selectedDateKey && day.isCurrentMonth);
     if (!isSelectedDateVisible) {
@@ -267,6 +283,7 @@ export function CalendarPage({
           {calendarDays.map((day) => {
             const daySummaries = summariesByDate[day.key] ?? [];
             const dayPlan = plansByDate[day.key];
+            const hasSkipped = daySummaries.some((s) => s.session.status === 'skipped');
             const showPlanDot = day.isCurrentMonth && dayPlan && daySummaries.length === 0;
             const totalVolume = daySummaries.reduce((sum, summary) => sum + summary.session.totalStrengthVolumeKg, 0);
 
@@ -301,6 +318,10 @@ export function CalendarPage({
                 {totalVolume > 0 ? (
                   <span className="mt-1 truncate text-[10px] font-medium text-cyan-300">
                     {totalVolume.toLocaleString()}kg
+                  </span>
+                ) : hasSkipped ? (
+                  <span className="mt-1 inline-block rounded bg-slate-500 px-1 py-0.5 text-[9px] font-bold text-white uppercase tracking-wide">
+                    {locale === 'ko' ? '건너뜀' : 'Skipped'}
                   </span>
                 ) : showPlanDot ? (
                   <span className={`mt-1 truncate text-[10px] font-medium ${
@@ -354,13 +375,45 @@ export function CalendarPage({
                 <p className="mt-2 text-xs text-slate-400">
                   {exerciseCountLabel(locale, summary.exerciseCount)} / {summary.session.totalStrengthVolumeKg.toLocaleString()} kg
                 </p>
-                <button
-                  type="button"
-                  onClick={() => onStartWorkout(summary.session.routineDayId, selectedDateKey, summary.session.id)}
-                  className="mt-3 min-h-10 w-full rounded-md bg-slate-900 px-3 text-xs font-semibold text-cyan-300"
-                >
-                  {locale === 'ko' ? '운동기록 수정' : 'Edit workout record'}
-                </button>
+                <div className="mt-3 flex gap-2">
+                  {summary.session.status === 'skipped' ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => void handleUnskipSession(summary.session.id)}
+                        className="flex-1 min-h-10 rounded-md bg-cyan-500 hover:bg-cyan-600 px-3 text-xs font-semibold text-slate-950 transition-colors"
+                      >
+                        {locale === 'ko' ? '스킵 취소' : 'Unskip'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onStartWorkout(summary.session.routineDayId, selectedDateKey, summary.session.id)}
+                        className="flex-1 min-h-10 rounded-md bg-slate-900 px-3 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+                      >
+                        {locale === 'ko' ? '기록 보기/수정' : 'View/Edit'}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => onStartWorkout(summary.session.routineDayId, selectedDateKey, summary.session.id)}
+                        className="flex-1 min-h-10 rounded-md bg-slate-900 px-3 text-xs font-semibold text-cyan-300 hover:bg-slate-950 transition-colors"
+                      >
+                        {locale === 'ko' ? '운동기록 수정' : 'Edit record'}
+                      </button>
+                      {summary.session.status === 'in_progress' && (
+                        <button
+                          type="button"
+                          onClick={() => void handleSkipSession(summary.session.id)}
+                          className="flex-1 min-h-10 rounded-md bg-slate-700 hover:bg-slate-650 px-3 text-xs font-semibold text-slate-200 transition-colors"
+                        >
+                          {locale === 'ko' ? '스킵하기' : 'Skip Workout'}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -408,6 +461,17 @@ export function CalendarPage({
                 <Play aria-hidden="true" size={17} />
                 <span>
                   {locale === 'ko' ? '자유 운동으로 기록 추가' : 'Add free workout record'}
+                </span>
+              </button>
+            )}
+            {(selectedPlan || selectedDateKey < todayKey) && (
+              <button
+                type="button"
+                onClick={() => void handleSkipNewSession()}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-750 px-3 text-sm font-semibold text-slate-300 transition-colors"
+              >
+                <span>
+                  {locale === 'ko' ? '운동 스킵 (Skip Workout)' : 'Skip Workout'}
                 </span>
               </button>
             )}

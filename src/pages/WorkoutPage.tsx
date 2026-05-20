@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Check, ChevronLeft, ClipboardList, Clock3, Copy, Plus, RefreshCw, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { db } from '../db/db';
 import { getRoutineDayDisplayName } from '../db/routines';
@@ -64,6 +64,68 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   const [restDuration, setRestDuration] = useState(90);
   const [restRemaining, setRestRemaining] = useState(0);
   const [isRestTimerActive, setIsRestTimerActive] = useState(false);
+  const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
+
+  const totalCardioDistance = useMemo(() => {
+    return cardioRecords.reduce((acc, curr) => acc + (curr.distanceKm || 0), 0);
+  }, [cardioRecords]);
+
+  const totalCardioMinutes = useMemo(() => {
+    return cardioRecords.reduce((acc, curr) => {
+      const min = Math.max(
+        1,
+        Math.round((new Date(curr.endedAt).getTime() - new Date(curr.startedAt).getTime()) / 60000)
+      );
+      return acc + min;
+    }, 0);
+  }, [cardioRecords]);
+
+  const autoTransitionAccordion = (completedWorkoutExerciseId: string) => {
+    setTimeout(() => {
+      setLogs((currentLogs) => {
+        const currentLogIndex = currentLogs.findIndex((l) => l.workoutExercise.id === completedWorkoutExerciseId);
+        if (currentLogIndex === -1) return currentLogs;
+
+        const currentLog = currentLogs[currentLogIndex];
+        const allCompleted = currentLog.sets.every((s) => s.isCompleted);
+        if (!allCompleted) return currentLogs;
+
+        const nextUncompletedLog = currentLogs
+          .slice(currentLogIndex + 1)
+          .find((l) => !l.sets.every((s) => s.isCompleted))
+          ?? currentLogs.find((l, idx) => idx !== currentLogIndex && !l.sets.every((s) => s.isCompleted));
+
+        setExpandedExercises((prev) => {
+          const nextState = { ...prev };
+          nextState[completedWorkoutExerciseId] = false;
+          if (nextUncompletedLog) {
+            nextState[nextUncompletedLog.workoutExercise.id] = true;
+
+            setTimeout(() => {
+              const el = document.getElementById(`exercise-card-${nextUncompletedLog.workoutExercise.id}`);
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }, 100);
+          }
+          return nextState;
+        });
+
+        return currentLogs;
+      });
+    }, 300);
+  };
+
+  useEffect(() => {
+    if (logs.length > 0 && Object.keys(expandedExercises).length === 0) {
+      const firstUncompleted = logs.find((log) => !log.sets.every((set) => set.isCompleted));
+      if (firstUncompleted) {
+        setExpandedExercises({ [firstUncompleted.workoutExercise.id]: true });
+      } else if (logs[0]) {
+        setExpandedExercises({ [logs[0].workoutExercise.id]: true });
+      }
+    }
+  }, [logs]);
 
   async function loadWorkout() {
     const todayWorkout = sessionId ? await getWorkoutBySessionId(sessionId) : await getTodayWorkout();
@@ -129,14 +191,23 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   ) {
     setSaveMessage(locale === 'ko' ? '저장 중...' : 'Saving...');
     await updateWorkoutSet(set.id, values);
-    if (values.isCompleted === true && !set.isCompleted) {
+    
+    const wasCompleted = set.isCompleted;
+    const isNowCompleted = values.isCompleted === true;
+
+    if (isNowCompleted && !wasCompleted) {
       const now = Date.now();
       setRestTimerStartedAt(now);
       setRestRemaining(restDuration);
       setIsRestTimerActive(true);
     }
+    
     await loadWorkout();
     setSaveMessage(`${locale === 'ko' ? '저장됨' : 'Saved'} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+
+    if (isNowCompleted && !wasCompleted) {
+      autoTransitionAccordion(set.workoutExerciseId);
+    }
   }
 
   async function handleCopyPreviousSet(set: WorkoutSet, previousSet: WorkoutSet | undefined) {
@@ -269,7 +340,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
   async function handleUpdateCardio(
     cardioRecord: CardioRecord,
-    values: Partial<Pick<CardioRecord, 'environment' | 'machineType' | 'location' | 'startedAt' | 'endedAt' | 'distanceKm' | 'memo'>>,
+    values: Partial<Pick<CardioRecord, 'environment' | 'machineType' | 'location' | 'startedAt' | 'endedAt' | 'distanceKm' | 'memo' | 'inclinePercent'>>,
   ) {
     await updateCardioRecord(cardioRecord.id, values);
     await loadWorkout();
@@ -488,143 +559,248 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
         ) : null}
       </section>
 
-      {logs.map((log, index) => (
-        <section key={log.workoutExercise.id} className="rounded-lg bg-slate-900 p-5 shadow">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium text-cyan-300">{log.exercise.defaultEmoji}</p>
-              <h2 className="mt-1 text-xl font-semibold text-white">{getExerciseName(log.exercise, locale)}</h2>
-            </div>
-            <div className="flex items-center gap-1">
+      {/* 가로 스크롤링 운동 미니 네비게이터 */}
+      {logs.length > 0 && (
+        <nav className="sticky top-0 z-20 flex gap-2 overflow-x-auto bg-slate-950/90 backdrop-blur-md px-4 py-3.5 scrollbar-none border-b border-slate-800/80 -mx-4 shadow-md">
+          {logs.map((log) => {
+            const allCompleted = log.sets.length > 0 && log.sets.every((s) => s.isCompleted);
+            const completedCount = log.sets.filter((s) => s.isCompleted).length;
+            const totalCount = log.sets.length;
+            const isCurrentExpanded = !!expandedExercises[log.workoutExercise.id];
+
+            return (
               <button
-                type="button"
-                onClick={() => void handleMoveExercise(log.workoutExercise.id, -1)}
-                disabled={index === 0}
-                className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-800 text-slate-100 disabled:text-slate-600"
-                aria-label={`Move ${log.exercise.nameKo} up`}
-              >
-                <ArrowUp aria-hidden="true" size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleMoveExercise(log.workoutExercise.id, 1)}
-                disabled={index === logs.length - 1}
-                className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-800 text-slate-100 disabled:text-slate-600"
-                aria-label={`Move ${log.exercise.nameKo} down`}
-              >
-                <ArrowDown aria-hidden="true" size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleDeleteExercise(log.workoutExercise.id)}
-                className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-800 text-red-300"
-                aria-label={`Delete ${log.exercise.nameKo}`}
-              >
-                <Trash2 aria-hidden="true" size={16} />
-              </button>
-            </div>
-          </div>
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-slate-200">
-              {log.workoutExercise.totalVolumeKg.toLocaleString()} kg
-            </p>
-              <button
+                key={log.workoutExercise.id}
                 type="button"
                 onClick={() => {
-                  setReplacingWorkoutExerciseId((current) => (
-                    current === log.workoutExercise.id ? undefined : log.workoutExercise.id
-                  ));
-                  resetExerciseFinderState();
+                  setExpandedExercises((prev) => ({
+                    ...prev,
+                    [log.workoutExercise.id]: true,
+                  }));
+                  setTimeout(() => {
+                    const el = document.getElementById(`exercise-card-${log.workoutExercise.id}`);
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }, 100);
                 }}
-              className="flex min-h-9 items-center gap-2 rounded-md bg-slate-800 px-3 text-sm font-semibold text-slate-100"
-            >
-              <RefreshCw aria-hidden="true" size={14} />
-              <span>{locale === 'ko' ? '교체' : 'Replace'}</span>
-            </button>
-          </div>
+                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all ${
+                  isCurrentExpanded
+                    ? 'bg-cyan-400 text-slate-950 ring-4 ring-cyan-400/20 shadow-lg shadow-cyan-400/10'
+                    : allCompleted
+                      ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/80'
+                      : 'bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-850'
+                }`}
+              >
+                <span className="text-[13px]">{log.exercise.defaultEmoji}</span>
+                <span>{getExerciseName(log.exercise, locale)}</span>
+                <span className={`text-[10px] px-1 py-0.5 rounded font-mono ${
+                  isCurrentExpanded 
+                    ? 'bg-cyan-500/30 text-slate-900' 
+                    : allCompleted 
+                      ? 'bg-emerald-900/40 text-emerald-400' 
+                      : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {completedCount}/{totalCount}
+                </span>
+                {allCompleted && (
+                  <Check size={12} className="text-emerald-300 shrink-0 stroke-[3px]" />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      )}
 
-          <div className="mt-3 rounded-md bg-slate-800 px-3 py-2">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase text-slate-500">{locale === 'ko' ? '이전 기록' : 'Previous'}</p>
-                <p className="mt-1 text-sm leading-5 text-slate-200">
-                  {log.previousSummary ?? (locale === 'ko' ? '아직 이전 완료 기록이 없습니다' : 'No previous completed record yet')}
+      {logs.map((log, index) => {
+        const isExpanded = !!expandedExercises[log.workoutExercise.id];
+        const allCompleted = log.sets.length > 0 && log.sets.every((s) => s.isCompleted);
+        const completedCount = log.sets.filter((s) => s.isCompleted).length;
+        const totalCount = log.sets.length;
+
+        return (
+          <section 
+            key={log.workoutExercise.id} 
+            id={`exercise-card-${log.workoutExercise.id}`}
+            className="rounded-lg bg-slate-900 shadow transition-all duration-300 border border-slate-800/80 overflow-hidden"
+          >
+            {/* 아코디언 헤더 */}
+            <button
+              type="button"
+              onClick={() => {
+                setExpandedExercises((prev) => ({
+                  ...prev,
+                  [log.workoutExercise.id]: !prev[log.workoutExercise.id],
+                }));
+              }}
+              className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-slate-850/50 transition-colors"
+            >
+              <div className="flex flex-col gap-1 pr-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-base shrink-0">{log.exercise.defaultEmoji}</span>
+                  <h2 className="text-base font-bold text-white leading-tight">
+                    {getExerciseName(log.exercise, locale)}
+                  </h2>
+                  {allCompleted && (
+                    <span className="rounded bg-emerald-950/60 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-800/60 shrink-0">
+                      {locale === 'ko' ? '완료' : 'Done'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs font-semibold text-cyan-400">
+                  {completedCount} / {totalCount} Sets
+                  {log.workoutExercise.totalVolumeKg > 0 && (
+                    <span className="text-slate-400"> • {log.workoutExercise.totalVolumeKg.toLocaleString()}kg</span>
+                  )}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => void handleCopyPreviousExercise(log)}
-                disabled={log.previousSets.length === 0}
-                className="min-h-9 shrink-0 rounded-md bg-slate-900 px-3 text-xs font-bold text-cyan-300 disabled:text-slate-600"
-              >
-                {locale === 'ko' ? '전체 복사' : 'Copy all'}
-              </button>
-            </div>
-            {log.previousSets.length > 0 ? (
-              <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                {log.previousSets.slice(0, 6).map((previousSet) => (
-                  <span key={previousSet.id} className="shrink-0 rounded bg-slate-900 px-2 py-1 text-[11px] font-semibold text-slate-300">
-                    {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
-                  </span>
-                ))}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[11px] font-semibold text-slate-500">
+                  {isExpanded ? (locale === 'ko' ? '접기' : 'Collapse') : (locale === 'ko' ? '보기' : 'Expand')}
+                </span>
+                <svg
+                  className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
-            ) : null}
-          </div>
+            </button>
 
-          <label className="mt-3 block text-xs font-medium text-slate-400">
-            {locale === 'ko' ? '운동 메모' : 'Exercise memo'}
-            <input
-              aria-label={`${log.exercise.nameKo} memo`}
-              type="text"
-              defaultValue={log.workoutExercise.memo ?? ''}
-              onBlur={(event) => void handleUpdateExerciseMemo(log.workoutExercise.id, event.target.value)}
-              className="mt-1 w-full rounded-md bg-slate-800 px-3 py-2 text-sm text-white"
-              placeholder={locale === 'ko' ? '그립, 템포, 기구, 자세 메모' : 'Grip, tempo, machine, or form notes'}
-            />
-          </label>
+            {/* 아코디언 바디 */}
+            {isExpanded && (
+              <div className="px-5 pb-5 pt-3 border-t border-slate-800/80 bg-slate-900/40">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => void handleMoveExercise(log.workoutExercise.id, -1)}
+                      disabled={index === 0}
+                      className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-800 text-slate-100 disabled:text-slate-600 hover:bg-slate-750 transition-colors"
+                      aria-label={`Move ${log.exercise.nameKo} up`}
+                    >
+                      <ArrowUp aria-hidden="true" size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleMoveExercise(log.workoutExercise.id, 1)}
+                      disabled={index === logs.length - 1}
+                      className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-800 text-slate-100 disabled:text-slate-600 hover:bg-slate-750 transition-colors"
+                      aria-label={`Move ${log.exercise.nameKo} down`}
+                    >
+                      <ArrowDown aria-hidden="true" size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteExercise(log.workoutExercise.id)}
+                      className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-800 text-red-300 hover:bg-slate-750 transition-colors"
+                      aria-label={`Delete ${log.exercise.nameKo}`}
+                    >
+                      <Trash2 aria-hidden="true" size={16} />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReplacingWorkoutExerciseId((current) => (
+                        current === log.workoutExercise.id ? undefined : log.workoutExercise.id
+                      ));
+                      resetExerciseFinderState();
+                    }}
+                    className="flex min-h-9 items-center gap-2 rounded-md bg-slate-800 px-3 text-sm font-semibold text-slate-100 hover:bg-slate-750 transition-colors"
+                  >
+                    <RefreshCw aria-hidden="true" size={14} />
+                    <span>{locale === 'ko' ? '교체' : 'Replace'}</span>
+                  </button>
+                </div>
 
-          {replacingWorkoutExerciseId === log.workoutExercise.id ? (
-            <div className="mt-4">
-              <ExerciseFinder
-                ariaLabel={`Search replacement for ${getExerciseName(log.exercise, locale)}`}
-                exercises={getAvailableExercises(log.exercise.id)}
-                locale={locale}
-                state={exerciseFinderState}
-                onChange={updateExerciseFinderState}
-                onSelect={(exercise) => void handleReplaceExercise(log.workoutExercise.id, exercise.id)}
-                title={locale === 'ko' ? '교체 운동 찾기' : 'Find replacement'}
-              />
-            </div>
-          ) : null}
+                <div className="mt-3 rounded-md bg-slate-800 px-3 py-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-500">{locale === 'ko' ? '이전 기록' : 'Previous'}</p>
+                      <p className="mt-1 text-sm leading-5 text-slate-200">
+                        {log.previousSummary ?? (locale === 'ko' ? '아직 이전 완료 기록이 없습니다' : 'No previous completed record yet')}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleCopyPreviousExercise(log)}
+                      disabled={log.previousSets.length === 0}
+                      className="min-h-9 shrink-0 rounded-md bg-slate-900 px-3 text-xs font-bold text-cyan-300 disabled:text-slate-600 hover:bg-slate-955 transition-colors"
+                    >
+                      {locale === 'ko' ? '전체 복사' : 'Copy all'}
+                    </button>
+                  </div>
+                  {log.previousSets.length > 0 ? (
+                    <div className="mt-2 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                      {log.previousSets.slice(0, 6).map((previousSet) => (
+                        <span key={previousSet.id} className="shrink-0 rounded bg-slate-900 px-2 py-1 text-[11px] font-semibold text-slate-300">
+                          {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
 
-          <div className="mt-4 grid gap-2">
-            {log.sets.map((set, setIndex) => (
-              <WorkoutSetRow
-                key={set.id}
-                set={set}
-                setIndex={setIndex}
-                log={log}
-                locale={locale}
-                handleQuickAdjustSet={handleQuickAdjustSet}
-                handleSetChange={handleSetChange}
-                handleToggleWarmup={handleToggleWarmup}
-                handleToggleHardSet={handleToggleHardSet}
-                handleCopyPreviousSet={handleCopyPreviousSet}
-                handleDeleteSet={handleDeleteSet}
-              />
-            ))}
-          </div>
+                <label className="mt-3 block text-xs font-medium text-slate-400">
+                  {locale === 'ko' ? '운동 메모' : 'Exercise memo'}
+                  <input
+                    aria-label={`${log.exercise.nameKo} memo`}
+                    type="text"
+                    defaultValue={log.workoutExercise.memo ?? ''}
+                    onBlur={(event) => void handleUpdateExerciseMemo(log.workoutExercise.id, event.target.value)}
+                    className="mt-1 w-full rounded-md bg-slate-800 px-3 py-2 text-sm text-white"
+                    placeholder={locale === 'ko' ? '그립, 템포, 기구, 자세 메모' : 'Grip, tempo, machine, or form notes'}
+                  />
+                </label>
 
-          <button
-            type="button"
-            onClick={() => void handleAddSet(log.workoutExercise.id)}
-            className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-slate-800 px-3 text-sm font-semibold text-slate-100"
-          >
-            <Plus aria-hidden="true" size={16} />
-            <span>{locale === 'ko' ? '세트 추가' : 'Add Set'}</span>
-          </button>
-        </section>
-      ))}
+                {replacingWorkoutExerciseId === log.workoutExercise.id ? (
+                  <div className="mt-4">
+                    <ExerciseFinder
+                      ariaLabel={`Search replacement for ${getExerciseName(log.exercise, locale)}`}
+                      exercises={getAvailableExercises(log.exercise.id)}
+                      locale={locale}
+                      state={exerciseFinderState}
+                      onChange={updateExerciseFinderState}
+                      onSelect={(exercise) => void handleReplaceExercise(log.workoutExercise.id, exercise.id)}
+                      title={locale === 'ko' ? '교체 운동 찾기' : 'Find replacement'}
+                    />
+                  </div>
+                ) : null}
+
+                <div className="mt-4 grid gap-2">
+                  {log.sets.map((set, setIndex) => (
+                    <WorkoutSetRow
+                      key={set.id}
+                      set={set}
+                      setIndex={setIndex}
+                      log={log}
+                      locale={locale}
+                      handleQuickAdjustSet={handleQuickAdjustSet}
+                      handleSetChange={handleSetChange}
+                      handleToggleWarmup={handleToggleWarmup}
+                      handleToggleHardSet={handleToggleHardSet}
+                      handleCopyPreviousSet={handleCopyPreviousSet}
+                      handleDeleteSet={handleDeleteSet}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void handleAddSet(log.workoutExercise.id)}
+                  className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-slate-800 px-3 text-sm font-semibold text-slate-100 hover:bg-slate-750 transition-colors"
+                >
+                  <Plus aria-hidden="true" size={16} />
+                  <span>{locale === 'ko' ? '세트 추가' : 'Add Set'}</span>
+                </button>
+              </div>
+            )}
+          </section>
+        );
+      })}
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
         <div className="flex items-center justify-between gap-3">
@@ -645,99 +821,255 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
         </div>
 
         <div className="mt-4 grid gap-3">
+        {cardioRecords.length > 0 && (
+          <div className="mt-3.5 flex items-center justify-between rounded-lg bg-cyan-950/40 border border-cyan-500/20 px-4 py-3 text-xs font-semibold text-cyan-300">
+            <span>{locale === 'ko' ? '🏃‍♂️ 오늘 유산소 누적 요약' : '🏃‍♂️ Cardio Summary'}</span>
+            <span>
+              {totalCardioDistance.toFixed(1)} km / {totalCardioMinutes} {locale === 'ko' ? '분' : 'min'}
+            </span>
+          </div>
+        )}
+
           {cardioRecords.map((cardioRecord) => {
             const minutes = Math.max(
               1,
               Math.round((new Date(cardioRecord.endedAt).getTime() - new Date(cardioRecord.startedAt).getTime()) / 60000),
             );
 
+            const machineLabels: Record<string, string> = {
+              treadmill: locale === 'ko' ? '트레드밀' : 'Treadmill',
+              indoor_bike: locale === 'ko' ? '실내 자전거' : 'Indoor Bike',
+              stair_climber: locale === 'ko' ? '천국의 계단' : 'Stair Climber',
+              elliptical: locale === 'ko' ? '엘립티컬' : 'Elliptical',
+            };
+            const displayName = cardioRecord.environment === 'outdoor'
+              ? (cardioRecord.location || (locale === 'ko' ? '야외 러닝/워킹' : 'Outdoor Cardio'))
+              : (machineLabels[cardioRecord.machineType || ''] || (locale === 'ko' ? '실내 유산소' : 'Indoor Cardio'));
+
             return (
-              <div key={cardioRecord.id} className="rounded-md bg-slate-800 p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-white">
-                    {cardioRecord.environment === 'indoor' ? cardioRecord.machineType ?? 'indoor' : cardioRecord.location || 'outdoor'}
-                  </p>
+              <div key={cardioRecord.id} className="rounded-md bg-slate-800 p-3.5 border border-slate-750">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">
+                      {cardioRecord.environment === 'indoor' ? '🏠' : '🌳'}
+                    </span>
+                    <p className="text-sm font-bold text-white">
+                      {displayName}
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => void handleDeleteCardio(cardioRecord.id)}
-                    className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-900 text-red-300"
+                    className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-900 hover:bg-slate-950 text-red-400 active:scale-95 transition-all"
                     aria-label="Delete cardio"
                   >
                     <Trash2 aria-hidden="true" size={14} />
                   </button>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <label className="text-xs font-medium text-slate-400">
-                    {locale === 'ko' ? '종류' : 'Type'}
-                    <select
-                      aria-label="Cardio environment"
-                      defaultValue={cardioRecord.environment}
-                      onChange={(event) => void handleUpdateCardio(cardioRecord, {
-                        environment: event.target.value as CardioRecord['environment'],
-                      })}
-                      className="mt-1 w-full rounded-md bg-slate-900 px-2 py-2 text-sm text-white"
-                    >
-                      <option value="indoor">{locale === 'ko' ? '실내' : 'Indoor'}</option>
-                      <option value="outdoor">{locale === 'ko' ? '야외' : 'Outdoor'}</option>
-                    </select>
-                  </label>
-                  <label className="text-xs font-medium text-slate-400">
-                    {locale === 'ko' ? '기구 / 장소' : 'Machine / place'}
-                    <input
-                      aria-label="Cardio machine or place"
-                      type="text"
-                      defaultValue={cardioRecord.environment === 'indoor' ? cardioRecord.machineType ?? '' : cardioRecord.location ?? ''}
-                      onBlur={(event) => void handleUpdateCardio(cardioRecord, cardioRecord.environment === 'indoor'
-                        ? { machineType: event.target.value as CardioRecord['machineType'] }
-                        : { location: event.target.value })}
-                      className="mt-1 w-full rounded-md bg-slate-900 px-2 py-2 text-sm text-white"
-                    />
-                  </label>
-                  <label className="text-xs font-medium text-slate-400">
-                    Km
-                    <input
-                      aria-label="Cardio distance"
-                      type="text"
-                      inputMode="decimal"
-                      enterKeyHint="done"
-                      defaultValue={cardioRecord.distanceKm || ''}
-                      onBlur={(event) => void handleUpdateCardio(cardioRecord, {
-                        distanceKm: Number(event.target.value) || undefined,
-                      })}
-                      className="mt-1 w-full rounded-md bg-slate-900 px-2 py-2 text-sm text-white"
-                    />
-                  </label>
-                  <label className="text-xs font-medium text-slate-400">
-                    Minutes
-                    <input
-                      aria-label="Cardio minutes"
-                      type="text"
-                      inputMode="numeric"
-                      enterKeyHint="done"
-                      defaultValue={minutes}
-                      onBlur={(event) => void handleUpdateCardio(cardioRecord, {
-                        endedAt: updateCardioMinutes(cardioRecord, Number(event.target.value) || minutes),
-                      })}
-                      className="mt-1 w-full rounded-md bg-slate-900 px-2 py-2 text-sm text-white"
-                    />
-                  </label>
+                {/* 실내 / 야외 전환 탭 */}
+                <div className="flex rounded-lg bg-slate-900 p-1 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => void handleUpdateCardio(cardioRecord, { environment: 'indoor', machineType: 'treadmill' })}
+                    className={`flex-1 rounded-md py-1.5 text-xs font-bold transition-all ${
+                      cardioRecord.environment === 'indoor'
+                        ? 'bg-slate-800 text-cyan-300 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {locale === 'ko' ? '실내 유산소' : 'Indoor'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleUpdateCardio(cardioRecord, { environment: 'outdoor', location: '' })}
+                    className={`flex-1 rounded-md py-1.5 text-xs font-bold transition-all ${
+                      cardioRecord.environment === 'outdoor'
+                        ? 'bg-slate-800 text-cyan-300 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {locale === 'ko' ? '야외 유산소' : 'Outdoor'}
+                  </button>
                 </div>
 
-                <label className="mt-3 block text-xs font-medium text-slate-400">
+                <div className="grid gap-3">
+                  {/* 기구 / 장소 입력 */}
+                  {cardioRecord.environment === 'indoor' ? (
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">
+                      {locale === 'ko' ? '기구 선택' : 'Machine Select'}
+                      <select
+                        aria-label="Cardio machine select"
+                        value={cardioRecord.machineType || 'treadmill'}
+                        onChange={(event) => void handleUpdateCardio(cardioRecord, {
+                          machineType: event.target.value as CardioRecord['machineType'],
+                        })}
+                        className="mt-1 min-h-10 w-full rounded-md bg-slate-900 px-3 text-sm text-white border border-slate-700/50"
+                      >
+                        <option value="treadmill">{locale === 'ko' ? '🏃‍♂️ 트레드밀 (러닝머신)' : '🏃‍♂️ Treadmill'}</option>
+                        <option value="indoor_bike">{locale === 'ko' ? '🚴‍♂️ 실내 자전거' : '🚴‍♂️ Indoor Bike'}</option>
+                        <option value="stair_climber">{locale === 'ko' ? '🧗‍♂️ 천국의 계단' : '🧗‍♂️ Stair Climber'}</option>
+                        <option value="elliptical">{locale === 'ko' ? '🎿 엘립티컬' : '🎿 Elliptical'}</option>
+                      </select>
+                    </label>
+                  ) : (
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">
+                      {locale === 'ko' ? '장소 입력' : 'Place'}
+                      <input
+                        aria-label="Cardio place input"
+                        type="text"
+                        defaultValue={cardioRecord.location ?? ''}
+                        onBlur={(event) => void handleUpdateCardio(cardioRecord, { location: event.target.value.trim() })}
+                        placeholder={locale === 'ko' ? '예: 동네 공원, 러닝 트랙 등' : 'e.g. Park, track, river'}
+                        className="mt-1 w-full rounded-md bg-slate-900 px-3 py-2 text-sm text-white border border-slate-700/50 outline-none focus:border-cyan-400"
+                      />
+                    </label>
+                  )}
+
+                  {/* 퀵 증감 계기판 */}
+                  <div className={`grid gap-2 ${cardioRecord.environment === 'indoor' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">
+                      Km
+                      <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-md bg-slate-900">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextVal = Math.max(0, Number(((cardioRecord.distanceKm || 0) - 0.5).toFixed(1)));
+                            void handleUpdateCardio(cardioRecord, { distanceKm: nextVal || undefined });
+                          }}
+                          className="min-h-10 text-sm font-bold text-slate-300"
+                        >
+                          -
+                        </button>
+                        <input
+                          aria-label="Cardio distance"
+                          type="text"
+                          inputMode="decimal"
+                          enterKeyHint="done"
+                          value={cardioRecord.distanceKm || ''}
+                          onChange={(event) => {
+                            const val = event.target.value === '' ? undefined : Number(event.target.value) || 0;
+                            void handleUpdateCardio(cardioRecord, { distanceKm: val });
+                          }}
+                          placeholder="0.0"
+                          className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-white outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextVal = Number(((cardioRecord.distanceKm || 0) + 0.5).toFixed(1));
+                            void handleUpdateCardio(cardioRecord, { distanceKm: nextVal });
+                          }}
+                          className="min-h-10 text-sm font-bold text-cyan-300"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </label>
+
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">
+                      {locale === 'ko' ? '분' : 'Min'}
+                      <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-md bg-slate-900">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextVal = Math.max(1, minutes - 5);
+                            void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
+                          }}
+                          className="min-h-10 text-sm font-bold text-slate-300"
+                        >
+                          -
+                        </button>
+                        <input
+                          aria-label="Cardio minutes"
+                          type="text"
+                          inputMode="numeric"
+                          enterKeyHint="done"
+                          value={minutes}
+                          onChange={(event) => {
+                            const val = Math.max(1, Math.round(Number(event.target.value)) || 1);
+                            void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, val) });
+                          }}
+                          placeholder="min"
+                          className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-white outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextVal = minutes + 5;
+                            void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
+                          }}
+                          className="min-h-10 text-sm font-bold text-cyan-300"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </label>
+
+                    {cardioRecord.environment === 'indoor' && (
+                      <label className="text-[11px] font-semibold uppercase text-slate-500">
+                        {locale === 'ko' ? '경사도 (%)' : 'Incline (%)'}
+                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-md bg-slate-900">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextVal = Math.max(0, (cardioRecord.inclinePercent || 0) - 1);
+                              void handleUpdateCardio(cardioRecord, { inclinePercent: nextVal });
+                            }}
+                            className="min-h-10 text-sm font-bold text-slate-300"
+                          >
+                            -
+                          </button>
+                          <input
+                            aria-label="Cardio incline"
+                            type="text"
+                            inputMode="numeric"
+                            enterKeyHint="done"
+                            value={cardioRecord.inclinePercent ?? ''}
+                            onChange={(event) => {
+                              const val = event.target.value === '' ? undefined : Number(event.target.value) || 0;
+                              void handleUpdateCardio(cardioRecord, { inclinePercent: val });
+                            }}
+                            placeholder="%"
+                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-white outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextVal = (cardioRecord.inclinePercent || 0) + 1;
+                              void handleUpdateCardio(cardioRecord, { inclinePercent: nextVal });
+                            }}
+                            className="min-h-10 text-sm font-bold text-cyan-300"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                <label className="mt-3.5 block text-[11px] font-semibold uppercase text-slate-500">
                   {locale === 'ko' ? '메모' : 'Memo'}
                   <input
                     aria-label="Cardio memo"
                     type="text"
                     defaultValue={cardioRecord.memo ?? ''}
-                    onBlur={(event) => void handleUpdateCardio(cardioRecord, { memo: event.target.value || undefined })}
-                    className="mt-1 w-full rounded-md bg-slate-900 px-2 py-2 text-sm text-white"
+                    onBlur={(event) => void handleUpdateCardio(cardioRecord, { memo: event.target.value.trim() || undefined })}
+                    placeholder={locale === 'ko' ? '속도 변경, 컨디션 피드백 등' : 'e.g. Speed changes, energy feedback'}
+                    className="mt-1 w-full rounded-md bg-slate-900 px-3 py-2 text-sm text-white border border-slate-700/50 outline-none focus:border-cyan-400"
                   />
                 </label>
 
-                <p className="mt-3 text-sm text-slate-300">
-                  {cardioRecord.averageSpeedKmh ? `${cardioRecord.averageSpeedKmh} km/h ${locale === 'ko' ? '평균' : 'average'}` : locale === 'ko' ? '거리를 저장하면 평균 속도가 표시됩니다.' : 'Average speed appears after distance is saved.'}
-                </p>
+                {cardioRecord.averageSpeedKmh ? (
+                  <p className="mt-3 text-xs font-semibold text-cyan-400 bg-cyan-950/30 rounded px-2.5 py-1.5 inline-block">
+                    ⚡ {locale === 'ko' ? '평균 속도' : 'Average speed'}: <span className="font-mono">{cardioRecord.averageSpeedKmh.toFixed(1)} km/h</span>
+                  </p>
+                ) : (
+                  <p className="mt-3 text-[11px] font-medium text-slate-400">
+                    ℹ️ {locale === 'ko' ? '거리를 입력하면 평균 속도가 계산됩니다.' : 'Enter distance to calculate average speed.'}
+                  </p>
+                )}
               </div>
             );
           })}
@@ -878,6 +1210,32 @@ function WorkoutSetRow({
 
   const currentType = set.type || (set.isWarmup ? 'warmup' : 'normal');
 
+  const previousSet = useMemo(() => {
+    const currentSets = log.sets;
+    const previousSets = log.previousSets;
+
+    if (!previousSets || previousSets.length === 0) return undefined;
+
+    const sameTypeSetsInCurrent = currentSets.filter(
+      (s) => (s.type || (s.isWarmup ? 'warmup' : 'normal')) === currentType
+    );
+    const relativeIndex = sameTypeSetsInCurrent.indexOf(set);
+
+    if (relativeIndex === -1) {
+      return previousSets[setIndex];
+    }
+
+    const sameTypeSetsInPrevious = previousSets.filter(
+      (s) => (s.type || (s.isWarmup ? 'warmup' : 'normal')) === currentType
+    );
+
+    if (sameTypeSetsInPrevious[relativeIndex]) {
+      return sameTypeSetsInPrevious[relativeIndex];
+    }
+
+    return previousSets[setIndex];
+  }, [set, log.sets, log.previousSets, setIndex, currentType]);
+
   const handleToggleSetType = async () => {
     const NEXT_TYPES: Record<WorkoutSetType, WorkoutSetType> = {
       normal: 'warmup',
@@ -977,6 +1335,11 @@ function WorkoutSetRow({
               +
             </button>
           </div>
+          {previousSet && previousSet.weightKg > 0 && (
+            <span className="mt-1 block text-[10px] font-medium text-slate-400 normal-case leading-none">
+              {locale === 'ko' ? `지난번: ${previousSet.weightKg}kg` : `Prev: ${previousSet.weightKg}kg`}
+            </span>
+          )}
         </label>
 
         <label className="text-[11px] font-semibold uppercase text-slate-500">
@@ -1015,6 +1378,11 @@ function WorkoutSetRow({
               +
             </button>
           </div>
+          {previousSet && previousSet.reps > 0 && (
+            <span className="mt-1 block text-[10px] font-medium text-slate-400 normal-case leading-none">
+              {locale === 'ko' ? `지난번: ${previousSet.reps}회` : `Prev: ${previousSet.reps} reps`}
+            </span>
+          )}
         </label>
 
         <label className="text-[11px] font-semibold uppercase text-slate-500">
@@ -1053,6 +1421,11 @@ function WorkoutSetRow({
               +
             </button>
           </div>
+          {previousSet && previousSet.rir !== undefined && (
+            <span className="mt-1 block text-[10px] font-medium text-slate-400 normal-case leading-none">
+              {locale === 'ko' ? `지난번: RIR ${previousSet.rir}` : `Prev: RIR ${previousSet.rir}`}
+            </span>
+          )}
         </label>
       </div>
 
@@ -1088,8 +1461,8 @@ function WorkoutSetRow({
         </button>
         <button
           type="button"
-          onClick={() => void handleCopyPreviousSet(set, log.previousSets[setIndex])}
-          disabled={!log.previousSets[setIndex]}
+          onClick={() => void handleCopyPreviousSet(set, previousSet)}
+          disabled={!previousSet}
           className="flex min-h-10 items-center justify-center rounded-md bg-slate-900 text-slate-100 disabled:text-slate-600"
           aria-label={`Copy previous workout values to ${log.exercise.nameKo} set ${set.setNo}`}
           title="Copy previous workout set"
