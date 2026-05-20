@@ -69,3 +69,34 @@ export class SetGoDatabase extends Dexie {
 }
 
 export const db = new SetGoDatabase();
+
+/**
+ * Request persistent storage permission from the browser.
+ * Returns true if the storage is persistent, false otherwise.
+ */
+export async function requestPersistentStorage(): Promise<boolean> {
+  if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+    try {
+      return await navigator.storage.persist();
+    } catch (e) {
+      console.warn('Failed to request storage persistence:', e);
+      return false;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if the storage is already persistent.
+ */
+export async function isStoragePersisted(): Promise<boolean> {
+  if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persisted) {
+    try {
+      return await navigator.storage.persisted();
+    } catch (e) {
+      console.warn('Failed to check storage persistence:', e);
+      return false;
+    }
+  }
+  return false;
+}

@@ -123,4 +123,91 @@ describe('stats builder', () => {
     expect(promptEn).toContain('2,500');
     expect(promptEn).toContain('Status: LOW');
   });
+
+  it('accurately counts hard sets and training volumes taking new set types (drop, failure) and backward compatibility into account', () => {
+    const date = formatDateKey(new Date());
+    const session: WorkoutSession = {
+      id: 'session_2',
+      date,
+      startedAt: `${date}T12:00:00.000`,
+      timeBand: 'evening',
+      status: 'completed',
+      totalStrengthVolumeKg: 0,
+      createdAt: `${date}T12:00:00.000`,
+      updatedAt: `${date}T12:00:00.000`,
+    };
+    const workoutExercises: WorkoutExercise[] = [
+      {
+        id: 'session_2_ex1',
+        sessionId: session.id,
+        exerciseId: 'deadlift',
+        order: 1,
+        status: 'completed',
+        totalVolumeKg: 1000,
+      },
+    ];
+    const sets: WorkoutSet[] = [
+      {
+        id: 'set_warmup_type',
+        workoutExerciseId: 'session_2_ex1',
+        setNo: 1,
+        weightKg: 60,
+        reps: 5,
+        isCompleted: true,
+        type: 'warmup',
+      },
+      {
+        id: 'set_normal_type',
+        workoutExerciseId: 'session_2_ex1',
+        setNo: 2,
+        weightKg: 100,
+        reps: 5,
+        rir: 2,
+        isCompleted: true,
+        type: 'normal',
+      },
+      {
+        id: 'set_drop_type',
+        workoutExerciseId: 'session_2_ex1',
+        setNo: 3,
+        weightKg: 80,
+        reps: 8,
+        rir: 1,
+        isCompleted: true,
+        type: 'drop',
+      },
+      {
+        id: 'set_failure_type',
+        workoutExerciseId: 'session_2_ex1',
+        setNo: 4,
+        weightKg: 100,
+        reps: 4,
+        rir: 0,
+        isCompleted: true,
+        type: 'failure',
+      },
+      {
+        id: 'set_legacy_warmup',
+        workoutExerciseId: 'session_2_ex1',
+        setNo: 5,
+        weightKg: 60,
+        reps: 5,
+        isCompleted: true,
+        isWarmup: true,
+      },
+    ];
+
+    const stats = buildStats(
+      [session],
+      workoutExercises,
+      sets,
+      [exercise('deadlift', 'main', ['main'], 'back')],
+      'en',
+    );
+
+    expect(stats.totalSets).toBe(5);
+    expect(stats.hardSets).toBe(3);
+    expect(stats.hardSetRatio).toBe(100);
+    expect(stats.muscleStats.find((item) => item.group === 'back')?.sets).toBe(3);
+  });
 });

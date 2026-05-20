@@ -214,7 +214,8 @@ function estimatedOneRm(set: WorkoutSet): number {
 }
 
 function isHardSet(set: WorkoutSet, exercise: ExerciseMaster): boolean {
-  return set.isCompleted && !set.isWarmup && !isWarmupOnlyExercise(exercise) && set.rir !== undefined && set.rir <= 3;
+  const isWarmup = set.type ? set.type === 'warmup' : set.isWarmup;
+  return set.isCompleted && !isWarmup && !isWarmupOnlyExercise(exercise) && set.rir !== undefined && set.rir <= 3;
 }
 
 function toMuscleGroups(exercise: ExerciseMaster): MuscleGroup[] {
@@ -362,7 +363,8 @@ export function buildStats(
   const isWarmupSetForStats = (set: WorkoutSet) => {
     const workoutExercise = workoutExerciseById.get(set.workoutExerciseId);
     const exercise = workoutExercise ? exerciseById.get(workoutExercise.exerciseId) : undefined;
-    return Boolean(set.isWarmup) || isWarmupOnlyExercise(exercise);
+    const isWarmup = set.type ? set.type === 'warmup' : set.isWarmup;
+    return Boolean(isWarmup) || isWarmupOnlyExercise(exercise);
   };
   const currentWeekTrainingSets = currentWeekSets.filter((set) => !isWarmupSetForStats(set));
   const hardSets = currentWeekSets.filter((set) => {
