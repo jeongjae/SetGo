@@ -8,6 +8,8 @@ describe('routine templates', () => {
       '3분할 가슴/등/하체',
       '3분할 푸시/풀/보충운동',
       '4분할 상체/하체 (강약)',
+      '주 3회 입문자 무분할 루틴',
+      '전통 5분할 루틴 (가슴/등/하체/어깨/팔)',
     ]);
   });
 
@@ -37,5 +39,13 @@ describe('routine templates', () => {
     expect(getRoutineDayDisplayName({ name: 'Push' }, 'ko')).toBe('Push');
     expect(getRoutineDayDisplayName({ name: 'Pull' }, 'ko')).toBe('Pull');
     expect(getRoutineDayDisplayName({ name: 'Assist' }, 'ko')).toBe('Assist');
+  });
+
+  it('documents the new full body and classic 5 splits', () => {
+    const fullBody = routineTemplates.find((t) => t.splitType === 'full_body_3');
+    const classic5 = routineTemplates.find((t) => t.splitType === 'classic_5');
+
+    expect(fullBody ? getRoutineTemplateSummary(fullBody, 'ko') : '').toContain('전신: 스쿼트');
+    expect(classic5 ? getRoutineTemplateSummary(classic5, 'ko') : '').toContain('가슴');
   });
 });

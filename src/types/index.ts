@@ -15,7 +15,9 @@ export type RoutineSplitType =
   | 'upper_lower_2'
   | 'chest_back_legs_3'
   | 'push_pull_assist_3'
-  | 'upper_lower_4';
+  | 'upper_lower_4'
+  | 'full_body_3'
+  | 'classic_5';
 
 export type WorkoutStatus = 'planned' | 'in_progress' | 'completed' | 'skipped';
 
@@ -134,11 +136,12 @@ export type CardioRecord = {
   id: string;
   sessionId: string;
   environment: 'indoor' | 'outdoor';
-  machineType?: 'treadmill' | 'indoor_bike' | 'trapmill';
+  machineType?: 'treadmill' | 'indoor_bike' | 'stair_climber' | 'elliptical';
   location?: string;
   startedAt: string;
   endedAt: string;
   distanceKm?: number;
   averageSpeedKmh?: number;
+  inclinePercent?: number;
   memo?: string;
 };

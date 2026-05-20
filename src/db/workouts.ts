@@ -297,7 +297,7 @@ export async function addCardioRecordToWorkout(sessionId: string): Promise<void>
 
 export async function updateCardioRecord(
   cardioRecordId: string,
-  values: Partial<Pick<CardioRecord, 'environment' | 'machineType' | 'location' | 'startedAt' | 'endedAt' | 'distanceKm' | 'memo'>>,
+  values: Partial<CardioRecord>,
 ): Promise<void> {
   const existing = await db.cardioRecords.get(cardioRecordId);
   if (!existing) return;
@@ -560,7 +560,7 @@ export async function moveWorkoutExercise(workoutExerciseId: string, direction: 
 
 export async function updateWorkoutSet(
   setId: string,
-  values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup'>>,
+  values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'type'>>,
 ): Promise<void> {
   const existingSet = await db.workoutSets.get(setId);
   if (!existingSet) return;
@@ -598,6 +598,14 @@ export async function skipWorkoutSession(sessionId: string): Promise<void> {
   await db.workoutSessions.update(sessionId, {
     status: 'skipped',
     endedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+export async function unskipWorkoutSession(sessionId: string): Promise<void> {
+  await db.workoutSessions.update(sessionId, {
+    status: 'in_progress',
+    endedAt: undefined,
     updatedAt: new Date().toISOString(),
   });
 }

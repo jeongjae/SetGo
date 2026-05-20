@@ -53,6 +53,22 @@ export const routineTemplates: RoutineTemplate[] = [
     dayDescriptions: ['Upper growth day', 'Lower growth day', 'Upper maintenance / recovery day', 'Lower maintenance / recovery day'],
     dayDescriptionsKo: ['Upper A: 가슴 / 등 / 이두 / 삼두, 근육성장', 'Lower A: 하체 / 어깨, 근육성장', 'Upper B: 가슴 / 등 / 이두 / 삼두, 유지/회복', 'Lower B: 하체 / 어깨, 유지/회복'],
   },
+  {
+    splitType: 'full_body_3',
+    name: '3-Day Full Body Starter',
+    nameKo: '주 3회 입문자 무분할 루틴',
+    days: ['Full Body'],
+    dayDescriptions: ['Squat / Bench / Lat Pulldown / Press / Curl / Plank'],
+    dayDescriptionsKo: ['전신: 스쿼트 / 벤치 / 랫풀다운 / 밀프 / 컬 / 플랭크'],
+  },
+  {
+    splitType: 'classic_5',
+    name: 'Classic 5-Day Bodypart Split',
+    nameKo: '전통 5분할 루틴 (가슴/등/하체/어깨/팔)',
+    days: ['Chest Focus', 'Back Focus', 'Legs Focus', 'Shoulders Focus', 'Arms Focus'],
+    dayDescriptions: ['Chest focus', 'Back focus', 'Legs focus', 'Shoulders focus', 'Arms focus'],
+    dayDescriptionsKo: ['가슴: 대흉근 융단폭격', '등: 광배근/등 전체 집중', '하체: 대퇴사두/햄스트링/종아리', '어깨: 삼각근 전측후면 타겟', '팔: 이두/삼두 슈퍼세트/동시훈련'],
+  },
 ];
 
 const routineTemplateExerciseIds: Record<RoutineSplitType, string[][]> = {
@@ -75,6 +91,16 @@ const routineTemplateExerciseIds: Record<RoutineSplitType, string[][]> = {
     ['barbell_squat', 'romanian_deadlift', 'leg_press', 'shoulder_press'],
     ['chest_press', 'seated_cable_row', 'pull_up', 'dumbbell_curl', 'cable_pushdown'],
     ['leg_press', 'romanian_deadlift', 'side_lateral_raise', 'joint_mobility'],
+  ],
+  full_body_3: [
+    ['barbell_squat', 'bench_press', 'lat_pulldown', 'military_press', 'barbell_curl', 'plank'],
+  ],
+  classic_5: [
+    ['bench_press', 'incline_bench_press', 'dumbbell_fly', 'peck_deck_fly', 'dips'],
+    ['pull_up', 'lat_pulldown', 'barbell_row', 'seated_cable_row', 'deadlift'],
+    ['barbell_squat', 'leg_press', 'leg_extension', 'lying_leg_curl', 'calf_raise'],
+    ['military_press', 'shoulder_press', 'side_lateral_raise', 'bentover_lateral_raise', 'face_pull'],
+    ['barbell_curl', 'cable_pushdown', 'dumbbell_curl', 'lying_triceps_extension', 'hammer_curl', 'overhead_triceps_extension'],
   ],
 };
 
@@ -106,6 +132,12 @@ export function getRoutineDayDisplayName(routineDay: Pick<RoutineDay, 'name'> | 
     'Lower A': '하체 A',
     'Upper B': '상체 B',
     'Lower B': '하체 B',
+    'Full Body': '전신',
+    'Chest Focus': '가슴',
+    'Back Focus': '등',
+    'Legs Focus': '하체',
+    'Shoulders Focus': '어깨',
+    'Arms Focus': '팔',
   };
 
   return labels[routineDay.name] ?? routineDay.name;
