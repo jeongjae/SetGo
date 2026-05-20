@@ -10,6 +10,18 @@ import { getOrCreateTodayWorkout, getOrCreateWorkoutForDate } from '../db/workou
 
 export type AppView = 'today' | 'calendar' | 'routineSetup' | 'export' | 'stats' | 'workout';
 
+function describeStartupError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    };
+  }
+
+  return error;
+}
+
 export function App() {
   const [view, setView] = useState<AppView>('today');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -36,12 +48,16 @@ export function App() {
       return;
     }
 
-    const workout = dateKey
-      ? await getOrCreateWorkoutForDate(dateKey, routineDayId, { createNew })
-      : await getOrCreateTodayWorkout(routineDayId);
-    setActiveWorkoutSessionId(workout.session.id);
-    setRefreshKey((current) => current + 1);
-    setView('workout');
+    try {
+      const workout = dateKey
+        ? await getOrCreateWorkoutForDate(dateKey, routineDayId, { createNew })
+        : await getOrCreateTodayWorkout(routineDayId);
+      setActiveWorkoutSessionId(workout.session.id);
+      setRefreshKey((current) => current + 1);
+      setView('workout');
+    } catch (error) {
+      console.error('Failed to start workout', describeStartupError(error));
+    }
   }
 
   const content = view === 'routineSetup'

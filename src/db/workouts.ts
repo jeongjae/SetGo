@@ -22,6 +22,18 @@ export type WorkoutExerciseLog = {
   previousSets: WorkoutSet[];
 };
 
+async function getWorkoutSessionsForDate(date: string): Promise<WorkoutSession[]> {
+  try {
+    return await db.workoutSessions
+      .where('date')
+      .equals(date)
+      .toArray();
+  } catch (error) {
+    console.warn('Falling back to full workout session scan for date lookup', error);
+    return (await db.workoutSessions.toArray()).filter((session) => session.date === date);
+  }
+}
+
 export async function getOrCreateWorkoutForDate(
   date: string,
   selectedRoutineDayId?: string,
@@ -29,18 +41,26 @@ export async function getOrCreateWorkoutForDate(
 ): Promise<ActiveWorkout> {
   const now = new Date();
   const sessionDate = new Date(`${date}T12:00:00`);
-  const activeRoutine = await getActiveRoutine();
+  const activeRoutine = await getActiveRoutine().catch((error) => {
+    console.warn('Failed to load active routine while starting workout', error);
+    return undefined;
+  });
   const routineDays = activeRoutine
-    ? await db.routineDays.where('routineId').equals(activeRoutine.id).sortBy('sequence')
+    ? await db.routineDays.where('routineId').equals(activeRoutine.id).sortBy('sequence').catch((error) => {
+      console.warn('Failed to load routine days while starting workout', error);
+      return [] as RoutineDay[];
+    })
     : [];
-  const scheduledRoutineDay = selectedRoutineDayId ? undefined : await getSuggestedRoutineDayForDate(sessionDate);
+  const scheduledRoutineDay = selectedRoutineDayId
+    ? undefined
+    : await getSuggestedRoutineDayForDate(sessionDate).catch((error) => {
+      console.warn('Failed to load scheduled routine day while starting workout', error);
+      return undefined;
+    });
   const routineDay = routineDays.find((day) => day.id === selectedRoutineDayId)
     ?? scheduledRoutineDay;
 
-  const existingSessions = await db.workoutSessions
-    .where('date')
-    .equals(date)
-    .toArray();
+  const existingSessions = await getWorkoutSessionsForDate(date);
   const inProgressSessions = existingSessions
     .filter((session) => session.status === 'in_progress')
     .sort((a, b) => (b.startedAt ?? b.createdAt).localeCompare(a.startedAt ?? a.createdAt));
@@ -55,6 +75,7 @@ export async function getOrCreateWorkoutForDate(
     if (existingExerciseCount === 0 && existingSession.routineDayId) {
       await seedWorkoutExercisesFromRoutineDay(existingSession.id, existingSession.routineDayId);
     }
+    await dedupeWorkoutExercisesByExercise(existingSession.id);
 
     const existingRoutineDay = existingSession.routineDayId
       ? await db.routineDays.get(existingSession.routineDayId)
@@ -103,6 +124,7 @@ export async function getWorkoutBySessionId(sessionId: string): Promise<ActiveWo
   if (existingExerciseCount === 0 && session.routineDayId) {
     await seedWorkoutExercisesFromRoutineDay(session.id, session.routineDayId);
   }
+  await dedupeWorkoutExercisesByExercise(session.id);
 
   const [routine, routineDay] = await Promise.all([
     session.routineId ? db.routines.get(session.routineId) : undefined,
@@ -116,17 +138,55 @@ export async function getWorkoutBySessionId(sessionId: string): Promise<ActiveWo
   };
 }
 
+async function dedupeWorkoutExercisesByExercise(sessionId: string): Promise<void> {
+  const workoutExercises = await db.workoutExercises.where('sessionId').equals(sessionId).sortBy('order');
+  const seenExerciseIds = new Set<string>();
+  const keptExercises: WorkoutExercise[] = [];
+  const duplicateExercises: WorkoutExercise[] = [];
+
+  for (const workoutExercise of workoutExercises) {
+    if (seenExerciseIds.has(workoutExercise.exerciseId)) {
+      duplicateExercises.push(workoutExercise);
+      continue;
+    }
+
+    seenExerciseIds.add(workoutExercise.exerciseId);
+    keptExercises.push(workoutExercise);
+  }
+
+  if (duplicateExercises.length === 0) return;
+
+  await db.transaction('rw', db.workoutExercises, db.workoutSets, async () => {
+    for (const duplicateExercise of duplicateExercises) {
+      await db.workoutSets.where('workoutExerciseId').equals(duplicateExercise.id).delete();
+      await db.workoutExercises.delete(duplicateExercise.id);
+    }
+
+    await Promise.all(
+      keptExercises.map((workoutExercise, index) => (
+        workoutExercise.order === index + 1
+          ? Promise.resolve()
+          : db.workoutExercises.update(workoutExercise.id, { order: index + 1 })
+      )),
+    );
+  });
+
+  await refreshSessionVolume(sessionId);
+}
+
 async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayId?: string): Promise<void> {
   if (!routineDayId) return;
 
   const plans = await db.routineExercisePlans.where('routineDayId').equals(routineDayId).sortBy('order');
   if (plans.length === 0) return;
 
+  const planExercises = await Promise.all(plans.map((plan) => db.exercises.get(plan.exerciseId)));
+
   await db.transaction('rw', db.workoutExercises, db.workoutSets, async () => {
     for (const [index, plan] of plans.entries()) {
-      const workoutExerciseId = `${sessionId}_${plan.exerciseId}_${Date.now()}_${index + 1}`;
+      const workoutExerciseId = `${sessionId}_${plan.id}`;
       const plannedSets = Math.max(1, plan.plannedSets ?? 3);
-      const exercise = await db.exercises.get(plan.exerciseId);
+      const exercise = planExercises[index];
       const isWarmup = exercise?.stage === 'warmup' && !exercise.stageTags?.includes('main');
 
       await db.workoutExercises.put({
@@ -156,11 +216,9 @@ async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayI
 
 export async function getTodayWorkout(): Promise<ActiveWorkout | undefined> {
   const date = formatDateKey(new Date());
-  const session = await db.workoutSessions
-    .where('date')
-    .equals(date)
+  const session = (await getWorkoutSessionsForDate(date))
     .filter((workoutSession) => workoutSession.status === 'in_progress')
-    .first();
+    .sort((a, b) => (b.startedAt ?? b.createdAt).localeCompare(a.startedAt ?? a.createdAt))[0];
 
   if (!session) return undefined;
 
@@ -168,6 +226,7 @@ export async function getTodayWorkout(): Promise<ActiveWorkout | undefined> {
   if (existingExerciseCount === 0 && session.routineDayId) {
     await seedWorkoutExercisesFromRoutineDay(session.id, session.routineDayId);
   }
+  await dedupeWorkoutExercisesByExercise(session.id);
 
   const [routine, routineDay] = await Promise.all([
     session.routineId ? db.routines.get(session.routineId) : undefined,

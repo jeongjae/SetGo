@@ -52,6 +52,19 @@ export class SetGoDatabase extends Dexie {
       workoutSets: 'id, workoutExerciseId, setNo',
       cardioRecords: 'id, sessionId, environment',
     });
+
+    this.version(3).stores({
+      exercises: 'id, category, stage, isDefault, isActive',
+      routines: 'id, splitType, isActive, startDate',
+      routineDays: 'id, routineId, sequence',
+      weeklySchedules: 'id, routineId, weekday, routineDayId',
+      calendarPlanOverrides: 'id, date, routineId, routineDayId',
+      routineExercisePlans: 'id, routineDayId, exerciseId, order',
+      workoutSessions: 'id, date, routineId, routineDayId, status',
+      workoutExercises: 'id, sessionId, exerciseId, order, status',
+      workoutSets: 'id, workoutExerciseId, setNo',
+      cardioRecords: 'id, sessionId, environment',
+    });
   }
 }
 

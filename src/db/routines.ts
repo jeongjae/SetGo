@@ -134,6 +134,24 @@ export type RoutineScheduleForDate = {
 
 const weekdays: Weekday[] = [0, 1, 2, 3, 4, 5, 6];
 
+async function getCalendarPlanOverrideForRoutineDate(
+  routineId: string,
+  dateKey: string,
+): Promise<CalendarPlanOverride | undefined> {
+  try {
+    return await db.calendarPlanOverrides
+      .where('date')
+      .equals(dateKey)
+      .filter((item) => item.routineId === routineId)
+      .first();
+  } catch (error) {
+    console.warn('Falling back to full calendar override scan for date lookup', error);
+    return (await db.calendarPlanOverrides.toArray()).find((item) => (
+      item.routineId === routineId && item.date === dateKey
+    ));
+  }
+}
+
 export async function getActiveRoutine() {
   return db.routines.filter((routine) => routine.isActive).first();
 }
@@ -210,7 +228,7 @@ export async function getRoutineScheduleForDate(date = new Date()): Promise<Rout
   const [days, schedule] = await Promise.all([getActiveRoutineDays(), getActiveWeeklySchedule()]);
   const dateKey = formatDateKey(date);
   const override = routine
-    ? await db.calendarPlanOverrides.where('date').equals(dateKey).filter((item) => item.routineId === routine.id).first()
+    ? await getCalendarPlanOverrideForRoutineDate(routine.id, dateKey)
     : undefined;
 
   if (override) {
@@ -254,11 +272,7 @@ export async function saveCalendarPlanOverride(dateKey: string, routineDayId?: s
   if (!routine) return;
 
   const now = new Date().toISOString();
-  const existing = await db.calendarPlanOverrides
-    .where('date')
-    .equals(dateKey)
-    .filter((item) => item.routineId === routine.id)
-    .first();
+  const existing = await getCalendarPlanOverrideForRoutineDate(routine.id, dateKey);
 
   await db.calendarPlanOverrides.put({
     id: existing?.id ?? `${routine.id}_${dateKey}`,
@@ -275,11 +289,7 @@ export async function clearCalendarPlanOverride(dateKey: string): Promise<void> 
   const routine = await getActiveRoutine();
   if (!routine) return;
 
-  const existing = await db.calendarPlanOverrides
-    .where('date')
-    .equals(dateKey)
-    .filter((item) => item.routineId === routine.id)
-    .first();
+  const existing = await getCalendarPlanOverrideForRoutineDate(routine.id, dateKey);
 
   if (existing) await db.calendarPlanOverrides.delete(existing.id);
 }
