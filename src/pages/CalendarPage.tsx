@@ -15,7 +15,9 @@ import { exerciseCountLabel, getStoredLocale, t, workoutStatusLabel } from '../i
 import type { CalendarPlanOverride, RoutineDay } from '../types';
 
 type CalendarPageProps = {
+  initialSelectedDateKey?: string;
   onBack: () => void;
+  onSelectedDateChange?: (dateKey: string) => void;
   onStartWorkout: (routineDayId?: string, dateKey?: string, sessionId?: string, createNew?: boolean) => void;
 };
 
@@ -58,6 +60,14 @@ function buildCalendarDays(year: number, monthIndex: number): CalendarDay[] {
   });
 }
 
+function dateFromKey(dateKey: string): Date {
+  return new Date(`${dateKey}T12:00:00`);
+}
+
+function monthFromDate(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
 function statusColor(status: WorkoutSummary['session']['status']) {
   if (status === 'completed') return 'bg-emerald-400';
   if (status === 'in_progress') return 'bg-cyan-400';
@@ -69,15 +79,22 @@ function planColor(status: CalendarPlan['status']) {
   return status === 'missed' ? 'bg-red-400' : 'bg-amber-300';
 }
 
-export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
+export function CalendarPage({
+  initialSelectedDateKey,
+  onBack,
+  onSelectedDateChange,
+  onStartWorkout,
+}: CalendarPageProps) {
   const today = new Date();
   const todayKey = formatDateKey(today);
-  const [visibleMonth, setVisibleMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
+  const [visibleMonth, setVisibleMonth] = useState(() => (
+    monthFromDate(initialSelectedDateKey ? dateFromKey(initialSelectedDateKey) : today)
+  ));
   const [summaries, setSummaries] = useState<WorkoutSummary[]>([]);
   const [plans, setPlans] = useState<CalendarPlan[]>([]);
   const [routineDays, setRoutineDays] = useState<RoutineDay[]>([]);
   const [overridesByDate, setOverridesByDate] = useState<Record<string, CalendarPlanOverride>>({});
-  const [selectedDateKey, setSelectedDateKey] = useState(todayKey);
+  const [selectedDateKey, setSelectedDateKey] = useState(initialSelectedDateKey ?? todayKey);
   const [reloadKey, setReloadKey] = useState(0);
   const [locale] = useState(() => getStoredLocale());
   const monthFormatter = useMemo(() => new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
@@ -156,9 +173,14 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
     setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + direction, 1));
   }
 
+  function selectDate(dateKey: string) {
+    setSelectedDateKey(dateKey);
+    onSelectedDateChange?.(dateKey);
+  }
+
   function goToToday() {
-    setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1));
-    setSelectedDateKey(todayKey);
+    setVisibleMonth(monthFromDate(today));
+    selectDate(todayKey);
   }
 
   async function handlePlanChange(value: string) {
@@ -174,9 +196,17 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
   useEffect(() => {
     const isSelectedDateVisible = calendarDays.some((day) => day.key === selectedDateKey && day.isCurrentMonth);
     if (!isSelectedDateVisible) {
-      setSelectedDateKey(formatDateKey(visibleMonth));
+      selectDate(formatDateKey(visibleMonth));
     }
   }, [calendarDays, selectedDateKey, visibleMonth]);
+
+  useEffect(() => {
+    if (!initialSelectedDateKey) return;
+
+    const initialDate = dateFromKey(initialSelectedDateKey);
+    setVisibleMonth(monthFromDate(initialDate));
+    setSelectedDateKey(initialSelectedDateKey);
+  }, [initialSelectedDateKey]);
 
   const selectedOverride = overridesByDate[selectedDateKey];
   const selectedSummaries = summariesByDate[selectedDateKey] ?? [];
@@ -184,12 +214,10 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
   const selectedPlanValue = selectedOverride
     ? selectedOverride.isRestDay ? '' : selectedOverride.routineDayId ?? ''
     : selectedPlan?.routineDay ? '__weekly' : '';
-  const selectedTodaySession = selectedDateKey === todayKey
-    ? selectedSummaries.find((summary) => summary.session.status === 'in_progress')
-    : undefined;
+  const selectedInProgressSession = selectedSummaries.find((summary) => summary.session.status === 'in_progress');
   const selectedOverrideRoutineDayId = selectedPlanValue !== '__weekly' ? selectedPlanValue || undefined : undefined;
   const startWorkoutRoutineDayId = selectedOverrideRoutineDayId ?? selectedPlan?.routineDay?.id;
-  const shouldContinueTodaySession = selectedDateKey === todayKey && selectedTodaySession !== undefined;
+  const shouldContinueSelectedSession = selectedInProgressSession !== undefined;
 
   return (
     <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
@@ -246,7 +274,7 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
               <button
                 type="button"
                 key={day.key}
-                onClick={() => setSelectedDateKey(day.key)}
+                onClick={() => selectDate(day.key)}
                 aria-label={`${day.key} ${dayPlan ? getRoutineDayDisplayName(dayPlan.routineDay, locale) ?? statusLabel(dayPlan.status, locale) : ''}`.trim()}
                 className={`flex aspect-square min-h-14 flex-col rounded-md p-1.5 ${
                   selectedDateKey === day.key
@@ -349,17 +377,17 @@ export function CalendarPage({ onBack, onStartWorkout }: CalendarPageProps) {
         <button
           type="button"
           onClick={() => onStartWorkout(
-            shouldContinueTodaySession ? selectedTodaySession.session.routineDayId : startWorkoutRoutineDayId,
+            shouldContinueSelectedSession ? selectedInProgressSession.session.routineDayId : startWorkoutRoutineDayId,
             selectedDateKey,
-            shouldContinueTodaySession ? selectedTodaySession.session.id : undefined,
-            selectedDateKey !== todayKey && !shouldContinueTodaySession,
+            shouldContinueSelectedSession ? selectedInProgressSession.session.id : undefined,
+            selectedDateKey !== todayKey && !shouldContinueSelectedSession,
           )}
           className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 text-sm font-semibold text-slate-950"
         >
           <Play aria-hidden="true" size={17} />
           <span>
-            {shouldContinueTodaySession
-              ? t(locale, 'continueTodayWorkout')
+            {shouldContinueSelectedSession
+              ? selectedDateKey === todayKey ? t(locale, 'continueTodayWorkout') : t(locale, 'continueWorkout')
               : selectedDateKey === todayKey
                 ? startWorkoutRoutineDayId
                   ? t(locale, 'startPlannedWorkout')
