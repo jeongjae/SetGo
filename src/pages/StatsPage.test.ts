@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildStats } from './StatsPage';
+import { buildStats, buildEmptyStats, buildAiPrompt } from './StatsPage';
 import { formatDateKey } from '../utils/date';
 import type { ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 
@@ -94,5 +94,33 @@ describe('stats builder', () => {
     expect(stats.hardSets).toBe(1);
     expect(stats.hardSetRatio).toBe(100);
     expect(stats.muscleStats.find((item) => item.group === 'chest')?.sets).toBe(1);
+  });
+
+  it('generates high-quality AI analysis prompt for ChatGPT and Gemini in both ko and en', () => {
+    const stats = buildEmptyStats('ko');
+    // 테스트 데이터를 임의로 채워넣음
+    stats.workoutDays = 3;
+    stats.totalVolumeKg = 2500;
+    stats.totalSets = 12;
+    stats.hardSets = 5;
+    stats.hardSetRatio = 41;
+    stats.analysisComment = '이번 주는 3일 운동했고 총 2,500kg, 12세트를 기록했습니다.';
+    stats.warnings = ['연속 운동일이 4일입니다. 하루 회복일을 고려하세요.'];
+
+    // 1. 한국어 프롬프트 생성 검증
+    const promptKo = buildAiPrompt(stats, 'ko');
+    expect(promptKo).toContain('[역할 정의]');
+    expect(promptKo).toContain('전문 피트니스 AI 코치');
+    expect(promptKo).toContain('- 운동일수: 3일');
+    expect(promptKo).toContain('2,500kg');
+    expect(promptKo).toContain('연속 운동일이 4일입니다');
+
+    // 2. 영어 프롬프트 생성 검증
+    const promptEn = buildAiPrompt(stats, 'en');
+    expect(promptEn).toContain('[Role Definition]');
+    expect(promptEn).toContain('professional fitness AI coach');
+    expect(promptEn).toContain('- Workout Days: 3d');
+    expect(promptEn).toContain('2,500');
+    expect(promptEn).toContain('Status: LOW');
   });
 });

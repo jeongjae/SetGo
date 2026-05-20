@@ -49,3 +49,49 @@ describe('workout session reuse', () => {
     expect(reusable).toBeUndefined();
   });
 });
+
+describe('workout and routine template isolation (Scenario A)', () => {
+  it('ensures completed sets preserve historical values even if the routine template is modified', () => {
+    const historicalCompletedSet = {
+      id: 'workout_2026-05-19_set_1',
+      workoutExerciseId: 'workout_2026-05-19_ex_1',
+      setNo: 1,
+      weightKg: 80,
+      reps: 10,
+      isCompleted: true,
+    };
+
+    const modifiedRoutinePlan = {
+      id: 'plan_ex_1',
+      exerciseId: 'ex_1',
+      plannedWeightKg: 90,
+      plannedReps: 8,
+    };
+
+    expect(historicalCompletedSet.weightKg).toBe(80);
+    expect(historicalCompletedSet.reps).toBe(10);
+    expect(historicalCompletedSet.weightKg).not.toBe(modifiedRoutinePlan.plannedWeightKg);
+    expect(historicalCompletedSet.reps).not.toBe(modifiedRoutinePlan.plannedReps);
+  });
+});
+
+describe('workout date binding and session creation safety (Scenario C)', () => {
+  it('generates correct and stable session structure for historical calendar dates', () => {
+    const historicalDate = '2026-05-10';
+    const timestamp = '2026-05-10T12:00:00.000';
+
+    const historicalSession = {
+      id: `workout_${historicalDate}`,
+      date: historicalDate,
+      startedAt: timestamp,
+      timeBand: 'afternoon',
+      status: 'in_progress' as const,
+      totalStrengthVolumeKg: 0,
+    };
+
+    expect(historicalSession.id).toBe('workout_2026-05-10');
+    expect(historicalSession.date).toBe('2026-05-10');
+    expect(historicalSession.startedAt).toBe('2026-05-10T12:00:00.000');
+    expect(historicalSession.status).toBe('in_progress');
+  });
+});

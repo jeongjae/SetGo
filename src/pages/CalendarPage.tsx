@@ -374,27 +374,65 @@ export function CalendarPage({
             {t(locale, 'backToToday')}
           </button>
         ) : null}
-        <button
-          type="button"
-          onClick={() => onStartWorkout(
-            shouldContinueSelectedSession ? selectedInProgressSession.session.routineDayId : startWorkoutRoutineDayId,
-            selectedDateKey,
-            shouldContinueSelectedSession ? selectedInProgressSession.session.id : undefined,
-            selectedDateKey !== todayKey && !shouldContinueSelectedSession,
-          )}
-          className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 text-sm font-semibold text-slate-950"
-        >
-          <Play aria-hidden="true" size={17} />
-          <span>
-            {shouldContinueSelectedSession
-              ? selectedDateKey === todayKey ? t(locale, 'continueTodayWorkout') : t(locale, 'continueWorkout')
-              : selectedDateKey === todayKey
-                ? startWorkoutRoutineDayId
+        {!shouldContinueSelectedSession && selectedDateKey !== todayKey ? (
+          <div className="mt-4 grid grid-cols-1 gap-2">
+            {startWorkoutRoutineDayId ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onStartWorkout(startWorkoutRoutineDayId, selectedDateKey, undefined, true)}
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 text-sm font-semibold text-slate-950"
+                >
+                  <Play aria-hidden="true" size={17} />
+                  <span>
+                    {locale === 'ko' ? '계획 루틴으로 기록 추가' : 'Add planned routine record'}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onStartWorkout(undefined, selectedDateKey, undefined, true)}
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-slate-800 border border-slate-700 px-3 text-sm font-semibold text-slate-100"
+                >
+                  <Play aria-hidden="true" size={17} />
+                  <span>
+                    {locale === 'ko' ? '자유 운동으로 기록 추가' : 'Add free workout record'}
+                  </span>
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onStartWorkout(undefined, selectedDateKey, undefined, true)}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 text-sm font-semibold text-slate-950"
+              >
+                <Play aria-hidden="true" size={17} />
+                <span>
+                  {locale === 'ko' ? '자유 운동으로 기록 추가' : 'Add free workout record'}
+                </span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onStartWorkout(
+              shouldContinueSelectedSession ? selectedInProgressSession.session.routineDayId : startWorkoutRoutineDayId,
+              selectedDateKey,
+              shouldContinueSelectedSession ? selectedInProgressSession.session.id : undefined,
+              selectedDateKey !== todayKey && !shouldContinueSelectedSession,
+            )}
+            className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 text-sm font-semibold text-slate-950"
+          >
+            <Play aria-hidden="true" size={17} />
+            <span>
+              {shouldContinueSelectedSession
+                ? selectedDateKey === todayKey ? t(locale, 'continueTodayWorkout') : t(locale, 'continueWorkout')
+                : startWorkoutRoutineDayId
                   ? t(locale, 'startPlannedWorkout')
-                  : t(locale, 'startFreeWorkout')
-                : locale === 'ko' ? '운동기록 추가' : 'Add workout record'}
-          </span>
-        </button>
+                  : t(locale, 'startFreeWorkout')}
+            </span>
+          </button>
+        )}
       </section>
     </section>
   );
