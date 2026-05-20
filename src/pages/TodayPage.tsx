@@ -170,7 +170,7 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
           </button>
         ) : null}
         {routineDays.length > 0 ? (
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+          <div className="mt-4 flex flex-wrap gap-2 pb-1">
             {routineDays.map((routineDay) => (
               <button
                 key={routineDay.id}
