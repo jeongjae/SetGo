@@ -669,7 +669,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
               {resetStatus}
             </p>
           ) : null}
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          <div className="mt-3 flex flex-wrap gap-2 pb-1">
             {dayPlans.map((dayPlan) => (
               <button
                 key={dayPlan.routineDay.id}
