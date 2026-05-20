@@ -20,4 +20,19 @@ describe('ExerciseCsvImportError', () => {
       ]);
     }
   });
+
+  it('correctly aggregates multiple validation warning issues (Scenario B)', () => {
+    const error = new ExerciseCsvImportError([
+      'Row 2: duplicate id "ex_chest_press"',
+      'Row 5: nameKo is required for "ex_squat"',
+      'Row 8: invalid categoryTags crossfit',
+      'Row 10: isActive parse error',
+    ]);
+
+    expect(error.issues).toHaveLength(4);
+    expect(error.issues[0]).toBe('Row 2: duplicate id "ex_chest_press"');
+    expect(error.issues[1]).toContain('nameKo is required');
+    expect(error.issues[2]).toContain('invalid categoryTags');
+    expect(error.message).toContain('Row 5: nameKo is required');
+  });
 });

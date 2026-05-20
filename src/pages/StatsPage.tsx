@@ -97,72 +97,93 @@ const recommendedSets: Record<MuscleGroup, { min: number; max: number }> = {
 
 const trackedMuscles: MuscleGroup[] = ['chest', 'back', 'legs', 'shoulder', 'biceps', 'triceps', 'core'];
 
-const copy = {
-  ko: {
-    title: '운동 통계',
-    emptyTitle: '아직 분석할 운동 기록이 없습니다',
-    emptyBody: '운동을 완료하면 주간 볼륨, Hard Set, 근육군별 부하가 자동으로 계산됩니다.',
-    workoutDays: '운동일수',
-    totalVolume: '총 볼륨',
-    totalSets: '총 세트',
-    weekOverWeek: '전주 대비 변화율',
-    recentTrend: '최근 8주 추세',
-    muscleAnalysis: '근육군별 분석',
-    performance: '운동별 성과',
-    recoveryWarnings: '회복/부하 경고',
-    noWarnings: '현재 주요 경고는 없습니다.',
-    automaticAnalysis: '자동 분석',
-    hardSets: 'Hard Set',
-    hardSetRatio: 'Hard Set 비율',
-    peak: '최고',
-    weeklyTarget: '주간 목표',
-    trendSummary: '추세 요약',
-    oneRmHistory: '1RM 추세',
-    volume: '볼륨',
-    sets: '세트',
-    recommended: '권장',
-    perWeek: '세트/주',
-    recentWeight: '최근 중량',
-    bestWeight: '최고 중량',
-    recentVolume: '최근 볼륨',
-    bestVolume: '최고 볼륨',
-    estimatedOneRm: '예상 1RM',
-    noPerformance: '완료한 운동 세트가 있으면 운동별 성과가 표시됩니다.',
-    emptyAnalysis: '운동 기록이 쌓이면 주간 부하와 다음 주 조정 제안을 표시합니다.',
-  },
-  en: {
-    title: 'Workout Stats',
-    emptyTitle: 'No workout records to analyze yet',
-    emptyBody: 'Weekly volume, hard sets, and muscle-group load will be calculated after workouts are completed.',
-    workoutDays: 'Workout days',
-    totalVolume: 'Total volume',
-    totalSets: 'Total sets',
-    weekOverWeek: 'Week over week',
-    recentTrend: 'Recent 8-week trend',
-    muscleAnalysis: 'Muscle-group analysis',
-    performance: 'Exercise performance',
-    recoveryWarnings: 'Recovery/load warnings',
-    noWarnings: 'No major warnings right now.',
-    automaticAnalysis: 'Automatic analysis',
-    hardSets: 'Hard sets',
-    hardSetRatio: 'Hard set ratio',
-    peak: 'Peak',
-    weeklyTarget: 'Weekly target',
-    trendSummary: 'Trend summary',
-    oneRmHistory: '1RM trend',
-    volume: 'Volume',
-    sets: 'Sets',
-    recommended: 'Recommended',
-    perWeek: 'sets/week',
-    recentWeight: 'Recent weight',
-    bestWeight: 'Best weight',
-    recentVolume: 'Recent volume',
-    bestVolume: 'Best volume',
-    estimatedOneRm: 'Estimated 1RM',
-    noPerformance: 'Exercise performance appears after completed sets are logged.',
-    emptyAnalysis: 'Weekly load and next-week adjustment suggestions will appear after workout history accumulates.',
-  },
-};
+export function buildAiPrompt(stats: StatsView, locale: Locale): string {
+  if (locale === 'ko') {
+    const muscleLines = stats.muscleStats
+      .map(
+        (m) =>
+          `- ${muscleLabels.ko[m.group]}: ${Math.round(m.volumeKg).toLocaleString()}kg, ${m.sets}세트 (Hard 세트: ${
+            m.hardSets
+          }, 상태: ${
+            m.status === 'normal'
+              ? '적정'
+              : m.status === 'high'
+              ? '과다'
+              : m.status === 'caution'
+              ? '주의'
+              : '부족'
+          })`,
+      )
+      .join('\n');
+
+    const warningLines =
+      stats.warnings.length > 0
+        ? stats.warnings.map((w) => `- ${w}`).join('\n')
+        : '- 특이사항 없음';
+
+    return `[역할 정의]
+너는 전문 피트니스 AI 코치야. 아래의 내 이번 주 운동 데이터를 바탕으로 내 훈련량과 신체 상태를 정밀 분석하고, 다음 주 운동 계획 및 정체기 극복, 부상 방지를 위한 구체적이고 전문적인 피드백을 제공해줘.
+
+[내 이번 주 운동 데이터]
+- 운동일수: ${stats.workoutDays}일
+- 총 볼륨: ${Math.round(stats.totalVolumeKg).toLocaleString()}kg
+- 총 세트: ${stats.totalSets}세트 (Hard 세트: ${stats.hardSets}세트, 비율: ${stats.hardSetRatio.toFixed(0)}%)
+- 전주 대비 변화율: ${formatPct(stats.weekOverWeekPct)}
+
+[근육군별 분석 (권장 세트 수와 비교)]
+${muscleLines}
+
+[발생한 경고 및 피드백]
+${warningLines}
+
+[로컬 자동 분석 결과]
+${stats.analysisComment}
+
+[요청 사항]
+이 데이터들을 정밀 진단해서:
+1. 내 현재 훈련 볼륨과 세트 수가 적절한지 평가해줘.
+2. 경고 사항(연속 운동일, 특정 부위 중복, 급격한 볼륨 증가 등)이 있다면 이를 개선하기 위한 회복 팁을 줘.
+3. 다음 주에 각 근육군별 세트 수와 볼륨을 어떻게 조정해야 점진적 과부하를 안전하게 달성할 수 있을지 구체적인 세트/횟수 가이드를 제시해줘.`;
+  } else {
+    const muscleLines = stats.muscleStats
+      .map(
+        (m) =>
+          `- ${muscleLabels.en[m.group]}: ${Math.round(m.volumeKg).toLocaleString()}kg, ${m.sets} sets (Hard sets: ${
+            m.hardSets
+          }, Status: ${m.status.toUpperCase()})`,
+      )
+      .join('\n');
+
+    const warningLines =
+      stats.warnings.length > 0
+        ? stats.warnings.map((w) => `- ${w}`).join('\n')
+        : '- No warnings';
+
+    return `[Role Definition]
+You are a professional fitness AI coach. Based on my workout data this week below, please analyze my training volume and fatigue levels, and provide specific, professional feedback for my next week's schedule, overcoming plateaus, and preventing injuries.
+
+[My Workout Data This Week]
+- Workout Days: ${stats.workoutDays}d
+- Total Volume: ${Math.round(stats.totalVolumeKg).toLocaleString()}kg
+- Total Sets: ${stats.totalSets} (Hard Sets: ${stats.hardSets}, Ratio: ${stats.hardSetRatio.toFixed(0)}%)
+- Week-over-Week Change: ${formatPct(stats.weekOverWeekPct)}
+
+[Muscle-Group Analysis]
+${muscleLines}
+
+[Warnings & Recovery Feedback]
+${warningLines}
+
+[Local Auto-Analysis]
+${stats.analysisComment}
+
+[Request]
+Please evaluate my data and:
+1. Assess whether my current training volume and set counts are appropriate.
+2. Provide recovery tips to address any warnings (consecutive training days, muscle overlaps, rapid volume surges).
+3. Offer a concrete guide on how to adjust my sets and volume next week for safe, progressive overload.`;
+  }
+}
 
 function startOfWeek(date: Date): Date {
   const copyDate = new Date(date);
@@ -258,7 +279,7 @@ export function buildEmptyStats(locale: Locale): StatsView {
     })),
     performances: [],
     warnings: [],
-    analysisComment: copy[locale].emptyAnalysis,
+    analysisComment: t(locale, 'statsEmptyAnalysis'),
   };
 }
 
@@ -613,7 +634,53 @@ function MiniSparkBars({ history }: { history: ExercisePerformance['oneRmHistory
 export function StatsPage({ onBack }: StatsPageProps) {
   const [locale] = useState<Locale>(() => getStoredLocale());
   const [stats, setStats] = useState<StatsView>(() => buildEmptyStats(locale));
-  const c = copy[locale];
+  
+  const c = useMemo(() => ({
+    title: t(locale, 'statsTitle'),
+    emptyTitle: t(locale, 'statsEmptyTitle'),
+    emptyBody: t(locale, 'statsEmptyBody'),
+    workoutDays: t(locale, 'statsWorkoutDays'),
+    totalVolume: t(locale, 'statsTotalVolume'),
+    totalSets: t(locale, 'statsTotalSets'),
+    weekOverWeek: t(locale, 'statsWeekOverWeek'),
+    recentTrend: t(locale, 'statsRecentTrend'),
+    muscleAnalysis: t(locale, 'statsMuscleAnalysis'),
+    performance: t(locale, 'statsPerformance'),
+    recoveryWarnings: t(locale, 'statsRecoveryWarnings'),
+    noWarnings: t(locale, 'statsNoWarnings'),
+    automaticAnalysis: t(locale, 'statsAutomaticAnalysis'),
+    hardSets: t(locale, 'statsHardSets'),
+    hardSetRatio: t(locale, 'statsHardSetRatio'),
+    peak: t(locale, 'statsPeak'),
+    weeklyTarget: t(locale, 'statsWeeklyTarget'),
+    trendSummary: t(locale, 'statsTrendSummary'),
+    oneRmHistory: t(locale, 'statsOneRmHistory'),
+    volume: t(locale, 'statsVolume'),
+    sets: t(locale, 'statsSets'),
+    recommended: t(locale, 'statsRecommended'),
+    perWeek: t(locale, 'statsPerWeek'),
+    recentWeight: t(locale, 'statsRecentWeight'),
+    bestWeight: t(locale, 'statsBestWeight'),
+    recentVolume: t(locale, 'statsRecentVolume'),
+    bestVolume: t(locale, 'statsBestVolume'),
+    estimatedOneRm: t(locale, 'statsEstimatedOneRm'),
+    noPerformance: t(locale, 'statsNoPerformance'),
+    emptyAnalysis: t(locale, 'statsEmptyAnalysis'),
+  }), [locale]);
+
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyPrompt = () => {
+    const promptText = buildAiPrompt(stats, locale);
+    navigator.clipboard.writeText(promptText)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+      })
+      .catch((err) => {
+        console.error('Failed to copy text: ', err);
+      });
+  };
 
   useEffect(() => {
     async function loadStats() {
@@ -795,8 +862,28 @@ export function StatsPage({ onBack }: StatsPageProps) {
       </section>
 
       <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <p className="text-sm font-medium text-cyan-300">{c.automaticAnalysis}</p>
-        <p className="mt-2 text-sm leading-6 text-slate-200">{stats.analysisComment}</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-medium text-cyan-300">{c.automaticAnalysis}</p>
+          {hasData && (
+            <button
+              type="button"
+              onClick={handleCopyPrompt}
+              className={`rounded px-3 py-1.5 text-xs font-bold transition-colors ${
+                copied
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : 'bg-slate-800 text-slate-100 hover:bg-slate-700 border border-slate-700'
+              }`}
+            >
+              {copied ? t(locale, 'copied') : t(locale, 'statsCopyAiPrompt')}
+            </button>
+          )}
+        </div>
+        <p className="mt-3 text-sm leading-6 text-slate-200">{stats.analysisComment}</p>
+        {copied && (
+          <p className="mt-2 text-[11px] leading-4 text-emerald-300 animate-pulse">
+            {t(locale, 'statsAiPromptCopied')}
+          </p>
+        )}
       </section>
     </section>
   );
