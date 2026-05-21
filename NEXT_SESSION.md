@@ -7,10 +7,10 @@
 - GitHub repo: `https://github.com/jeongjae/SetGo.git`
 - Latest pushed commit before the local cleanup pass: `cdda6d8`
 - Latest local commits:
+  - `17019bd Cover exercise CSV validation`
   - `4bb2014 Cover workout creation regressions`
   - `645f2b8 Move stats summaries into i18n`
   - `903f5d1 Clarify backdated workout logging`
-  - `1abcbf8 Stabilize workout timer and exercise seeding`
   - `7293e6c Polish mobile workout UI shell`
 - Development URL used in Codex browser: `http://localhost:5174/`
 - Deployment target: GitHub Pages.
@@ -52,6 +52,7 @@ Leave them alone unless the user asks to use or remove them.
 - Backdated Calendar workout records now show their date in the workout header instead of a misleading multi-day live timer.
 - Stats trend, warning, target-range, and local analysis summary text now use i18n message templates.
 - Workout regressions now cover first backdated Calendar session creation and routine-plan values seeding into new workout logs.
+- Exercise CSV import validation now has direct coverage for missing columns and aggregated row-level issues.
 
 ## Verification Already Done
 
@@ -84,7 +85,6 @@ Browser checks were also done for:
    - future improvement can add optional user-triggered external AI export/prompt flow.
 4. Add stronger regression coverage for:
    - existing in-progress workouts not being unexpectedly overwritten.
-   - CSV import validation.
    - calendar selected-date workout editing.
 
 ## Useful Commands
@@ -102,7 +102,7 @@ git log --oneline -5
 
 Continue SetGo development from `C:\Users\NB-24021500\Projects\SetGo\setgo-starter`.
 Read `AGENTS.md`, `README.md`, and `NEXT_SESSION.md` first.
-The latest local commit is `4bb2014`.
+The latest local commit is `17019bd`.
 Keep Tailwind v3, no backend/auth, local-first Dexie only.
 Do not commit the untracked backup/CSV files.
 Proceed with the next P2 polishing item and verify with tests/build/browser.
