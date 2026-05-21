@@ -2,6 +2,7 @@ import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSession, Wor
 import { getExerciseName } from '../domain/exercises';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg } from '../domain/volume';
 import { timeBandLabel, type AppLocale } from '../i18n/i18n';
+import { getExerciseIcon } from './exerciseIcon';
 
 type ExerciseLogInput = {
   workoutExercise: WorkoutExercise;
@@ -43,7 +44,7 @@ export function formatWorkoutMarkdown(input: WorkoutMarkdownInput): string {
     for (const item of exercises) {
       const volume = calculateExerciseVolumeKg(item.sets);
 
-      lines.push(`### ${item.exercise.defaultEmoji} ${getExerciseName(item.exercise, locale)}`);
+      lines.push(`### ${getExerciseIcon(item.exercise.defaultEmoji)} ${getExerciseName(item.exercise, locale)}`);
       for (const set of item.sets.sort((a, b) => a.setNo - b.setNo)) {
         const status = set.isCompleted ? '' : isKo ? ' (미완료)' : ' (not completed)';
         const rir = set.rir === undefined ? '' : `, RIR ${set.rir}`;

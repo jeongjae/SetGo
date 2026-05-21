@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { db } from '../db/db';
 import { seedDefaultExercises } from '../db/seed';
+import { getExerciseIcon } from '../utils/exerciseIcon';
 import {
   exerciseCategoryOptions,
   exerciseMatchesFilters,
@@ -296,30 +297,32 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
     : undefined;
 
   return (
-    <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
-      <header className="flex items-center gap-3">
+    <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4.5 px-4 py-6">
+      <header className="flex items-center gap-3.5">
         <button
           type="button"
           onClick={onBack}
-          className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-900 text-slate-100"
+          className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-100 hover:bg-slate-800 hover:text-white active:scale-95 transition-all duration-200"
           aria-label="Back to Today"
         >
           <ChevronLeft aria-hidden="true" size={22} />
         </button>
         <div>
-          <p className="text-sm font-medium text-cyan-300">{t(locale, 'routineSetup')}</p>
-          <h1 className="text-2xl font-bold text-white">{t(locale, 'setUpTraining')}</h1>
+          <p className="text-[11px] font-black uppercase tracking-wider text-cyan-400">{t(locale, 'routineSetup')}</p>
+          <h1 className="text-2xl font-black text-white tracking-tight">{t(locale, 'setUpTraining')}</h1>
         </div>
       </header>
 
-      <nav aria-label="Routine setup sections" className="grid grid-cols-3 gap-2 rounded-lg bg-slate-900 p-2 shadow">
+      <nav aria-label="Routine setup sections" className="grid grid-cols-3 gap-1.5 rounded-2xl bg-slate-950/80 border border-slate-900 p-1.5 shadow-2xl">
         {setupSections.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setSetupTab(item.id as SetupTab)}
-            className={`min-h-10 rounded-md px-2 text-sm font-semibold ${
-              setupTab === item.id ? 'bg-cyan-400 text-slate-950' : 'bg-slate-800 text-slate-100'
+            className={`min-h-10 rounded-xl px-2.5 text-xs font-black transition-all duration-200 active:scale-95 ${
+              setupTab === item.id 
+                ? 'bg-gradient-to-br from-cyan-400 to-cyan-500 text-slate-950 font-extrabold shadow-md shadow-cyan-400/15' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
             }`}
           >
             {item.label}
@@ -327,14 +330,14 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
         ))}
       </nav>
 
-      <section className="flex items-center justify-between gap-3 rounded-lg bg-slate-900 p-3 shadow">
+      <section className="flex items-center justify-between gap-3 rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-4 shadow-xl">
         <div>
-          <p className="text-xs font-semibold uppercase text-slate-500">{t(locale, 'language')}</p>
-          <p className="mt-1 text-sm font-semibold text-white">
-            {locale === 'ko' ? '한국어' : 'English'}
+          <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">{t(locale, 'language')}</p>
+          <p className="mt-0.5 text-sm font-bold text-white">
+            {locale === 'ko' ? '한국어 (KR)' : 'English (US)'}
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-1 rounded-md bg-slate-800 p-1">
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-950 p-1 border border-slate-900">
           {(['ko', 'en'] as AppLocale[]).map((item) => (
             <button
               key={item}
@@ -343,8 +346,10 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                 saveStoredLocale(item);
                 setLocale(item);
               }}
-              className={`min-h-9 rounded px-3 text-xs font-semibold ${
-                locale === item ? 'bg-cyan-400 text-slate-950' : 'text-slate-200'
+              className={`min-h-8 rounded-lg px-3 text-xs font-bold transition-all active:scale-95 ${
+                locale === item 
+                  ? 'bg-gradient-to-br from-cyan-400 to-cyan-500 text-slate-950' 
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               {item === 'ko' ? '한국어' : 'EN'}
@@ -354,185 +359,205 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
       </section>
 
       {setupTab === 'routine' ? (
-      <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <p className="text-sm font-medium text-slate-400">{t(locale, 'activeRoutine')}</p>
+      <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl">
+        <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">{t(locale, 'activeRoutine')}</p>
         {activeRoutine ? (
           <input
             aria-label="Active routine name"
             type="text"
             defaultValue={activeRoutineName}
             onBlur={(event) => void handleUpdateRoutineName(event.target.value)}
-            className="mt-2 w-full rounded-md bg-slate-800 px-3 py-3 text-xl font-semibold text-white"
+            className="mt-2.5 w-full rounded-xl bg-slate-950/80 border border-slate-850 px-3.5 py-3 text-lg font-bold text-white outline-none focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400/80 transition-all"
           />
         ) : (
-          <h2 className="mt-1 text-xl font-semibold text-white">{t(locale, 'noActiveRoutine')}</h2>
+          <h2 className="mt-1 text-lg font-bold text-slate-500">{t(locale, 'noActiveRoutine')}</h2>
         )}
       </section>
       ) : null}
 
       {setupTab === 'library' ? (
-      <section className="rounded-lg bg-slate-900 p-5 shadow">
+      <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-slate-400">{t(locale, 'exerciseLibrary')}</p>
-            <h2 className="mt-1 text-lg font-semibold text-white">
-              {locale === 'ko' ? `${exerciseLibrary.length}개의 ${t(locale, 'exercises')}` : `${exerciseLibrary.length} ${t(locale, 'exercises')}`}
+            <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">{t(locale, 'exerciseLibrary')}</p>
+            <h2 className="mt-0.5 text-lg font-bold text-white">
+              {locale === 'ko' ? `${exerciseLibrary.length}개의 등록된 운동` : `${exerciseLibrary.length} Exercises`}
             </h2>
           </div>
         </div>
-        <div className="mt-4 flex items-center gap-2 rounded-md bg-slate-800 px-3 py-2">
-          <Search aria-hidden="true" size={16} className="shrink-0 text-slate-400" />
+
+        <div className="mt-4 flex items-center gap-2.5 rounded-xl bg-slate-950/80 border border-slate-900 px-3.5 py-2.5 focus-within:ring-1 focus-within:ring-cyan-400 focus-within:border-cyan-400 transition-all">
+          <Search aria-hidden="true" size={16} className="shrink-0 text-slate-500" />
           <input
             aria-label="Search exercise library"
             type="search"
             value={exerciseSearch}
             onChange={(event) => setExerciseSearch(event.target.value)}
             placeholder={t(locale, 'searchExercises')}
-            className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+            className="min-w-0 flex-1 bg-transparent text-xs text-slate-200 outline-none placeholder:text-slate-600"
           />
         </div>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+
+        <div className="mt-3.5 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {exerciseCategories.map((category) => (
             <button
               key={category.label}
               type="button"
               onClick={() => setExerciseCategoryFilter(category.value)}
-              className={`min-h-9 rounded-md px-3 text-xs font-semibold ${
+              className={`min-h-8 shrink-0 rounded-lg px-3 text-[10px] font-black transition-all active:scale-95 duration-200 ${
                 exerciseCategoryFilter === category.value
-                  ? 'bg-cyan-400 text-slate-950'
-                  : 'bg-slate-800 text-slate-100'
+                  ? 'bg-cyan-400 text-slate-950 shadow-md shadow-cyan-400/10'
+                  : 'bg-slate-950 border border-slate-900 text-slate-400 hover:text-slate-200'
               }`}
             >
               {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
             </button>
           ))}
         </div>
-        <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+
+        <div className="mt-1.5 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {exerciseStages.map((stage) => (
             <button
               key={stage.value}
               type="button"
               onClick={() => setExerciseStageFilter(stage.value)}
-              className={`min-h-9 rounded-md px-3 text-xs font-semibold ${
+              className={`min-h-8 shrink-0 rounded-lg px-3 text-[10px] font-black transition-all active:scale-95 duration-200 ${
                 exerciseStageFilter === stage.value
-                  ? 'bg-cyan-400 text-slate-950'
-                  : 'bg-slate-800 text-slate-100'
+                  ? 'bg-cyan-400 text-slate-950 shadow-md shadow-cyan-400/10'
+                  : 'bg-slate-950 border border-slate-900 text-slate-400 hover:text-slate-200'
               }`}
             >
               {stage.value === 'all' ? t(locale, 'all') : labelForStage(stage.value, locale)}
             </button>
           ))}
         </div>
-        <div className="mt-4 grid gap-2">
+
+        <div className="mt-4.5 grid gap-2">
           <input
             aria-label="New exercise Korean name"
             type="text"
             value={newExerciseName}
             onChange={(event) => setNewExerciseName(event.target.value)}
             placeholder={t(locale, 'koreanName')}
-            className="min-h-11 min-w-0 rounded-md bg-slate-800 px-3 text-sm text-white placeholder:text-slate-500"
+            className="min-h-11 min-w-0 rounded-xl bg-slate-950 border border-slate-900 px-3.5 text-xs text-white outline-none focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400 placeholder:text-slate-650"
           />
-          <div className="grid grid-cols-[1fr_7rem] gap-2">
+          <div className="grid grid-cols-[1fr_7.5rem] gap-2">
             <input
               aria-label="New exercise English name"
               type="text"
               value={newExerciseNameEn}
               onChange={(event) => setNewExerciseNameEn(event.target.value)}
               placeholder={t(locale, 'englishName')}
-              className="min-h-11 min-w-0 rounded-md bg-slate-800 px-3 text-sm text-white placeholder:text-slate-500"
+              className="min-h-11 min-w-0 rounded-xl bg-slate-950 border border-slate-900 px-3.5 text-xs text-white outline-none focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400 placeholder:text-slate-650"
             />
             <select
               aria-label="New exercise category"
               value={newExerciseCategory}
               onChange={(event) => setNewExerciseCategory(event.target.value as ExerciseCategory)}
-              className="min-h-11 rounded-md bg-slate-800 px-2 text-sm text-white"
+              className="min-h-11 rounded-xl bg-slate-950 border border-slate-900 px-2.5 text-xs text-white outline-none focus:ring-1 focus:ring-cyan-400/50"
             >
               {exerciseCategoryOptions.map((category) => (
-                <option key={category.value} value={category.value}>
+                <option key={category.value} value={category.value} className="bg-slate-950">
                   {labelForCategory(category.value, locale)}
                 </option>
               ))}
             </select>
           </div>
         </div>
+
         <button
           type="button"
           onClick={() => void handleCreateExercise()}
           disabled={!newExerciseName.trim()}
-          className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 text-sm font-semibold text-slate-950 disabled:bg-slate-800 disabled:text-slate-500"
+          className="mt-2.5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-500 px-3 text-xs font-bold text-slate-950 shadow-md shadow-cyan-400/10 disabled:from-slate-900 disabled:to-slate-900 disabled:text-slate-500 disabled:border disabled:border-slate-850 disabled:shadow-none active:scale-95 transition-all duration-200"
         >
-          <Plus aria-hidden="true" size={16} />
+          <Plus aria-hidden="true" size={15} />
           <span>{t(locale, 'addExercise')}</span>
         </button>
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-          {filteredExerciseLibrary.slice(0, 10).map((exercise) => (
+
+        {/* 10개 제한 해제 및 세로 2열 썸네일 그리드 */}
+        <div className="mt-5 grid grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1.5 scrollbar-thin">
+          {filteredExerciseLibrary.map((exercise) => (
             <button
               key={exercise.id}
               type="button"
               onClick={() => setEditingExerciseId(exercise.id)}
-              className={`min-w-36 rounded-md px-3 py-2 text-left text-sm ${
+              className={`flex items-center rounded-xl p-2 text-left border transition-all active:scale-95 duration-200 ${
                 editingExercise?.id === exercise.id
-                  ? 'bg-cyan-400 text-slate-950'
-                  : 'bg-slate-800 text-slate-100'
+                  ? 'bg-cyan-400 border-cyan-400 text-slate-950 font-bold shadow-md shadow-cyan-400/10'
+                  : 'bg-slate-950 border-slate-900 text-slate-350 hover:border-slate-800'
               }`}
             >
-              <span className="block truncate font-semibold">{getExerciseName(exercise, locale)}</span>
-              <span className="mt-1 block truncate text-xs opacity-80">
-                {getExerciseCategories(exercise).map((category) => labelForCategory(category, locale)).join(' / ')}
-              </span>
+              <div className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-lg text-sm shadow-inner ${
+                editingExercise?.id === exercise.id ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-900 border border-slate-850'
+              }`}>
+                {getExerciseIcon(exercise.defaultEmoji)}
+              </div>
+              <div className="min-w-0 flex-1 ml-2">
+                <span className="block truncate text-[11px] font-black leading-tight">{getExerciseName(exercise, locale)}</span>
+                <span className={`block truncate text-[8.5px] mt-0.5 ${editingExercise?.id === exercise.id ? 'text-slate-950/70 font-medium' : 'text-slate-500'}`}>
+                  {getExerciseCategories(exercise).map((c) => labelForCategory(c, locale)).join('/')}
+                </span>
+              </div>
             </button>
           ))}
         </div>
+
         {editingExercise ? (
-          <div key={editingExercise.id} className="mt-4 rounded-md bg-slate-800 p-3">
+          <div key={editingExercise.id} className="mt-4.5 rounded-2xl bg-slate-950/80 border border-slate-900 p-4 shadow-xl">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-base font-semibold text-white">{getExerciseName(editingExercise, locale)}</h3>
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-base">
+                  {getExerciseIcon(editingExercise.defaultEmoji)}
+                </div>
+                <h3 className="text-sm font-bold text-white leading-tight">{getExerciseName(editingExercise, locale)}</h3>
               </div>
               <button
                 type="button"
                 onClick={() => void handleDeactivateExercise(editingExercise.id)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-900 text-slate-300"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-rose-400 active:scale-95 transition-all"
                 aria-label={`Deactivate ${getExerciseName(editingExercise, locale)}`}
               >
                 <EyeOff aria-hidden="true" size={15} />
               </button>
             </div>
-            <div className="mt-3 grid gap-2">
-              <label className="text-xs font-medium text-slate-400">
+
+            <div className="mt-3.5 grid gap-2.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                 {t(locale, 'koreanName')}
                 <input
                   aria-label="Edit exercise Korean name"
                   type="text"
                   defaultValue={editingExercise.nameKo}
                   onBlur={(event) => void handleUpdateExercise(editingExercise.id, { nameKo: event.target.value.trim() || editingExercise.nameKo })}
-                  className="mt-1 w-full rounded-md bg-slate-900 px-3 py-2 text-sm text-white"
+                  className="mt-1 w-full rounded-xl bg-slate-900 border border-slate-850 px-3.5 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400/50"
                 />
               </label>
-              <label className="text-xs font-medium text-slate-400">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                 {t(locale, 'englishName')}
                 <input
                   aria-label="Edit exercise English name"
                   type="text"
                   defaultValue={editingExercise.nameEn ?? ''}
                   onBlur={(event) => void handleUpdateExercise(editingExercise.id, { nameEn: event.target.value.trim() || undefined })}
-                  className="mt-1 w-full rounded-md bg-slate-900 px-3 py-2 text-sm text-white"
+                  className="mt-1 w-full rounded-xl bg-slate-900 border border-slate-850 px-3.5 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400/50"
                 />
               </label>
-              <label className="text-xs font-medium text-slate-400">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                 {t(locale, 'description')}
                 <textarea
                   aria-label="Edit exercise description"
                   defaultValue={editingExercise.description ?? ''}
                   onBlur={(event) => void handleUpdateExercise(editingExercise.id, { description: event.target.value.trim() || undefined })}
                   rows={2}
-                  className="mt-1 w-full resize-none rounded-md bg-slate-900 px-3 py-2 text-sm text-white"
+                  className="mt-1 w-full resize-none rounded-xl bg-slate-900 border border-slate-850 px-3.5 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400/50"
                 />
               </label>
             </div>
-            <div className="mt-3">
-              <p className="text-xs font-semibold uppercase text-slate-500">{t(locale, 'categories')}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
+
+            <div className="mt-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{t(locale, 'categories')}</p>
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {exerciseCategoryOptions.map((category) => {
                   const selected = getExerciseCategories(editingExercise).includes(category.value);
                   return (
@@ -542,8 +567,10 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                       onClick={() => void handleUpdateExercise(editingExercise.id, {
                         categoryTags: toggleCategory(editingExercise, category.value),
                       })}
-                      className={`min-h-9 rounded-md px-3 text-xs font-semibold ${
-                        selected ? 'bg-cyan-400 text-slate-950' : 'bg-slate-900 text-slate-200'
+                      className={`min-h-8 rounded-lg px-2.5 text-[10px] font-bold transition-all active:scale-95 duration-200 ${
+                        selected 
+                          ? 'bg-cyan-400 text-slate-950 shadow-md shadow-cyan-400/10' 
+                          : 'bg-slate-900 text-slate-400 border border-slate-850 hover:bg-slate-850 hover:text-slate-200'
                       }`}
                     >
                       {labelForCategory(category.value, locale)}
@@ -552,9 +579,10 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                 })}
               </div>
             </div>
-            <div className="mt-3">
-              <p className="text-xs font-semibold uppercase text-slate-500">{t(locale, 'stages')}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
+
+            <div className="mt-3.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{t(locale, 'stages')}</p>
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {exerciseStageOptions.map((stage) => {
                   const selected = getExerciseStages(editingExercise).includes(stage.value);
                   return (
@@ -564,8 +592,10 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                       onClick={() => void handleUpdateExercise(editingExercise.id, {
                         stageTags: toggleStage(editingExercise, stage.value),
                       })}
-                      className={`min-h-9 rounded-md px-3 text-xs font-semibold ${
-                        selected ? 'bg-cyan-400 text-slate-950' : 'bg-slate-900 text-slate-200'
+                      className={`min-h-8 rounded-lg px-2.5 text-[10px] font-bold transition-all active:scale-95 duration-200 ${
+                        selected 
+                          ? 'bg-cyan-400 text-slate-950 shadow-md shadow-cyan-400/10' 
+                          : 'bg-slate-900 text-slate-400 border border-slate-850 hover:bg-slate-850 hover:text-slate-200'
                       }`}
                     >
                       {labelForStage(stage.value, locale)}
@@ -590,24 +620,28 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
               key={template.splitType}
               type="button"
               onClick={() => void handleActivate(template.splitType)}
-              className="rounded-lg bg-slate-900 p-4 text-left shadow"
+              className={`w-full rounded-2xl bg-slate-900/60 backdrop-blur-md border p-5 text-left transition-all active:scale-[0.98] shadow-2xl ${
+                isActive 
+                  ? 'border-cyan-400/80 shadow-[0_0_15px_-3px_rgba(34,211,238,0.15)] bg-slate-900/90' 
+                  : 'border-slate-800/80 hover:bg-slate-900/40'
+              }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-semibold text-white">{getRoutineTemplateName(template, locale)}</h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">{getRoutineTemplateSummary(template, locale)}</p>
+                  <h2 className="text-sm font-black text-white tracking-wide">{getRoutineTemplateName(template, locale)}</h2>
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{getRoutineTemplateSummary(template, locale)}</p>
                 </div>
                 {isActive ? (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-400 text-slate-950">
-                    <Check aria-hidden="true" size={18} />
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-400 text-slate-950 shadow-md shadow-emerald-400/20">
+                    <Check aria-hidden="true" size={16} />
                   </span>
                 ) : null}
               </div>
-              <p className="mt-3 text-sm font-medium text-cyan-300">
+              <p className={`mt-3.5 text-[10px] font-black uppercase tracking-wider ${isActive ? 'text-cyan-400' : 'text-slate-500'}`}>
                 {isSaving
-                  ? locale === 'ko' ? '로컬 저장 중...' : 'Saving locally...'
-                  : isActive ? locale === 'ko' ? '활성 루틴' : 'Active'
-                  : locale === 'ko' ? '활성화' : 'Set active'}
+                  ? locale === 'ko' ? '로컬 저장 중...' : 'Saving...'
+                  : isActive ? locale === 'ko' ? '● 활성 루틴' : '● Active'
+                  : locale === 'ko' ? '활성화하기' : 'Activate Plan'}
               </p>
             </button>
           );
@@ -616,27 +650,27 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
       ) : null}
 
       {dayPlans.length > 0 && setupTab !== 'library' ? (
-        <section className="rounded-lg bg-slate-900 p-5 shadow">
+        <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
           {setupTab === 'schedule' ? (
           <>
-          <p className="text-sm font-medium text-slate-400">{t(locale, 'weeklyPlan')}</p>
-          <div className="mt-2 rounded-md bg-slate-800 px-3 py-3">
-            <p className="text-xs font-semibold uppercase text-slate-500">{t(locale, 'activeRoutine')}</p>
-            <h2 className="mt-1 text-base font-semibold text-white">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
-            <p className="mt-1 text-xs leading-5 text-slate-400">{t(locale, 'routinePlanFor')}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{t(locale, 'weeklyPlan')}</p>
+          <div className="mt-2 rounded-xl bg-slate-950/80 border border-slate-900 px-4 py-3">
+            <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">{t(locale, 'activeRoutine')}</p>
+            <h2 className="mt-1 text-sm font-black text-white">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
+            <p className="mt-1 text-[10px] leading-normal text-slate-500">{t(locale, 'routinePlanFor')}</p>
           </div>
-          <div className="mt-3 grid gap-2">
+          <div className="mt-3.5 space-y-2">
             {weeklySchedule.map((schedule) => (
               <label
                 key={schedule.weekday}
-                className="grid grid-cols-[3.5rem_1fr] items-center gap-3 text-sm font-semibold text-slate-300"
+                className="grid grid-cols-[4.5rem_1fr] items-center gap-3 text-xs font-black text-slate-400 uppercase tracking-wider"
               >
                 <span>{weekdayLabels[locale][schedule.weekday]}</span>
                 <select
                   aria-label={`${weekdayLabels[locale][schedule.weekday]} routine day`}
                   value={schedule.isRestDay ? '' : schedule.routineDayId ?? ''}
                   onChange={(event) => void handleWeeklyScheduleChange(schedule.weekday, event.target.value)}
-                  className="min-h-10 rounded-md bg-slate-800 px-3 text-sm text-white"
+                  className="min-h-9 w-full rounded-xl bg-slate-950 border border-slate-850 px-3 text-xs font-bold text-slate-300 outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 transition-all cursor-pointer"
                 >
                   <option value="">{t(locale, 'rest')}</option>
                   {dayPlans.map((dayPlan) => (
@@ -652,33 +686,33 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
           ) : null}
 
           {setupTab === 'routine' ? (
-          <div className="mt-5 border-t border-slate-800 pt-5">
+          <div className="mt-5 border-t border-slate-800/80 pt-5">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium text-slate-400">{t(locale, 'routineDays')}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{t(locale, 'routineDays')}</p>
             <button
               type="button"
               onClick={() => void handleRevertRoutineChanges()}
-              className="flex min-h-9 items-center gap-2 rounded-md bg-slate-800 px-3 text-xs font-semibold text-slate-100"
+              className="flex min-h-8 items-center gap-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 px-3 py-1.5 text-xs font-bold text-slate-200 transition-all active:scale-95 border border-slate-750"
             >
-              <RotateCcw aria-hidden="true" size={14} />
+              <RotateCcw aria-hidden="true" size={13} />
               <span>{locale === 'ko' ? '변경 취소' : 'Undo changes'}</span>
             </button>
           </div>
           {resetStatus ? (
-            <p className="mt-2 rounded-md bg-cyan-950 px-3 py-2 text-xs font-semibold text-cyan-100">
+            <p className="mt-2 rounded-xl bg-cyan-950/80 border border-cyan-900/50 px-3.5 py-2 text-xs font-bold text-cyan-200">
               {resetStatus}
             </p>
           ) : null}
-          <div className="mt-3 flex flex-wrap gap-2 pb-1">
+          <div className="mt-3 flex flex-wrap gap-1.5 pb-1">
             {dayPlans.map((dayPlan) => (
               <button
                 key={dayPlan.routineDay.id}
                 type="button"
                 onClick={() => setSelectedDayId(dayPlan.routineDay.id)}
-                className={`min-h-10 rounded-md px-3 text-sm font-semibold ${
+                className={`min-h-8 rounded-full px-4 text-xs font-black transition-all active:scale-95 border ${
                   selectedDay?.routineDay.id === dayPlan.routineDay.id
-                    ? 'bg-cyan-400 text-slate-950'
-                    : 'bg-slate-800 text-slate-100'
+                    ? 'bg-cyan-400 border-cyan-400 text-slate-950 shadow-md shadow-cyan-400/20'
+                    : 'bg-slate-950 border-slate-850 text-slate-400 hover:bg-slate-850 hover:text-white'
                 }`}
               >
 	                {getRoutineDayDisplayName(dayPlan.routineDay, locale)}
@@ -688,13 +722,13 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
 
           {selectedDay ? (
             <div className="mt-4">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-2.5">
                 <input
                   aria-label="Routine day name"
                   type="text"
                   defaultValue={selectedDay.routineDay.name}
                   onBlur={(event) => void handleUpdateRoutineDayName(selectedDay.routineDay.id, event.target.value)}
-                  className="min-w-0 flex-1 rounded-md bg-slate-800 px-3 py-2 text-lg font-semibold text-white"
+                  className="min-w-0 flex-1 rounded-xl bg-slate-950 border border-slate-850 focus:border-cyan-400/50 px-3.5 py-2 text-sm font-black text-white outline-none focus:ring-1 focus:ring-cyan-400 transition-all"
                 />
                 <button
                   type="button"
@@ -704,10 +738,10 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                     ));
                     resetRoutineAddFinderState();
                   }}
-                  className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-400 text-slate-950"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 active:scale-95 transition-all shadow-md shadow-cyan-400/20"
                   aria-label={`Add exercise to ${selectedDay.routineDay.name}`}
                 >
-                  <Plus aria-hidden="true" size={20} />
+                  <Plus aria-hidden="true" size={18} />
                 </button>
               </div>
 
@@ -725,52 +759,57 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                 </div>
               ) : null}
 
-              <div className="mt-3 grid gap-2">
+              <div className="mt-3.5 space-y-2.5">
                 {selectedDay.plans.length === 0 ? (
-                  <p className="rounded-md bg-slate-800 px-3 py-3 text-sm text-slate-300">
+                  <p className="rounded-2xl bg-slate-900/40 border border-slate-800/80 px-4 py-6 text-xs font-semibold text-slate-400 text-center leading-relaxed">
                     {t(locale, 'noPlannedExercises')}
                   </p>
                 ) : selectedDay.plans.map(({ plan, exercise }, planIndex) => (
-                  <div key={plan.id} className="rounded-md bg-slate-800 px-3 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-white">{getExerciseName(exercise, locale)}</p>
-                        <p className="mt-1 text-xs text-slate-400">
-                          {getExerciseCategories(exercise).map((category) => labelForCategory(category, locale)).join(' / ')}
-                        </p>
+                  <div key={plan.id} className="rounded-2xl bg-slate-950/80 border border-slate-900 p-4 shadow-xl space-y-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-base shrink-0">
+                          {getExerciseIcon(exercise.defaultEmoji)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-black text-white leading-tight truncate">{getExerciseName(exercise, locale)}</p>
+                          <p className="mt-0.5 text-[9.5px] font-bold text-slate-500 truncate">
+                            {getExerciseCategories(exercise).map((category) => labelForCategory(category, locale)).join(' / ')}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 shrink-0">
                         <button
                           type="button"
                           onClick={() => void handleMovePlan(plan.id, -1)}
                           disabled={planIndex === 0}
-                          className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-900 text-slate-100 disabled:text-slate-600"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-slate-450 border border-slate-850 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-all"
                           aria-label={`Move ${getExerciseName(exercise, locale)} up`}
                         >
-                          <ArrowUp aria-hidden="true" size={15} />
+                          <ArrowUp aria-hidden="true" size={13} />
                         </button>
                         <button
                           type="button"
                           onClick={() => void handleMovePlan(plan.id, 1)}
                           disabled={planIndex === selectedDay.plans.length - 1}
-                          className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-900 text-slate-100 disabled:text-slate-600"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-slate-450 border border-slate-850 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-all"
                           aria-label={`Move ${getExerciseName(exercise, locale)} down`}
                         >
-                          <ArrowDown aria-hidden="true" size={15} />
+                          <ArrowDown aria-hidden="true" size={13} />
                         </button>
                         <button
                           type="button"
                           onClick={() => void handleDeletePlan(plan.id)}
-                          className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-900 text-red-300"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 border border-slate-850 text-rose-455 hover:text-rose-400 hover:bg-rose-950/20 active:scale-95 transition-all"
                           aria-label={`Remove ${getExerciseName(exercise, locale)} from ${selectedDay.routineDay.name}`}
                         >
-                          <Trash2 aria-hidden="true" size={16} />
+                          <Trash2 aria-hidden="true" size={14} />
                         </button>
                       </div>
                     </div>
-                    <div className="mt-3 grid grid-cols-4 gap-2">
-                      <label className="text-xs font-medium text-slate-400">
-                        Sets
+                    <div className="grid grid-cols-4 gap-2 pt-1 border-t border-slate-900">
+                      <label className="block text-center">
+                        <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Sets</span>
                         <input
                           aria-label={`${getExerciseName(exercise, locale)} planned sets`}
                           type="text"
@@ -779,11 +818,11 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                           onBlur={(event) => void handleUpdatePlan(plan.id, {
                             plannedSets: Math.max(1, Number(event.target.value) || 1),
                           })}
-                          className="mt-1 w-full rounded-md bg-slate-900 px-2 py-2 text-center text-sm text-white"
+                          className="w-full rounded-xl bg-slate-900 border border-slate-850 py-2.5 text-center text-xs font-black text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all"
                         />
                       </label>
-                      <label className="text-xs font-medium text-slate-400">
-                        Kg
+                      <label className="block text-center">
+                        <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Kg</span>
                         <input
                           aria-label={`${getExerciseName(exercise, locale)} planned weight`}
                           type="text"
@@ -792,11 +831,11 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                           onBlur={(event) => void handleUpdatePlan(plan.id, {
                             plannedWeightKg: Number(event.target.value) || undefined,
                           })}
-                          className="mt-1 w-full rounded-md bg-slate-900 px-2 py-2 text-center text-sm text-white"
+                          className="w-full rounded-xl bg-slate-900 border border-slate-850 py-2.5 text-center text-xs font-black text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all"
                         />
                       </label>
-                      <label className="text-xs font-medium text-slate-400">
-                        Reps
+                      <label className="block text-center">
+                        <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Reps</span>
                         <input
                           aria-label={`${getExerciseName(exercise, locale)} planned reps`}
                           type="text"
@@ -805,11 +844,11 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                           onBlur={(event) => void handleUpdatePlan(plan.id, {
                             plannedReps: Math.max(0, Number(event.target.value) || 0),
                           })}
-                          className="mt-1 w-full rounded-md bg-slate-900 px-2 py-2 text-center text-sm text-white"
+                          className="w-full rounded-xl bg-slate-900 border border-slate-850 py-2.5 text-center text-xs font-black text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all"
                         />
                       </label>
-                      <label className="text-xs font-medium text-slate-400">
-                        RIR
+                      <label className="block text-center">
+                        <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">RIR</span>
                         <input
                           aria-label={`${getExerciseName(exercise, locale)} planned RIR`}
                           type="text"
@@ -821,7 +860,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                               plannedRir: value === '' ? undefined : Math.max(0, Number(value) || 0),
                             });
                           }}
-                          className="mt-1 w-full rounded-md bg-slate-900 px-2 py-2 text-center text-sm text-white"
+                          className="w-full rounded-xl bg-slate-900 border border-slate-850 py-2.5 text-center text-xs font-black text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all"
                         />
                       </label>
                     </div>

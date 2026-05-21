@@ -119,67 +119,81 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
       : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
   const actionLabel = (labelKey: MessageKey) => {
     if (labelKey === 'startWorkout') return locale === 'ko' ? '운동일지' : 'Workout Log';
-    if (labelKey === 'export') return locale === 'ko' ? '내보내기/가져오기' : 'Export/Restore';
+    if (labelKey === 'export') return locale === 'ko' ? '가져오기/내보내기' : 'Export/Restore';
     return t(locale, labelKey);
   };
 
   return (
     <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
-      <header className="rounded-lg bg-slate-900 p-5 shadow">
-        <p className="text-sm font-medium text-cyan-300">{t(locale, 'today')}</p>
-        <h1 className="mt-1 text-3xl font-bold text-white">SetGo</h1>
-        <p className="mt-2 text-base text-slate-200">{todayLabel}</p>
+      
+      {/* Hero Welcome Card - Glassmorphism */}
+      <header className="relative overflow-hidden rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl">
+        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-24 h-24 rounded-full bg-cyan-500/10 blur-xl"></div>
+        <p className="text-xs font-bold uppercase tracking-wider text-cyan-400">{t(locale, 'today')}</p>
+        <h1 className="mt-1 text-4xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+          SetGo
+        </h1>
+        <p className="mt-2 text-sm font-semibold text-slate-300">{todayLabel}</p>
       </header>
 
-      <section className="rounded-lg bg-slate-900 p-5 shadow">
+      {/* Active Routine Glass Card */}
+      <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl flex flex-col gap-3">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-cyan-500 text-slate-950">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 text-slate-950 font-bold shadow-lg shadow-cyan-500/20">
             <Dumbbell aria-hidden="true" size={22} />
           </div>
-          <div>
-            <p className="text-sm font-medium text-slate-400">{t(locale, 'activeRoutine')}</p>
-            <h2 className="mt-1 text-xl font-semibold text-white">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">{t(locale, 'activeRoutine')}</p>
+            <h2 className="mt-0.5 text-lg font-bold text-white truncate">
               {activeRoutineName ?? t(locale, 'noActiveRoutine')}
             </h2>
-            <div className="mt-3 rounded-md bg-slate-800 px-3 py-2">
-              <p className="text-xs font-semibold uppercase text-slate-500">{t(locale, 'todaysPlan')}</p>
-              <p className="mt-1 text-base font-semibold text-white">{planLabel}</p>
-            </div>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              {inProgressSession
-                ? locale === 'ko' ? '진행 중인 운동을 이어서 기록합니다.' : 'An in-progress workout will continue from its saved routine day.'
-                : isTodayRestDay && activeRoutine
-                ? locale === 'ko' ? '휴식일에 운동한다면 다음 루틴을 선택하세요.' : 'Tap the next routine if you decide to train on this rest day.'
-                : activeRoutine
-                ? locale === 'ko' ? '주간 계획에 맞춰 오늘 루틴을 불러왔습니다. 시작 전 다른 루틴으로 바꿀 수 있습니다.' : 'Today is matched to your weekly schedule. You can choose a different routine day before starting.'
-                : locale === 'ko' ? '루틴 설정에서 첫 운동 계획을 만들어 보세요.' : 'Choose Routine Setup to create your first local plan.'}
-            </p>
           </div>
         </div>
+
+        <div className="rounded-xl bg-slate-950/80 border border-slate-800/80 px-4 py-3">
+          <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">{t(locale, 'todaysPlan')}</p>
+          <p className="mt-1 text-sm font-bold text-cyan-300 flex items-center gap-1.5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
+            {planLabel}
+          </p>
+        </div>
+        
+        <p className="text-xs leading-5 text-slate-400 font-medium">
+          {inProgressSession
+            ? locale === 'ko' ? '진행 중인 운동을 이어서 기록합니다.' : 'An in-progress workout will continue from its saved routine day.'
+            : isTodayRestDay && activeRoutine
+            ? locale === 'ko' ? '휴식일에 운동한다면 다음 루틴을 선택하세요.' : 'Tap the next routine if you decide to train on this rest day.'
+            : activeRoutine
+            ? locale === 'ko' ? '주간 계획에 맞춰 오늘 루틴을 불러왔습니다. 시작 전 다른 루틴으로 바꿀 수 있습니다.' : 'Today is matched to your weekly schedule. You can choose a different routine day before starting.'
+            : locale === 'ko' ? '루틴 설정에서 첫 운동 계획을 만들어 보세요.' : 'Choose Routine Setup to create your first local plan.'}
+        </p>
+
         {isTodayRestDay && !inProgressSession && nextRoutineDay ? (
           <button
             type="button"
             onClick={() => setSelectedRoutineDayId(nextRoutineDay.id)}
-            className={`mt-4 min-h-11 w-full rounded-md px-3 text-left text-sm font-semibold ${
+            className={`mt-2 min-h-11 w-full rounded-xl px-4 text-left text-xs font-bold transition-all active:scale-98 border ${
               selectedRoutineDayId === nextRoutineDay.id
-                ? 'bg-cyan-400 text-slate-950'
-                : 'bg-slate-800 text-slate-100'
+                ? 'bg-cyan-400 border-cyan-400 text-slate-950 shadow-md shadow-cyan-400/20'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-850'
             }`}
           >
-            {locale === 'ko' ? '다음 루틴' : 'Next routine'}: {getRoutineDayDisplayName(nextRoutineDay, locale)}
+            {locale === 'ko' ? '💡 추천 다음 루틴' : '💡 Recommended Next'}: {getRoutineDayDisplayName(nextRoutineDay, locale)}
           </button>
         ) : null}
+
+        {/* Dynamic Horizontal Split Planner Tags */}
         {routineDays.length > 0 ? (
-          <div className="mt-4 flex flex-wrap gap-2 pb-1">
+          <div className="mt-2 flex flex-wrap gap-2 pb-1">
             {routineDays.map((routineDay) => (
               <button
                 key={routineDay.id}
                 type="button"
                 onClick={() => setSelectedRoutineDayId(routineDay.id)}
-                className={`min-h-10 rounded-md px-3 text-sm font-semibold ${
+                className={`min-h-9 rounded-full px-4.5 text-xs font-bold transition-all active:scale-95 border ${
                   selectedRoutineDayId === routineDay.id
-                    ? 'bg-cyan-400 text-slate-950'
-                    : 'bg-slate-800 text-slate-100'
+                    ? 'bg-cyan-400 border-cyan-400 text-slate-950 shadow-md shadow-cyan-400/20'
+                    : 'bg-slate-950 border-slate-850 text-slate-400 hover:bg-slate-850'
                 }`}
               >
                 {getRoutineDayDisplayName(routineDay, locale)}
@@ -187,12 +201,14 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
             ))}
           </div>
         ) : null}
+
+        {/* Planned Exercises Pills Carousel */}
         {plannedExerciseNames.length > 0 ? (
-          <div className="mt-3 rounded-md bg-slate-800 px-3 py-2">
-            <p className="text-xs font-semibold uppercase text-slate-500">{t(locale, 'plannedExercises')}</p>
-            <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-1 rounded-xl bg-slate-950/80 border border-slate-800/80 px-4 py-3">
+            <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-2">{t(locale, 'plannedExercises')}</p>
+            <div className="flex flex-wrap gap-1.5">
               {plannedExerciseNames.slice(0, 6).map((exerciseName) => (
-                <span key={exerciseName} className="rounded-md bg-slate-900 px-2 py-1 text-xs font-semibold text-slate-200">
+                <span key={exerciseName} className="rounded-lg bg-slate-900 border border-slate-800/80 px-2.5 py-1 text-xs font-bold text-slate-300">
                   {exerciseName}
                 </span>
               ))}
@@ -201,20 +217,27 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
         ) : null}
       </section>
 
-      <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <p className="text-sm font-medium text-slate-400">{t(locale, 'lastWorkout')}</p>
-        <h2 className="mt-1 text-lg font-semibold text-white">
-          {latestFinishedWorkout
-            ? `${latestFinishedWorkout.session.date} / ${getRoutineDayDisplayName(latestFinishedWorkout.routineDay, locale) ?? latestFinishedWorkout.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}`
-            : t(locale, 'noFinishedWorkout')}
+      {/* Last Workout Summary Glass Card */}
+      <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl">
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">{t(locale, 'lastWorkout')}</p>
+        <h2 className="mt-1.5 text-sm font-bold text-white flex items-center gap-2">
+          {latestFinishedWorkout ? (
+            <>
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+              {latestFinishedWorkout.session.date} / {getRoutineDayDisplayName(latestFinishedWorkout.routineDay, locale) ?? latestFinishedWorkout.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}
+            </>
+          ) : (
+            t(locale, 'noFinishedWorkout')
+          )}
         </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-300">
+        <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-400">
           {latestFinishedWorkout
-            ? `${workoutStatusLabel(locale, latestFinishedWorkout.session.status)} / ${exerciseCountLabel(locale, latestFinishedWorkout.exerciseCount)} / ${latestFinishedWorkout.session.totalStrengthVolumeKg.toLocaleString()} kg`
-            : locale === 'ko' ? '운동을 완료하거나 건너뛰면 기록이 쌓입니다.' : 'Complete or skip a session to build your local history.'}
+            ? `${workoutStatusLabel(locale, latestFinishedWorkout.session.status)} • ${exerciseCountLabel(locale, latestFinishedWorkout.exerciseCount)} • ${latestFinishedWorkout.session.totalStrengthVolumeKg.toLocaleString()} kg`
+            : locale === 'ko' ? '운동을 완료하거나 건너뛰면 기록이 쌓됩니다.' : 'Complete or skip a session to build your local history.'}
         </p>
       </section>
 
+      {/* Grid of Dynamic Premium Navigation Actions */}
       <nav aria-label="Today actions" className="grid grid-cols-2 gap-3">
         {actions.map(({ labelKey, icon: Icon, primary, view }) => (
           <button
@@ -228,14 +251,14 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
 
               if (view) onNavigate(view);
             }}
-            className={`flex min-h-14 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold shadow ${
+            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-3 text-xs font-bold transition-all border active:scale-95 shadow-lg ${
               primary
-                ? 'bg-cyan-400 text-slate-950'
-                : 'bg-slate-800 text-slate-100'
+                ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 border-cyan-400 text-slate-950 shadow-cyan-500/20 hover:opacity-95'
+                : 'bg-slate-900/60 backdrop-blur-sm border-slate-800/80 text-slate-300 hover:bg-slate-850 hover:text-white'
             }`}
           >
-            <Icon aria-hidden="true" size={18} />
-            <span>
+            <Icon aria-hidden="true" size={20} className={primary ? 'animate-pulse shrink-0' : 'shrink-0'} />
+            <span className="tracking-wide">
               {labelKey === 'startWorkout' && !inProgressSession && isTodayRestDay && !selectedRoutineDayId
                 ? t(locale, 'startFreeWorkout')
                 : actionLabel(labelKey)}
