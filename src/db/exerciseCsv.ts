@@ -183,10 +183,14 @@ function normalizeIcon(iconVal: string, category: ExerciseCategory): string {
   return trimmed;
 }
 
-export async function importExerciseCsv(csv: string): Promise<number> {
+export function buildExerciseCsvImport(
+  csv: string,
+  existingExercises: ExerciseMaster[],
+  now: string,
+): ExerciseMaster[] {
   const rows = parseCsvRows(csv.replace(/^\uFEFF/, '').trim());
   const [headerRow, ...dataRows] = rows;
-  if (!headerRow) return 0;
+  if (!headerRow) return [];
 
   const headerIndex = new Map(headerRow.map((header, index) => [header.trim().replace(/^\uFEFF/, ''), index]));
   const missingHeaders = csvHeaders.filter((header) => !headerIndex.has(header));
@@ -194,8 +198,6 @@ export async function importExerciseCsv(csv: string): Promise<number> {
     throw new ExerciseCsvImportError([`Missing required columns: ${missingHeaders.join(', ')}`]);
   }
 
-  const now = new Date().toISOString();
-  const existingExercises = await db.exercises.toArray();
   const existingById = new Map(existingExercises.map((exercise) => [exercise.id, exercise]));
   
   const existingByNameKo = new Map(
@@ -282,9 +284,18 @@ export async function importExerciseCsv(csv: string): Promise<number> {
     throw new ExerciseCsvImportError(issues);
   }
 
+  return nextExercises;
+}
+
+export async function importExerciseCsv(csv: string): Promise<number> {
+  const nextExercises = buildExerciseCsvImport(
+    csv,
+    await db.exercises.toArray(),
+    new Date().toISOString(),
+  );
+
   if (nextExercises.length === 0) return 0;
 
   await db.exercises.bulkPut(nextExercises);
   return nextExercises.length;
 }
-
