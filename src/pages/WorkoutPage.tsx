@@ -48,6 +48,13 @@ function formatElapsed(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+export function getElapsedMs(startedAtStr: string, nowMs: number): number {
+  const start = new Date(startedAtStr).getTime();
+  if (Number.isNaN(start)) return 0;
+
+  return Math.max(0, nowMs - start);
+}
+
 export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
   const [workout, setWorkout] = useState<ActiveWorkout | undefined>();
   const [logs, setLogs] = useState<WorkoutExerciseLog[]>([]);
@@ -404,7 +411,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   const completedExerciseCount = logs.filter((log) => log.workoutExercise.status === 'completed').length;
 
   const sessionElapsed = workout?.session.startedAt
-    ? formatElapsed(timerNow - new Date(workout.session.startedAt).getTime())
+    ? formatElapsed(getElapsedMs(workout.session.startedAt, timerNow))
     : '0:00';
 
   const restElapsed = restTimerStartedAt ? formatElapsed(timerNow - restTimerStartedAt) : '--:--';
