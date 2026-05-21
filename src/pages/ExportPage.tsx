@@ -293,12 +293,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
   }
 
   return (
-    <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
-      <header className="flex items-center gap-3">
+    <section className="mx-auto flex overflow-hidden max-w-md flex-col gap-3 px-4 pt-3 pb-4 viewport-locked text-slate-100">
+      <header className="flex items-center gap-3 shrink-0 py-1">
         <button
           type="button"
           onClick={onBack}
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-955 border border-slate-850 text-slate-350 hover:text-white hover:bg-slate-850 active:scale-95 transition-all duration-200 shrink-0"
+          className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-800/80 border border-slate-700/60 text-slate-100 active:scale-95 transition-all shadow-md hover:bg-slate-700/80 shrink-0"
           aria-label="Back to Today"
         >
           <ChevronLeft aria-hidden="true" size={20} />
@@ -309,222 +309,228 @@ export function ExportPage({ onBack }: ExportPageProps) {
         </div>
       </header>
 
-      <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
-        <div>
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t(locale, 'workoutSession')}</p>
-          <h2 className="mt-1 text-base font-black text-white tracking-wide">
-            {summary ? `${summary.session.date} / ${workoutStatusLabel(locale, summary.session.status)}` : locale === 'ko' ? '저장된 운동이 없습니다' : 'No workout saved yet'}
-          </h2>
-          <p className="mt-1.5 text-xs leading-relaxed text-slate-455 font-semibold">
-            {summary
-              ? `${exerciseCountLabel(locale, summary.exerciseCount)} / ${summary.session.totalStrengthVolumeKg.toLocaleString()} kg`
-              : locale === 'ko' ? '운동을 완료하면 내보낼 기록이 생성됩니다.' : 'Complete a workout to generate an export.'}
-          </p>
-        </div>
-        
-        {summaries.length > 0 ? (
-          <div className="space-y-3 pt-1 border-t border-slate-900/60">
-            <select
-              aria-label="Export workout session"
-              value={summary?.session.id ?? ''}
-              onChange={(event) => void handleSelectSummary(event.target.value)}
-              className="min-h-11 w-full rounded-xl bg-slate-950 border border-slate-850 px-3 text-xs font-bold text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 transition-all cursor-pointer"
-            >
-              {summaries.map((item) => {
-                const routineDayName = getRoutineDayDisplayName(item.routineDay, locale) ?? t(locale, 'freeWorkout');
-                return (
-                  <option key={item.session.id} value={item.session.id} className="bg-slate-950 text-slate-200">
-                    {item.session.date} / {routineDayName} / {workoutStatusLabel(locale, item.session.status)} / {exerciseCountLabel(locale, item.exerciseCount)}
-                  </option>
-                );
-              })}
-            </select>
-            <p className="text-[10px] leading-relaxed text-slate-450 font-bold">
-              {locale === 'ko'
-                ? '완료 기록을 우선 선택합니다. 진행 중인 기록은 운동일지에서 완료 후 내보내는 것을 권장합니다.'
-                : 'Completed records are selected first. For in-progress sessions, finish the workout before exporting when possible.'}
+      {/* 내부 콘텐츠 스크롤 영역 */}
+      <div className="inner-scroll min-h-0 space-y-4 pr-0.5">
+        <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t(locale, 'workoutSession')}</p>
+            <h2 className="mt-1 text-base font-black text-white tracking-wide">
+              {summary ? `${summary.session.date} / ${workoutStatusLabel(locale, summary.session.status)}` : locale === 'ko' ? '저장된 운동이 없습니다' : 'No workout saved yet'}
+            </h2>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-300 font-semibold">
+              {summary
+                ? `${exerciseCountLabel(locale, summary.exerciseCount)} / ${summary.session.totalStrengthVolumeKg.toLocaleString()} kg`
+                : locale === 'ko' ? '운동을 완료하면 내보낼 기록이 생성됩니다.' : 'Complete a workout to generate an export.'}
             </p>
           </div>
-        ) : null}
-      </section>
 
-      <button
-        type="button"
-        onClick={() => void handleCopy()}
-        disabled={!markdown}
-        className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 px-4 text-xs font-black uppercase tracking-widest text-slate-955 shadow-lg shadow-cyan-400/20 active:scale-95 disabled:bg-slate-900 disabled:text-slate-500 disabled:border disabled:border-slate-850 disabled:shadow-none transition-all duration-200"
-      >
-        <Copy aria-hidden="true" size={16} />
-        <span>{copyStatus === 'copied' ? t(locale, 'copied') : t(locale, 'copy')}</span>
-      </button>
-
-      <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t(locale, 'localData')}</p>
-          {isPersisted ? (
-            <span className="flex items-center gap-1.5 rounded-lg bg-emerald-450/15 border border-emerald-500/20 px-2 py-0.5 text-[9px] font-black tracking-wide text-emerald-450">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-              </span>
-              <span>Persistent 🟢</span>
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 rounded-lg bg-amber-450/15 border border-amber-500/20 px-2 py-0.5 text-[9px] font-black tracking-wide text-amber-450">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
-              </span>
-              <span>Best-effort 🟡</span>
-            </span>
-          )}
-        </div>
-        <h2 className="text-base font-black text-white tracking-wide">{t(locale, 'backupRestore')}</h2>
-        <p className="text-xs leading-relaxed text-slate-400 font-semibold">
-          {backupSummary ?? (
-            locale === 'ko'
-              ? '전체 JSON 백업에는 운동 기록, 루틴, 운동 라이브러리, 주간계획, 날짜별 계획이 모두 포함됩니다.'
-              : t(locale, 'localDataNote')
-          )}
-        </p>
-        {!isPersisted && (
-          <p className="text-[10px] leading-relaxed text-amber-300 bg-amber-450/5 border border-amber-400/10 rounded-xl p-3 font-bold">
-            {locale === 'ko'
-              ? '💡 모바일 기기의 Safari/Chrome에서 "홈 화면에 추가"하여 PWA로 설치하면, 브라우저가 데이터를 임의로 지우지 않는 [영구 안심 보존(Persistent)] 권한을 자동으로 획득할 수 있습니다.'
-              : '💡 Add this app to your "Home Screen" (PWA) to automatically gain [Persistent Storage] status, ensuring the browser never auto-deletes your logs.'}
-          </p>
-        )}
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <button
-            type="button"
-            onClick={() => void handleBackup()}
-            className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-850 hover:bg-slate-850 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200"
-          >
-            <Download aria-hidden="true" size={15} />
-            <span>{backupStatus === 'downloaded' ? t(locale, 'downloaded') : t(locale, 'backupJson')}</span>
-          </button>
-          <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-850 hover:bg-slate-850 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200">
-            <Upload aria-hidden="true" size={15} />
-            <span>
-              {restoreStatus === 'restored'
-                ? t(locale, 'restored')
-                : restoreStatus === 'cancelled'
-                ? t(locale, 'restoreCancelled')
-                : restoreStatus === 'failed'
-                ? t(locale, 'restoreFailed')
-                : t(locale, 'restoreJson')}
-            </span>
-            <input
-              aria-label="Restore SetGo JSON backup"
-              type="file"
-              accept="application/json"
-              onChange={(event) => void handleRestore(event)}
-              className="sr-only"
-            />
-          </label>
-        </div>
-      </section>
-
-      <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
-        <div>
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            {locale === 'ko' ? '설정 데이터' : 'Settings Data'}
-          </p>
-          <h2 className="mt-1 text-base font-black text-white tracking-wide">
-            {locale === 'ko' ? '루틴 / 운동 / 주간계획 백업' : 'Routine / Exercise / Weekly Plan Backup'}
-          </h2>
-        </div>
-        <p className="text-xs leading-relaxed text-slate-400 font-semibold">
-          {settingsBackupStatus ?? (
-            locale === 'ko'
-              ? '운동 기록은 제외하고 설정에서 저장한 루틴, 루틴별 운동 구성, 운동 라이브러리, 주간계획, 날짜별 계획만 JSON으로 저장합니다.'
-              : 'Export only settings: routines, routine exercise plans, exercise library, weekly plan, and date overrides. Workout logs are not included.'
-          )}
-        </p>
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <button
-            type="button"
-            onClick={() => void handleSettingsBackup()}
-            className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-850 hover:bg-slate-850 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200"
-          >
-            <Download aria-hidden="true" size={15} />
-            <span>{locale === 'ko' ? '설정 저장' : 'Export Settings'}</span>
-          </button>
-          <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-850 hover:bg-slate-850 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200">
-            <Upload aria-hidden="true" size={15} />
-            <span>{locale === 'ko' ? '설정 복원' : 'Restore Settings'}</span>
-            <input
-              aria-label="Restore SetGo settings JSON backup"
-              type="file"
-              accept="application/json"
-              onChange={(event) => void handleSettingsRestore(event)}
-              className="sr-only"
-            />
-          </label>
-        </div>
-      </section>
-
-      <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
-        <div>
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            {locale === 'ko' ? '운동 라이브러리' : 'Exercise Library'}
-          </p>
-          <h2 className="mt-1 text-base font-black text-white tracking-wide">
-            {locale === 'ko' ? 'CSV 일괄 수정' : 'Bulk CSV Edit'}
-          </h2>
-        </div>
-        <p className="text-xs leading-relaxed text-slate-400 font-semibold">
-          {exerciseCsvStatus ?? (
-            locale === 'ko'
-              ? 'CSV를 내려받아 한글명, 영문명, 분류, 설명을 수정한 뒤 다시 가져오세요. categoryTags와 stageTags는 | 로 여러 값을 입력할 수 있습니다.'
-              : 'Export the CSV, edit names, tags, and descriptions, then import it back. Use | for multiple categoryTags or stageTags.'
-          )}
-        </p>
-        {exerciseCsvIssues.length > 0 ? (
-          <div className="rounded-xl bg-rose-955/20 border border-rose-900/65 px-4 py-3 space-y-2">
-            <p className="text-xs font-black text-rose-350">
-              {locale === 'ko' ? '가져오기 전 수정할 항목' : 'Items to fix before import'}
-            </p>
-            <ul className="grid gap-1 text-[11px] leading-relaxed font-bold text-rose-300">
-              {exerciseCsvIssues.slice(0, 8).map((issue) => (
-                <li key={issue}>{issue}</li>
-              ))}
-            </ul>
-            {exerciseCsvIssues.length > 8 ? (
-              <p className="text-[10px] font-black text-rose-400">
+          {summaries.length > 0 ? (
+            <div className="space-y-3 pt-3.5 border-t border-slate-700/60">
+              <label htmlFor="export-session-select" className="text-[11px] font-extrabold text-slate-350 tracking-wide block">
+                {locale === 'ko' ? '기록 선택' : 'Select Session'}
+              </label>
+              <select
+                id="export-session-select"
+                aria-label="Export workout session"
+                value={summary?.session.id ?? ''}
+                onChange={(event) => void handleSelectSummary(event.target.value)}
+                className="min-h-11 w-full rounded-xl bg-slate-900 border border-slate-700 px-3 text-xs font-bold text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 transition-all cursor-pointer"
+              >
+                {summaries.map((item) => {
+                  const routineDayName = getRoutineDayDisplayName(item.routineDay, locale) ?? t(locale, 'freeWorkout');
+                  return (
+                    <option key={item.session.id} value={item.session.id} className="bg-slate-900 text-slate-200">
+                      {item.session.date} / {routineDayName} / {workoutStatusLabel(locale, item.session.status)} / {exerciseCountLabel(locale, item.exerciseCount)}
+                    </option>
+                  );
+                })}
+              </select>
+              <p className="text-[10px] leading-relaxed text-slate-400 font-semibold">
                 {locale === 'ko'
-                  ? `${exerciseCsvIssues.length - 8}개 항목이 더 있습니다.`
-                  : `${exerciseCsvIssues.length - 8} more issues.`}
+                  ? '완료 기록을 우선 선택합니다. 진행 중인 기록은 운동일지에서 완료 후 내보내는 것을 권장합니다.'
+                  : 'Completed records are selected first. For in-progress sessions, finish the workout before exporting when possible.'}
               </p>
-            ) : null}
-          </div>
-        ) : null}
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <button
-            type="button"
-            onClick={() => void handleExerciseCsvExport()}
-            className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-850 hover:bg-slate-850 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200"
-          >
-            <Download aria-hidden="true" size={15} />
-            <span>{locale === 'ko' ? 'CSV 내보내기' : 'Export CSV'}</span>
-          </button>
-          <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-850 hover:bg-slate-850 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200">
-            <Upload aria-hidden="true" size={15} />
-            <span>{locale === 'ko' ? 'CSV 가져오기' : 'Import CSV'}</span>
-            <input
-              aria-label="Import exercise library CSV"
-              type="file"
-              accept=".csv,text/csv"
-              onChange={(event) => void handleExerciseCsvImport(event)}
-              className="sr-only"
-            />
-          </label>
-        </div>
-      </section>
+            </div>
+          ) : null}
+        </section>
 
-      <pre className="min-h-72 overflow-auto whitespace-pre-wrap rounded-2xl bg-slate-950 border border-slate-900 p-4 text-xs leading-relaxed font-medium text-slate-300 shadow-inner">
-        {markdown || t(locale, 'noMarkdown')}
-      </pre>
+        <button
+          type="button"
+          onClick={() => void handleCopy()}
+          disabled={!markdown}
+          className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 px-4 text-xs font-black uppercase tracking-widest text-slate-955 shadow-lg shadow-cyan-400/20 active:scale-95 disabled:bg-slate-900 disabled:text-slate-500 disabled:border disabled:border-slate-750 disabled:shadow-none transition-all duration-200"
+        >
+          <Copy aria-hidden="true" size={16} />
+          <span>{copyStatus === 'copied' ? t(locale, 'copied') : t(locale, 'copy')}</span>
+        </button>
+
+        <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t(locale, 'localData')}</p>
+            {isPersisted ? (
+              <span className="flex items-center gap-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/20 px-2 py-0.5 text-[9px] font-black tracking-wide text-emerald-400">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+                <span>Persistent 🟢</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 rounded-lg bg-amber-500/15 border border-amber-500/20 px-2 py-0.5 text-[9px] font-black tracking-wide text-amber-400">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                </span>
+                <span>Best-effort 🟡</span>
+              </span>
+            )}
+          </div>
+          <h2 className="text-base font-black text-white tracking-wide">{t(locale, 'backupRestore')}</h2>
+          <p className="text-xs leading-relaxed text-slate-350 font-semibold">
+            {backupSummary ?? (
+              locale === 'ko'
+                ? '전체 JSON 백업에는 운동 기록, 루틴, 운동 라이브러리, 주간계획, 날짜별 계획이 모두 포함됩니다.'
+                : t(locale, 'localDataNote')
+            )}
+          </p>
+          {!isPersisted && (
+            <p className="text-[10px] leading-relaxed text-amber-250 bg-amber-950/20 border border-amber-900 px-3 py-2.5 rounded-xl font-bold">
+              {locale === 'ko'
+                ? '💡 모바일 기기의 Safari/Chrome에서 "홈 화면에 추가"하여 PWA로 설치하면, 브라우저가 데이터를 임의로 지우지 않는 [영구 안심 보존(Persistent)] 권한을 자동으로 획득할 수 있습니다.'
+                : '💡 Add this app to your "Home Screen" (PWA) to automatically gain [Persistent Storage] status, ensuring the browser never auto-deletes your logs.'}
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => void handleBackup()}
+              className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200"
+            >
+              <Download aria-hidden="true" size={15} />
+              <span>{backupStatus === 'downloaded' ? t(locale, 'downloaded') : t(locale, 'backupJson')}</span>
+            </button>
+            <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200">
+              <Upload aria-hidden="true" size={15} />
+              <span>
+                {restoreStatus === 'restored'
+                  ? t(locale, 'restored')
+                  : restoreStatus === 'cancelled'
+                  ? t(locale, 'restoreCancelled')
+                  : restoreStatus === 'failed'
+                  ? t(locale, 'restoreFailed')
+                  : t(locale, 'restoreJson')}
+              </span>
+              <input
+                aria-label="Restore SetGo JSON backup"
+                type="file"
+                accept="application/json"
+                onChange={(event) => void handleRestore(event)}
+                className="sr-only"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {locale === 'ko' ? '설정 데이터' : 'Settings Data'}
+            </p>
+            <h2 className="mt-1 text-base font-black text-white tracking-wide">
+              {locale === 'ko' ? '루틴 / 운동 / 주간계획 백업' : 'Routine / Exercise / Weekly Plan Backup'}
+            </h2>
+          </div>
+          <p className="text-xs leading-relaxed text-slate-350 font-semibold">
+            {settingsBackupStatus ?? (
+              locale === 'ko'
+                ? '운동 기록은 제외하고 설정에서 저장한 루틴, 루틴별 운동 구성, 운동 라이브러리, 주간계획, 날짜별 계획만 JSON으로 저장합니다.'
+                : 'Export only settings: routines, routine exercise plans, exercise library, weekly plan, and date overrides. Workout logs are not included.'
+            )}
+          </p>
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => void handleSettingsBackup()}
+              className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200"
+            >
+              <Download aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? '설정 저장' : 'Export Settings'}</span>
+            </button>
+            <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200">
+              <Upload aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? '설정 복원' : 'Restore Settings'}</span>
+              <input
+                aria-label="Restore SetGo settings JSON backup"
+                type="file"
+                accept="application/json"
+                onChange={(event) => void handleSettingsRestore(event)}
+                className="sr-only"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {locale === 'ko' ? '운동 라이브러리' : 'Exercise Library'}
+            </p>
+            <h2 className="mt-1 text-base font-black text-white tracking-wide">
+              {locale === 'ko' ? 'CSV 일괄 수정' : 'Bulk CSV Edit'}
+            </h2>
+          </div>
+          <p className="text-xs leading-relaxed text-slate-350 font-semibold">
+            {exerciseCsvStatus ?? (
+              locale === 'ko'
+                ? 'CSV를 내려받아 한글명, 영문명, 분류, 설명을 수정한 뒤 다시 가져오세요. categoryTags와 stageTags는 | 로 여러 값을 입력할 수 있습니다.'
+                : 'Export the CSV, edit names, tags, and descriptions, then import it back. Use | for multiple categoryTags or stageTags.'
+            )}
+          </p>
+          {exerciseCsvIssues.length > 0 ? (
+            <div className="rounded-xl bg-rose-950/20 border border-rose-900 px-4 py-3 space-y-2">
+              <p className="text-xs font-black text-rose-350">
+                {locale === 'ko' ? '가져오기 전 수정할 항목' : 'Items to fix before import'}
+              </p>
+              <ul className="grid gap-1 text-[11px] leading-relaxed font-bold text-rose-300">
+                {exerciseCsvIssues.slice(0, 8).map((issue) => (
+                  <li key={issue}>{issue}</li>
+                ))}
+              </ul>
+              {exerciseCsvIssues.length > 8 ? (
+                <p className="text-[10px] font-black text-rose-450">
+                  {locale === 'ko'
+                    ? `${exerciseCsvIssues.length - 8}개 항목이 더 있습니다.`
+                    : `${exerciseCsvIssues.length - 8} more issues.`}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => void handleExerciseCsvExport()}
+              className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200"
+            >
+              <Download aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? 'CSV 내보내기' : 'Export CSV'}</span>
+            </button>
+            <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200">
+              <Upload aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? 'CSV 가져오기' : 'Import CSV'}</span>
+              <input
+                aria-label="Import exercise library CSV"
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(event) => void handleExerciseCsvImport(event)}
+                className="sr-only"
+              />
+            </label>
+          </div>
+        </section>
+
+        <pre className="min-h-72 overflow-auto whitespace-pre-wrap rounded-2xl bg-slate-900 border border-slate-750 p-4 text-xs leading-relaxed font-semibold text-slate-200 shadow-inner">
+          {markdown || t(locale, 'noMarkdown')}
+        </pre>
+      </div>
     </section>
   );
 }
-
