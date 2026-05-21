@@ -94,7 +94,7 @@ export async function seedDefaultExercises() {
   const missingExercises = defaultExercises.filter((item) => !existingIds.has(item.id));
 
   if (missingExercises.length > 0) {
-    await db.exercises.bulkAdd(missingExercises);
+    await db.exercises.bulkPut(missingExercises);
   }
 
   const canonicalById = new Map(defaultExercises.map((item) => [item.id, item]));
