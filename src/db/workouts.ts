@@ -102,7 +102,7 @@ export async function getOrCreateWorkoutForDate(
   const session: WorkoutSession = {
     id: existingSessions.length === 0 ? `workout_${date}` : `workout_${date}_${now.getTime()}`,
     date,
-    startedAt: existingSessions.length === 0 ? `${date}T12:00:00.000` : timestamp,
+    startedAt: (existingSessions.length === 0 && date !== formatDateKey(new Date())) ? `${date}T12:00:00.000` : timestamp,
     timeBand: getTimeBand(sessionDate),
     routineId: activeRoutine?.id,
     routineDayId: routineDay?.id,

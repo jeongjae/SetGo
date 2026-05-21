@@ -1,5 +1,6 @@
 import { db } from './db';
 import type { ExerciseCategory, ExerciseMaster, ExerciseStage } from '../types';
+import { getCategoryAbbreviation } from '../utils/exerciseIcon';
 
 const exerciseCategories: ExerciseCategory[] = [
   'chest',
@@ -138,6 +139,50 @@ export async function createExerciseCsv(): Promise<string> {
     .join('\n');
 }
 
+function normalizeKoreanName(name: string): string {
+  return name
+    .trim()
+    .replace(/\s+/g, '')
+    .toLowerCase()
+    .replace(/펙/g, '팩');
+}
+
+function normalizeEnglishName(name: string): string {
+  return name
+    .trim()
+    .replace(/\s+/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function normalizeIcon(iconVal: string, category: ExerciseCategory): string {
+  const trimmed = iconVal.trim();
+  if (!trimmed) return getCategoryAbbreviation(category);
+
+  const upper = trimmed.toUpperCase();
+  const validAbbreviations = ['CH', 'BK', 'SH', 'BI', 'TR', 'LG', 'BW', 'MO', 'CA'];
+  if (validAbbreviations.includes(upper)) {
+    return upper;
+  }
+
+  const categoryMap: Record<string, string> = {
+    chest: 'CH',
+    back: 'BK',
+    shoulder: 'SH',
+    biceps: 'BI',
+    triceps: 'TR',
+    legs: 'LG',
+    bodyweight: 'BW',
+    mobility: 'MO',
+    cardio: 'CA',
+  };
+  if (categoryMap[trimmed.toLowerCase()]) {
+    return categoryMap[trimmed.toLowerCase()];
+  }
+
+  return trimmed;
+}
+
 export async function importExerciseCsv(csv: string): Promise<number> {
   const rows = parseCsvRows(csv.replace(/^\uFEFF/, '').trim());
   const [headerRow, ...dataRows] = rows;
@@ -152,6 +197,16 @@ export async function importExerciseCsv(csv: string): Promise<number> {
   const now = new Date().toISOString();
   const existingExercises = await db.exercises.toArray();
   const existingById = new Map(existingExercises.map((exercise) => [exercise.id, exercise]));
+  
+  const existingByNameKo = new Map(
+    existingExercises.map((exercise) => [normalizeKoreanName(exercise.nameKo), exercise])
+  );
+  const existingByNameEn = new Map(
+    existingExercises
+      .filter((exercise) => exercise.nameEn)
+      .map((exercise) => [normalizeEnglishName(exercise.nameEn!), exercise])
+  );
+
   const seenIds = new Set<string>();
   const issues: string[] = [];
 
@@ -159,14 +214,27 @@ export async function importExerciseCsv(csv: string): Promise<number> {
     .map((row, rowIndex): ExerciseMaster | undefined => {
       const csvLine = rowIndex + 2;
       const read = (key: string) => row[headerIndex.get(key) ?? -1]?.trim() ?? '';
-      const id = read('id') || `custom_${Date.now()}_${rowIndex + 1}`;
-      const existing = existingById.get(id);
+      
+      const rawId = read('id');
+      const rawNameKo = read('nameKo');
+      const rawNameEn = read('nameEn');
+
+      let existing = rawId ? existingById.get(rawId) : undefined;
+      if (!existing && rawNameKo) {
+        existing = existingByNameKo.get(normalizeKoreanName(rawNameKo));
+      }
+      if (!existing && rawNameEn) {
+        existing = existingByNameEn.get(normalizeEnglishName(rawNameEn));
+      }
+
+      const id = existing ? existing.id : (rawId || `custom_${Date.now()}_${rowIndex + 1}`);
+
       const invalidCategoryTags = invalidTags(read('categoryTags'), exerciseCategories);
       const invalidStageTags = invalidTags(read('stageTags'), exerciseStages);
       const categoryTags = validateTags(read('categoryTags'), exerciseCategories);
       const stageTags = validateTags(read('stageTags'), exerciseStages);
-      const nameKo = read('nameKo') || existing?.nameKo;
-      const nameEn = read('nameEn') || existing?.nameEn || nameKo;
+      const nameKo = rawNameKo || existing?.nameKo;
+      const nameEn = rawNameEn || existing?.nameEn || nameKo;
 
       if (seenIds.has(id)) issues.push(`Row ${csvLine}: duplicate id "${id}"`);
       seenIds.add(id);
@@ -201,7 +269,7 @@ export async function importExerciseCsv(csv: string): Promise<number> {
         stage: nextStageTags[0],
         stageTags: nextStageTags,
         description: read('description') || undefined,
-        defaultEmoji: read('icon') || existing?.defaultEmoji || nextCategoryTags[0].slice(0, 2).toUpperCase(),
+        defaultEmoji: normalizeIcon(read('icon') || existing?.defaultEmoji || '', nextCategoryTags[0]),
         isDefault: existing?.isDefault ?? false,
         isActive,
         createdAt: existing?.createdAt ?? now,
@@ -219,3 +287,4 @@ export async function importExerciseCsv(csv: string): Promise<number> {
   await db.exercises.bulkPut(nextExercises);
   return nextExercises.length;
 }
+

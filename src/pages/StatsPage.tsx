@@ -552,27 +552,27 @@ function Badge({ status, locale }: { status: LoadStatus; locale: Locale }) {
     en: { low: 'Low', normal: 'Good', high: 'High', caution: 'Caution' },
   };
   const className = status === 'normal'
-    ? 'bg-emerald-400/15 text-emerald-300'
+    ? 'bg-emerald-450/15 text-emerald-450 border border-emerald-500/20'
     : status === 'high'
-    ? 'bg-red-400/15 text-red-300'
-    : 'bg-amber-400/15 text-amber-300';
+    ? 'bg-rose-450/15 text-rose-450 border border-rose-500/20'
+    : 'bg-amber-450/15 text-amber-450 border border-amber-500/20';
 
-  return <span className={`rounded px-2 py-1 text-xs font-bold ${className}`}>{labels[locale][status]}</span>;
+  return <span className={`rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${className}`}>{labels[locale][status]}</span>;
 }
 
 function MiniBarChart({ weeks, metric }: { weeks: WeekStat[]; metric: 'sets' | 'workoutDays' }) {
   const maxValue = Math.max(1, ...weeks.map((week) => week[metric]));
   return (
-    <div className="mt-4 flex h-28 items-end gap-2">
+    <div className="mt-3.5 flex h-28 items-end gap-1.5 px-1">
       {weeks.map((week) => (
         <div key={week.key} className="flex flex-1 flex-col items-center gap-2">
-          <span className="text-[10px] font-semibold text-slate-300">{week[metric]}</span>
+          <span className="text-[9px] font-black text-slate-300">{week[metric]}</span>
           <div
-            className="w-full rounded-t bg-cyan-400"
-            style={{ height: `${Math.max(8, (week[metric] / maxValue) * 76)}px` }}
+            className="w-full rounded-t-lg bg-gradient-to-t from-cyan-500/80 to-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+            style={{ height: `${Math.max(8, (week[metric] / maxValue) * 72)}px` }}
             aria-label={`${week.label} ${week[metric]}`}
           />
-          <span className="text-[10px] text-slate-500">{week.label}</span>
+          <span className="text-[9px] font-extrabold text-slate-500">{week.label}</span>
         </div>
       ))}
     </div>
@@ -584,7 +584,7 @@ function MiniLineChart({ weeks, locale, peakLabel }: { weeks: WeekStat[]; locale
     const maxValue = Math.max(1, ...weeks.map((week) => week.volumeKg));
     return weeks.map((week, index) => {
       const x = weeks.length === 1 ? 0 : (index / (weeks.length - 1)) * 100;
-      const y = 100 - (week.volumeKg / maxValue) * 88 - 6;
+      const y = 100 - (week.volumeKg / maxValue) * 82 - 10;
       return { x, y, value: week.volumeKg, label: week.label };
     });
   }, [weeks]);
@@ -593,19 +593,36 @@ function MiniLineChart({ weeks, locale, peakLabel }: { weeks: WeekStat[]; locale
   const peak = weeks.slice().sort((a, b) => b.volumeKg - a.volumeKg)[0];
 
   return (
-    <div className="mt-4">
-      <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
+    <div className="mt-3">
+      <div className="mb-2.5 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-wider">
         <span>{latest ? `${latest.label}: ${Math.round(latest.volumeKg).toLocaleString()}kg` : '0kg'}</span>
-        <span>{peak ? `${peakLabel} ${peak.label}: ${Math.round(peak.volumeKg).toLocaleString()}kg` : ''}</span>
+        <span className="text-cyan-400">{peak ? `${peakLabel} ${peak.label}: ${Math.round(peak.volumeKg).toLocaleString()}kg` : ''}</span>
       </div>
-      <svg viewBox="0 0 100 100" className="h-32 w-full overflow-visible">
-        <line x1="0" y1="94" x2="100" y2="94" stroke="#334155" strokeWidth="1" />
-        <polyline points={points} fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        {plottedPoints.map((point) => (
-          <circle key={point.label} cx={point.x} cy={point.y} r="2" fill="#67e8f9" />
-        ))}
-      </svg>
-      <div className="mt-1 grid grid-cols-8 text-center text-[10px] text-slate-500">
+      <div className="relative p-1 bg-slate-950/40 rounded-xl border border-slate-900">
+        <svg viewBox="0 0 100 100" className="h-32 w-full overflow-visible">
+          <defs>
+            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+          <line x1="0" y1="95" x2="100" y2="95" stroke="#1e293b" strokeWidth="1" />
+          
+          {/* Area fill under curve */}
+          {plottedPoints.length > 0 && (
+            <polygon
+              points={`0,95 ${points} 100,95`}
+              fill="url(#chartGradient)"
+            />
+          )}
+          
+          <polyline points={points} fill="none" stroke="#22d3ee" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          {plottedPoints.map((point) => (
+            <circle key={point.label} cx={point.x} cy={point.y} r="2.5" fill="#22d3ee" stroke="#0f172a" strokeWidth="1" />
+          ))}
+        </svg>
+      </div>
+      <div className="mt-2 grid grid-cols-8 text-center text-[9px] font-extrabold text-slate-500">
         {weeks.map((week) => <span key={week.key}>{week.label}</span>)}
       </div>
     </div>
@@ -618,15 +635,16 @@ function MiniSparkBars({ history }: { history: ExercisePerformance['oneRmHistory
   if (history.length === 0) return null;
 
   return (
-    <div className="mt-3 flex h-16 items-end gap-2">
+    <div className="mt-3 flex h-16 items-end gap-1.5 px-0.5">
       {history.map((item) => (
         <div key={`${item.label}_${item.valueKg}`} className="flex flex-1 flex-col items-center gap-1">
+          <span className="text-[8px] font-bold text-slate-400">{Math.round(item.valueKg)}</span>
           <div
-            className="w-full rounded-t bg-emerald-300"
-            style={{ height: `${Math.max(8, (item.valueKg / maxValue) * 44)}px` }}
+            className="w-full rounded-t bg-gradient-to-t from-emerald-500/80 to-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.15)]"
+            style={{ height: `${Math.max(6, (item.valueKg / maxValue) * 32)}px` }}
             aria-label={`${item.label} ${item.valueKg.toFixed(1)}kg`}
           />
-          <span className="text-[10px] text-slate-500">{item.label}</span>
+          <span className="text-[8px] font-extrabold text-slate-500">{item.label}</span>
         </div>
       ))}
     </div>
@@ -715,178 +733,217 @@ export function StatsPage({ onBack }: StatsPageProps) {
         <button
           type="button"
           onClick={onBack}
-          className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-900 text-slate-100"
+          className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-955 border border-slate-850 text-slate-350 hover:text-white hover:bg-slate-850 active:scale-95 transition-all duration-200 shrink-0"
           aria-label="Back to Today"
         >
-          <ChevronLeft aria-hidden="true" size={22} />
+          <ChevronLeft aria-hidden="true" size={20} />
         </button>
         <div>
-          <p className="text-sm font-medium text-cyan-300">{t(locale, 'stats')}</p>
-          <h1 className="text-2xl font-bold text-white">{c.title}</h1>
+          <p className="text-[10px] font-black uppercase tracking-widest text-cyan-400">{t(locale, 'stats')}</p>
+          <h1 className="text-xl font-black text-white tracking-wide">{c.title}</h1>
         </div>
       </header>
 
       {!hasData ? (
-        <section className="rounded-lg bg-slate-900 p-5 shadow">
-          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-cyan-300">
+        <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-6 shadow-2xl flex flex-col items-center text-center space-y-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 border border-slate-850 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.15)]">
             <BarChart3 aria-hidden="true" size={24} />
           </div>
-          <h2 className="mt-4 text-xl font-bold text-white">{c.emptyTitle}</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-300">{c.emptyBody}</p>
+          <div className="space-y-2">
+            <h2 className="text-base font-black text-white tracking-wide">{c.emptyTitle}</h2>
+            <p className="text-xs leading-relaxed text-slate-400 font-semibold max-w-xs">{c.emptyBody}</p>
+          </div>
         </section>
       ) : null}
 
-      <section className="grid grid-cols-2 gap-3">
-        {[
-          [c.workoutDays, locale === 'ko' ? `${stats.workoutDays}일` : `${stats.workoutDays}d`],
-          [c.totalVolume, `${Math.round(stats.totalVolumeKg).toLocaleString()}kg`],
-          [c.totalSets, `${stats.totalSets}`],
-          [c.hardSets, `${stats.hardSets}`],
-          [c.hardSetRatio, `${stats.hardSetRatio.toFixed(0)}%`],
-        ].map(([label, value]) => (
-          <div key={label} className="rounded-lg bg-slate-900 p-4 shadow">
-            <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
-            <p className="mt-2 text-2xl font-bold text-white">{value}</p>
-          </div>
-        ))}
-        <div className="rounded-lg bg-slate-900 p-4 shadow">
-          <p className="text-xs font-semibold uppercase text-slate-500">{c.weekOverWeek}</p>
-          <p className={`mt-2 text-3xl font-bold ${stats.weekOverWeekPct !== undefined && stats.weekOverWeekPct >= 25 ? 'text-amber-300' : 'text-white'}`}>
-            {formatPct(stats.weekOverWeekPct)}
-          </p>
-        </div>
-      </section>
-
-      <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <h2 className="text-lg font-bold text-white">{c.recentTrend}</h2>
-        <p className="mt-4 text-sm font-semibold text-slate-300">{c.totalVolume}</p>
-        <MiniLineChart weeks={stats.weeks} locale={locale} peakLabel={c.peak} />
-        <p className="mt-5 text-sm font-semibold text-slate-300">{c.totalSets}</p>
-        <MiniBarChart weeks={stats.weeks} metric="sets" />
-        <p className="mt-5 text-sm font-semibold text-slate-300">{c.workoutDays}</p>
-        <MiniBarChart weeks={stats.weeks} metric="workoutDays" />
-        {latestWeek ? (
-          <div className="mt-5 rounded-md bg-slate-800 px-3 py-3">
-            <p className="text-xs font-semibold uppercase text-slate-500">{c.trendSummary}</p>
-            <p className="mt-1 text-sm leading-6 text-slate-200">
-              {locale === 'ko'
-                ? `${latestWeek.label} 주간은 ${latestWeek.workoutDays}일 운동, ${latestWeek.sets}세트, ${Math.round(latestWeek.volumeKg).toLocaleString()}kg입니다. 전주 대비 ${formatPct(latestWeekVolumeChange)}.`
-                : `${latestWeek.label} has ${latestWeek.workoutDays} workout days, ${latestWeek.sets} sets, and ${Math.round(latestWeek.volumeKg).toLocaleString()}kg. Week-over-week: ${formatPct(latestWeekVolumeChange)}.`}
-            </p>
-          </div>
-        ) : null}
-      </section>
-
-      <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <h2 className="text-lg font-bold text-white">{c.muscleAnalysis}</h2>
-        <div className="mt-4 grid gap-3">
-          {stats.muscleStats.map((muscle) => (
-            <div key={muscle.group} className="rounded-md bg-slate-800 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-base font-bold text-white">{muscleLabels[locale][muscle.group]}</p>
-                <Badge status={muscle.status} locale={locale} />
+      {hasData && (
+        <>
+          <section className="grid grid-cols-2 gap-3">
+            {[
+              [c.workoutDays, locale === 'ko' ? `${stats.workoutDays}일` : `${stats.workoutDays}d`],
+              [c.totalVolume, `${Math.round(stats.totalVolumeKg).toLocaleString()}kg`],
+              [c.totalSets, `${stats.totalSets}`],
+              [c.hardSets, `${stats.hardSets}`],
+              [c.hardSetRatio, `${stats.hardSetRatio.toFixed(0)}%`],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-4 shadow-xl flex flex-col justify-between">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</p>
+                <p className="mt-2 text-xl font-black text-white tracking-tight">{value}</p>
               </div>
-              <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                <div><p className="text-slate-500">{c.volume}</p><p className="font-bold text-white">{Math.round(muscle.volumeKg).toLocaleString()}kg</p></div>
-                <div><p className="text-slate-500">{c.sets}</p><p className="font-bold text-white">{muscle.sets}</p></div>
-                <div><p className="text-slate-500">{c.hardSets}</p><p className="font-bold text-white">{muscle.hardSets}</p></div>
-              </div>
-              <div className="mt-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-400">{c.weeklyTarget}</span>
-                  <span className="text-slate-300">
-                    {muscle.sets}/{muscle.recommendedMax}{c.perWeek}
-                  </span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-900">
-                  <div
-                    className={`h-full rounded-full ${
-                      muscle.status === 'high' ? 'bg-red-300' : muscle.status === 'normal' ? 'bg-emerald-300' : 'bg-amber-300'
-                    }`}
-                    style={{ width: `${muscle.targetPct}%` }}
-                  />
-                </div>
-                <p className="mt-2 text-xs text-slate-400">
-                  {muscle.deficitSets > 0
-                    ? locale === 'ko' ? `최소 목표까지 ${muscle.deficitSets}세트 부족` : `${muscle.deficitSets} sets below minimum`
-                    : muscle.excessSets > 0
-                      ? locale === 'ko' ? `권장 상한보다 ${muscle.excessSets}세트 많음` : `${muscle.excessSets} sets above target`
-                      : locale === 'ko' ? '권장 범위 안에 있습니다' : 'Within target range'}
+            ))}
+            <div className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-4 shadow-xl flex flex-col justify-between">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">{c.weekOverWeek}</p>
+              <p className={`mt-2 text-xl font-black tracking-tight ${
+                stats.weekOverWeekPct !== undefined && stats.weekOverWeekPct >= 25
+                  ? 'text-rose-450 shadow-[0_0_8px_rgba(244,63,94,0.15)]'
+                  : stats.weekOverWeekPct !== undefined && stats.weekOverWeekPct > 0
+                    ? 'text-cyan-455 shadow-[0_0_8px_rgba(34,211,238,0.15)]'
+                    : 'text-white'
+              }`}>
+                {formatPct(stats.weekOverWeekPct)}
+              </p>
+            </div>
+          </section>
+
+          <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-5">
+            <h2 className="text-base font-black text-white tracking-wide">{c.recentTrend}</h2>
+            
+            <div>
+              <p className="text-xs font-black text-slate-400 uppercase tracking-wider">{c.totalVolume}</p>
+              <MiniLineChart weeks={stats.weeks} locale={locale} peakLabel={c.peak} />
+            </div>
+            
+            <div className="border-t border-slate-850 pt-4">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-wider">{c.totalSets}</p>
+              <MiniBarChart weeks={stats.weeks} metric="sets" />
+            </div>
+            
+            <div className="border-t border-slate-850 pt-4">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-wider">{c.workoutDays}</p>
+              <MiniBarChart weeks={stats.weeks} metric="workoutDays" />
+            </div>
+            
+            {latestWeek ? (
+              <div className="rounded-xl bg-slate-950/85 border border-slate-900 p-3.5 mt-2">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">{c.trendSummary}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-350 font-semibold">
+                  {locale === 'ko'
+                    ? `${latestWeek.label} 주간은 ${latestWeek.workoutDays}일 운동, ${latestWeek.sets}세트, ${Math.round(latestWeek.volumeKg).toLocaleString()}kg입니다. 전주 대비 ${formatPct(latestWeekVolumeChange)}.`
+                    : `${latestWeek.label} has ${latestWeek.workoutDays} workout days, ${latestWeek.sets} sets, and ${Math.round(latestWeek.volumeKg).toLocaleString()}kg. Week-over-week: ${formatPct(latestWeekVolumeChange)}.`}
                 </p>
               </div>
-              <p className="mt-2 text-xs text-slate-400">{c.recommended} {muscle.recommendedMin}-{muscle.recommendedMax}{c.perWeek}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+            ) : null}
+          </section>
 
-      <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <h2 className="text-lg font-bold text-white">{c.performance}</h2>
-        <div className="mt-4 grid gap-3">
-          {stats.performances.length === 0 ? (
-            <p className="text-sm text-slate-300">{c.noPerformance}</p>
-          ) : stats.performances.map((performance) => (
-            <div key={performance.id} className="rounded-md bg-slate-800 p-3">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-sm font-bold text-white">{performance.name}</h3>
-                <span className="text-xs font-bold text-cyan-300">{formatPct(performance.fourWeekChangePct)}</span>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <p className="text-slate-400">{c.recentWeight} <span className="font-bold text-white">{performance.recentWeightKg.toFixed(1)}kg</span></p>
-                <p className="text-slate-400">{c.bestWeight} <span className="font-bold text-white">{performance.bestWeightKg.toFixed(1)}kg</span></p>
-                <p className="text-slate-400">{c.recentVolume} <span className="font-bold text-white">{Math.round(performance.recentVolumeKg).toLocaleString()}kg</span></p>
-                <p className="text-slate-400">{c.bestVolume} <span className="font-bold text-white">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
-                <p className="col-span-2 text-slate-400">{c.estimatedOneRm} <span className="font-bold text-white">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
-              </div>
-              {performance.oneRmHistory.length > 0 ? (
-                <div className="mt-3 border-t border-slate-700 pt-3">
-                  <p className="text-xs font-semibold uppercase text-slate-500">{c.oneRmHistory}</p>
-                  <MiniSparkBars history={performance.oneRmHistory} />
+          <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
+            <h2 className="text-base font-black text-white tracking-wide">{c.muscleAnalysis}</h2>
+            <div className="grid gap-3.5">
+              {stats.muscleStats.map((muscle) => (
+                <div key={muscle.group} className="rounded-2xl bg-slate-950/80 border border-slate-900 p-4 space-y-3 shadow-lg">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-black text-white tracking-wide">{muscleLabels[locale][muscle.group]}</p>
+                    <Badge status={muscle.status} locale={locale} />
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-2 py-1.5 text-center bg-slate-900/40 rounded-xl border border-slate-900/60">
+                    <div>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{c.volume}</p>
+                      <p className="text-xs font-black text-slate-200 mt-0.5">{Math.round(muscle.volumeKg).toLocaleString()}kg</p>
+                    </div>
+                    <div className="border-x border-slate-900/80">
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{c.sets}</p>
+                      <p className="text-xs font-black text-slate-200 mt-0.5">{muscle.sets}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{c.hardSets}</p>
+                      <p className="text-xs font-black text-slate-200 mt-0.5">{muscle.hardSets}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                      <span>{c.weeklyTarget}</span>
+                      <span className="text-slate-350 font-black">
+                        {muscle.sets} / {muscle.recommendedMax} {c.perWeek}
+                      </span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-900">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          muscle.status === 'high' ? 'bg-rose-400 shadow-[0_0_6px_#f87171]' : muscle.status === 'normal' ? 'bg-emerald-450 shadow-[0_0_6px_#10b981]' : 'bg-amber-400 shadow-[0_0_6px_#fbbf24]'
+                        }`}
+                        style={{ width: `${muscle.targetPct}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-450">
+                      {muscle.deficitSets > 0
+                        ? locale === 'ko' ? `최소 목표까지 ${muscle.deficitSets}세트 부족` : `${muscle.deficitSets} sets below minimum`
+                        : muscle.excessSets > 0
+                          ? locale === 'ko' ? `권장 상한보다 ${muscle.excessSets}세트 많음` : `${muscle.excessSets} sets above target`
+                          : locale === 'ko' ? '권장 범위 안에 있습니다' : 'Within target range'}
+                    </p>
+                  </div>
+                  <div className="text-[9px] font-extrabold text-slate-500 pt-1 border-t border-slate-900/60">
+                    {c.recommended} {muscle.recommendedMin}-{muscle.recommendedMax} {c.perWeek}
+                  </div>
                 </div>
-              ) : null}
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
 
-      <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <div className="flex items-center gap-2">
-          <AlertTriangle aria-hidden="true" size={18} className="text-amber-300" />
-          <h2 className="text-lg font-bold text-white">{c.recoveryWarnings}</h2>
-        </div>
-        <div className="mt-4 grid gap-2">
-          {stats.warnings.length === 0 ? (
-            <p className="rounded-md bg-emerald-400/10 px-3 py-3 text-sm text-emerald-300">{c.noWarnings}</p>
-          ) : stats.warnings.map((warning) => (
-            <p key={warning} className="rounded-md bg-amber-400/10 px-3 py-3 text-sm leading-6 text-amber-200">{warning}</p>
-          ))}
-        </div>
-      </section>
+          <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
+            <h2 className="text-base font-black text-white tracking-wide">{c.performance}</h2>
+            <div className="grid gap-3.5">
+              {stats.performances.length === 0 ? (
+                <p className="text-xs font-bold text-slate-400 text-center py-4">{c.noPerformance}</p>
+              ) : stats.performances.map((performance) => (
+                <div key={performance.id} className="rounded-2xl bg-slate-950/80 border border-slate-900 p-4 space-y-3 shadow-lg">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-sm font-black text-white tracking-wide">{performance.name}</h3>
+                    <span className="rounded-lg bg-cyan-950 border border-cyan-850 px-2 py-0.5 text-[10px] font-black text-cyan-400 shadow-sm">
+                      {formatPct(performance.fourWeekChangePct)}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 py-2 px-3 bg-slate-900/40 rounded-xl border border-slate-900/60 text-[11px] font-semibold text-slate-400">
+                    <p>{c.recentWeight} <span className="font-black text-white">{performance.recentWeightKg.toFixed(1)}kg</span></p>
+                    <p>{c.bestWeight} <span className="font-black text-white">{performance.bestWeightKg.toFixed(1)}kg</span></p>
+                    <p>{c.recentVolume} <span className="font-black text-white">{Math.round(performance.recentVolumeKg).toLocaleString()}kg</span></p>
+                    <p>{c.bestVolume} <span className="font-black text-white">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
+                    <p className="col-span-2 border-t border-slate-850 pt-1.5 mt-0.5">{c.estimatedOneRm} <span className="font-black text-cyan-300">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
+                  </div>
+                  
+                  {performance.oneRmHistory.length > 0 ? (
+                    <div className="border-t border-slate-900/60 pt-3">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-slate-500">{c.oneRmHistory}</p>
+                      <MiniSparkBars history={performance.oneRmHistory} />
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
 
-      <section className="rounded-lg bg-slate-900 p-5 shadow">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-medium text-cyan-300">{c.automaticAnalysis}</p>
-          {hasData && (
-            <button
-              type="button"
-              onClick={handleCopyPrompt}
-              className={`rounded px-3 py-1.5 text-xs font-bold transition-colors ${
-                copied
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  : 'bg-slate-800 text-slate-100 hover:bg-slate-700 border border-slate-700'
-              }`}
-            >
-              {copied ? t(locale, 'copied') : t(locale, 'statsCopyAiPrompt')}
-            </button>
-          )}
-        </div>
-        <p className="mt-3 text-sm leading-6 text-slate-200">{stats.analysisComment}</p>
-        {copied && (
-          <p className="mt-2 text-[11px] leading-4 text-emerald-300 animate-pulse">
-            {t(locale, 'statsAiPromptCopied')}
-          </p>
-        )}
-      </section>
+          <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle aria-hidden="true" size={18} className="text-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.15)]" />
+              <h2 className="text-base font-black text-white tracking-wide">{c.recoveryWarnings}</h2>
+            </div>
+            <div className="grid gap-2.5">
+              {stats.warnings.length === 0 ? (
+                <p className="rounded-xl bg-emerald-950/20 border border-emerald-900/65 px-4 py-3 text-xs leading-relaxed font-bold text-emerald-300">{c.noWarnings}</p>
+              ) : stats.warnings.map((warning) => (
+                <p key={warning} className="rounded-xl bg-amber-950/20 border border-amber-900/65 px-4 py-3 text-xs leading-relaxed font-bold text-amber-250">{warning}</p>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-black uppercase tracking-wider text-cyan-400">{c.automaticAnalysis}</p>
+              <button
+                type="button"
+                onClick={handleCopyPrompt}
+                className={`rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-wider active:scale-95 transition-all duration-200 ${
+                  copied
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_8px_rgba(16,185,129,0.15)]'
+                    : 'bg-slate-900 hover:bg-slate-850 text-slate-250 border border-slate-850 shadow-md'
+                }`}
+              >
+                {copied ? t(locale, 'copied') : t(locale, 'statsCopyAiPrompt')}
+              </button>
+            </div>
+            <div className="rounded-xl bg-slate-950/80 border border-slate-900 p-4 shadow-inner">
+              <p className="text-xs leading-relaxed text-slate-350 font-semibold">{stats.analysisComment}</p>
+            </div>
+            {copied && (
+              <p className="text-[10px] font-black text-emerald-450 tracking-wide text-center animate-pulse pt-1">
+                {t(locale, 'statsAiPromptCopied')}
+              </p>
+            )}
+          </section>
+        </>
+      )}
     </section>
   );
 }
