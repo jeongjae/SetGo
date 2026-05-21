@@ -2,7 +2,7 @@ import { AlertTriangle, BarChart3, ChevronLeft } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { db } from '../db/db';
 import { getExerciseCategories, getExerciseName, isWarmupOnlyExercise } from '../domain/exercises';
-import { getStoredLocale, t } from '../i18n/i18n';
+import { getStoredLocale, t, tf } from '../i18n/i18n';
 import { formatDateKey } from '../utils/date';
 import type { ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 
@@ -470,9 +470,7 @@ export function buildStats(
     else if (streak > 0) break;
   }
   if (streak >= 4) {
-    warnings.push(locale === 'ko'
-      ? `연속 운동일이 ${streak}일입니다. 하루 회복일을 고려하세요.`
-      : `You have trained ${streak} days in a row. Consider a recovery day.`);
+    warnings.push(tf(locale, 'statsWarningStreak', { days: streak }));
   }
 
   const muscleHistory: Array<{ group: MuscleGroup; date: Date }> = [];
@@ -490,46 +488,41 @@ export function buildStats(
       .sort((a, b) => a.getTime() - b.getTime());
     const hasShortGap = dates.some((date, index) => index > 0 && date.getTime() - dates[index - 1].getTime() < 48 * 60 * 60 * 1000);
     if (hasShortGap) {
-      warnings.push(locale === 'ko'
-        ? `${muscleLabels.ko[group]} 부위가 48시간 미만 간격으로 반복되었습니다.`
-        : `${muscleLabels.en[group]} was repeated within 48 hours.`);
+      warnings.push(tf(locale, 'statsWarningMuscleGap', { muscle: muscleLabels[locale][group] }));
     }
   });
 
   const weekChange = pctChange(totalVolumeKg, previousWeekVolumeKg);
   if (weekChange !== undefined && weekChange >= 25) {
-    warnings.push(locale === 'ko'
-      ? `주간 볼륨이 전주 대비 ${weekChange.toFixed(0)}% 증가했습니다.`
-      : `Weekly volume increased ${weekChange.toFixed(0)}% versus last week.`);
+    warnings.push(tf(locale, 'statsWarningVolumeSpike', { change: weekChange.toFixed(0) }));
   }
   const hardSetRatio = currentWeekTrainingSets.length > 0 ? (hardSets / currentWeekTrainingSets.length) * 100 : 0;
   if (hardSetRatio > 70) {
-    warnings.push(locale === 'ko'
-      ? `Hard Set 비율이 ${hardSetRatio.toFixed(0)}%입니다. 피로 누적을 확인하세요.`
-      : `Hard sets are ${hardSetRatio.toFixed(0)}% of sets. Watch accumulated fatigue.`);
+    warnings.push(tf(locale, 'statsWarningHardSetRatio', { ratio: hardSetRatio.toFixed(0) }));
   }
 
   const lowMuscles = muscleStats.filter((stat) => stat.status === 'low').map((stat) => muscleLabels[locale][stat.group]);
   const highMuscles = muscleStats.filter((stat) => stat.status === 'high' || stat.status === 'caution').map((stat) => muscleLabels[locale][stat.group]);
   const fourWeekAverageVolume = weekStats.slice(-4).reduce((sum, week) => sum + week.volumeKg, 0) / 4;
   const currentWeekVolumeVsAverage = pctChange(totalVolumeKg, fourWeekAverageVolume);
-  const analysisComment = locale === 'ko'
-    ? [
-      `이번 주는 ${currentWeekSessions.length}일 운동했고 총 ${Math.round(totalVolumeKg).toLocaleString()}kg, ${currentWeekSets.length}세트를 기록했습니다.`,
-      currentWeekVolumeVsAverage !== undefined ? `최근 4주 평균 대비 볼륨은 ${formatPct(currentWeekVolumeVsAverage)}입니다.` : '최근 4주 평균 비교는 기록이 더 쌓이면 표시됩니다.',
-      `Hard Set 비율은 ${hardSetRatio.toFixed(0)}%입니다.`,
-      lowMuscles.length > 0 ? `부족한 근육군은 ${lowMuscles.slice(0, 3).join(', ')}입니다.` : '주요 근육군 세트 수는 대체로 권장 범위 안에 있습니다.',
-      highMuscles.length > 0 ? `${highMuscles.slice(0, 3).join(', ')}는 부하를 점검하세요.` : '과도한 부하 신호는 크지 않습니다.',
-      warnings.length > 0 ? '다음 주에는 경고 항목을 우선 줄이는 방향으로 계획하세요.' : '다음 주에는 부족한 부위에 2-4세트를 추가하는 정도가 적절합니다.',
-    ].join(' ')
-    : [
-      `This week has ${currentWeekSessions.length} workout days, ${Math.round(totalVolumeKg).toLocaleString()}kg total volume, and ${currentWeekSets.length} sets.`,
-      currentWeekVolumeVsAverage !== undefined ? `Volume is ${formatPct(currentWeekVolumeVsAverage)} versus the recent 4-week average.` : 'The 4-week average comparison will appear after more history accumulates.',
-      `Hard-set ratio is ${hardSetRatio.toFixed(0)}%.`,
-      lowMuscles.length > 0 ? `Under-trained groups: ${lowMuscles.slice(0, 3).join(', ')}.` : 'Major muscle groups are mostly within the recommended range.',
-      highMuscles.length > 0 ? `Review load for ${highMuscles.slice(0, 3).join(', ')}.` : 'No major overload signal is present.',
-      warnings.length > 0 ? 'Next week, prioritize reducing the warning items.' : 'Next week, adding 2-4 sets to lagging areas looks reasonable.',
-    ].join(' ');
+  const analysisComment = [
+    tf(locale, 'statsAnalysisWeekSummary', {
+      days: currentWeekSessions.length,
+      volume: Math.round(totalVolumeKg).toLocaleString(),
+      sets: currentWeekSets.length,
+    }),
+    currentWeekVolumeVsAverage !== undefined
+      ? tf(locale, 'statsAnalysisVolumeVsAverage', { change: formatPct(currentWeekVolumeVsAverage) })
+      : t(locale, 'statsAnalysisVolumeAveragePending'),
+    tf(locale, 'statsAnalysisHardSetRatio', { ratio: hardSetRatio.toFixed(0) }),
+    lowMuscles.length > 0
+      ? tf(locale, 'statsAnalysisLowMuscles', { muscles: lowMuscles.slice(0, 3).join(', ') })
+      : t(locale, 'statsAnalysisMusclesInRange'),
+    highMuscles.length > 0
+      ? tf(locale, 'statsAnalysisHighMuscles', { muscles: highMuscles.slice(0, 3).join(', ') })
+      : t(locale, 'statsAnalysisNoOverload'),
+    warnings.length > 0 ? t(locale, 'statsAnalysisReduceWarnings') : t(locale, 'statsAnalysisAddSets'),
+  ].join(' ');
 
   return {
     workoutDays: currentWeekSessions.length,
@@ -760,7 +753,7 @@ export function StatsPage({ onBack }: StatsPageProps) {
         <div className="inner-scroll min-h-0 space-y-4 pr-0.5">
           <section className="grid grid-cols-2 gap-3">
             {[
-              [c.workoutDays, locale === 'ko' ? `${stats.workoutDays}일` : `${stats.workoutDays}d`],
+              [c.workoutDays, tf(locale, 'statsWorkoutDaysValue', { days: stats.workoutDays })],
               [c.totalVolume, `${Math.round(stats.totalVolumeKg).toLocaleString()}kg`],
               [c.totalSets, `${stats.totalSets}`],
               [c.hardSets, `${stats.hardSets}`],
@@ -807,9 +800,13 @@ export function StatsPage({ onBack }: StatsPageProps) {
               <div className="rounded-xl bg-slate-900 border border-slate-750 p-3.5 mt-2">
                 <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{c.trendSummary}</p>
                 <p className="mt-1 text-xs leading-relaxed text-slate-200 font-semibold">
-                  {locale === 'ko'
-                    ? `${latestWeek.label} 주간은 ${latestWeek.workoutDays}일 운동, ${latestWeek.sets}세트, ${Math.round(latestWeek.volumeKg).toLocaleString()}kg입니다. 전주 대비 ${formatPct(latestWeekVolumeChange)}.`
-                    : `${latestWeek.label} has ${latestWeek.workoutDays} workout days, ${latestWeek.sets} sets, and ${Math.round(latestWeek.volumeKg).toLocaleString()}kg. Week-over-week: ${formatPct(latestWeekVolumeChange)}.`}
+                  {tf(locale, 'statsTrendSummaryText', {
+                    week: latestWeek.label,
+                    days: latestWeek.workoutDays,
+                    sets: latestWeek.sets,
+                    volume: Math.round(latestWeek.volumeKg).toLocaleString(),
+                    change: formatPct(latestWeekVolumeChange),
+                  })}
                 </p>
               </div>
             ) : null}
@@ -857,10 +854,10 @@ export function StatsPage({ onBack }: StatsPageProps) {
                     </div>
                     <p className="text-[10px] font-bold text-slate-300">
                       {muscle.deficitSets > 0
-                        ? locale === 'ko' ? `최소 목표까지 ${muscle.deficitSets}세트 부족` : `${muscle.deficitSets} sets below minimum`
+                        ? tf(locale, 'statsBelowMinimum', { sets: muscle.deficitSets })
                         : muscle.excessSets > 0
-                          ? locale === 'ko' ? `권장 상한보다 ${muscle.excessSets}세트 많음` : `${muscle.excessSets} sets above target`
-                          : locale === 'ko' ? '권장 범위 안에 있습니다' : 'Within target range'}
+                          ? tf(locale, 'statsAboveTarget', { sets: muscle.excessSets })
+                          : t(locale, 'statsWithinTargetRange')}
                     </p>
                   </div>
                   <div className="text-[9px] font-extrabold text-slate-450 pt-1.5 border-t border-slate-800">
