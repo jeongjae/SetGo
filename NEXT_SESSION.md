@@ -7,6 +7,7 @@
 - GitHub repo: `https://github.com/jeongjae/SetGo.git`
 - Latest pushed commit before the local cleanup pass: `cdda6d8`
 - Latest local commits:
+  - `645f2b8 Move stats summaries into i18n`
   - `903f5d1 Clarify backdated workout logging`
   - `1abcbf8 Stabilize workout timer and exercise seeding`
   - `7293e6c Polish mobile workout UI shell`
@@ -51,6 +52,7 @@ Leave them alone unless the user asks to use or remove them.
 - External font loading was removed so the app shell remains network-independent after install.
 - Tailwind now registers the intermediate slate/accent shades and spacing tokens used by the premium mobile UI pass.
 - Backdated Calendar workout records now show their date in the workout header instead of a misleading multi-day live timer.
+- Stats trend, warning, target-range, and local analysis summary text now use i18n message templates.
 
 ## Verification Already Done
 
@@ -77,12 +79,11 @@ Browser checks were also done for:
 2. Review iPhone PWA behavior after GitHub Pages deploy:
    - horizontal movement should be reduced or gone.
    - if still present, inspect individual wide elements such as tables, `<pre>`, SVG charts, or chip rows.
-3. Complete Stats i18n for all labels and AI comment text.
-4. Decide how AI comments should work long term:
+3. Decide how AI comments should work long term:
    - current version is local deterministic summary only.
    - mobile works offline because it does not call an API.
    - future improvement can add optional user-triggered external AI export/prompt flow.
-5. Add stronger regression coverage for:
+4. Add stronger regression coverage for:
    - routine exercise edits propagating to new workouts.
    - existing in-progress workouts not being unexpectedly overwritten.
    - CSV import validation.
@@ -103,7 +104,7 @@ git log --oneline -5
 
 Continue SetGo development from `C:\Users\NB-24021500\Projects\SetGo\setgo-starter`.
 Read `AGENTS.md`, `README.md`, and `NEXT_SESSION.md` first.
-The latest local commit is `903f5d1`.
+The latest local commit is `645f2b8`.
 Keep Tailwind v3, no backend/auth, local-first Dexie only.
 Do not commit the untracked backup/CSV files.
 Proceed with the next P2 polishing item and verify with tests/build/browser.
