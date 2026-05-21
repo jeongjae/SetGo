@@ -552,10 +552,10 @@ function Badge({ status, locale }: { status: LoadStatus; locale: Locale }) {
     en: { low: 'Low', normal: 'Good', high: 'High', caution: 'Caution' },
   };
   const className = status === 'normal'
-    ? 'bg-emerald-450/15 text-emerald-450 border border-emerald-500/20'
+    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
     : status === 'high'
-    ? 'bg-rose-450/15 text-rose-450 border border-rose-500/20'
-    : 'bg-amber-450/15 text-amber-450 border border-amber-500/20';
+    ? 'bg-rose-500/15 text-rose-450 border border-rose-500/20'
+    : 'bg-amber-500/15 text-amber-400 border border-amber-500/20';
 
   return <span className={`rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${className}`}>{labels[locale][status]}</span>;
 }
@@ -563,16 +563,16 @@ function Badge({ status, locale }: { status: LoadStatus; locale: Locale }) {
 function MiniBarChart({ weeks, metric }: { weeks: WeekStat[]; metric: 'sets' | 'workoutDays' }) {
   const maxValue = Math.max(1, ...weeks.map((week) => week[metric]));
   return (
-    <div className="mt-3.5 flex h-28 items-end gap-1.5 px-1">
+    <div className="mt-3 flex h-28 items-end gap-1.5 px-1">
       {weeks.map((week) => (
         <div key={week.key} className="flex flex-1 flex-col items-center gap-2">
-          <span className="text-[9px] font-black text-slate-300">{week[metric]}</span>
+          <span className="text-[9px] font-black text-slate-200">{week[metric]}</span>
           <div
-            className="w-full rounded-t-lg bg-gradient-to-t from-cyan-500/80 to-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+            className="w-full rounded-t-lg bg-gradient-to-t from-cyan-500/80 to-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.3)]"
             style={{ height: `${Math.max(8, (week[metric] / maxValue) * 72)}px` }}
             aria-label={`${week.label} ${week[metric]}`}
           />
-          <span className="text-[9px] font-extrabold text-slate-500">{week.label}</span>
+          <span className="text-[9px] font-black text-slate-400">{week.label}</span>
         </div>
       ))}
     </div>
@@ -594,11 +594,11 @@ function MiniLineChart({ weeks, locale, peakLabel }: { weeks: WeekStat[]; locale
 
   return (
     <div className="mt-3">
-      <div className="mb-2.5 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-wider">
+      <div className="mb-2 flex items-center justify-between text-[10px] font-black text-slate-350 uppercase tracking-wider">
         <span>{latest ? `${latest.label}: ${Math.round(latest.volumeKg).toLocaleString()}kg` : '0kg'}</span>
-        <span className="text-cyan-400">{peak ? `${peakLabel} ${peak.label}: ${Math.round(peak.volumeKg).toLocaleString()}kg` : ''}</span>
+        <span className="text-cyan-400 font-bold">{peak ? `${peakLabel} ${peak.label}: ${Math.round(peak.volumeKg).toLocaleString()}kg` : ''}</span>
       </div>
-      <div className="relative p-1 bg-slate-950/40 rounded-xl border border-slate-900">
+      <div className="relative p-1 bg-slate-900/60 rounded-xl border border-slate-750">
         <svg viewBox="0 0 100 100" className="h-32 w-full overflow-visible">
           <defs>
             <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -606,7 +606,7 @@ function MiniLineChart({ weeks, locale, peakLabel }: { weeks: WeekStat[]; locale
               <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.0" />
             </linearGradient>
           </defs>
-          <line x1="0" y1="95" x2="100" y2="95" stroke="#1e293b" strokeWidth="1" />
+          <line x1="0" y1="95" x2="100" y2="95" stroke="#334155" strokeWidth="1" />
           
           {/* Area fill under curve */}
           {plottedPoints.length > 0 && (
@@ -622,7 +622,7 @@ function MiniLineChart({ weeks, locale, peakLabel }: { weeks: WeekStat[]; locale
           ))}
         </svg>
       </div>
-      <div className="mt-2 grid grid-cols-8 text-center text-[9px] font-extrabold text-slate-500">
+      <div className="mt-2 grid grid-cols-8 text-center text-[9px] font-black text-slate-400">
         {weeks.map((week) => <span key={week.key}>{week.label}</span>)}
       </div>
     </div>
@@ -638,13 +638,13 @@ function MiniSparkBars({ history }: { history: ExercisePerformance['oneRmHistory
     <div className="mt-3 flex h-16 items-end gap-1.5 px-0.5">
       {history.map((item) => (
         <div key={`${item.label}_${item.valueKg}`} className="flex flex-1 flex-col items-center gap-1">
-          <span className="text-[8px] font-bold text-slate-400">{Math.round(item.valueKg)}</span>
+          <span className="text-[8px] font-black text-slate-350">{Math.round(item.valueKg)}</span>
           <div
             className="w-full rounded-t bg-gradient-to-t from-emerald-500/80 to-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.15)]"
             style={{ height: `${Math.max(6, (item.valueKg / maxValue) * 32)}px` }}
             aria-label={`${item.label} ${item.valueKg.toFixed(1)}kg`}
           />
-          <span className="text-[8px] font-extrabold text-slate-500">{item.label}</span>
+          <span className="text-[8px] font-black text-slate-400">{item.label}</span>
         </div>
       ))}
     </div>
@@ -728,12 +728,12 @@ export function StatsPage({ onBack }: StatsPageProps) {
     : undefined;
 
   return (
-    <section className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
-      <header className="flex items-center gap-3">
+    <section className="mx-auto flex overflow-hidden max-w-md flex-col gap-3 px-4 pt-3 pb-4 viewport-locked text-slate-100">
+      <header className="flex items-center gap-3 shrink-0 py-1">
         <button
           type="button"
           onClick={onBack}
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-955 border border-slate-850 text-slate-350 hover:text-white hover:bg-slate-850 active:scale-95 transition-all duration-200 shrink-0"
+          className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-800/80 border border-slate-700/60 text-slate-100 active:scale-95 transition-all shadow-md hover:bg-slate-700/80 shrink-0"
           aria-label="Back to Today"
         >
           <ChevronLeft aria-hidden="true" size={20} />
@@ -745,19 +745,19 @@ export function StatsPage({ onBack }: StatsPageProps) {
       </header>
 
       {!hasData ? (
-        <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-6 shadow-2xl flex flex-col items-center text-center space-y-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 border border-slate-850 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.15)]">
-            <BarChart3 aria-hidden="true" size={24} />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-base font-black text-white tracking-wide">{c.emptyTitle}</h2>
-            <p className="text-xs leading-relaxed text-slate-400 font-semibold max-w-xs">{c.emptyBody}</p>
-          </div>
-        </section>
-      ) : null}
-
-      {hasData && (
-        <>
+        <div className="inner-scroll min-h-0 w-full flex flex-col items-center justify-center p-2">
+          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-6 shadow-2xl flex flex-col items-center text-center space-y-4 w-full">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 border border-slate-700 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.15)]">
+              <BarChart3 aria-hidden="true" size={24} />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-base font-black text-white tracking-wide">{c.emptyTitle}</h2>
+              <p className="text-xs leading-relaxed text-slate-300 font-semibold max-w-xs">{c.emptyBody}</p>
+            </div>
+          </section>
+        </div>
+      ) : (
+        <div className="inner-scroll min-h-0 space-y-4 pr-0.5">
           <section className="grid grid-cols-2 gap-3">
             {[
               [c.workoutDays, locale === 'ko' ? `${stats.workoutDays}일` : `${stats.workoutDays}d`],
@@ -766,18 +766,18 @@ export function StatsPage({ onBack }: StatsPageProps) {
               [c.hardSets, `${stats.hardSets}`],
               [c.hardSetRatio, `${stats.hardSetRatio.toFixed(0)}%`],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-4 shadow-xl flex flex-col justify-between">
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</p>
-                <p className="mt-2 text-xl font-black text-white tracking-tight">{value}</p>
+              <div key={label} className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-4 shadow-xl flex flex-col justify-between">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</p>
+                <p className="mt-2 text-lg font-black text-white">{value}</p>
               </div>
             ))}
-            <div className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-4 shadow-xl flex flex-col justify-between">
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">{c.weekOverWeek}</p>
-              <p className={`mt-2 text-xl font-black tracking-tight ${
+            <div className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-4 shadow-xl flex flex-col justify-between">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{c.weekOverWeek}</p>
+              <p className={`mt-2 text-lg font-black ${
                 stats.weekOverWeekPct !== undefined && stats.weekOverWeekPct >= 25
-                  ? 'text-rose-450 shadow-[0_0_8px_rgba(244,63,94,0.15)]'
+                  ? 'text-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.15)]'
                   : stats.weekOverWeekPct !== undefined && stats.weekOverWeekPct > 0
-                    ? 'text-cyan-455 shadow-[0_0_8px_rgba(34,211,238,0.15)]'
+                    ? 'text-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.15)]'
                     : 'text-white'
               }`}>
                 {formatPct(stats.weekOverWeekPct)}
@@ -785,28 +785,28 @@ export function StatsPage({ onBack }: StatsPageProps) {
             </div>
           </section>
 
-          <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-5">
+          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-5">
             <h2 className="text-base font-black text-white tracking-wide">{c.recentTrend}</h2>
             
             <div>
-              <p className="text-xs font-black text-slate-400 uppercase tracking-wider">{c.totalVolume}</p>
+              <p className="text-xs font-black text-slate-350 uppercase tracking-wider">{c.totalVolume}</p>
               <MiniLineChart weeks={stats.weeks} locale={locale} peakLabel={c.peak} />
             </div>
             
-            <div className="border-t border-slate-850 pt-4">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-wider">{c.totalSets}</p>
+            <div className="border-t border-slate-750 pt-4">
+              <p className="text-xs font-black text-slate-350 uppercase tracking-wider">{c.totalSets}</p>
               <MiniBarChart weeks={stats.weeks} metric="sets" />
             </div>
-            
-            <div className="border-t border-slate-850 pt-4">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-wider">{c.workoutDays}</p>
+
+            <div className="border-t border-slate-750 pt-4">
+              <p className="text-xs font-black text-slate-350 uppercase tracking-wider">{c.workoutDays}</p>
               <MiniBarChart weeks={stats.weeks} metric="workoutDays" />
             </div>
             
             {latestWeek ? (
-              <div className="rounded-xl bg-slate-950/85 border border-slate-900 p-3.5 mt-2">
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">{c.trendSummary}</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-350 font-semibold">
+              <div className="rounded-xl bg-slate-900 border border-slate-750 p-3.5 mt-2">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{c.trendSummary}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-200 font-semibold">
                   {locale === 'ko'
                     ? `${latestWeek.label} 주간은 ${latestWeek.workoutDays}일 운동, ${latestWeek.sets}세트, ${Math.round(latestWeek.volumeKg).toLocaleString()}kg입니다. 전주 대비 ${formatPct(latestWeekVolumeChange)}.`
                     : `${latestWeek.label} has ${latestWeek.workoutDays} workout days, ${latestWeek.sets} sets, and ${Math.round(latestWeek.volumeKg).toLocaleString()}kg. Week-over-week: ${formatPct(latestWeekVolumeChange)}.`}
@@ -815,47 +815,47 @@ export function StatsPage({ onBack }: StatsPageProps) {
             ) : null}
           </section>
 
-          <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
+          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
             <h2 className="text-base font-black text-white tracking-wide">{c.muscleAnalysis}</h2>
             <div className="grid gap-3.5">
               {stats.muscleStats.map((muscle) => (
-                <div key={muscle.group} className="rounded-2xl bg-slate-950/80 border border-slate-900 p-4 space-y-3 shadow-lg">
+                <div key={muscle.group} className="rounded-2xl bg-slate-900 border border-slate-750 p-4 space-y-3 shadow-lg">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-black text-white tracking-wide">{muscleLabels[locale][muscle.group]}</p>
                     <Badge status={muscle.status} locale={locale} />
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-2 py-1.5 text-center bg-slate-900/40 rounded-xl border border-slate-900/60">
+                  <div className="grid grid-cols-3 gap-2 py-1.5 text-center bg-slate-950/40 rounded-xl border border-slate-800">
                     <div>
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{c.volume}</p>
-                      <p className="text-xs font-black text-slate-200 mt-0.5">{Math.round(muscle.volumeKg).toLocaleString()}kg</p>
+                      <p className="text-[9px] font-bold text-slate-450 uppercase tracking-wider">{c.volume}</p>
+                      <p className="text-xs font-black text-slate-100 mt-0.5">{Math.round(muscle.volumeKg).toLocaleString()}kg</p>
                     </div>
-                    <div className="border-x border-slate-900/80">
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{c.sets}</p>
-                      <p className="text-xs font-black text-slate-200 mt-0.5">{muscle.sets}</p>
+                    <div className="border-x border-slate-800">
+                      <p className="text-[9px] font-bold text-slate-455 uppercase tracking-wider">{c.sets}</p>
+                      <p className="text-xs font-black text-slate-100 mt-0.5">{muscle.sets}</p>
                     </div>
                     <div>
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{c.hardSets}</p>
-                      <p className="text-xs font-black text-slate-200 mt-0.5">{muscle.hardSets}</p>
+                      <p className="text-[9px] font-bold text-slate-450 uppercase tracking-wider">{c.hardSets}</p>
+                      <p className="text-xs font-black text-slate-100 mt-0.5">{muscle.hardSets}</p>
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-350">
                       <span>{c.weeklyTarget}</span>
-                      <span className="text-slate-350 font-black">
+                      <span className="text-slate-200 font-black">
                         {muscle.sets} / {muscle.recommendedMax} {c.perWeek}
                       </span>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-900">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-950">
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
-                          muscle.status === 'high' ? 'bg-rose-400 shadow-[0_0_6px_#f87171]' : muscle.status === 'normal' ? 'bg-emerald-450 shadow-[0_0_6px_#10b981]' : 'bg-amber-400 shadow-[0_0_6px_#fbbf24]'
+                          muscle.status === 'high' ? 'bg-rose-450 shadow-[0_0_6px_#f43f5e]' : muscle.status === 'normal' ? 'bg-emerald-450 shadow-[0_0_6px_#10b981]' : 'bg-amber-450 shadow-[0_0_6px_#f59e0b]'
                         }`}
                         style={{ width: `${muscle.targetPct}%` }}
                       />
                     </div>
-                    <p className="text-[10px] font-bold text-slate-450">
+                    <p className="text-[10px] font-bold text-slate-300">
                       {muscle.deficitSets > 0
                         ? locale === 'ko' ? `최소 목표까지 ${muscle.deficitSets}세트 부족` : `${muscle.deficitSets} sets below minimum`
                         : muscle.excessSets > 0
@@ -863,7 +863,7 @@ export function StatsPage({ onBack }: StatsPageProps) {
                           : locale === 'ko' ? '권장 범위 안에 있습니다' : 'Within target range'}
                     </p>
                   </div>
-                  <div className="text-[9px] font-extrabold text-slate-500 pt-1 border-t border-slate-900/60">
+                  <div className="text-[9px] font-extrabold text-slate-450 pt-1.5 border-t border-slate-800">
                     {c.recommended} {muscle.recommendedMin}-{muscle.recommendedMax} {c.perWeek}
                   </div>
                 </div>
@@ -871,13 +871,13 @@ export function StatsPage({ onBack }: StatsPageProps) {
             </div>
           </section>
 
-          <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
+          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
             <h2 className="text-base font-black text-white tracking-wide">{c.performance}</h2>
             <div className="grid gap-3.5">
               {stats.performances.length === 0 ? (
-                <p className="text-xs font-bold text-slate-400 text-center py-4">{c.noPerformance}</p>
+                <p className="text-xs font-bold text-slate-300 text-center py-4">{c.noPerformance}</p>
               ) : stats.performances.map((performance) => (
-                <div key={performance.id} className="rounded-2xl bg-slate-950/80 border border-slate-900 p-4 space-y-3 shadow-lg">
+                <div key={performance.id} className="rounded-2xl bg-slate-900 border border-slate-750 p-4 space-y-3 shadow-lg">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-sm font-black text-white tracking-wide">{performance.name}</h3>
                     <span className="rounded-lg bg-cyan-950 border border-cyan-850 px-2 py-0.5 text-[10px] font-black text-cyan-400 shadow-sm">
@@ -885,17 +885,17 @@ export function StatsPage({ onBack }: StatsPageProps) {
                     </span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 py-2 px-3 bg-slate-900/40 rounded-xl border border-slate-900/60 text-[11px] font-semibold text-slate-400">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 py-2.5 px-3 bg-slate-950/40 rounded-xl border border-slate-800 text-[11px] font-semibold text-slate-300">
                     <p>{c.recentWeight} <span className="font-black text-white">{performance.recentWeightKg.toFixed(1)}kg</span></p>
                     <p>{c.bestWeight} <span className="font-black text-white">{performance.bestWeightKg.toFixed(1)}kg</span></p>
                     <p>{c.recentVolume} <span className="font-black text-white">{Math.round(performance.recentVolumeKg).toLocaleString()}kg</span></p>
                     <p>{c.bestVolume} <span className="font-black text-white">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
-                    <p className="col-span-2 border-t border-slate-850 pt-1.5 mt-0.5">{c.estimatedOneRm} <span className="font-black text-cyan-300">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
+                    <p className="col-span-2 border-t border-slate-800 pt-2 mt-0.5">{c.estimatedOneRm} <span className="font-black text-cyan-300">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
                   </div>
                   
                   {performance.oneRmHistory.length > 0 ? (
-                    <div className="border-t border-slate-900/60 pt-3">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-slate-500">{c.oneRmHistory}</p>
+                    <div className="border-t border-slate-800 pt-3">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">{c.oneRmHistory}</p>
                       <MiniSparkBars history={performance.oneRmHistory} />
                     </div>
                   ) : null}
@@ -904,21 +904,21 @@ export function StatsPage({ onBack }: StatsPageProps) {
             </div>
           </section>
 
-          <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
+          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
             <div className="flex items-center gap-2.5">
               <AlertTriangle aria-hidden="true" size={18} className="text-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.15)]" />
               <h2 className="text-base font-black text-white tracking-wide">{c.recoveryWarnings}</h2>
             </div>
             <div className="grid gap-2.5">
               {stats.warnings.length === 0 ? (
-                <p className="rounded-xl bg-emerald-950/20 border border-emerald-900/65 px-4 py-3 text-xs leading-relaxed font-bold text-emerald-300">{c.noWarnings}</p>
+                <p className="rounded-xl bg-emerald-950/30 border border-emerald-800 px-4 py-3 text-xs leading-relaxed font-bold text-emerald-300">{c.noWarnings}</p>
               ) : stats.warnings.map((warning) => (
-                <p key={warning} className="rounded-xl bg-amber-950/20 border border-amber-900/65 px-4 py-3 text-xs leading-relaxed font-bold text-amber-250">{warning}</p>
+                <p key={warning} className="rounded-xl bg-amber-950/30 border border-amber-900 px-4 py-3 text-xs leading-relaxed font-bold text-amber-200">{warning}</p>
               ))}
             </div>
           </section>
 
-          <section className="rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-5 shadow-2xl space-y-4">
+          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-black uppercase tracking-wider text-cyan-400">{c.automaticAnalysis}</p>
               <button
@@ -927,22 +927,22 @@ export function StatsPage({ onBack }: StatsPageProps) {
                 className={`rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-wider active:scale-95 transition-all duration-200 ${
                   copied
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_8px_rgba(16,185,129,0.15)]'
-                    : 'bg-slate-900 hover:bg-slate-850 text-slate-250 border border-slate-850 shadow-md'
+                    : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 shadow-md'
                 }`}
               >
                 {copied ? t(locale, 'copied') : t(locale, 'statsCopyAiPrompt')}
               </button>
             </div>
-            <div className="rounded-xl bg-slate-950/80 border border-slate-900 p-4 shadow-inner">
-              <p className="text-xs leading-relaxed text-slate-350 font-semibold">{stats.analysisComment}</p>
+            <div className="rounded-xl bg-slate-900 border border-slate-750 p-4 shadow-inner">
+              <p className="text-xs leading-relaxed text-slate-200 font-semibold">{stats.analysisComment}</p>
             </div>
             {copied && (
-              <p className="text-[10px] font-black text-emerald-450 tracking-wide text-center animate-pulse pt-1">
+              <p className="text-[10px] font-black text-emerald-400 tracking-wide text-center animate-pulse pt-1">
                 {t(locale, 'statsAiPromptCopied')}
               </p>
             )}
           </section>
-        </>
+        </div>
       )}
     </section>
   );
