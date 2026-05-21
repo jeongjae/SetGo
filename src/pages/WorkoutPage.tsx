@@ -4,6 +4,7 @@ import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } fr
 import { db } from '../db/db';
 import { getRoutineDayDisplayName } from '../db/routines';
 import { getExerciseIcon } from '../utils/exerciseIcon';
+import { formatDateKey } from '../utils/date';
 import {
   getExerciseCategories,
   getExerciseName,
@@ -31,7 +32,7 @@ import {
   type ActiveWorkout,
   type WorkoutExerciseLog,
 } from '../db/workouts';
-import type { CardioRecord, ExerciseCategory, ExerciseMaster, ExerciseStage, WorkoutSet, WorkoutSetType } from '../types';
+import type { CardioRecord, ExerciseCategory, ExerciseMaster, ExerciseStage, WorkoutSession, WorkoutSet, WorkoutSetType } from '../types';
 
 type WorkoutPageProps = {
   sessionId?: string;
@@ -53,6 +54,16 @@ export function getElapsedMs(startedAtStr: string, nowMs: number): number {
   if (Number.isNaN(start)) return 0;
 
   return Math.max(0, nowMs - start);
+}
+
+export function getLiveSessionElapsedMs(
+  session: Pick<WorkoutSession, 'date' | 'startedAt' | 'status'>,
+  nowMs: number,
+): number | undefined {
+  if (!session.startedAt || session.status !== 'in_progress') return undefined;
+  if (session.date !== formatDateKey(new Date(nowMs))) return undefined;
+
+  return getElapsedMs(session.startedAt, nowMs);
 }
 
 export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
@@ -410,9 +421,12 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   const workoutRoutineDayName = getRoutineDayDisplayName(workout?.routineDay, locale);
   const completedExerciseCount = logs.filter((log) => log.workoutExercise.status === 'completed').length;
 
-  const sessionElapsed = workout?.session.startedAt
-    ? formatElapsed(getElapsedMs(workout.session.startedAt, timerNow))
-    : '0:00';
+  const liveSessionElapsed = workout
+    ? getLiveSessionElapsedMs(workout.session, timerNow)
+    : undefined;
+  const sessionElapsed = liveSessionElapsed === undefined
+    ? undefined
+    : formatElapsed(liveSessionElapsed);
 
   const restElapsed = restTimerStartedAt ? formatElapsed(timerNow - restTimerStartedAt) : '--:--';
   const isCompletedEditMode = workout?.session.status === 'completed' || workout?.session.status === 'skipped';
@@ -443,12 +457,16 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
           {/* 콤팩트 실시간 대시보드 */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {!isCompletedEditMode && (
+            {!isCompletedEditMode && sessionElapsed ? (
               <div className="flex items-center gap-1 rounded-xl bg-slate-900 border border-slate-800 px-2.5 py-1 text-xs font-bold text-white shadow-inner">
                 <Clock3 size={13} className="text-slate-400" />
                 <span className="font-mono tracking-wide">{sessionElapsed}</span>
               </div>
-            )}
+            ) : workout && !isCompletedEditMode ? (
+              <div className="rounded-xl bg-slate-900 border border-slate-800 px-2.5 py-1 text-xs font-bold text-slate-300 shadow-inner">
+                <span className="font-mono">{workout.session.date}</span>
+              </div>
+            ) : null}
             {isRestTimerActive && restRemaining > 0 ? (
               <button
                 type="button"
@@ -569,7 +587,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
         {/* 세션 메모 영역 */}
         <section className="rounded-2xl bg-slate-900/60 border border-slate-800/80 p-4 shadow-md shrink-0">
           <label className="block text-xs font-bold text-slate-300">
-            {locale === 'ko' ? '📝 오늘 세션 전체 메모' : '📝 Overall Session Notes'}
+            {locale === 'ko' ? '📝 세션 전체 메모' : '📝 Overall Session Notes'}
             <textarea
               aria-label="Session memo"
               defaultValue={workout?.session.memo ?? ''}
