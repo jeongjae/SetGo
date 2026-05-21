@@ -129,6 +129,25 @@ const messages = {
     statsEmptyAnalysis: '운동 기록이 쌓이면 주간 부하와 다음 주 조정 제안을 표시합니다.',
     statsCopyAiPrompt: 'AI 분석용 프롬프트 복사',
     statsAiPromptCopied: '클립보드에 프롬프트가 복사되었습니다! ChatGPT나 Gemini에 붙여넣어 피드백을 받아보세요.',
+    statsTrendSummaryText: '{week} 주간은 {days}일 운동, {sets}세트, {volume}kg입니다. 전주 대비 {change}.',
+    statsBelowMinimum: '최소 목표까지 {sets}세트 부족',
+    statsAboveTarget: '권장 상한보다 {sets}세트 많음',
+    statsWithinTargetRange: '권장 범위 안에 있습니다',
+    statsAnalysisWeekSummary: '이번 주는 {days}일 운동했고 총 {volume}kg, {sets}세트를 기록했습니다.',
+    statsAnalysisVolumeVsAverage: '최근 4주 평균 대비 볼륨은 {change}입니다.',
+    statsAnalysisVolumeAveragePending: '최근 4주 평균 비교는 기록이 더 쌓이면 표시됩니다.',
+    statsAnalysisHardSetRatio: 'Hard Set 비율은 {ratio}%입니다.',
+    statsAnalysisLowMuscles: '부족한 근육군은 {muscles}입니다.',
+    statsAnalysisMusclesInRange: '주요 근육군 세트 수는 대체로 권장 범위 안에 있습니다.',
+    statsAnalysisHighMuscles: '{muscles}는 부하를 점검하세요.',
+    statsAnalysisNoOverload: '과도한 부하 신호는 크지 않습니다.',
+    statsAnalysisReduceWarnings: '다음 주에는 경고 항목을 우선 줄이는 방향으로 계획하세요.',
+    statsAnalysisAddSets: '다음 주에는 부족한 부위에 2-4세트를 추가하는 정도가 적절합니다.',
+    statsWorkoutDaysValue: '{days}일',
+    statsWarningStreak: '연속 운동일이 {days}일입니다. 하루 회복일을 고려하세요.',
+    statsWarningMuscleGap: '{muscle} 부위가 48시간 미만 간격으로 반복되었습니다.',
+    statsWarningVolumeSpike: '주간 볼륨이 전주 대비 {change}% 증가했습니다.',
+    statsWarningHardSetRatio: 'Hard Set 비율이 {ratio}%입니다. 피로 누적을 확인하세요.',
   },
   en: {
     activeRoutine: 'Active Routine',
@@ -243,6 +262,25 @@ const messages = {
     statsEmptyAnalysis: 'Weekly load and next-week adjustment suggestions will appear after workout history accumulates.',
     statsCopyAiPrompt: 'Copy AI Prompt',
     statsAiPromptCopied: 'Prompt copied to clipboard! Paste it into ChatGPT or Gemini to get expert feedback.',
+    statsTrendSummaryText: '{week} has {days} workout days, {sets} sets, and {volume}kg. Week-over-week: {change}.',
+    statsBelowMinimum: '{sets} sets below minimum',
+    statsAboveTarget: '{sets} sets above target',
+    statsWithinTargetRange: 'Within target range',
+    statsAnalysisWeekSummary: 'This week has {days} workout days, {volume}kg total volume, and {sets} sets.',
+    statsAnalysisVolumeVsAverage: 'Volume is {change} versus the recent 4-week average.',
+    statsAnalysisVolumeAveragePending: 'The 4-week average comparison will appear after more history accumulates.',
+    statsAnalysisHardSetRatio: 'Hard-set ratio is {ratio}%.',
+    statsAnalysisLowMuscles: 'Under-trained groups: {muscles}.',
+    statsAnalysisMusclesInRange: 'Major muscle groups are mostly within the recommended range.',
+    statsAnalysisHighMuscles: 'Review load for {muscles}.',
+    statsAnalysisNoOverload: 'No major overload signal is present.',
+    statsAnalysisReduceWarnings: 'Next week, prioritize reducing the warning items.',
+    statsAnalysisAddSets: 'Next week, adding 2-4 sets to lagging areas looks reasonable.',
+    statsWorkoutDaysValue: '{days}d',
+    statsWarningStreak: 'You have trained {days} days in a row. Consider a recovery day.',
+    statsWarningMuscleGap: '{muscle} was repeated within 48 hours.',
+    statsWarningVolumeSpike: 'Weekly volume increased {change}% versus last week.',
+    statsWarningHardSetRatio: 'Hard sets are {ratio}% of sets. Watch accumulated fatigue.',
   },
 } satisfies Record<AppLocale, Record<string, string>>;
 
@@ -250,6 +288,10 @@ export type MessageKey = keyof typeof messages.ko;
 
 export function t(locale: AppLocale, key: MessageKey): string {
   return messages[locale][key] ?? messages.en[key] ?? key;
+}
+
+export function tf(locale: AppLocale, key: MessageKey, values: Record<string, string | number>): string {
+  return t(locale, key).replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? `{${name}}`));
 }
 
 export function workoutStatusLabel(locale: AppLocale, status: 'planned' | 'in_progress' | 'completed' | 'skipped'): string {
