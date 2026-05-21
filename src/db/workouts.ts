@@ -1,6 +1,6 @@
 import { db } from './db';
 import { getActiveRoutine, getSuggestedRoutineDayForDate } from './routines';
-import type { CardioRecord, ExerciseMaster, RoutineDay, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
+import type { CardioRecord, ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 import { formatDateKey, getTimeBand } from '../utils/date';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg, calculateSessionStrengthVolumeKg } from '../domain/volume';
 import { isWarmupOnlyExercise } from '../domain/exercises';
@@ -51,6 +51,30 @@ export function selectReusableInProgressSession(
     : inProgressSessions[0];
 }
 
+export function createWorkoutSessionForDate(
+  date: string,
+  now: Date,
+  existingSessionCount: number,
+  routineId?: string,
+  routineDayId?: string,
+): WorkoutSession {
+  const timestamp = now.toISOString();
+  const isFirstBackdatedSession = existingSessionCount === 0 && date !== formatDateKey(now);
+
+  return {
+    id: existingSessionCount === 0 ? `workout_${date}` : `workout_${date}_${now.getTime()}`,
+    date,
+    startedAt: isFirstBackdatedSession ? `${date}T12:00:00.000` : timestamp,
+    timeBand: getTimeBand(new Date(`${date}T12:00:00`)),
+    routineId,
+    routineDayId,
+    status: 'in_progress',
+    totalStrengthVolumeKg: 0,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
+
 export async function getOrCreateWorkoutForDate(
   date: string,
   selectedRoutineDayId?: string,
@@ -98,19 +122,13 @@ export async function getOrCreateWorkoutForDate(
     };
   }
 
-  const timestamp = now.toISOString();
-  const session: WorkoutSession = {
-    id: existingSessions.length === 0 ? `workout_${date}` : `workout_${date}_${now.getTime()}`,
+  const session = createWorkoutSessionForDate(
     date,
-    startedAt: (existingSessions.length === 0 && date !== formatDateKey(new Date())) ? `${date}T12:00:00.000` : timestamp,
-    timeBand: getTimeBand(sessionDate),
-    routineId: activeRoutine?.id,
-    routineDayId: routineDay?.id,
-    status: 'in_progress',
-    totalStrengthVolumeKg: 0,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
+    now,
+    existingSessions.length,
+    activeRoutine?.id,
+    routineDay?.id,
+  );
 
   await db.workoutSessions.put(session);
   await seedWorkoutExercisesFromRoutineDay(session.id, routineDay?.id);
@@ -184,6 +202,43 @@ async function dedupeWorkoutExercisesByExercise(sessionId: string): Promise<void
   await refreshSessionVolume(sessionId);
 }
 
+export function createWorkoutExerciseSeed(
+  sessionId: string,
+  plans: RoutineExercisePlan[],
+  exerciseById: Map<string, ExerciseMaster | undefined>,
+): { workoutExercises: WorkoutExercise[]; workoutSets: WorkoutSet[] } {
+  const workoutExercises: WorkoutExercise[] = [];
+  const workoutSets: WorkoutSet[] = [];
+
+  plans.forEach((plan, index) => {
+    const workoutExerciseId = `${sessionId}_${plan.id}`;
+    const plannedSets = Math.max(1, plan.plannedSets ?? 3);
+    const exercise = exerciseById.get(plan.exerciseId);
+    const isWarmup = isWarmupOnlyExercise(exercise);
+
+    workoutExercises.push({
+      id: workoutExerciseId,
+      sessionId,
+      exerciseId: plan.exerciseId,
+      order: index + 1,
+      status: 'planned',
+      totalVolumeKg: 0,
+    });
+    workoutSets.push(...Array.from({ length: plannedSets }, (_, setIndex) => ({
+      id: `${workoutExerciseId}_set_${setIndex + 1}`,
+      workoutExerciseId,
+      setNo: setIndex + 1,
+      weightKg: plan.plannedWeightKg ?? 0,
+      reps: plan.plannedReps ?? 0,
+      rir: plan.plannedRir,
+      isCompleted: false,
+      isWarmup,
+    })));
+  });
+
+  return { workoutExercises, workoutSets };
+}
+
 async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayId?: string): Promise<void> {
   if (!routineDayId) return;
 
@@ -191,36 +246,12 @@ async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayI
   if (plans.length === 0) return;
 
   const planExercises = await Promise.all(plans.map((plan) => db.exercises.get(plan.exerciseId)));
+  const exerciseById = new Map(plans.map((plan, index) => [plan.exerciseId, planExercises[index]]));
+  const seed = createWorkoutExerciseSeed(sessionId, plans, exerciseById);
 
   await db.transaction('rw', db.workoutExercises, db.workoutSets, async () => {
-    for (const [index, plan] of plans.entries()) {
-      const workoutExerciseId = `${sessionId}_${plan.id}`;
-      const plannedSets = Math.max(1, plan.plannedSets ?? 3);
-      const exercise = planExercises[index];
-      const isWarmup = isWarmupOnlyExercise(exercise);
-
-      await db.workoutExercises.put({
-        id: workoutExerciseId,
-        sessionId,
-        exerciseId: plan.exerciseId,
-        order: index + 1,
-        status: 'planned',
-        totalVolumeKg: 0,
-      });
-
-      await db.workoutSets.bulkPut(
-        Array.from({ length: plannedSets }, (_, setIndex) => ({
-          id: `${workoutExerciseId}_set_${setIndex + 1}`,
-          workoutExerciseId,
-          setNo: setIndex + 1,
-          weightKg: plan.plannedWeightKg ?? 0,
-          reps: plan.plannedReps ?? 0,
-          rir: plan.plannedRir,
-          isCompleted: false,
-          isWarmup,
-        })),
-      );
-    }
+    await db.workoutExercises.bulkPut(seed.workoutExercises);
+    await db.workoutSets.bulkPut(seed.workoutSets);
   });
 }
 

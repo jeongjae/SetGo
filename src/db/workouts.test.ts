@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { selectReusableInProgressSession } from './workouts';
-import type { WorkoutSession } from '../types';
+import {
+  createWorkoutExerciseSeed,
+  createWorkoutSessionForDate,
+  selectReusableInProgressSession,
+} from './workouts';
+import type { ExerciseMaster, RoutineExercisePlan, WorkoutSession } from '../types';
 
 function session(
   id: string,
@@ -76,22 +80,105 @@ describe('workout and routine template isolation (Scenario A)', () => {
 });
 
 describe('workout date binding and session creation safety (Scenario C)', () => {
-  it('generates correct and stable session structure for historical calendar dates', () => {
-    const historicalDate = '2026-05-10';
-    const timestamp = '2026-05-10T12:00:00.000';
+  it('binds the first backdated calendar workout to the selected date', () => {
+    const historicalSession = createWorkoutSessionForDate(
+      '2026-05-10',
+      new Date('2026-05-21T09:30:00.000Z'),
+      0,
+      'routine_push_pull',
+      'routine_push_pull_day_1',
+    );
 
-    const historicalSession = {
-      id: `workout_${historicalDate}`,
-      date: historicalDate,
-      startedAt: timestamp,
+    expect(historicalSession).toMatchObject({
+      id: 'workout_2026-05-10',
+      date: '2026-05-10',
+      startedAt: '2026-05-10T12:00:00.000',
       timeBand: 'afternoon',
-      status: 'in_progress' as const,
-      totalStrengthVolumeKg: 0,
+      routineId: 'routine_push_pull',
+      routineDayId: 'routine_push_pull_day_1',
+      status: 'in_progress',
+    });
+  });
+
+  it('uses unique ids and current timestamps for extra records on the same date', () => {
+    const now = new Date('2026-05-21T09:30:00.000Z');
+    const extraSession = createWorkoutSessionForDate('2026-05-20', now, 1);
+
+    expect(extraSession.id).toBe(`workout_2026-05-20_${now.getTime()}`);
+    expect(extraSession.startedAt).toBe(now.toISOString());
+  });
+});
+
+describe('routine plan seeding', () => {
+  function exercise(id: string, stage: ExerciseMaster['stage']): ExerciseMaster {
+    return {
+      id,
+      nameKo: id,
+      nameEn: id,
+      stage,
+      stageTags: [stage],
+      category: stage === 'warmup' ? 'mobility' : 'chest',
+      categoryTags: [stage === 'warmup' ? 'mobility' : 'chest'],
+      defaultEmoji: 'EX',
+      isDefault: true,
+      isActive: true,
+      createdAt: '2026-05-20T00:00:00.000Z',
+      updatedAt: '2026-05-20T00:00:00.000Z',
+    };
+  }
+
+  it('copies edited routine plan values only into a new workout seed', () => {
+    const plan: RoutineExercisePlan = {
+      id: 'routine_day_1_bench_press',
+      routineDayId: 'routine_day_1',
+      exerciseId: 'bench_press',
+      order: 1,
+      plannedSets: 4,
+      plannedWeightKg: 82.5,
+      plannedReps: 8,
+      plannedRir: 1,
     };
 
-    expect(historicalSession.id).toBe('workout_2026-05-10');
-    expect(historicalSession.date).toBe('2026-05-10');
-    expect(historicalSession.startedAt).toBe('2026-05-10T12:00:00.000');
-    expect(historicalSession.status).toBe('in_progress');
+    const seed = createWorkoutExerciseSeed(
+      'workout_2026-05-21',
+      [plan],
+      new Map([['bench_press', exercise('bench_press', 'main')]]),
+    );
+
+    expect(seed.workoutExercises).toEqual([{
+      id: 'workout_2026-05-21_routine_day_1_bench_press',
+      sessionId: 'workout_2026-05-21',
+      exerciseId: 'bench_press',
+      order: 1,
+      status: 'planned',
+      totalVolumeKg: 0,
+    }]);
+    expect(seed.workoutSets).toHaveLength(4);
+    expect(seed.workoutSets[0]).toMatchObject({
+      weightKg: 82.5,
+      reps: 8,
+      rir: 1,
+      isCompleted: false,
+      isWarmup: false,
+    });
+  });
+
+  it('marks warmup-only routine exercise seeds as warmup sets', () => {
+    const plan: RoutineExercisePlan = {
+      id: 'routine_day_1_joint_mobility',
+      routineDayId: 'routine_day_1',
+      exerciseId: 'joint_mobility',
+      order: 1,
+      plannedSets: 2,
+      plannedReps: 12,
+    };
+
+    const seed = createWorkoutExerciseSeed(
+      'workout_2026-05-21',
+      [plan],
+      new Map([['joint_mobility', exercise('joint_mobility', 'warmup')]]),
+    );
+
+    expect(seed.workoutSets.map((set) => set.isWarmup)).toEqual([true, true]);
   });
 });
