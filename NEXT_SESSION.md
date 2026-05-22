@@ -30,9 +30,12 @@ The app source cleanup pass is committed locally. These local files are intentio
 
 - `setgo-backup-2026-05-20T08-30-04.json`
 - `setgo-backup-2026-05-20T08-54-52.json`
+- `setgo-backup-2026-05-22T07-11-39.json`
 - `setgo-exercises-2026-05-20T08-57-35.csv`
 - `setgo-exercises-2026-05-21T10-43-35.csv`
+- `setgo-exercises-2026-05-22T07-12-01.csv`
 - `setgo-settings-2026-05-20T08-57-27.json`
+- `setgo-settings-2026-05-22T07-11-56.json`
 
 Leave them alone unless the user asks to use or remove them.
 
@@ -58,6 +61,7 @@ Leave them alone unless the user asks to use or remove them.
 - Workout start selection now has direct coverage for resuming in-progress records versus creating explicit new Calendar records.
 - Workout rest timer surfaces now use the same remaining-time countdown formatting.
 - Cardio-only workout sessions can be completed once at least one cardio record exists.
+- Strength workouts now require at least one completed set before the workout completion action unlocks.
 - Workout header exercise progress now counts only exercises whose sets are all complete.
 - Newly added workout exercises open immediately and scroll into view for logging.
 - Deleting logged workout exercises, sets, or cardio entries now asks for confirmation while empty placeholders still delete quickly.
@@ -80,6 +84,7 @@ Browser checks were also done for:
   - Routine Setup opens and exposes the `루틴`, `운동`, and `주간 계획` tabs.
   - Calendar skip status was round-tripped on the May 21 in-progress session and restored with `스킵 취소`.
   - A temporary bench press exercise was added to the May 21 free workout, a `42.5 kg x 8 @ RIR 2` set was logged, save-time feedback and the rest timer appeared, and the temporary exercise was removed again.
+  - A follow-up empty-workout check confirmed that a placeholder strength exercise alone no longer unlocks workout completion; logging a set unlocks it.
   - Markdown export copied to the clipboard and full JSON backup reported a browser download start.
   - Stats empty state still renders when there are no completed workout records.
 - Today page load and fixed-shell height metrics.
