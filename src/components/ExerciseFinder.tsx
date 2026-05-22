@@ -193,7 +193,7 @@ export function ExerciseFinder({
                         {getExerciseName(exercise, locale)}
                       </span>
                       {isCustom && (
-                        <span className="shrink-0 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                        <span className="shrink-0 rounded-md border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-extrabold uppercase text-amber-300">
                           My
                         </span>
                       )}
@@ -204,8 +204,8 @@ export function ExerciseFinder({
                           .map((cat) => labelForCategory(cat, locale))
                           .join(' / ')}
                       </span>
-                      <span className="text-[10px] text-slate-500 font-bold">•</span>
-                      <span className="text-[10px] text-slate-400 font-semibold">
+                      <span className="text-xs font-bold text-slate-200">•</span>
+                      <span className="text-xs font-semibold text-slate-100">
                         {getExerciseStages(exercise)
                           .map((stg) => labelForStage(stg, locale))
                           .join(' / ')}

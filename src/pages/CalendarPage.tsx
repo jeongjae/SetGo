@@ -353,15 +353,15 @@ export function CalendarPage({
                   ) : null}
                 </div>
                 {totalVolume > 0 ? (
-                  <span className="mt-0.5 truncate text-[8.5px] font-black text-emerald-450">
+                  <span className="mt-0.5 truncate text-[10px] font-black text-emerald-300">
                     {totalVolume.toLocaleString()}kg
                   </span>
                 ) : hasSkipped ? (
-                  <span className="mt-0.5 inline-block rounded bg-slate-800 border border-slate-700 px-1 py-0.2 text-[7.5px] font-black text-slate-400 uppercase tracking-wide">
+                  <span className="mt-0.5 inline-block rounded border border-slate-650 bg-slate-750 px-1 py-0.2 text-[9px] font-black uppercase text-slate-100">
                     {locale === 'ko' ? '스킵' : 'Skip'}
                   </span>
                 ) : showPlanDot ? (
-                  <span className={`mt-0.5 truncate text-[8.5px] font-extrabold ${
+                  <span className={`mt-0.5 truncate text-[10px] font-extrabold ${
                     dayPlan.status === 'missed' ? 'text-rose-450' : 'text-cyan-400'
                   }`}>
                     {getRoutineDayDisplayName(dayPlan.routineDay, locale) ?? statusLabel(dayPlan.status, locale)}
@@ -427,7 +427,7 @@ export function CalendarPage({
                   <h3 className="text-sm font-black text-white tracking-wide">
                     {getRoutineDayDisplayName(summary.routineDay, locale) ?? summary.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}
                   </h3>
-                  <span className="rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-1 text-[10px] font-black tracking-wide text-cyan-400">
+                  <span className="rounded-lg border border-slate-650 bg-slate-750 px-2.5 py-1 text-xs font-black text-cyan-200">
                     {workoutStatusLabel(locale, summary.session.status)}
                   </span>
                 </div>
@@ -465,7 +465,7 @@ export function CalendarPage({
                         <button
                           type="button"
                           onClick={() => void handleSkipSession(summary.session.id)}
-                          className="flex-1 min-h-10 rounded-xl bg-slate-950 border border-slate-800 hover:bg-slate-900 px-3 text-xs font-black text-slate-350 active:scale-95 transition-all"
+                          className="min-h-10 flex-1 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-black text-slate-100 transition-all hover:bg-slate-700 active:scale-95"
                         >
                           {locale === 'ko' ? '스킵하기' : 'Skip Workout'}
                         </button>

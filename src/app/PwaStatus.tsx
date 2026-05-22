@@ -74,9 +74,9 @@ export function PwaStatus() {
   if (!updateReady && isOnline && (!installPrompt || installDismissed)) return null;
 
   return (
-    <section className="mx-auto max-w-md px-4 pt-3">
-      <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-900 px-3 py-3 text-sm shadow">
-        <div className="flex min-w-0 items-center gap-2 text-slate-200">
+    <section className="mx-auto max-w-md px-3.5 pt-3">
+      <div className="flex items-center justify-between gap-2.5 rounded-xl border border-slate-650 bg-slate-750/95 px-3 py-2.5 text-sm shadow-lg">
+        <div className="flex min-w-0 items-center gap-2 text-slate-100">
           {!isOnline ? <WifiOff aria-hidden="true" size={17} className="shrink-0 text-amber-300" /> : null}
           {updateReady ? <RefreshCw aria-hidden="true" size={17} className="shrink-0 text-cyan-300" /> : null}
           {isOnline && !updateReady && installPrompt && !installDismissed ? (
@@ -95,7 +95,7 @@ export function PwaStatus() {
           <button
             type="button"
             onClick={() => void handleUpdate()}
-            className="min-h-9 rounded-md bg-cyan-400 px-3 text-xs font-semibold text-slate-950"
+            className="min-h-9 rounded-lg bg-cyan-400 px-3 text-sm font-bold text-slate-950"
           >
             {locale === 'ko' ? '새로고침' : 'Reload'}
           </button>
@@ -106,14 +106,14 @@ export function PwaStatus() {
             <button
               type="button"
               onClick={() => void handleInstall()}
-              className="min-h-9 rounded-md bg-cyan-400 px-3 text-xs font-semibold text-slate-950"
+              className="min-h-9 rounded-lg bg-cyan-400 px-3 text-sm font-bold text-slate-950"
             >
               {locale === 'ko' ? '설치' : 'Install'}
             </button>
             <button
               type="button"
               onClick={dismissInstall}
-              className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-800 text-slate-300"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-650 bg-slate-850 text-slate-100"
               aria-label="Dismiss install prompt"
             >
               <X aria-hidden="true" size={15} />
