@@ -108,7 +108,7 @@ export function App() {
             : <TodayPage refreshKey={refreshKey} onNavigate={handleTodayNavigate} onStartWorkout={(routineDayId) => void handleStartWorkout(routineDayId)} />;
 
   return (
-    <main className="app-shell bg-slate-950 text-slate-100">
+    <main className="app-shell bg-[#131b26] text-slate-100">
       <PwaStatus />
       {content}
     </main>

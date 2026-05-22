@@ -293,28 +293,28 @@ export function ExportPage({ onBack }: ExportPageProps) {
   }
 
   return (
-    <section className="mx-auto flex overflow-hidden max-w-md flex-col gap-3 px-4 pt-3 pb-4 viewport-locked text-slate-100">
-      <header className="flex items-center gap-3 shrink-0 py-1">
+    <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
+      <header className="flex shrink-0 items-center gap-2.5">
         <button
           type="button"
           onClick={onBack}
-          className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-800/80 border border-slate-700/60 text-slate-100 active:scale-95 transition-all shadow-md hover:bg-slate-700/80 shrink-0"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 shadow-md transition-all hover:bg-slate-650 active:scale-95"
           aria-label="Back to Today"
         >
           <ChevronLeft aria-hidden="true" size={20} />
         </button>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-cyan-400">{t(locale, 'export')}</p>
-          <h1 className="text-xl font-black text-white tracking-wide">{t(locale, 'export')}</h1>
+          <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'export')}</p>
+          <h1 className="text-xl font-black text-white">{t(locale, 'export')}</h1>
         </div>
       </header>
 
       {/* 내부 콘텐츠 스크롤 영역 */}
-      <div className="inner-scroll min-h-0 space-y-4 pr-0.5">
-        <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
+      <div className="inner-scroll min-h-0 space-y-2.5 pr-0.5">
+        <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t(locale, 'workoutSession')}</p>
-            <h2 className="mt-1 text-base font-black text-white tracking-wide">
+            <p className="text-xs font-black uppercase text-slate-200">{t(locale, 'workoutSession')}</p>
+            <h2 className="mt-1 text-base font-black text-white">
               {summary ? `${summary.session.date} / ${workoutStatusLabel(locale, summary.session.status)}` : locale === 'ko' ? '저장된 운동이 없습니다' : 'No workout saved yet'}
             </h2>
             <p className="mt-1.5 text-xs leading-relaxed text-slate-300 font-semibold">
@@ -326,7 +326,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
 
           {summaries.length > 0 ? (
             <div className="space-y-3 pt-3.5 border-t border-slate-700/60">
-              <label htmlFor="export-session-select" className="text-[11px] font-extrabold text-slate-350 tracking-wide block">
+              <label htmlFor="export-session-select" className="block text-xs font-extrabold text-slate-100">
                 {locale === 'ko' ? '기록 선택' : 'Select Session'}
               </label>
               <select
@@ -334,7 +334,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
                 aria-label="Export workout session"
                 value={summary?.session.id ?? ''}
                 onChange={(event) => void handleSelectSummary(event.target.value)}
-                className="min-h-11 w-full rounded-xl bg-slate-900 border border-slate-700 px-3 text-xs font-bold text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 transition-all cursor-pointer"
+                className="min-h-10 w-full cursor-pointer rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
               >
                 {summaries.map((item) => {
                   const routineDayName = getRoutineDayDisplayName(item.routineDay, locale) ?? t(locale, 'freeWorkout');
@@ -364,9 +364,9 @@ export function ExportPage({ onBack }: ExportPageProps) {
           <span>{copyStatus === 'copied' ? t(locale, 'copied') : t(locale, 'copy')}</span>
         </button>
 
-        <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
+        <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t(locale, 'localData')}</p>
+            <p className="text-xs font-black uppercase text-slate-200">{t(locale, 'localData')}</p>
             {isPersisted ? (
               <span className="flex items-center gap-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/20 px-2 py-0.5 text-[9px] font-black tracking-wide text-emerald-400">
                 <span className="relative flex h-1.5 w-1.5">
@@ -384,7 +384,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
               </span>
             )}
           </div>
-          <h2 className="text-base font-black text-white tracking-wide">{t(locale, 'backupRestore')}</h2>
+          <h2 className="text-base font-black text-white">{t(locale, 'backupRestore')}</h2>
           <p className="text-xs leading-relaxed text-slate-350 font-semibold">
             {backupSummary ?? (
               locale === 'ko'
@@ -430,12 +430,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
+        <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <p className="text-xs font-black uppercase text-slate-200">
               {locale === 'ko' ? '설정 데이터' : 'Settings Data'}
             </p>
-            <h2 className="mt-1 text-base font-black text-white tracking-wide">
+            <h2 className="mt-1 text-base font-black text-white">
               {locale === 'ko' ? '루틴 / 운동 / 주간계획 백업' : 'Routine / Exercise / Weekly Plan Backup'}
             </h2>
           </div>
@@ -469,12 +469,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
+        <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <p className="text-xs font-black uppercase text-slate-200">
               {locale === 'ko' ? '운동 라이브러리' : 'Exercise Library'}
             </p>
-            <h2 className="mt-1 text-base font-black text-white tracking-wide">
+            <h2 className="mt-1 text-base font-black text-white">
               {locale === 'ko' ? 'CSV 일괄 수정' : 'Bulk CSV Edit'}
             </h2>
           </div>

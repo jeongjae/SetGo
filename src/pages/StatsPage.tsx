@@ -721,25 +721,25 @@ export function StatsPage({ onBack }: StatsPageProps) {
     : undefined;
 
   return (
-    <section className="mx-auto flex overflow-hidden max-w-md flex-col gap-3 px-4 pt-3 pb-4 viewport-locked text-slate-100">
-      <header className="flex items-center gap-3 shrink-0 py-1">
+    <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
+      <header className="flex shrink-0 items-center gap-2.5">
         <button
           type="button"
           onClick={onBack}
-          className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-800/80 border border-slate-700/60 text-slate-100 active:scale-95 transition-all shadow-md hover:bg-slate-700/80 shrink-0"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 shadow-md transition-all hover:bg-slate-650 active:scale-95"
           aria-label="Back to Today"
         >
           <ChevronLeft aria-hidden="true" size={20} />
         </button>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-cyan-400">{t(locale, 'stats')}</p>
-          <h1 className="text-xl font-black text-white tracking-wide">{c.title}</h1>
+          <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'stats')}</p>
+          <h1 className="text-xl font-black text-white">{c.title}</h1>
         </div>
       </header>
 
       {!hasData ? (
         <div className="inner-scroll min-h-0 w-full flex flex-col items-center justify-center p-2">
-          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-6 shadow-2xl flex flex-col items-center text-center space-y-4 w-full">
+          <section className="flex w-full flex-col items-center space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-5 text-center shadow-2xl">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 border border-slate-700 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.15)]">
               <BarChart3 aria-hidden="true" size={24} />
             </div>
@@ -750,8 +750,8 @@ export function StatsPage({ onBack }: StatsPageProps) {
           </section>
         </div>
       ) : (
-        <div className="inner-scroll min-h-0 space-y-4 pr-0.5">
-          <section className="grid grid-cols-2 gap-3">
+        <div className="inner-scroll min-h-0 space-y-2.5 pr-0.5">
+          <section className="grid grid-cols-2 gap-2">
             {[
               [c.workoutDays, tf(locale, 'statsWorkoutDaysValue', { days: stats.workoutDays })],
               [c.totalVolume, `${Math.round(stats.totalVolumeKg).toLocaleString()}kg`],
@@ -759,13 +759,13 @@ export function StatsPage({ onBack }: StatsPageProps) {
               [c.hardSets, `${stats.hardSets}`],
               [c.hardSetRatio, `${stats.hardSetRatio.toFixed(0)}%`],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-4 shadow-xl flex flex-col justify-between">
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</p>
-                <p className="mt-2 text-lg font-black text-white">{value}</p>
+              <div key={label} className="flex flex-col justify-between rounded-2xl border border-slate-650 bg-slate-750/90 p-3 shadow-xl">
+                <p className="text-xs font-black uppercase text-slate-200">{label}</p>
+                <p className="mt-1.5 text-lg font-black text-white">{value}</p>
               </div>
             ))}
-            <div className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-4 shadow-xl flex flex-col justify-between">
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{c.weekOverWeek}</p>
+            <div className="flex flex-col justify-between rounded-2xl border border-slate-650 bg-slate-750/90 p-3 shadow-xl">
+              <p className="text-xs font-black uppercase text-slate-200">{c.weekOverWeek}</p>
               <p className={`mt-2 text-lg font-black ${
                 stats.weekOverWeekPct !== undefined && stats.weekOverWeekPct >= 25
                   ? 'text-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.15)]'
@@ -778,8 +778,8 @@ export function StatsPage({ onBack }: StatsPageProps) {
             </div>
           </section>
 
-          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-5">
-            <h2 className="text-base font-black text-white tracking-wide">{c.recentTrend}</h2>
+          <section className="space-y-3.5 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+            <h2 className="text-base font-black text-white">{c.recentTrend}</h2>
             
             <div>
               <p className="text-xs font-black text-slate-350 uppercase tracking-wider">{c.totalVolume}</p>
@@ -798,7 +798,7 @@ export function StatsPage({ onBack }: StatsPageProps) {
             
             {latestWeek ? (
               <div className="rounded-xl bg-slate-900 border border-slate-750 p-3.5 mt-2">
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{c.trendSummary}</p>
+                <p className="text-xs font-black uppercase text-slate-200">{c.trendSummary}</p>
                 <p className="mt-1 text-xs leading-relaxed text-slate-200 font-semibold">
                   {tf(locale, 'statsTrendSummaryText', {
                     week: latestWeek.label,
@@ -812,11 +812,11 @@ export function StatsPage({ onBack }: StatsPageProps) {
             ) : null}
           </section>
 
-          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
-            <h2 className="text-base font-black text-white tracking-wide">{c.muscleAnalysis}</h2>
-            <div className="grid gap-3.5">
+          <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+            <h2 className="text-base font-black text-white">{c.muscleAnalysis}</h2>
+            <div className="grid gap-2.5">
               {stats.muscleStats.map((muscle) => (
-                <div key={muscle.group} className="rounded-2xl bg-slate-900 border border-slate-750 p-4 space-y-3 shadow-lg">
+                <div key={muscle.group} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-lg">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-black text-white tracking-wide">{muscleLabels[locale][muscle.group]}</p>
                     <Badge status={muscle.status} locale={locale} />
@@ -868,13 +868,13 @@ export function StatsPage({ onBack }: StatsPageProps) {
             </div>
           </section>
 
-          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
-            <h2 className="text-base font-black text-white tracking-wide">{c.performance}</h2>
-            <div className="grid gap-3.5">
+          <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+            <h2 className="text-base font-black text-white">{c.performance}</h2>
+            <div className="grid gap-2.5">
               {stats.performances.length === 0 ? (
                 <p className="text-xs font-bold text-slate-300 text-center py-4">{c.noPerformance}</p>
               ) : stats.performances.map((performance) => (
-                <div key={performance.id} className="rounded-2xl bg-slate-900 border border-slate-750 p-4 space-y-3 shadow-lg">
+                <div key={performance.id} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-lg">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-sm font-black text-white tracking-wide">{performance.name}</h3>
                     <span className="rounded-lg bg-cyan-950 border border-cyan-850 px-2 py-0.5 text-[10px] font-black text-cyan-400 shadow-sm">
@@ -901,7 +901,7 @@ export function StatsPage({ onBack }: StatsPageProps) {
             </div>
           </section>
 
-          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
+          <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
             <div className="flex items-center gap-2.5">
               <AlertTriangle aria-hidden="true" size={18} className="text-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.15)]" />
               <h2 className="text-base font-black text-white tracking-wide">{c.recoveryWarnings}</h2>
@@ -915,7 +915,7 @@ export function StatsPage({ onBack }: StatsPageProps) {
             </div>
           </section>
 
-          <section className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 shadow-2xl space-y-4">
+          <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-black uppercase tracking-wider text-cyan-400">{c.automaticAnalysis}</p>
               <button

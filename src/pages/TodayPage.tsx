@@ -124,44 +124,43 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
   };
 
   return (
-    <section className="viewport-locked mx-auto max-w-md p-4 gap-3.5">
+    <section className="viewport-locked mx-auto max-w-md gap-2.5 p-3.5">
       
-      {/* Hero Welcome Card - Glassmorphism */}
-      <header className="relative overflow-hidden rounded-2xl bg-slate-800/85 backdrop-blur-md border border-slate-700/80 p-4.5 shadow-2xl shrink-0">
-        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-24 h-24 rounded-full bg-cyan-500/10 blur-xl"></div>
-        <p className="text-[11px] font-extrabold uppercase tracking-wider text-cyan-400">{t(locale, 'today')}</p>
-        <h1 className="mt-0.5 text-4xl font-extrabold bg-gradient-to-r from-cyan-400 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(34,211,238,0.25)]">
+      {/* Hero Welcome Card */}
+      <header className="shrink-0 overflow-hidden rounded-2xl border border-slate-650 bg-slate-750/95 p-3.5 shadow-xl">
+        <p className="text-xs font-extrabold uppercase text-cyan-300">{t(locale, 'today')}</p>
+        <h1 className="mt-0.5 text-[2rem] font-extrabold leading-none text-cyan-200">
           SetGo
         </h1>
-        <p className="mt-1.5 text-[13px] font-bold text-slate-200">{todayLabel}</p>
+        <p className="mt-1 text-sm font-bold text-slate-100">{todayLabel}</p>
       </header>
 
       {/* Middle Scrollable Section */}
-      <div className="inner-scroll space-y-3.5 pr-0.5 py-0.5">
+      <div className="inner-scroll space-y-2.5 pr-0.5 py-0.5">
 
-        {/* Active Routine Glass Card */}
-        <section className="rounded-2xl bg-slate-800/80 backdrop-blur-md border border-slate-700/80 p-5 shadow-2xl flex flex-col gap-3.5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 text-slate-950 font-bold shadow-lg shadow-cyan-500/20">
+        {/* Active Routine Card */}
+        <section className="flex flex-col gap-2.5 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
+          <div className="flex items-start gap-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-300 text-slate-950 shadow-md shadow-cyan-500/20">
               <Dumbbell aria-hidden="true" size={22} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-extrabold text-slate-300 uppercase tracking-wide">{t(locale, 'activeRoutine')}</p>
-              <h2 className="mt-0.5 text-lg font-bold text-white truncate">
+              <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'activeRoutine')}</p>
+              <h2 className="mt-0.5 truncate text-base font-bold text-white">
                 {activeRoutineName ?? t(locale, 'noActiveRoutine')}
               </h2>
             </div>
           </div>
 
-          <div className="rounded-xl bg-slate-900/90 border border-slate-800 px-4 py-3">
-            <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">{t(locale, 'todaysPlan')}</p>
-            <p className="mt-1 text-[15px] font-bold text-cyan-300 flex items-center gap-1.5">
+          <div className="rounded-xl border border-slate-650 bg-slate-850/85 px-3 py-2.5">
+            <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'todaysPlan')}</p>
+            <p className="mt-1 flex items-center gap-1.5 text-base font-bold text-cyan-200">
               <span className="inline-block w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
               {planLabel}
             </p>
           </div>
 
-          <p className="text-[13px] leading-5 text-slate-300 font-medium">
+          <p className="text-sm font-medium leading-5 text-slate-100">
             {inProgressSession
               ? locale === 'ko' ? '진행 중인 운동을 이어서 기록합니다.' : 'An in-progress workout will continue from its saved routine day.'
               : isTodayRestDay && activeRoutine
@@ -175,10 +174,10 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
             <button
               type="button"
               onClick={() => setSelectedRoutineDayId(nextRoutineDay.id)}
-              className={`mt-1 min-h-11 w-full rounded-xl px-4 text-left text-xs font-bold transition-all active:scale-98 border ${
+              className={`min-h-10 w-full rounded-xl border px-3 text-left text-sm font-bold transition-all active:scale-98 ${
                 selectedRoutineDayId === nextRoutineDay.id
                   ? 'bg-cyan-400 border-cyan-400 text-slate-950 shadow-md shadow-cyan-400/20'
-                  : 'bg-slate-900 border-slate-850 text-slate-200 hover:bg-slate-850'
+                  : 'bg-slate-850 border-slate-650 text-slate-100 hover:bg-slate-750'
               }`}
             >
               {locale === 'ko' ? '💡 추천 다음 루틴' : '💡 Recommended Next'}: {getRoutineDayDisplayName(nextRoutineDay, locale)}
@@ -187,16 +186,16 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
 
           {/* Dynamic Horizontal Split Planner Tags */}
           {routineDays.length > 0 ? (
-            <div className="mt-1 flex flex-wrap gap-2 pb-1">
+            <div className="flex flex-wrap gap-1.5">
               {routineDays.map((routineDay) => (
                 <button
                   key={routineDay.id}
                   type="button"
                   onClick={() => setSelectedRoutineDayId(routineDay.id)}
-                  className={`min-h-9 rounded-full px-4 text-xs font-bold transition-all active:scale-95 border ${
+                  className={`min-h-9 rounded-full border px-3 text-sm font-bold transition-all active:scale-95 ${
                     selectedRoutineDayId === routineDay.id
                       ? 'bg-cyan-400 border-cyan-400 text-slate-950 shadow-md shadow-cyan-400/20'
-                      : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                      : 'bg-slate-850 border-slate-650 text-slate-100 hover:bg-slate-750'
                   }`}
                 >
                   {getRoutineDayDisplayName(routineDay, locale)}
@@ -207,11 +206,11 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
 
           {/* Planned Exercises Pills Carousel */}
           {plannedExerciseNames.length > 0 ? (
-            <div className="mt-1 rounded-xl bg-slate-900/90 border border-slate-800 px-4 py-3">
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">{t(locale, 'plannedExercises')}</p>
+            <div className="rounded-xl border border-slate-650 bg-slate-850/85 px-3 py-2.5">
+              <p className="mb-1.5 text-xs font-extrabold uppercase text-slate-200">{t(locale, 'plannedExercises')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {plannedExerciseNames.slice(0, 6).map((exerciseName) => (
-                  <span key={exerciseName} className="rounded-lg bg-slate-800 border border-slate-700/80 px-2.5 py-1 text-xs font-bold text-slate-200">
+                  <span key={exerciseName} className="rounded-lg border border-slate-650 bg-slate-750 px-2.5 py-1 text-xs font-bold text-slate-100">
                     {exerciseName}
                   </span>
                 ))}
@@ -220,10 +219,10 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
           ) : null}
         </section>
 
-        {/* Last Workout Summary Glass Card */}
-        <section className="rounded-2xl bg-slate-800/80 backdrop-blur-md border border-slate-700/80 p-5 shadow-2xl">
-          <p className="text-[11px] font-extrabold text-slate-300 uppercase tracking-wide">{t(locale, 'lastWorkout')}</p>
-          <h2 className="mt-1.5 text-sm font-bold text-white flex items-center gap-2">
+        {/* Last Workout Summary Card */}
+        <section className="rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
+          <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'lastWorkout')}</p>
+          <h2 className="mt-1 flex items-center gap-2 text-base font-bold text-white">
             {latestFinishedWorkout ? (
               <>
                 <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
@@ -237,7 +236,7 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
               <span className="text-slate-350">{t(locale, 'noFinishedWorkout')}</span>
             )}
           </h2>
-          <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-300">
+          <p className="mt-1.5 text-sm font-semibold leading-5 text-slate-100">
             {latestFinishedWorkout
               ? `${workoutStatusLabel(locale, latestFinishedWorkout.session.status)} • ${exerciseCountLabel(locale, latestFinishedWorkout.exerciseCount)} • ${latestFinishedWorkout.session.totalStrengthVolumeKg.toLocaleString()} kg`
               : locale === 'ko' ? '운동을 완료하거나 건너뛰면 기록이 누적됩니다.' : 'Complete or skip a session to build your local history.'}
@@ -246,7 +245,7 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
       </div>
 
       {/* Grid of Dynamic Premium Navigation Actions */}
-      <nav aria-label="Today actions" className="grid grid-cols-2 gap-3 shrink-0">
+      <nav aria-label="Today actions" className="grid shrink-0 grid-cols-2 gap-2">
         {actions.map(({ labelKey, icon: Icon, primary, view }) => (
           <button
             key={labelKey}
@@ -259,14 +258,14 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
 
               if (view) onNavigate(view);
             }}
-            className={`flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-2xl px-3 text-xs font-bold transition-all border active:scale-95 shadow-lg ${
+            className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl border px-3 text-sm font-bold shadow-lg transition-all active:scale-95 ${
               primary
                 ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 border-cyan-400 text-slate-950 shadow-cyan-500/20 hover:opacity-95'
-                : 'bg-slate-800/80 backdrop-blur-sm border-slate-700/80 text-slate-200 hover:bg-slate-750 hover:text-white'
+                : 'bg-slate-750/90 border-slate-650 text-slate-100 hover:bg-slate-650 hover:text-white'
             }`}
           >
             <Icon aria-hidden="true" size={20} className={primary ? 'animate-pulse shrink-0' : 'shrink-0'} />
-            <span className="tracking-wide text-[13px]">
+            <span className="text-sm">
               {labelKey === 'startWorkout' && !inProgressSession && isTodayRestDay && !selectedRoutineDayId
                 ? t(locale, 'startFreeWorkout')
                 : actionLabel(labelKey)}

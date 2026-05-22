@@ -257,45 +257,45 @@ export function CalendarPage({
   const shouldContinueSelectedSession = selectedInProgressSession !== undefined;
 
   return (
-    <section className="mx-auto flex overflow-hidden max-w-md flex-col gap-3 px-4 pt-3 pb-4 viewport-locked text-slate-100">
-      <header className="flex items-center gap-3 shrink-0 py-1">
+    <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
+      <header className="flex shrink-0 items-center gap-2.5">
         <button
           type="button"
           onClick={onBack}
-          className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-800/80 border border-slate-700/60 text-slate-100 active:scale-95 transition-all shadow-md hover:bg-slate-700/80"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 shadow-md transition-all hover:bg-slate-650 active:scale-95"
           aria-label="Back to Today"
         >
           <ChevronLeft aria-hidden="true" size={20} />
         </button>
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-400">{t(locale, 'calendar')}</p>
-          <h1 className="text-lg font-black text-white">{t(locale, 'monthlyWorkoutLog')}</h1>
+          <p className="text-xs font-extrabold uppercase text-cyan-300">{t(locale, 'calendar')}</p>
+          <h1 className="text-xl font-black text-white">{t(locale, 'monthlyWorkoutLog')}</h1>
         </div>
       </header>
 
       {/* 달력 영역: 높이 고정 (shrink-0) 및 톤업 스타일 */}
-      <section className="shrink-0 rounded-2xl bg-slate-800/80 border border-slate-700/60 p-4 shadow-xl">
+      <section className="shrink-0 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => changeMonth(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-700 text-slate-200 hover:text-white hover:bg-slate-800 transition-all active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-850 text-slate-100 transition-all hover:bg-slate-700 hover:text-white active:scale-95"
             aria-label="Previous month"
           >
             <ChevronLeft aria-hidden="true" size={18} />
           </button>
-          <h2 className="text-sm font-black text-white tracking-wide">{monthFormatter.format(visibleMonth)}</h2>
+          <h2 className="text-base font-black text-white">{monthFormatter.format(visibleMonth)}</h2>
           <button
             type="button"
             onClick={() => changeMonth(1)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-700 text-slate-200 hover:text-white hover:bg-slate-800 transition-all active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-850 text-slate-100 transition-all hover:bg-slate-700 hover:text-white active:scale-95"
             aria-label="Next month"
           >
             <ChevronRight aria-hidden="true" size={18} />
           </button>
         </div>
 
-        <div className="mt-3.5 grid grid-cols-7 gap-1 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        <div className="mt-2.5 grid grid-cols-7 gap-1 text-center text-xs font-black uppercase text-slate-200">
           {weekdayLabels[locale].map((weekday) => (
             <div key={weekday}>{weekday}</div>
           ))}
@@ -320,9 +320,9 @@ export function CalendarPage({
             } else if (hasInProgress) {
               cellStyle = 'bg-cyan-950/40 border-cyan-500/60 text-slate-100 hover:bg-cyan-950/60 shadow-[0_0_8px_-2px_rgba(34,211,238,0.25)]';
             } else if (day.isCurrentMonth) {
-              cellStyle = 'bg-slate-900/60 border-slate-750 text-slate-200 hover:bg-slate-700/60';
+              cellStyle = 'bg-slate-850/75 border-slate-650 text-slate-100 hover:bg-slate-700';
             } else {
-              cellStyle = 'bg-slate-950/40 border-transparent text-slate-600';
+              cellStyle = 'bg-slate-900/40 border-transparent text-slate-500';
             }
 
             return (
@@ -334,7 +334,7 @@ export function CalendarPage({
                 className={`flex aspect-square min-h-12 flex-col rounded-xl p-1.5 border transition-all duration-200 active:scale-95 ${cellStyle}`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className={`text-[10px] font-black ${isSelected ? 'text-cyan-300' : 'text-slate-350'}`}>{day.date.getDate()}</span>
+                  <span className={`text-xs font-black ${isSelected ? 'text-cyan-200' : 'text-slate-100'}`}>{day.date.getDate()}</span>
                   {hasCompleted && <span className="text-[9px] filter drop-shadow">🏋️‍♂️</span>}
                 </div>
                 <div className="mt-auto flex items-center gap-0.5">
@@ -372,7 +372,7 @@ export function CalendarPage({
           })}
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-[9px] font-black uppercase tracking-wider text-slate-300 border-t border-slate-750 pt-3">
+        <div className="mt-3 flex items-center justify-between border-t border-slate-650 pt-2.5 text-[10px] font-black uppercase text-slate-100">
           <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />{t(locale, 'completed')}</span>
           <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />{t(locale, 'inProgress')}</span>
           <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-cyan-400" />{t(locale, 'planned')}</span>
@@ -381,17 +381,17 @@ export function CalendarPage({
       </section>
 
       {/* 운동 상세 정보 및 조작부: 내부 스크롤 적용 (inner-scroll) */}
-      <section className="inner-scroll min-h-0 rounded-2xl bg-slate-800/80 border border-slate-700/60 p-4 shadow-xl space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-750 pb-2">
+      <section className="inner-scroll min-h-0 space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-650 pb-2">
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t(locale, 'planDate')}</p>
-            <h2 className="mt-0.5 text-base font-black text-white tracking-wide">{selectedDateKey}</h2>
+            <p className="text-xs font-black uppercase text-slate-200">{t(locale, 'planDate')}</p>
+            <h2 className="mt-0.5 text-base font-black text-white">{selectedDateKey}</h2>
           </div>
           {selectedDateKey !== todayKey ? (
             <button
               type="button"
               onClick={goToToday}
-              className="min-h-8 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-[11px] font-bold text-slate-200 active:scale-95 transition-all"
+              className="min-h-8 rounded-lg border border-slate-650 bg-slate-850 px-3 text-xs font-bold text-slate-100 transition-all hover:bg-slate-700 active:scale-95"
             >
               {t(locale, 'backToToday')}
             </button>
@@ -399,7 +399,7 @@ export function CalendarPage({
         </div>
         
         <div className="space-y-1">
-          <label htmlFor="calendar-workout-plan-select" className="text-[11px] font-extrabold text-slate-350 tracking-wide block">
+          <label htmlFor="calendar-workout-plan-select" className="block text-xs font-extrabold text-slate-100">
             {locale === 'ko' ? '이 날의 계획 수정' : 'Modify plan for this date'}
           </label>
           <select
@@ -407,7 +407,7 @@ export function CalendarPage({
             aria-label="Selected date workout plan"
             value={selectedPlanValue}
             onChange={(event) => void handlePlanChange(event.target.value)}
-            className="min-h-11 w-full rounded-xl bg-slate-900 border border-slate-700 px-3 text-sm font-semibold text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400 focus:border-cyan-400 transition-all cursor-pointer"
+            className="min-h-10 w-full cursor-pointer rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-semibold text-slate-100 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
           >
             <option value="__weekly" className="bg-slate-900 text-slate-200">{t(locale, 'useWeeklySchedule')}</option>
             <option value="" className="bg-slate-900 text-slate-200">{t(locale, 'rest')}</option>
@@ -422,7 +422,7 @@ export function CalendarPage({
         {selectedSummaries.length > 0 ? (
           <div className="grid gap-3">
             {selectedSummaries.map((summary) => (
-              <div key={summary.session.id} className="rounded-2xl bg-slate-900/90 border border-slate-750 p-4 shadow-xl space-y-3">
+              <div key={summary.session.id} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-xl">
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-sm font-black text-white tracking-wide">
                     {getRoutineDayDisplayName(summary.routineDay, locale) ?? summary.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}
