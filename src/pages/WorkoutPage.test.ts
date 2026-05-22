@@ -6,6 +6,7 @@ import {
   formatCountdownSeconds,
   getElapsedMs,
   getLiveSessionElapsedMs,
+  shouldConfirmCardioDelete,
   shouldConfirmWorkoutExerciseDelete,
   shouldConfirmWorkoutSetDelete,
 } from './WorkoutPage';
@@ -111,6 +112,23 @@ describe('workout set deletion safety', () => {
       reps: 0,
       rir: undefined,
       isCompleted: false,
+    })).toBe(false);
+  });
+});
+
+describe('cardio deletion safety', () => {
+  it('asks before deleting cardio entries with logged values', () => {
+    expect(shouldConfirmCardioDelete({
+      distanceKm: 4,
+      inclinePercent: undefined,
+      location: undefined,
+      memo: undefined,
+    })).toBe(true);
+    expect(shouldConfirmCardioDelete({
+      distanceKm: 0,
+      inclinePercent: undefined,
+      location: '',
+      memo: '',
     })).toBe(false);
   });
 });
