@@ -6,6 +6,7 @@ import {
   formatCountdownSeconds,
   getElapsedMs,
   getLiveSessionElapsedMs,
+  shouldConfirmWorkoutExerciseDelete,
 } from './WorkoutPage';
 
 describe('workout elapsed time', () => {
@@ -76,5 +77,22 @@ describe('workout exercise expansion', () => {
       existing: true,
       added: true,
     });
+  });
+});
+
+describe('workout exercise deletion safety', () => {
+  it('asks before deleting an exercise that has logs or notes', () => {
+    expect(shouldConfirmWorkoutExerciseDelete({
+      workoutExercise: { memo: 'bench setup' },
+      sets: [],
+    })).toBe(true);
+    expect(shouldConfirmWorkoutExerciseDelete({
+      workoutExercise: {},
+      sets: [{ weightKg: 80, reps: 0, rir: undefined, isCompleted: false }],
+    })).toBe(true);
+    expect(shouldConfirmWorkoutExerciseDelete({
+      workoutExercise: {},
+      sets: [{ weightKg: 0, reps: 0, rir: undefined, isCompleted: false }],
+    })).toBe(false);
   });
 });
