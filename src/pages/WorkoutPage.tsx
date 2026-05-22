@@ -80,6 +80,13 @@ export function countFullyCompletedExercises(
   return logs.filter((log) => log.sets.length > 0 && log.sets.every((set) => set.isCompleted)).length;
 }
 
+export function expandWorkoutExercise(
+  expandedExercises: Record<string, boolean>,
+  workoutExerciseId: string,
+): Record<string, boolean> {
+  return { ...expandedExercises, [workoutExerciseId]: true };
+}
+
 export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
   const [workout, setWorkout] = useState<ActiveWorkout | undefined>();
   const [logs, setLogs] = useState<WorkoutExerciseLog[]>([]);
@@ -213,9 +220,19 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   async function handleAddExercise(exerciseId: string) {
     if (!workout) return;
 
-    await addExerciseToWorkout(workout.session.id, exerciseId);
+    const addedWorkoutExerciseId = await addExerciseToWorkout(workout.session.id, exerciseId);
     setIsAdding(false);
     await loadWorkout();
+
+    if (!addedWorkoutExerciseId) return;
+
+    setExpandedExercises((current) => expandWorkoutExercise(current, addedWorkoutExerciseId));
+    window.setTimeout(() => {
+      document.getElementById(`exercise-card-${addedWorkoutExerciseId}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 100);
   }
 
   async function handleSetChange(
