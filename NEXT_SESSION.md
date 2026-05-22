@@ -66,6 +66,7 @@ Leave them alone unless the user asks to use or remove them.
 - Newly added workout exercises open immediately and scroll into view for logging.
 - Deleting logged workout exercises, sets, or cardio entries now asks for confirmation while empty placeholders still delete quickly.
 - The remaining UI readability pass now brightens dense secondary surfaces in workout logging, routine exercise editing, Calendar status chips, Export persistence hints, Stats mini charts, and the PWA status banner.
+- A final micro-polish pass enlarges Calendar cell status text, brightens Stats trend labels, and makes Export helper/error copy easier to scan.
 
 ## Verification Already Done
 
@@ -97,6 +98,9 @@ Browser checks were also done for:
   - Workout visible set rows and bottom actions were rechecked after brightening secondary buttons and the rest-timer surface.
   - Routine Setup routine and exercise library surfaces were rechecked after enlarging exercise metadata and edit controls.
   - Export local-data persistence messaging and the empty Stats state were rechecked at mobile width.
+- May 22 micro-polish pass:
+  - Calendar cell plan/status labels and the month legend were rechecked after the last size increase.
+  - Export first viewport was rechecked after enlarging the copy action and backup helper text.
 - Today page load and fixed-shell height metrics.
 - Routine Setup body scrolling inside the fixed header shell.
 - Calendar date detail scrolling inside the fixed month view.

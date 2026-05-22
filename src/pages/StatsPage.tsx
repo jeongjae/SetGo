@@ -782,17 +782,17 @@ export function StatsPage({ onBack }: StatsPageProps) {
             <h2 className="text-base font-black text-white">{c.recentTrend}</h2>
             
             <div>
-              <p className="text-xs font-black text-slate-350 uppercase tracking-wider">{c.totalVolume}</p>
+              <p className="text-xs font-black uppercase text-slate-100">{c.totalVolume}</p>
               <MiniLineChart weeks={stats.weeks} locale={locale} peakLabel={c.peak} />
             </div>
             
             <div className="border-t border-slate-750 pt-4">
-              <p className="text-xs font-black text-slate-350 uppercase tracking-wider">{c.totalSets}</p>
+              <p className="text-xs font-black uppercase text-slate-100">{c.totalSets}</p>
               <MiniBarChart weeks={stats.weeks} metric="sets" />
             </div>
 
             <div className="border-t border-slate-750 pt-4">
-              <p className="text-xs font-black text-slate-350 uppercase tracking-wider">{c.workoutDays}</p>
+              <p className="text-xs font-black uppercase text-slate-100">{c.workoutDays}</p>
               <MiniBarChart weeks={stats.weeks} metric="workoutDays" />
             </div>
             

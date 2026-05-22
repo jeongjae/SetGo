@@ -358,7 +358,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
           type="button"
           onClick={() => void handleCopy()}
           disabled={!markdown}
-          className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 px-4 text-xs font-black uppercase tracking-widest text-slate-955 shadow-lg shadow-cyan-400/20 active:scale-95 disabled:bg-slate-900 disabled:text-slate-500 disabled:border disabled:border-slate-750 disabled:shadow-none transition-all duration-200"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 px-4 text-sm font-black uppercase text-slate-955 shadow-lg shadow-cyan-400/20 transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 disabled:border disabled:border-slate-750 disabled:bg-slate-900 disabled:text-slate-500 disabled:shadow-none active:scale-95"
         >
           <Copy aria-hidden="true" size={16} />
           <span>{copyStatus === 'copied' ? t(locale, 'copied') : t(locale, 'copy')}</span>
@@ -385,7 +385,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
             )}
           </div>
           <h2 className="text-base font-black text-white">{t(locale, 'backupRestore')}</h2>
-          <p className="text-xs leading-relaxed text-slate-350 font-semibold">
+          <p className="text-sm font-semibold leading-relaxed text-slate-100">
             {backupSummary ?? (
               locale === 'ko'
                 ? '전체 JSON 백업에는 운동 기록, 루틴, 운동 라이브러리, 주간계획, 날짜별 계획이 모두 포함됩니다.'
@@ -439,7 +439,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
               {locale === 'ko' ? '루틴 / 운동 / 주간계획 백업' : 'Routine / Exercise / Weekly Plan Backup'}
             </h2>
           </div>
-          <p className="text-xs leading-relaxed text-slate-350 font-semibold">
+          <p className="text-sm font-semibold leading-relaxed text-slate-100">
             {settingsBackupStatus ?? (
               locale === 'ko'
                 ? '운동 기록은 제외하고 설정에서 저장한 루틴, 루틴별 운동 구성, 운동 라이브러리, 주간계획, 날짜별 계획만 JSON으로 저장합니다.'
@@ -478,7 +478,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
               {locale === 'ko' ? 'CSV 일괄 수정' : 'Bulk CSV Edit'}
             </h2>
           </div>
-          <p className="text-xs leading-relaxed text-slate-350 font-semibold">
+          <p className="text-sm font-semibold leading-relaxed text-slate-100">
             {exerciseCsvStatus ?? (
               locale === 'ko'
                 ? 'CSV를 내려받아 한글명, 영문명, 분류, 설명을 수정한 뒤 다시 가져오세요. categoryTags와 stageTags는 | 로 여러 값을 입력할 수 있습니다.'
@@ -486,17 +486,17 @@ export function ExportPage({ onBack }: ExportPageProps) {
             )}
           </p>
           {exerciseCsvIssues.length > 0 ? (
-            <div className="rounded-xl bg-rose-950/20 border border-rose-900 px-4 py-3 space-y-2">
-              <p className="text-xs font-black text-rose-350">
+            <div className="space-y-2 rounded-xl border border-rose-800 bg-rose-950/25 px-4 py-3">
+              <p className="text-sm font-black text-rose-200">
                 {locale === 'ko' ? '가져오기 전 수정할 항목' : 'Items to fix before import'}
               </p>
-              <ul className="grid gap-1 text-[11px] leading-relaxed font-bold text-rose-300">
+              <ul className="grid gap-1 text-xs font-bold leading-relaxed text-rose-100">
                 {exerciseCsvIssues.slice(0, 8).map((issue) => (
                   <li key={issue}>{issue}</li>
                 ))}
               </ul>
               {exerciseCsvIssues.length > 8 ? (
-                <p className="text-[10px] font-black text-rose-450">
+                <p className="text-xs font-black text-rose-200">
                   {locale === 'ko'
                     ? `${exerciseCsvIssues.length - 8}개 항목이 더 있습니다.`
                     : `${exerciseCsvIssues.length - 8} more issues.`}
