@@ -345,7 +345,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
                   );
                 })}
               </select>
-              <p className="text-[10px] leading-relaxed text-slate-400 font-semibold">
+              <p className="text-xs font-semibold leading-relaxed text-slate-100">
                 {locale === 'ko'
                   ? '완료 기록을 우선 선택합니다. 진행 중인 기록은 운동일지에서 완료 후 내보내는 것을 권장합니다.'
                   : 'Completed records are selected first. For in-progress sessions, finish the workout before exporting when possible.'}
@@ -368,7 +368,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
           <div className="flex items-center justify-between">
             <p className="text-xs font-black uppercase text-slate-200">{t(locale, 'localData')}</p>
             {isPersisted ? (
-              <span className="flex items-center gap-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/20 px-2 py-0.5 text-[9px] font-black tracking-wide text-emerald-400">
+              <span className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-black text-emerald-300">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
@@ -376,7 +376,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
                 <span>Persistent 🟢</span>
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 rounded-lg bg-amber-500/15 border border-amber-500/20 px-2 py-0.5 text-[9px] font-black tracking-wide text-amber-400">
+              <span className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/15 px-2 py-0.5 text-[11px] font-black text-amber-300">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
                 </span>
@@ -393,7 +393,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
             )}
           </p>
           {!isPersisted && (
-            <p className="text-[10px] leading-relaxed text-amber-250 bg-amber-950/20 border border-amber-900 px-3 py-2.5 rounded-xl font-bold">
+            <p className="rounded-xl border border-amber-800 bg-amber-950/25 px-3 py-2.5 text-xs font-bold leading-relaxed text-amber-100">
               {locale === 'ko'
                 ? '💡 모바일 기기의 Safari/Chrome에서 "홈 화면에 추가"하여 PWA로 설치하면, 브라우저가 데이터를 임의로 지우지 않는 [영구 안심 보존(Persistent)] 권한을 자동으로 획득할 수 있습니다.'
                 : '💡 Add this app to your "Home Screen" (PWA) to automatically gain [Persistent Storage] status, ensuring the browser never auto-deletes your logs.'}

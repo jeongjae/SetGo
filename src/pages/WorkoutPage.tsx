@@ -821,7 +821,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                           type="button"
                           onClick={() => void handleMoveExercise(log.workoutExercise.id, -1)}
                           disabled={index === 0}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-300 disabled:text-slate-700 disabled:border-slate-800/40 disabled:bg-slate-950/20 hover:bg-slate-850 hover:text-white transition-all active:scale-95 duration-200"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all duration-200 hover:bg-slate-650 hover:text-white disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
                           aria-label={`Move ${log.exercise.nameKo} up`}
                         >
                           <ArrowUp aria-hidden="true" size={15} />
@@ -830,7 +830,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                           type="button"
                           onClick={() => void handleMoveExercise(log.workoutExercise.id, 1)}
                           disabled={index === logs.length - 1}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-300 disabled:text-slate-700 disabled:border-slate-800/40 disabled:bg-slate-950/20 hover:bg-slate-850 hover:text-white transition-all active:scale-95 duration-200"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all duration-200 hover:bg-slate-650 hover:text-white disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
                           aria-label={`Move ${log.exercise.nameKo} down`}
                         >
                           <ArrowDown aria-hidden="true" size={15} />
@@ -838,7 +838,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                         <button
                           type="button"
                           onClick={() => void handleDeleteExercise(log)}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all active:scale-95 duration-200"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-rose-300 transition-all duration-200 hover:border-rose-500/30 hover:bg-rose-500/10 active:scale-95"
                           aria-label={`Delete ${log.exercise.nameKo}`}
                         >
                           <Trash2 aria-hidden="true" size={15} />
@@ -855,7 +855,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                         className={`flex min-h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-all active:scale-95 duration-200 ${
                           replacingWorkoutExerciseId === log.workoutExercise.id
                             ? 'bg-slate-800 border-slate-700 text-slate-300'
-                            : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                            : 'border-slate-650 bg-slate-750 text-slate-100 hover:bg-slate-650'
                         }`}
                       >
                         <RefreshCw aria-hidden="true" size={12} className={replacingWorkoutExerciseId === log.workoutExercise.id ? 'animate-spin' : ''} />
@@ -876,7 +876,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                           type="button"
                           onClick={() => void handleCopyPreviousExercise(log)}
                           disabled={log.previousSets.length === 0}
-                          className="min-h-8 shrink-0 rounded-lg bg-slate-900 border border-slate-800 px-3 text-xs font-bold text-cyan-400 disabled:text-slate-600 disabled:border-transparent disabled:bg-slate-950 hover:bg-slate-800 active:scale-95 transition-all"
+                          className="min-h-8 shrink-0 rounded-lg border border-slate-650 bg-slate-750 px-3 text-xs font-bold text-cyan-200 transition-all hover:bg-slate-650 disabled:border-transparent disabled:bg-slate-950/30 disabled:text-slate-500 active:scale-95"
                         >
                           {locale === 'ko' ? '전체 복사' : 'Copy all'}
                         </button>
@@ -884,7 +884,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                       {log.previousSets.length > 0 ? (
                         <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                           {log.previousSets.slice(0, 6).map((previousSet) => (
-                            <span key={previousSet.id} className="shrink-0 rounded-lg bg-slate-900 border border-slate-850 px-2.5 py-1 text-[10px] font-bold text-slate-400 font-mono shadow-sm">
+                            <span key={previousSet.id} className="shrink-0 rounded-lg border border-slate-650 bg-slate-750 px-2.5 py-1 font-mono text-xs font-bold text-slate-100 shadow-sm">
                               {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
                             </span>
                           ))}
@@ -1035,7 +1035,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                       className={`flex-1 rounded-lg py-1.5 text-xs font-extrabold transition-all active:scale-95 ${
                         cardioRecord.environment === 'indoor'
                           ? 'bg-slate-800 text-cyan-300 shadow-sm border border-slate-700/50'
-                          : 'text-slate-400 hover:text-slate-200'
+                          : 'text-slate-100 hover:bg-slate-650 hover:text-white'
                       }`}
                     >
                       {locale === 'ko' ? '실내 유산소' : 'Indoor'}
@@ -1046,7 +1046,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                       className={`flex-1 rounded-lg py-1.5 text-xs font-extrabold transition-all active:scale-95 ${
                         cardioRecord.environment === 'outdoor'
                           ? 'bg-slate-800 text-cyan-300 shadow-sm border border-slate-700/50'
-                          : 'text-slate-400 hover:text-slate-200'
+                          : 'text-slate-100 hover:bg-slate-650 hover:text-white'
                       }`}
                     >
                       {locale === 'ko' ? '야외 유산소' : 'Outdoor'}
@@ -1097,7 +1097,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                               const nextVal = Math.max(0, Number(((cardioRecord.distanceKm || 0) - 0.5).toFixed(1)));
                               void handleUpdateCardio(cardioRecord, { distanceKm: nextVal || undefined });
                             }}
-                            className="min-h-10 text-sm font-bold text-slate-400 hover:text-slate-200 active:bg-slate-850/50"
+                            className="min-h-10 text-sm font-bold text-slate-100 hover:text-white active:bg-slate-850/50"
                           >
                             -
                           </button>
@@ -1136,7 +1136,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                               const nextVal = Math.max(1, minutes - 5);
                               void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
                             }}
-                            className="min-h-10 text-sm font-bold text-slate-400 hover:text-slate-200 active:bg-slate-850/50"
+                            className="min-h-10 text-sm font-bold text-slate-100 hover:text-white active:bg-slate-850/50"
                           >
                             -
                           </button>
@@ -1176,7 +1176,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                                 const nextVal = Math.max(0, (cardioRecord.inclinePercent || 0) - 1);
                                 void handleUpdateCardio(cardioRecord, { inclinePercent: nextVal });
                               }}
-                              className="min-h-10 text-sm font-bold text-slate-400 hover:text-slate-200 active:bg-slate-850/50"
+                              className="min-h-10 text-sm font-bold text-slate-100 hover:text-white active:bg-slate-850/50"
                             >
                               -
                             </button>
@@ -1239,7 +1239,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                       ⚡ {locale === 'ko' ? '평균 속도' : 'Average speed'}: <span className="font-mono">{cardioRecord.averageSpeedKmh.toFixed(1)} km/h</span>
                     </p>
                   ) : (
-                    <p className="mt-3 text-[10px] font-medium text-slate-400">
+                    <p className="mt-3 text-xs font-medium text-slate-100">
                       ℹ️ {locale === 'ko' ? '거리를 입력하면 평균 속도가 계산됩니다.' : 'Enter distance to calculate average speed.'}
                     </p>
                   )}
@@ -1270,8 +1270,8 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
               }}
               className={`flex h-12 px-3.5 items-center justify-center gap-1.5 rounded-xl text-xs font-extrabold transition-all active:scale-95 shrink-0 border ${
                 isAdding
-                  ? 'bg-slate-800 text-slate-300 border-slate-700'
-                  : 'bg-slate-900 text-slate-200 border-slate-800 hover:bg-slate-850'
+                  ? 'border-slate-650 bg-slate-650 text-slate-100'
+                  : 'border-slate-650 bg-slate-750 text-slate-100 hover:bg-slate-650'
               }`}
             >
               <Plus size={16} className={`transition-transform duration-300 ${isAdding ? 'rotate-45' : ''}`} />
@@ -1282,7 +1282,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
               type="button"
               onClick={() => void handleCompleteWorkout()}
               disabled={!workout || !canCompleteWorkout}
-              className="flex-1 flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-4 text-xs font-black text-slate-950 disabled:bg-slate-800 disabled:text-slate-500 active:scale-95 transition-all shadow-lg shadow-emerald-500/10"
+              className="flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-4 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/10 transition-all disabled:bg-slate-750 disabled:text-slate-400 active:scale-95"
             >
               <Check aria-hidden="true" size={16} />
               <span>{locale === 'ko' ? '운동 완료' : 'Complete'}</span>
@@ -1292,7 +1292,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
               type="button"
               onClick={() => void handleSkipWorkout()}
               disabled={!workout}
-              className="flex h-12 px-3 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-xs font-extrabold text-slate-400 disabled:text-slate-650 hover:bg-slate-850 active:scale-95 transition-all shrink-0"
+              className="flex h-12 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 px-3 text-sm font-extrabold text-slate-100 transition-all hover:bg-slate-650 disabled:text-slate-500 active:scale-95"
             >
               {locale === 'ko' ? '패스' : 'Skip'}
             </button>
@@ -1302,14 +1302,14 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
       {/* 5. 플로팅 휴식 타이머 오버레이 (휴식 타이머 활성화 및 카운트 다운 중일 때) */}
       {isRestTimerActive && restRemaining > 0 && (
-        <div className="fixed bottom-[4.5rem] left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-slate-800 bg-slate-950/90 px-4 py-3 shadow-2xl backdrop-blur-md transition-all duration-300 animate-fade-in">
+        <div className="fixed bottom-[4.5rem] left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-slate-650 bg-slate-750/95 px-3.5 py-3 shadow-2xl backdrop-blur-md transition-all duration-300 animate-fade-in">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 animate-pulse">
                 <Clock3 size={16} />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-slate-400">{t(locale, 'resting')}</p>
+                <p className="text-xs font-bold text-slate-100">{t(locale, 'resting')}</p>
                 <p className="text-lg font-black text-white tracking-wider font-mono">
                   {formatCountdownSeconds(restRemaining)}
                 </p>
@@ -1321,7 +1321,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                 onClick={() => {
                   setRestDuration((prev) => prev + 30);
                 }}
-                className="flex h-8 items-center justify-center rounded-lg bg-slate-900 px-2.5 text-xs font-bold text-cyan-400 border border-cyan-400/20 active:bg-cyan-500/20 active:scale-95 transition-all"
+                className="flex h-8 items-center justify-center rounded-lg border border-cyan-400/25 bg-slate-850 px-2.5 text-xs font-bold text-cyan-200 transition-all active:scale-95 active:bg-cyan-500/20"
               >
                 +30s
               </button>
@@ -1330,7 +1330,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                 onClick={() => {
                   setRestDuration((prev) => Math.max(1, prev - 30));
                 }}
-                className="flex h-8 items-center justify-center rounded-lg bg-slate-900 px-2.5 text-xs font-bold text-slate-400 border border-slate-850 active:bg-slate-800 active:scale-95 transition-all"
+                className="flex h-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-850 px-2.5 text-xs font-bold text-slate-100 transition-all active:scale-95 active:bg-slate-650"
               >
                 -30s
               </button>
@@ -1346,7 +1346,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
               </button>
             </div>
           </div>
-          <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-slate-900">
+          <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-slate-850">
             <div
               className="h-full bg-cyan-400 transition-all duration-500 ease-out"
               style={{ width: `${(restRemaining / restDuration) * 100}%` }}

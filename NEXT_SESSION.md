@@ -65,6 +65,7 @@ Leave them alone unless the user asks to use or remove them.
 - Workout header exercise progress now counts only exercises whose sets are all complete.
 - Newly added workout exercises open immediately and scroll into view for logging.
 - Deleting logged workout exercises, sets, or cardio entries now asks for confirmation while empty placeholders still delete quickly.
+- The remaining UI readability pass now brightens dense secondary surfaces in workout logging, routine exercise editing, Calendar status chips, Export persistence hints, Stats mini charts, and the PWA status banner.
 
 ## Verification Already Done
 
@@ -92,6 +93,10 @@ Browser checks were also done for:
   - Workout set entry, exercise addition finder, and fixed footer were checked with visible set rows.
   - Calendar, empty Stats, Export, Routine Setup routine tab, exercise library tab, and weekly plan tab were checked in the in-app browser.
   - Cardio draft logging was checked: a new manual cardio draft stays in the workout log, `Log cardio and continue` confirms it, and sessions without strength logs return to the exercise finder.
+- May 22 final UI finishing pass:
+  - Workout visible set rows and bottom actions were rechecked after brightening secondary buttons and the rest-timer surface.
+  - Routine Setup routine and exercise library surfaces were rechecked after enlarging exercise metadata and edit controls.
+  - Export local-data persistence messaging and the empty Stats state were rechecked at mobile width.
 - Today page load and fixed-shell height metrics.
 - Routine Setup body scrolling inside the fixed header shell.
 - Calendar date detail scrolling inside the fixed month view.
