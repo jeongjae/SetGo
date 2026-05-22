@@ -70,8 +70,8 @@ export function getLiveSessionElapsedMs(
   return getElapsedMs(session.startedAt, nowMs);
 }
 
-export function canCompleteWorkoutLog(strengthExerciseCount: number, cardioRecordCount: number): boolean {
-  return strengthExerciseCount > 0 || cardioRecordCount > 0;
+export function canCompleteWorkoutLog(completedStrengthSetCount: number, cardioRecordCount: number): boolean {
+  return completedStrengthSetCount > 0 || cardioRecordCount > 0;
 }
 
 export function countFullyCompletedExercises(
@@ -521,7 +521,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
   const restElapsed = restTimerStartedAt ? formatElapsed(timerNow - restTimerStartedAt) : '--:--';
   const isCompletedEditMode = workout?.session.status === 'completed' || workout?.session.status === 'skipped';
-  const canCompleteWorkout = canCompleteWorkoutLog(logs.length, cardioRecords.length);
+  const canCompleteWorkout = canCompleteWorkoutLog(completedSetCount, cardioRecords.length);
 
   return (
     <section className="mx-auto flex overflow-hidden max-w-md flex-col bg-[#0b0f19] text-slate-100 px-4 py-4 gap-0 viewport-locked select-none">
