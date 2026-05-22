@@ -466,17 +466,19 @@ export async function getLatestWorkoutSummary(): Promise<WorkoutSummary | undefi
   return session ? getWorkoutSummary(session) : undefined;
 }
 
-export async function addExerciseToWorkout(sessionId: string, exerciseId: string): Promise<void> {
+export async function addExerciseToWorkout(sessionId: string, exerciseId: string): Promise<string | undefined> {
   const existing = await db.workoutExercises
     .where('sessionId')
     .equals(sessionId)
     .filter((workoutExercise) => workoutExercise.exerciseId === exerciseId)
     .first();
 
-  if (existing) return;
+  if (existing) return existing.id;
 
   const order = await db.workoutExercises.where('sessionId').equals(sessionId).count() + 1;
   const exercise = await db.exercises.get(exerciseId);
+  if (!exercise) return undefined;
+
   const isWarmup = isWarmupOnlyExercise(exercise);
   const workoutExerciseId = `${sessionId}_${exerciseId}_${Date.now()}`;
   const workoutExercise: WorkoutExercise = {
@@ -503,6 +505,8 @@ export async function addExerciseToWorkout(sessionId: string, exerciseId: string
     await db.workoutExercises.put(workoutExercise);
     await db.workoutSets.bulkPut(sets);
   });
+
+  return workoutExerciseId;
 }
 
 export async function replaceWorkoutExercise(workoutExerciseId: string, exerciseId: string): Promise<void> {

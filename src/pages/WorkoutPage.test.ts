@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canCompleteWorkoutLog,
   countFullyCompletedExercises,
+  expandWorkoutExercise,
   formatCountdownSeconds,
   getElapsedMs,
   getLiveSessionElapsedMs,
@@ -66,5 +67,14 @@ describe('workout progress counters', () => {
       { sets: [{ isCompleted: true }] },
       { sets: [] },
     ])).toBe(1);
+  });
+});
+
+describe('workout exercise expansion', () => {
+  it('keeps current cards open while revealing the added exercise', () => {
+    expect(expandWorkoutExercise({ existing: true }, 'added')).toEqual({
+      existing: true,
+      added: true,
+    });
   });
 });
