@@ -75,6 +75,36 @@ export function createWorkoutSessionForDate(
   };
 }
 
+export type WorkoutStartSessionSelection =
+  | { kind: 'reuse'; session: WorkoutSession }
+  | { kind: 'create'; session: WorkoutSession };
+
+export function selectWorkoutStartSession(
+  date: string,
+  now: Date,
+  existingSessions: WorkoutSession[],
+  selectedRoutineDayId?: string,
+  options: { createNew?: boolean } = {},
+  routineId?: string,
+  routineDayId?: string,
+): WorkoutStartSessionSelection {
+  const existingSession = selectReusableInProgressSession(existingSessions, selectedRoutineDayId, options);
+  if (existingSession) {
+    return { kind: 'reuse', session: existingSession };
+  }
+
+  return {
+    kind: 'create',
+    session: createWorkoutSessionForDate(
+      date,
+      now,
+      existingSessions.length,
+      routineId,
+      routineDayId,
+    ),
+  };
+}
+
 export async function getOrCreateWorkoutForDate(
   date: string,
   selectedRoutineDayId?: string,
@@ -102,9 +132,18 @@ export async function getOrCreateWorkoutForDate(
     ?? scheduledRoutineDay;
 
   const existingSessions = await getWorkoutSessionsForDate(date);
-  const existingSession = selectReusableInProgressSession(existingSessions, selectedRoutineDayId, options);
+  const sessionSelection = selectWorkoutStartSession(
+    date,
+    now,
+    existingSessions,
+    selectedRoutineDayId,
+    options,
+    activeRoutine?.id,
+    routineDay?.id,
+  );
 
-  if (existingSession) {
+  if (sessionSelection.kind === 'reuse') {
+    const existingSession = sessionSelection.session;
     const existingExerciseCount = await db.workoutExercises.where('sessionId').equals(existingSession.id).count();
     if (existingExerciseCount === 0 && existingSession.routineDayId) {
       await seedWorkoutExercisesFromRoutineDay(existingSession.id, existingSession.routineDayId);
@@ -122,13 +161,7 @@ export async function getOrCreateWorkoutForDate(
     };
   }
 
-  const session = createWorkoutSessionForDate(
-    date,
-    now,
-    existingSessions.length,
-    activeRoutine?.id,
-    routineDay?.id,
-  );
+  const session = sessionSelection.session;
 
   await db.workoutSessions.put(session);
   await seedWorkoutExercisesFromRoutineDay(session.id, routineDay?.id);
