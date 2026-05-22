@@ -102,6 +102,15 @@ export function shouldConfirmWorkoutExerciseDelete(
     ));
 }
 
+export function shouldConfirmWorkoutSetDelete(
+  set: Pick<WorkoutSet, 'isCompleted' | 'weightKg' | 'reps' | 'rir'>,
+): boolean {
+  return set.isCompleted
+    || set.weightKg > 0
+    || set.reps > 0
+    || set.rir !== undefined;
+}
+
 export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
   const [workout, setWorkout] = useState<ActiveWorkout | undefined>();
   const [logs, setLogs] = useState<WorkoutExerciseLog[]>([]);
@@ -370,8 +379,17 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
     }, 100);
   }
 
-  async function handleDeleteSet(setId: string) {
-    await deleteWorkoutSet(setId);
+  async function handleDeleteSet(set: WorkoutSet) {
+    if (shouldConfirmWorkoutSetDelete(set)) {
+      const shouldDelete = window.confirm(
+        locale === 'ko'
+          ? '기록값이 있는 세트입니다. 이 세트를 삭제할까요?'
+          : 'This set has logged values. Delete it?',
+      );
+      if (!shouldDelete) return;
+    }
+
+    await deleteWorkoutSet(set.id);
     await loadWorkout();
     setSaveMessage(locale === 'ko' ? '세트를 삭제했습니다' : 'Set deleted');
   }
@@ -1273,7 +1291,7 @@ type WorkoutSetRowProps = {
   handleToggleWarmup: (set: WorkoutSet) => Promise<void>;
   handleToggleHardSet: (set: WorkoutSet) => Promise<void>;
   handleCopyPreviousSet: (set: WorkoutSet, previousSet: WorkoutSet | undefined) => Promise<void>;
-  handleDeleteSet: (setId: string) => Promise<void>;
+  handleDeleteSet: (set: WorkoutSet) => Promise<void>;
 };
 
 function WorkoutSetRow({
@@ -1571,7 +1589,7 @@ function WorkoutSetRow({
         </button>
         <button
           type="button"
-          onClick={() => void handleDeleteSet(set.id)}
+          onClick={() => void handleDeleteSet(set)}
           disabled={log.sets.length === 1}
           className="flex min-h-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-850 text-rose-400 hover:bg-rose-500/10 disabled:text-slate-700 disabled:border-transparent disabled:bg-slate-950/20 transition-all active:scale-95"
           aria-label="Delete set"
