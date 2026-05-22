@@ -74,6 +74,12 @@ export function canCompleteWorkoutLog(strengthExerciseCount: number, cardioRecor
   return strengthExerciseCount > 0 || cardioRecordCount > 0;
 }
 
+export function countFullyCompletedExercises(
+  logs: Array<{ sets: Array<Pick<WorkoutSet, 'isCompleted'>> }>,
+): number {
+  return logs.filter((log) => log.sets.length > 0 && log.sets.every((set) => set.isCompleted)).length;
+}
+
 export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
   const [workout, setWorkout] = useState<ActiveWorkout | undefined>();
   const [logs, setLogs] = useState<WorkoutExerciseLog[]>([]);
@@ -427,7 +433,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
     0,
   );
   const workoutRoutineDayName = getRoutineDayDisplayName(workout?.routineDay, locale);
-  const completedExerciseCount = logs.filter((log) => log.workoutExercise.status === 'completed').length;
+  const completedExerciseCount = countFullyCompletedExercises(logs);
 
   const liveSessionElapsed = workout
     ? getLiveSessionElapsedMs(workout.session, timerNow)
