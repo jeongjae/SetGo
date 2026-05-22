@@ -3,6 +3,7 @@ import {
   createWorkoutExerciseSeed,
   createWorkoutSessionForDate,
   selectReusableInProgressSession,
+  selectWorkoutStartSession,
 } from './workouts';
 import type { ExerciseMaster, RoutineExercisePlan, WorkoutSession } from '../types';
 
@@ -51,6 +52,38 @@ describe('workout session reuse', () => {
     ], 'push', { createNew: true });
 
     expect(reusable).toBeUndefined();
+  });
+
+  it('keeps the existing in-progress session when the start flow can resume it', () => {
+    const existingSession = session('existing', 'in_progress', '2026-05-20T09:00:00.000Z', 'push');
+    const selection = selectWorkoutStartSession(
+      '2026-05-20',
+      new Date('2026-05-21T09:30:00.000Z'),
+      [existingSession],
+      'push',
+    );
+
+    expect(selection).toEqual({ kind: 'reuse', session: existingSession });
+  });
+
+  it('creates a separate session when a new Calendar record is requested', () => {
+    const selection = selectWorkoutStartSession(
+      '2026-05-20',
+      new Date('2026-05-21T09:30:00.000Z'),
+      [session('existing', 'in_progress', '2026-05-20T09:00:00.000Z', 'push')],
+      'push',
+      { createNew: true },
+      'routine_push_pull',
+      'push',
+    );
+
+    expect(selection.kind).toBe('create');
+    expect(selection.session).toMatchObject({
+      id: 'workout_2026-05-20_1779355800000',
+      date: '2026-05-20',
+      routineId: 'routine_push_pull',
+      routineDayId: 'push',
+    });
   });
 });
 
