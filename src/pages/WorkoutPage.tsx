@@ -32,7 +32,7 @@ import {
   type ActiveWorkout,
   type WorkoutExerciseLog,
 } from '../db/workouts';
-import type { CardioRecord, ExerciseCategory, ExerciseMaster, ExerciseStage, WorkoutSession, WorkoutSet, WorkoutSetType } from '../types';
+import type { CardioRecord, ExerciseCategory, ExerciseMaster, ExerciseStage, WorkoutExercise, WorkoutSession, WorkoutSet, WorkoutSetType } from '../types';
 
 type WorkoutPageProps = {
   sessionId?: string;
@@ -85,6 +85,21 @@ export function expandWorkoutExercise(
   workoutExerciseId: string,
 ): Record<string, boolean> {
   return { ...expandedExercises, [workoutExerciseId]: true };
+}
+
+export function shouldConfirmWorkoutExerciseDelete(
+  log: {
+    workoutExercise: Pick<WorkoutExercise, 'memo'>;
+    sets: Array<Pick<WorkoutSet, 'isCompleted' | 'weightKg' | 'reps' | 'rir'>>;
+  },
+): boolean {
+  return Boolean(log.workoutExercise.memo?.trim())
+    || log.sets.some((set) => (
+      set.isCompleted
+      || set.weightKg > 0
+      || set.reps > 0
+      || set.rir !== undefined
+    ));
 }
 
 export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
@@ -361,8 +376,17 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
     setSaveMessage(locale === 'ko' ? '세트를 삭제했습니다' : 'Set deleted');
   }
 
-  async function handleDeleteExercise(workoutExerciseId: string) {
-    await deleteWorkoutExercise(workoutExerciseId);
+  async function handleDeleteExercise(log: WorkoutExerciseLog) {
+    if (shouldConfirmWorkoutExerciseDelete(log)) {
+      const shouldDelete = window.confirm(
+        locale === 'ko'
+          ? '기록된 세트나 메모가 있는 운동입니다. 이 운동을 삭제할까요?'
+          : 'This exercise has logged sets or notes. Delete it?',
+      );
+      if (!shouldDelete) return;
+    }
+
+    await deleteWorkoutExercise(log.workoutExercise.id);
     await loadWorkout();
     setSaveMessage(locale === 'ko' ? '운동을 삭제했습니다' : 'Exercise deleted');
   }
@@ -735,7 +759,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                         </button>
                         <button
                           type="button"
-                          onClick={() => void handleDeleteExercise(log.workoutExercise.id)}
+                          onClick={() => void handleDeleteExercise(log)}
                           className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all active:scale-95 duration-200"
                           aria-label={`Delete ${log.exercise.nameKo}`}
                         >
