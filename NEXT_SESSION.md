@@ -7,10 +7,10 @@
 - GitHub repo: `https://github.com/jeongjae/SetGo.git`
 - Latest pushed commit before the local cleanup pass: `cdda6d8`
 - Latest local commits:
+  - `8e6fd1b Align workout rest countdown`
   - `526234b Cover workout start selection`
   - `2055f5f Cover calendar workout start args`
   - `17019bd Cover exercise CSV validation`
-  - `4bb2014 Cover workout creation regressions`
   - `7293e6c Polish mobile workout UI shell`
 - Development URL used in Codex browser: `http://localhost:5174/`
 - Deployment target: GitHub Pages.
@@ -55,6 +55,7 @@ Leave them alone unless the user asks to use or remove them.
 - Exercise CSV import validation now has direct coverage for missing columns and aggregated row-level issues.
 - Calendar start/edit button arguments now have direct regression coverage for selected-date workouts.
 - Workout start selection now has direct coverage for resuming in-progress records versus creating explicit new Calendar records.
+- Workout rest timer surfaces now use the same remaining-time countdown formatting.
 
 ## Verification Already Done
 
@@ -72,7 +73,7 @@ Browser checks were also done for:
 - Today page load and fixed-shell height metrics.
 - Routine Setup body scrolling inside the fixed header shell.
 - Calendar date detail scrolling inside the fixed month view.
-- Workout entry from Calendar, add-exercise finder, and fixed workout footer.
+- Workout entry from Calendar, add-exercise finder, fixed workout footer, and workout screen render after rest countdown polish.
 - Stats empty state and Export long-content scrolling.
 
 ## Suggested Next Development Order
@@ -102,7 +103,7 @@ git log --oneline -5
 
 Continue SetGo development from `C:\Users\NB-24021500\Projects\SetGo\setgo-starter`.
 Read `AGENTS.md`, `README.md`, and `NEXT_SESSION.md` first.
-The latest local commit is `526234b`.
+The latest local commit is `8e6fd1b`.
 Keep Tailwind v3, no backend/auth, local-first Dexie only.
 Do not commit the untracked backup/CSV files.
 Proceed with the next P2 polishing item and verify with tests/build/browser.
