@@ -335,7 +335,7 @@ export function CalendarPage({
               >
                 <div className="flex items-center justify-between w-full">
                   <span className={`text-xs font-black ${isSelected ? 'text-cyan-200' : 'text-slate-100'}`}>{day.date.getDate()}</span>
-                  {hasCompleted && <span className="text-[9px] filter drop-shadow">🏋️‍♂️</span>}
+                  {hasCompleted && <span className="text-[11px] filter drop-shadow">🏋️‍♂️</span>}
                 </div>
                 <div className="mt-auto flex items-center gap-0.5">
                   {daySummaries.slice(0, 3).map((summary) => (
@@ -353,15 +353,15 @@ export function CalendarPage({
                   ) : null}
                 </div>
                 {totalVolume > 0 ? (
-                  <span className="mt-0.5 truncate text-[10px] font-black text-emerald-300">
+                  <span className="mt-0.5 truncate text-[11px] font-black text-emerald-300">
                     {totalVolume.toLocaleString()}kg
                   </span>
                 ) : hasSkipped ? (
-                  <span className="mt-0.5 inline-block rounded border border-slate-650 bg-slate-750 px-1 py-0.2 text-[9px] font-black uppercase text-slate-100">
+                  <span className="mt-0.5 inline-block rounded border border-slate-650 bg-slate-750 px-1 py-0.2 text-[10px] font-black uppercase text-slate-100">
                     {locale === 'ko' ? '스킵' : 'Skip'}
                   </span>
                 ) : showPlanDot ? (
-                  <span className={`mt-0.5 truncate text-[10px] font-extrabold ${
+                  <span className={`mt-0.5 truncate text-[11px] font-extrabold ${
                     dayPlan.status === 'missed' ? 'text-rose-450' : 'text-cyan-400'
                   }`}>
                     {getRoutineDayDisplayName(dayPlan.routineDay, locale) ?? statusLabel(dayPlan.status, locale)}
@@ -372,7 +372,7 @@ export function CalendarPage({
           })}
         </div>
 
-        <div className="mt-3 flex items-center justify-between border-t border-slate-650 pt-2.5 text-[10px] font-black uppercase text-slate-100">
+        <div className="mt-3 flex items-center justify-between border-t border-slate-650 pt-2.5 text-xs font-black uppercase text-slate-100">
           <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />{t(locale, 'completed')}</span>
           <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />{t(locale, 'inProgress')}</span>
           <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-cyan-400" />{t(locale, 'planned')}</span>

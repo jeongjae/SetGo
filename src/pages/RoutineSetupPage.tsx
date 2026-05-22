@@ -544,7 +544,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                   className="min-h-9 rounded-xl border border-slate-650 bg-slate-850 px-2 text-sm font-medium text-white outline-none focus:ring-1 focus:ring-cyan-400"
                 >
                   {exerciseCategoryOptions.map((category) => (
-                  <option key={category.value} value={category.value} className="bg-slate-850">
+                    <option key={category.value} value={category.value} className="bg-slate-850">
                       {labelForCategory(category.value, locale)}
                     </option>
                   ))}
