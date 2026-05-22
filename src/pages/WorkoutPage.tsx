@@ -70,6 +70,10 @@ export function getLiveSessionElapsedMs(
   return getElapsedMs(session.startedAt, nowMs);
 }
 
+export function canCompleteWorkoutLog(strengthExerciseCount: number, cardioRecordCount: number): boolean {
+  return strengthExerciseCount > 0 || cardioRecordCount > 0;
+}
+
 export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
   const [workout, setWorkout] = useState<ActiveWorkout | undefined>();
   const [logs, setLogs] = useState<WorkoutExerciseLog[]>([]);
@@ -434,6 +438,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
   const restElapsed = restTimerStartedAt ? formatElapsed(timerNow - restTimerStartedAt) : '--:--';
   const isCompletedEditMode = workout?.session.status === 'completed' || workout?.session.status === 'skipped';
+  const canCompleteWorkout = canCompleteWorkoutLog(logs.length, cardioRecords.length);
 
   return (
     <section className="mx-auto flex overflow-hidden max-w-md flex-col bg-[#0b0f19] text-slate-100 px-4 py-4 gap-0 viewport-locked select-none">
@@ -1131,7 +1136,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
             <button
               type="button"
               onClick={() => void handleCompleteWorkout()}
-              disabled={!workout || logs.length === 0}
+              disabled={!workout || !canCompleteWorkout}
               className="flex-1 flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-4 text-xs font-black text-slate-950 disabled:bg-slate-800 disabled:text-slate-500 active:scale-95 transition-all shadow-lg shadow-emerald-500/10"
             >
               <Check aria-hidden="true" size={16} />

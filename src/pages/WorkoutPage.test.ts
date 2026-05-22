@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { formatCountdownSeconds, getElapsedMs, getLiveSessionElapsedMs } from './WorkoutPage';
+import {
+  canCompleteWorkoutLog,
+  formatCountdownSeconds,
+  getElapsedMs,
+  getLiveSessionElapsedMs,
+} from './WorkoutPage';
 
 describe('workout elapsed time', () => {
   it('measures UTC session time without timezone correction', () => {
@@ -42,5 +47,13 @@ describe('rest countdown formatting', () => {
     expect(formatCountdownSeconds(90)).toBe('1:30');
     expect(formatCountdownSeconds(5)).toBe('0:05');
     expect(formatCountdownSeconds(-1)).toBe('0:00');
+  });
+});
+
+describe('workout completion eligibility', () => {
+  it('allows strength or cardio logs to complete a session', () => {
+    expect(canCompleteWorkoutLog(1, 0)).toBe(true);
+    expect(canCompleteWorkoutLog(0, 1)).toBe(true);
+    expect(canCompleteWorkoutLog(0, 0)).toBe(false);
   });
 });
