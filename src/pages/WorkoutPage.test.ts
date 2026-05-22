@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canCompleteWorkoutLog,
+  countLoggedCardioRecords,
   countFullyCompletedExercises,
   expandWorkoutExercise,
   formatCountdownSeconds,
@@ -60,6 +61,14 @@ describe('workout completion eligibility', () => {
     expect(canCompleteWorkoutLog(1, 0)).toBe(true);
     expect(canCompleteWorkoutLog(0, 1)).toBe(true);
     expect(canCompleteWorkoutLog(0, 0)).toBe(false);
+  });
+
+  it('does not treat a new cardio draft as a logged cardio record', () => {
+    expect(countLoggedCardioRecords([
+      { isDraft: true },
+      {},
+      { isDraft: false },
+    ])).toBe(2);
   });
 });
 

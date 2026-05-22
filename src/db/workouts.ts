@@ -350,6 +350,7 @@ export async function addCardioRecordToWorkout(sessionId: string): Promise<void>
   await db.cardioRecords.put({
     id: `${sessionId}_cardio_${Date.now()}`,
     sessionId,
+    isDraft: true,
     environment: 'indoor',
     machineType: 'treadmill',
     startedAt,

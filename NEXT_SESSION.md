@@ -60,7 +60,7 @@ Leave them alone unless the user asks to use or remove them.
 - Calendar start/edit button arguments now have direct regression coverage for selected-date workouts.
 - Workout start selection now has direct coverage for resuming in-progress records versus creating explicit new Calendar records.
 - Workout rest timer surfaces now use the same remaining-time countdown formatting.
-- Cardio-only workout sessions can be completed once at least one cardio record exists.
+- Cardio-only workout sessions can be completed once at least one cardio record is confirmed from its draft.
 - Strength workouts now require at least one completed set before the workout completion action unlocks.
 - Workout header exercise progress now counts only exercises whose sets are all complete.
 - Newly added workout exercises open immediately and scroll into view for logging.
@@ -91,6 +91,7 @@ Browser checks were also done for:
   - Today and Workout were checked at mobile width after brightening the graphite palette, enlarging input labels, and tightening card spacing.
   - Workout set entry, exercise addition finder, and fixed footer were checked with visible set rows.
   - Calendar, empty Stats, Export, Routine Setup routine tab, exercise library tab, and weekly plan tab were checked in the in-app browser.
+  - Cardio draft logging was checked: a new manual cardio draft stays in the workout log, `Log cardio and continue` confirms it, and sessions without strength logs return to the exercise finder.
 - Today page load and fixed-shell height metrics.
 - Routine Setup body scrolling inside the fixed header shell.
 - Calendar date detail scrolling inside the fixed month view.
