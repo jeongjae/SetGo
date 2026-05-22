@@ -74,6 +74,10 @@ export function canCompleteWorkoutLog(completedStrengthSetCount: number, cardioR
   return completedStrengthSetCount > 0 || cardioRecordCount > 0;
 }
 
+export function countLoggedCardioRecords(cardioRecords: Array<Pick<CardioRecord, 'isDraft'>>): number {
+  return cardioRecords.filter((cardioRecord) => cardioRecord.isDraft !== true).length;
+}
+
 export function countFullyCompletedExercises(
   logs: Array<{ sets: Array<Pick<WorkoutSet, 'isCompleted'>> }>,
 ): number {
@@ -139,19 +143,23 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   const [isRestTimerActive, setIsRestTimerActive] = useState(false);
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
 
-  const totalCardioDistance = useMemo(() => {
-    return cardioRecords.reduce((acc, curr) => acc + (curr.distanceKm || 0), 0);
+  const loggedCardioRecords = useMemo(() => {
+    return cardioRecords.filter((cardioRecord) => cardioRecord.isDraft !== true);
   }, [cardioRecords]);
 
+  const totalCardioDistance = useMemo(() => {
+    return loggedCardioRecords.reduce((acc, curr) => acc + (curr.distanceKm || 0), 0);
+  }, [loggedCardioRecords]);
+
   const totalCardioMinutes = useMemo(() => {
-    return cardioRecords.reduce((acc, curr) => {
+    return loggedCardioRecords.reduce((acc, curr) => {
       const min = Math.max(
         1,
         Math.round((new Date(curr.endedAt).getTime() - new Date(curr.startedAt).getTime()) / 60000)
       );
       return acc + min;
     }, 0);
-  }, [cardioRecords]);
+  }, [loggedCardioRecords]);
 
   const autoTransitionAccordion = (completedWorkoutExerciseId: string) => {
     setTimeout(() => {
@@ -441,11 +449,44 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
   async function handleUpdateCardio(
     cardioRecord: CardioRecord,
-    values: Partial<Pick<CardioRecord, 'environment' | 'machineType' | 'location' | 'startedAt' | 'endedAt' | 'distanceKm' | 'memo' | 'inclinePercent'>>,
+    values: Partial<Pick<CardioRecord, 'environment' | 'machineType' | 'location' | 'startedAt' | 'endedAt' | 'distanceKm' | 'memo' | 'inclinePercent' | 'isDraft'>>,
   ) {
     await updateCardioRecord(cardioRecord.id, values);
     await loadWorkout();
     setSaveMessage(locale === 'ko' ? '유산소를 저장했습니다' : 'Cardio saved');
+  }
+
+  function continueWorkoutAfterCardio() {
+    const nextLog = logs.find((log) => !log.sets.every((set) => set.isCompleted)) ?? logs[0];
+
+    if (nextLog) {
+      setExpandedExercises((current) => expandWorkoutExercise(current, nextLog.workoutExercise.id));
+      window.setTimeout(() => {
+        document.getElementById(`exercise-card-${nextLog.workoutExercise.id}`)?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }, 100);
+      return;
+    }
+
+    setIsAdding(true);
+    resetExerciseFinderState();
+    window.setTimeout(() => {
+      document.getElementById('workout-exercise-finder')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 100);
+  }
+
+  async function handleSaveCardioAndContinue(cardioRecord: CardioRecord) {
+    if (cardioRecord.isDraft) {
+      await handleUpdateCardio(cardioRecord, { isDraft: false });
+      setSaveMessage(locale === 'ko' ? '유산소를 기록했습니다' : 'Cardio logged');
+    }
+
+    continueWorkoutAfterCardio();
   }
 
   async function handleUpdateSessionMemo(memo: string) {
@@ -511,6 +552,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   );
   const workoutRoutineDayName = getRoutineDayDisplayName(workout?.routineDay, locale);
   const completedExerciseCount = countFullyCompletedExercises(logs);
+  const loggedCardioCount = countLoggedCardioRecords(cardioRecords);
 
   const liveSessionElapsed = workout
     ? getLiveSessionElapsedMs(workout.session, timerNow)
@@ -521,7 +563,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
   const restElapsed = restTimerStartedAt ? formatElapsed(timerNow - restTimerStartedAt) : '--:--';
   const isCompletedEditMode = workout?.session.status === 'completed' || workout?.session.status === 'skipped';
-  const canCompleteWorkout = canCompleteWorkoutLog(completedSetCount, cardioRecords.length);
+  const canCompleteWorkout = canCompleteWorkoutLog(completedSetCount, loggedCardioCount);
 
   return (
     <section className="viewport-locked mx-auto flex max-w-md select-none flex-col overflow-hidden bg-[#131b26] px-3.5 py-3 text-slate-100">
@@ -693,7 +735,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
         {/* 운동검색/추가 폼 (isAdding일 때 스크롤 뷰 내 상단에 띄움) */}
         {isAdding && (
-          <section className="shrink-0 rounded-2xl border border-cyan-500/30 bg-slate-750/90 p-3 shadow-xl animate-fade-in">
+          <section id="workout-exercise-finder" className="shrink-0 rounded-2xl border border-cyan-500/30 bg-slate-750/90 p-3 shadow-xl animate-fade-in">
             <ExerciseFinder
               ariaLabel="Search exercises to add"
               exercises={availableExercises}
@@ -932,7 +974,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
           </div>
 
           <div className="mt-3 flex flex-col gap-3">
-            {cardioRecords.length > 0 && (
+            {loggedCardioCount > 0 && (
               <div className="flex items-center justify-between rounded-xl bg-cyan-950/40 border border-cyan-500/20 px-3.5 py-2.5 text-xs font-bold text-cyan-300 shadow-inner">
                 <span>🏃‍♂️ {locale === 'ko' ? '오늘 유산소 누적 요약' : 'Cardio Summary'}</span>
                 <span className="font-mono">
@@ -958,15 +1000,22 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                 : (machineLabels[cardioRecord.machineType || ''] || (locale === 'ko' ? '실내 유산소' : 'Indoor Cardio'));
 
               return (
-                <div key={cardioRecord.id} className="rounded-xl bg-slate-950/60 p-3.5 border border-slate-900">
-                  <div className="flex items-center justify-between gap-3 mb-3">
+                <div key={cardioRecord.id} className="rounded-xl border border-slate-650 bg-slate-850/85 p-3">
+                  <div className="mb-2.5 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm">
                         {cardioRecord.environment === 'indoor' ? '🏠' : '🌳'}
                       </span>
-                      <p className="text-sm font-bold text-white">
-                        {displayName}
-                      </p>
+                      <div>
+                        <p className="text-sm font-bold text-white">
+                          {displayName}
+                        </p>
+                        {cardioRecord.isDraft ? (
+                          <span className="mt-0.5 inline-flex rounded-md border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[11px] font-black text-amber-200">
+                            {locale === 'ko' ? '입력 중' : 'Draft'}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -979,7 +1028,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                   </div>
 
                   {/* 실내 / 야외 전환 탭 */}
-                  <div className="flex rounded-xl bg-slate-900 border border-slate-850 p-1 mb-3">
+                  <div className="mb-2.5 flex rounded-xl border border-slate-650 bg-slate-750 p-1">
                     <button
                       type="button"
                       onClick={() => void handleUpdateCardio(cardioRecord, { environment: 'indoor', machineType: 'treadmill' })}
@@ -1007,7 +1056,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                   <div className="grid gap-3">
                     {/* 기구 / 장소 입력 */}
                     {cardioRecord.environment === 'indoor' ? (
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <label className="text-xs font-bold uppercase text-slate-200">
                         {locale === 'ko' ? '기구 선택' : 'Machine Select'}
                         <select
                           aria-label="Cardio machine select"
@@ -1015,7 +1064,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                           onChange={(event) => void handleUpdateCardio(cardioRecord, {
                             machineType: event.target.value as CardioRecord['machineType'],
                           })}
-                          className="mt-1 min-h-10 w-full rounded-xl bg-slate-900 px-3 text-sm text-white border border-slate-800 outline-none font-medium"
+                          className="mt-1 min-h-10 w-full rounded-xl border border-slate-650 bg-slate-750 px-3 text-sm font-medium text-white outline-none"
                         >
                           <option value="treadmill">{locale === 'ko' ? '🏃‍♂️ 트레드밀 (러닝머신)' : '🏃‍♂️ Treadmill'}</option>
                           <option value="indoor_bike">{locale === 'ko' ? '🚴‍♂️ 실내 자전거' : '🚴‍♂️ Indoor Bike'}</option>
@@ -1024,7 +1073,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                         </select>
                       </label>
                     ) : (
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <label className="text-xs font-bold uppercase text-slate-200">
                         {locale === 'ko' ? '장소 입력' : 'Place'}
                         <input
                           aria-label="Cardio place input"
@@ -1032,16 +1081,16 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                           defaultValue={cardioRecord.location ?? ''}
                           onBlur={(event) => void handleUpdateCardio(cardioRecord, { location: event.target.value.trim() })}
                           placeholder={locale === 'ko' ? '예: 동네 공원, 러닝 트랙 등' : 'e.g. Park, track, river'}
-                          className="mt-1 w-full rounded-xl bg-slate-900 px-3.5 py-2 text-sm text-white border border-slate-800 outline-none focus:border-cyan-400 font-medium"
+                          className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-750 px-3.5 py-2 text-sm font-medium text-white outline-none focus:border-cyan-400"
                         />
                       </label>
                     )}
 
                     {/* 퀵 증감 계기판 */}
                     <div className={`grid gap-2.5 ${cardioRecord.environment === 'indoor' ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <label className="text-xs font-bold uppercase text-slate-200">
                         Km
-                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl bg-slate-900 border border-slate-800 focus-within:ring-1 focus-within:ring-cyan-400">
+                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 focus-within:ring-1 focus-within:ring-cyan-400">
                           <button
                             type="button"
                             onClick={() => {
@@ -1078,9 +1127,9 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                         </div>
                       </label>
 
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <label className="text-xs font-bold uppercase text-slate-200">
                         {locale === 'ko' ? '분' : 'Min'}
-                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl bg-slate-900 border border-slate-800 focus-within:ring-1 focus-within:ring-cyan-400">
+                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 focus-within:ring-1 focus-within:ring-cyan-400">
                           <button
                             type="button"
                             onClick={() => {
@@ -1118,9 +1167,9 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                       </label>
 
                       {cardioRecord.environment === 'indoor' && (
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <label className="text-xs font-bold uppercase text-slate-200">
                           {locale === 'ko' ? '경사 (%)' : 'Inc (%)'}
-                          <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl bg-slate-900 border border-slate-800 focus-within:ring-1 focus-within:ring-cyan-400">
+                          <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 focus-within:ring-1 focus-within:ring-cyan-400">
                             <button
                               type="button"
                               onClick={() => {
@@ -1160,7 +1209,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                     </div>
                   </div>
 
-                  <label className="mt-3 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <label className="mt-2.5 block text-xs font-bold uppercase text-slate-200">
                     {locale === 'ko' ? '메모' : 'Memo'}
                     <input
                       aria-label="Cardio memo"
@@ -1168,9 +1217,22 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                       defaultValue={cardioRecord.memo ?? ''}
                       onBlur={(event) => void handleUpdateCardio(cardioRecord, { memo: event.target.value.trim() || undefined })}
                       placeholder={locale === 'ko' ? '속도 변경, 컨디션 피드백 등' : 'e.g. Speed changes, energy feedback'}
-                      className="mt-1 w-full rounded-xl bg-slate-900 px-3.5 py-2 text-xs text-white border border-slate-800 outline-none focus:border-cyan-400 font-medium"
+                      className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-750 px-3.5 py-2 text-sm font-medium text-white outline-none focus:border-cyan-400"
                     />
                   </label>
+
+                  <button
+                    type="button"
+                    onClick={() => void handleSaveCardioAndContinue(cardioRecord)}
+                    className="mt-2.5 flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-cyan-400 px-3 text-sm font-black text-slate-950 shadow-md shadow-cyan-400/15 transition-all hover:bg-cyan-300 active:scale-95"
+                  >
+                    <Check aria-hidden="true" size={15} />
+                    <span>
+                      {cardioRecord.isDraft
+                        ? locale === 'ko' ? '기록하고 운동 계속' : 'Log cardio and continue'
+                        : locale === 'ko' ? '운동 기록 계속' : 'Continue workout log'}
+                    </span>
+                  </button>
 
                   {cardioRecord.averageSpeedKmh ? (
                     <p className="mt-3 text-xs font-bold text-cyan-400 bg-cyan-950/30 border border-cyan-500/10 rounded-lg px-2.5 py-1.5 inline-block">

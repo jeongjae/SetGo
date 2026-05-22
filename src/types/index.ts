@@ -135,6 +135,7 @@ export type WorkoutSet = {
 export type CardioRecord = {
   id: string;
   sessionId: string;
+  isDraft?: boolean;
   environment: 'indoor' | 'outdoor';
   machineType?: 'treadmill' | 'indoor_bike' | 'stair_climber' | 'elliptical';
   location?: string;
