@@ -49,6 +49,10 @@ function formatElapsed(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+export function formatCountdownSeconds(seconds: number): string {
+  return formatElapsed(Math.max(0, seconds) * 1000);
+}
+
 export function getElapsedMs(startedAtStr: string, nowMs: number): number {
   const start = new Date(startedAtStr).getTime();
   if (Number.isNaN(start)) return 0;
@@ -478,7 +482,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                 className="flex items-center gap-1 rounded-xl bg-emerald-950/80 border border-emerald-800/60 px-2.5 py-1 text-xs font-bold text-emerald-300 animate-pulse shadow-md"
               >
                 <span>Rest</span>
-                <span className="font-mono tracking-wide">{restElapsed}</span>
+                <span className="font-mono tracking-wide">{formatCountdownSeconds(restRemaining)}</span>
               </button>
             ) : restTimerStartedAt && !isCompletedEditMode ? (
               <button
@@ -1157,7 +1161,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
               <div>
                 <p className="text-[10px] font-bold text-slate-400">{t(locale, 'resting')}</p>
                 <p className="text-lg font-black text-white tracking-wider font-mono">
-                  {Math.floor(restRemaining / 60)}:{(restRemaining % 60).toString().padStart(2, '0')}
+                  {formatCountdownSeconds(restRemaining)}
                 </p>
               </div>
             </div>

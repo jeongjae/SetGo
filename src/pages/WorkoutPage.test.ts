@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getElapsedMs, getLiveSessionElapsedMs } from './WorkoutPage';
+import { formatCountdownSeconds, getElapsedMs, getLiveSessionElapsedMs } from './WorkoutPage';
 
 describe('workout elapsed time', () => {
   it('measures UTC session time without timezone correction', () => {
@@ -34,5 +34,13 @@ describe('workout elapsed time', () => {
       startedAt: '2026-05-21T12:00:00',
       status: 'completed',
     }, nowMs)).toBeUndefined();
+  });
+});
+
+describe('rest countdown formatting', () => {
+  it('uses a compact minutes and seconds countdown for rest surfaces', () => {
+    expect(formatCountdownSeconds(90)).toBe('1:30');
+    expect(formatCountdownSeconds(5)).toBe('0:05');
+    expect(formatCountdownSeconds(-1)).toBe('0:00');
   });
 });
