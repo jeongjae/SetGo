@@ -111,6 +111,15 @@ export function shouldConfirmWorkoutSetDelete(
     || set.rir !== undefined;
 }
 
+export function shouldConfirmCardioDelete(
+  cardioRecord: Pick<CardioRecord, 'distanceKm' | 'inclinePercent' | 'location' | 'memo'>,
+): boolean {
+  return (cardioRecord.distanceKm ?? 0) > 0
+    || (cardioRecord.inclinePercent ?? 0) > 0
+    || Boolean(cardioRecord.location?.trim())
+    || Boolean(cardioRecord.memo?.trim());
+}
+
 export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
   const [workout, setWorkout] = useState<ActiveWorkout | undefined>();
   const [logs, setLogs] = useState<WorkoutExerciseLog[]>([]);
@@ -453,8 +462,17 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
     setSaveMessage(locale === 'ko' ? '운동 메모를 저장했습니다' : 'Exercise memo saved');
   }
 
-  async function handleDeleteCardio(cardioRecordId: string) {
-    await deleteCardioRecord(cardioRecordId);
+  async function handleDeleteCardio(cardioRecord: CardioRecord) {
+    if (shouldConfirmCardioDelete(cardioRecord)) {
+      const shouldDelete = window.confirm(
+        locale === 'ko'
+          ? '기록값이 있는 유산소 항목입니다. 이 항목을 삭제할까요?'
+          : 'This cardio record has logged values. Delete it?',
+      );
+      if (!shouldDelete) return;
+    }
+
+    await deleteCardioRecord(cardioRecord.id);
     await loadWorkout();
     setSaveMessage(locale === 'ko' ? '유산소를 삭제했습니다' : 'Cardio deleted');
   }
@@ -952,7 +970,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                     </div>
                     <button
                       type="button"
-                      onClick={() => void handleDeleteCardio(cardioRecord.id)}
+                      onClick={() => void handleDeleteCardio(cardioRecord)}
                       className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-rose-400 hover:bg-rose-500/10 active:scale-95 transition-all"
                       aria-label="Delete cardio"
                     >
