@@ -71,10 +71,17 @@ npm.cmd test -- --run
 npm.cmd run build
 ```
 
-Both passed after the latest source changes.
+Both passed again during the May 22 desktop UAT pass.
 
 Browser checks were also done for:
 
+- May 22 desktop UAT:
+  - Today loads after a fresh browser reload.
+  - Routine Setup opens and exposes the `루틴`, `운동`, and `주간 계획` tabs.
+  - Calendar skip status was round-tripped on the May 21 in-progress session and restored with `스킵 취소`.
+  - A temporary bench press exercise was added to the May 21 free workout, a `42.5 kg x 8 @ RIR 2` set was logged, save-time feedback and the rest timer appeared, and the temporary exercise was removed again.
+  - Markdown export copied to the clipboard and full JSON backup reported a browser download start.
+  - Stats empty state still renders when there are no completed workout records.
 - Today page load and fixed-shell height metrics.
 - Routine Setup body scrolling inside the fixed header shell.
 - Calendar date detail scrolling inside the fixed month view.
@@ -84,9 +91,10 @@ Browser checks were also done for:
 ## Suggested Next Development Order
 
 1. Continue P2 polishing around workout logging usability.
-2. Review iPhone PWA behavior after GitHub Pages deploy:
+2. Run the remaining real-device UAT on iPhone Safari / Home Screen after GitHub Pages deploy:
    - horizontal movement should be reduced or gone.
    - if still present, inspect individual wide elements such as tables, `<pre>`, SVG charts, or chip rows.
+   - verify keyboard entry, Add to Home Screen relaunch, and offline shell from the installed PWA.
 3. Decide how AI comments should work long term:
    - current version is local deterministic summary only.
    - mobile works offline because it does not call an API.
