@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canCompleteWorkoutLog,
+  countFullyCompletedExercises,
   formatCountdownSeconds,
   getElapsedMs,
   getLiveSessionElapsedMs,
@@ -55,5 +56,15 @@ describe('workout completion eligibility', () => {
     expect(canCompleteWorkoutLog(1, 0)).toBe(true);
     expect(canCompleteWorkoutLog(0, 1)).toBe(true);
     expect(canCompleteWorkoutLog(0, 0)).toBe(false);
+  });
+});
+
+describe('workout progress counters', () => {
+  it('counts an exercise only after all of its sets are complete', () => {
+    expect(countFullyCompletedExercises([
+      { sets: [{ isCompleted: true }, { isCompleted: false }] },
+      { sets: [{ isCompleted: true }] },
+      { sets: [] },
+    ])).toBe(1);
   });
 });
