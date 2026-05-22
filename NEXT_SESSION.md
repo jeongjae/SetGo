@@ -75,7 +75,7 @@ npm.cmd test -- --run
 npm.cmd run build
 ```
 
-Both passed again during the May 22 desktop UAT pass.
+Both passed again during the May 22 desktop UAT and readability-density UI pass.
 
 Browser checks were also done for:
 
@@ -87,6 +87,10 @@ Browser checks were also done for:
   - A follow-up empty-workout check confirmed that a placeholder strength exercise alone no longer unlocks workout completion; logging a set unlocks it.
   - Markdown export copied to the clipboard and full JSON backup reported a browser download start.
   - Stats empty state still renders when there are no completed workout records.
+- May 22 readability-density UI pass:
+  - Today and Workout were checked at mobile width after brightening the graphite palette, enlarging input labels, and tightening card spacing.
+  - Workout set entry, exercise addition finder, and fixed footer were checked with visible set rows.
+  - Calendar, empty Stats, Export, Routine Setup routine tab, exercise library tab, and weekly plan tab were checked in the in-app browser.
 - Today page load and fixed-shell height metrics.
 - Routine Setup body scrolling inside the fixed header shell.
 - Calendar date detail scrolling inside the fixed month view.

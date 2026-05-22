@@ -524,24 +524,24 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   const canCompleteWorkout = canCompleteWorkoutLog(completedSetCount, cardioRecords.length);
 
   return (
-    <section className="mx-auto flex overflow-hidden max-w-md flex-col bg-[#0b0f19] text-slate-100 px-4 py-4 gap-0 viewport-locked select-none">
+    <section className="viewport-locked mx-auto flex max-w-md select-none flex-col overflow-hidden bg-[#131b26] px-3.5 py-3 text-slate-100">
       {/* 1. 상단 고정 헤더 영역 (shrink-0) */}
-      <header className="flex flex-col gap-2 pb-3 border-b border-slate-900 shrink-0">
+      <header className="shrink-0 flex flex-col gap-1.5 border-b border-slate-650 pb-2.5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
               onClick={onBack}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-750 active:scale-95 transition-all shadow-md shrink-0"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 shadow-md transition-all hover:bg-slate-650 active:scale-95"
               aria-label="Back to Today"
             >
               <ChevronLeft aria-hidden="true" size={20} />
             </button>
             <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-wider text-cyan-400 leading-none">
+              <p className="text-xs font-black uppercase leading-none text-cyan-300">
                 {workout ? workoutStatusLabel(locale, workout.session.status) : (locale === 'ko' ? '불러오는 중...' : 'Loading...')}
               </p>
-              <h1 className="text-base font-extrabold text-white truncate max-w-[140px] md:max-w-[200px] mt-0.5">
+              <h1 className="mt-0.5 max-w-[150px] truncate text-lg font-extrabold leading-tight text-white md:max-w-[210px]">
                 {routineNameLabel(locale, workout?.routineName) ?? t(locale, 'freeWorkout')}
               </h1>
             </div>
@@ -550,12 +550,12 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
           {/* 콤팩트 실시간 대시보드 */}
           <div className="flex items-center gap-1.5 shrink-0">
             {!isCompletedEditMode && sessionElapsed ? (
-              <div className="flex items-center gap-1 rounded-xl bg-slate-900 border border-slate-800 px-2.5 py-1 text-xs font-bold text-white shadow-inner">
-                <Clock3 size={13} className="text-slate-400" />
+              <div className="flex items-center gap-1 rounded-xl border border-slate-650 bg-slate-850 px-2.5 py-1 text-sm font-bold text-white shadow-inner">
+                <Clock3 size={13} className="text-slate-200" />
                 <span className="font-mono tracking-wide">{sessionElapsed}</span>
               </div>
             ) : workout && !isCompletedEditMode ? (
-              <div className="rounded-xl bg-slate-900 border border-slate-800 px-2.5 py-1 text-xs font-bold text-slate-300 shadow-inner">
+              <div className="rounded-xl border border-slate-650 bg-slate-850 px-2.5 py-1 text-sm font-bold text-slate-100 shadow-inner">
                 <span className="font-mono">{workout.session.date}</span>
               </div>
             ) : null}
@@ -567,7 +567,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                   setRestRemaining(restDuration);
                   setIsRestTimerActive(true);
                 }}
-                className="flex items-center gap-1 rounded-xl bg-emerald-950/80 border border-emerald-800/60 px-2.5 py-1 text-xs font-bold text-emerald-300 animate-pulse shadow-md"
+                className="flex items-center gap-1 rounded-xl border border-emerald-700/70 bg-emerald-950/80 px-2.5 py-1 text-sm font-bold text-emerald-200 shadow-md animate-pulse"
               >
                 <span>Rest</span>
                 <span className="font-mono tracking-wide">{formatCountdownSeconds(restRemaining)}</span>
@@ -580,14 +580,14 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                   setRestRemaining(restDuration);
                   setIsRestTimerActive(true);
                 }}
-                className="flex items-center gap-1 rounded-xl bg-slate-900 border border-slate-800 px-2.5 py-1 text-xs font-bold text-slate-400 hover:text-slate-300"
+                className="flex items-center gap-1 rounded-xl border border-slate-650 bg-slate-850 px-2.5 py-1 text-sm font-bold text-slate-100 hover:text-white"
               >
                 <span>Rest</span>
                 <span className="font-mono tracking-wide">{restElapsed}</span>
               </button>
             ) : null}
             {workout && (
-              <div className="flex items-center gap-1 rounded-xl bg-slate-900 border border-slate-800 px-2.5 py-1 text-xs font-bold text-emerald-400 shadow-inner">
+              <div className="flex items-center gap-1 rounded-xl border border-slate-650 bg-slate-850 px-2.5 py-1 text-sm font-bold text-emerald-300 shadow-inner">
                 <span className="font-mono">{workout.session.totalStrengthVolumeKg.toLocaleString()}kg</span>
               </div>
             )}
@@ -595,12 +595,12 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
         </div>
 
         {/* 세션 상태 정보 바 */}
-        <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 px-0.5 mt-1">
+        <div className="mt-0.5 flex items-center justify-between gap-2 px-0.5 text-xs font-medium text-slate-200">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#22d3ee]"></span>
-            <span className="font-medium text-slate-300">{saveMessage}</span>
+            <span className="font-semibold text-slate-100">{saveMessage}</span>
           </div>
-          <div className="font-semibold text-slate-300">
+          <div className="font-bold text-slate-100">
             {completedExerciseCount}/{logs.length} {locale === 'ko' ? '운동' : 'Ex'} • {completedSetCount}/{totalSetCount} {locale === 'ko' ? '세트 완료' : 'Sets'}
           </div>
         </div>
@@ -608,7 +608,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
       {/* 2. 가로 스냅 스크롤링 운동 탭바 (헤더 하부 shrink-0) */}
       {logs.length > 0 && (
-        <nav className="flex gap-2 overflow-x-auto bg-slate-950/40 py-2.5 border-b border-slate-900 shrink-0 scrollbar-none scroll-smooth">
+        <nav className="flex shrink-0 gap-1.5 overflow-x-auto border-b border-slate-650 bg-slate-850/60 py-2 scrollbar-none scroll-smooth">
           {logs.map((log) => {
             const allCompleted = log.sets.length > 0 && log.sets.every((s) => s.isCompleted);
             const completedCount = log.sets.filter((s) => s.isCompleted).length;
@@ -631,22 +631,22 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                     }
                   }, 100);
                 }}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold transition-all active:scale-95 ${
                   isCurrentExpanded
                     ? 'bg-cyan-400 text-slate-950 ring-4 ring-cyan-400/20 shadow-lg'
                     : allCompleted
                       ? 'bg-emerald-950/65 text-emerald-300 border border-emerald-800/60'
-                      : 'bg-slate-900 text-slate-400 border border-slate-800/80 hover:bg-slate-850'
+                      : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650'
                 }`}
               >
                 <span className="text-[13px] shrink-0">{getExerciseIcon(log.exercise.defaultEmoji)}</span>
                 <span className="truncate max-w-[80px]">{getExerciseName(log.exercise, locale)}</span>
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded font-mono ${
+                <span className={`rounded px-1.5 py-0.5 font-mono text-[11px] font-black ${
                   isCurrentExpanded 
                     ? 'bg-cyan-500/30 text-slate-900' 
                     : allCompleted 
                       ? 'bg-emerald-900/40 text-emerald-400' 
-                      : 'bg-slate-800 text-slate-500'
+                      : 'bg-slate-850 text-slate-200'
                 }`}>
                   {completedCount}/{totalCount}
                 </span>
@@ -660,15 +660,15 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
       )}
 
       {/* 3. 중앙 본문 스크롤 영역 (flex-1 overflow-y-auto overscroll-contain) */}
-      <div className="flex-1 overflow-y-auto overscroll-contain py-4 gap-4 flex flex-col scrollbar-none inner-scroll -mx-2 px-2">
+      <div className="inner-scroll -mx-2 flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-2 py-2.5 scrollbar-none">
 
         {isCompletedEditMode ? (
-          <section className="rounded-2xl border border-cyan-500/30 bg-cyan-950/20 p-4 shadow-lg animate-fade-in shrink-0">
+          <section className="shrink-0 rounded-2xl border border-cyan-500/40 bg-cyan-950/25 p-3 shadow-lg animate-fade-in">
             <p className="text-sm font-bold text-cyan-300 flex items-center gap-1.5">
               <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#22d3ee]"></span>
               {locale === 'ko' ? '완료된 운동기록 편집 중' : 'Editing a finished workout'}
             </p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-300 font-medium">
+            <p className="mt-1 text-sm font-medium leading-5 text-slate-100">
               {locale === 'ko'
                 ? '세트, 운동, 메모를 수정하면 통계와 내보내기에 바로 반영됩니다.'
                 : 'Set, exercise, and memo edits update stats and exports immediately.'}
@@ -677,15 +677,15 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
         ) : null}
 
         {/* 세션 메모 영역 */}
-        <section className="rounded-2xl bg-slate-900/60 border border-slate-800/80 p-4 shadow-md shrink-0">
-          <label className="block text-xs font-bold text-slate-300">
+        <section className="shrink-0 rounded-2xl border border-slate-650 bg-slate-750/75 p-3 shadow-md">
+          <label className="block text-sm font-bold text-slate-100">
             {locale === 'ko' ? '📝 세션 전체 메모' : '📝 Overall Session Notes'}
             <textarea
               aria-label="Session memo"
               defaultValue={workout?.session.memo ?? ''}
               onBlur={(event) => void handleUpdateSessionMemo(event.target.value)}
               rows={2}
-              className="mt-2 w-full resize-none rounded-xl bg-slate-950/80 border border-slate-850 px-3.5 py-2.5 text-sm text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400/80 transition-all placeholder:text-slate-600 font-medium"
+              className="mt-1.5 w-full resize-none rounded-xl border border-slate-650 bg-slate-850 px-3 py-2 text-sm font-medium text-slate-100 outline-none transition-all placeholder:text-slate-350 focus:border-cyan-400/80 focus:ring-1 focus:ring-cyan-400/50"
               placeholder={locale === 'ko' ? '컨디션, 특이사항, 오늘 목표 등' : 'Energy level, injuries, or today\'s goals'}
             />
           </label>
@@ -693,7 +693,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
         {/* 운동검색/추가 폼 (isAdding일 때 스크롤 뷰 내 상단에 띄움) */}
         {isAdding && (
-          <section className="rounded-2xl bg-slate-900/80 border border-cyan-500/20 p-4 shadow-xl animate-fade-in shrink-0">
+          <section className="shrink-0 rounded-2xl border border-cyan-500/30 bg-slate-750/90 p-3 shadow-xl animate-fade-in">
             <ExerciseFinder
               ariaLabel="Search exercises to add"
               exercises={availableExercises}
@@ -707,7 +707,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
         )}
 
         {/* 개별 운동 세트 아코디언 카드 그룹 */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2.5">
           {logs.map((log, index) => {
             const isExpanded = !!expandedExercises[log.workoutExercise.id];
             const allCompleted = log.sets.length > 0 && log.sets.every((s) => s.isCompleted);
@@ -718,7 +718,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
               <section
                 key={log.workoutExercise.id}
                 id={`exercise-card-${log.workoutExercise.id}`}
-                className="rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md transition-all duration-300 overflow-hidden"
+                className="overflow-hidden rounded-2xl border border-slate-650 bg-slate-750/75 shadow-md transition-all duration-300"
               >
                 {/* 아코디언 헤더 */}
                 <button
@@ -729,24 +729,24 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                       [log.workoutExercise.id]: !prev[log.workoutExercise.id],
                     }));
                   }}
-                  className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-slate-800/30 transition-colors active:bg-slate-800/40"
+                  className="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-slate-650/40 active:bg-slate-650/60"
                 >
                   <div className="flex items-center gap-3 pr-4">
-                    <div className="w-10 h-10 shrink-0 flex items-center justify-center bg-slate-950 border border-slate-800 rounded-xl text-xl shadow-inner">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-850 text-xl shadow-inner">
                       {getExerciseIcon(log.exercise.defaultEmoji)}
                     </div>
                     <div className="flex flex-col gap-0.5">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <h2 className="text-[14px] font-extrabold text-white leading-tight">
+                        <h2 className="text-base font-extrabold leading-tight text-white">
                           {getExerciseName(log.exercise, locale)}
                         </h2>
                         {allCompleted && (
-                          <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black text-emerald-400 border border-emerald-500/25 shrink-0">
+                          <span className="shrink-0 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-black text-emerald-300">
                             {locale === 'ko' ? '완료' : 'Done'}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] font-bold text-cyan-400">
+                      <p className="text-xs font-bold text-cyan-200">
                         {completedCount} / {totalCount} Sets
                         {log.workoutExercise.totalVolumeKg > 0 && (
                           <span className="text-slate-300 font-semibold font-mono"> • {log.workoutExercise.totalVolumeKg.toLocaleString()}kg</span>
@@ -755,7 +755,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[10px] font-bold text-slate-400 tracking-wide uppercase">
+                    <span className="text-xs font-bold uppercase text-slate-200">
                       {isExpanded ? (locale === 'ko' ? '접기' : 'Hide') : (locale === 'ko' ? '열기' : 'Show')}
                     </span>
                     <svg
@@ -771,7 +771,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
                 {/* 아코디언 바디 */}
                 {isExpanded && (
-                  <div className="px-4 pb-4 pt-2 border-t border-slate-900 bg-slate-950/20">
+                  <div className="border-t border-slate-650 bg-slate-850/35 px-3 pb-3 pt-2">
                     {/* 운동조작 버튼(순서 이동, 삭제, 교체) */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-1.5">
@@ -822,11 +822,11 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                     </div>
 
                     {/* 지난 운동 기록 복사 영역 */}
-                    <div className="mt-3 rounded-xl bg-slate-950 border border-slate-900 px-3.5 py-3 shadow-inner">
+                    <div className="mt-2.5 rounded-xl border border-slate-650 bg-slate-850 px-3 py-2.5 shadow-inner">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">{locale === 'ko' ? '지난 기록' : 'Previous Log'}</p>
-                          <p className="mt-1 text-xs leading-relaxed text-slate-300 font-semibold">
+                          <p className="text-xs font-extrabold uppercase text-slate-200">{locale === 'ko' ? '지난 기록' : 'Previous Log'}</p>
+                          <p className="mt-1 text-sm font-semibold leading-5 text-slate-100">
                             {log.previousSummary ?? (locale === 'ko' ? '이전 완료 기록이 없습니다' : 'No previous completed record yet')}
                           </p>
                         </div>
@@ -851,14 +851,14 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                     </div>
 
                     {/* 운동 개별 메모 */}
-                    <label className="mt-3 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <label className="mt-2.5 block text-xs font-bold uppercase text-slate-200">
                       {locale === 'ko' ? '운동 개별 메모' : 'Exercise Notes'}
                       <input
                         aria-label={`${log.exercise.nameKo} memo`}
                         type="text"
                         defaultValue={log.workoutExercise.memo ?? ''}
                         onBlur={(event) => void handleUpdateExerciseMemo(log.workoutExercise.id, event.target.value)}
-                        className="mt-1.5 w-full rounded-xl bg-slate-950 border border-slate-850 px-3.5 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-cyan-400/50 focus:border-cyan-400/85 transition-all placeholder:text-slate-600 font-medium"
+                        className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 py-2 text-sm font-medium text-slate-100 outline-none transition-all placeholder:text-slate-350 focus:border-cyan-400/85 focus:ring-1 focus:ring-cyan-400/50"
                         placeholder={locale === 'ko' ? '그립, 자세, 기구 세팅 메모' : 'Grip type, machine setup, or form cues'}
                       />
                     </label>
@@ -879,7 +879,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                     )}
 
                     {/* 세트 리스트 */}
-                    <div className="mt-4 flex flex-col gap-2.5">
+                    <div className="mt-3 flex flex-col gap-2">
                       {log.sets.map((set, setIndex) => (
                         <WorkoutSetRow
                           key={set.id}
@@ -900,7 +900,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
                     <button
                       type="button"
                       onClick={() => void handleAddSet(log.workoutExercise.id)}
-                      className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-800 px-3 text-xs font-bold text-slate-300 hover:bg-slate-850 active:scale-95 transition-all duration-200"
+                      className="mt-2.5 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100 transition-all duration-200 hover:bg-slate-750 active:scale-95"
                     >
                       <Plus aria-hidden="true" size={15} />
                       <span>{locale === 'ko' ? '세트 추가' : 'Add Set'}</span>
@@ -913,10 +913,10 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
         </div>
 
         {/* 유산소 수동 입력 영역 */}
-        <section className="rounded-2xl bg-slate-900/60 border border-slate-800/80 p-4 shadow-md shrink-0">
+        <section className="shrink-0 rounded-2xl border border-slate-650 bg-slate-750/75 p-3 shadow-md">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">{t(locale, 'cardio')}</p>
+              <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'cardio')}</p>
               <h2 className="mt-0.5 text-base font-bold text-white">
                 {cardioRecords.length === 0 ? (locale === 'ko' ? '유산소 수동 입력' : 'Optional Cardio') : `${cardioRecords.length} ${t(locale, 'cardio')}`}
               </h2>
@@ -1189,7 +1189,7 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
       </div>
 
       {/* 4. 하단 고정 조작 푸터 영역 (shrink-0) */}
-      <footer className="mt-auto pt-3 pb-2 border-t border-slate-900 flex flex-col gap-2 shrink-0 bg-[#0b0f19]">
+      <footer className="mt-auto flex shrink-0 flex-col gap-2 border-t border-slate-650 bg-[#131b26] pb-1 pt-2.5">
         {isCompletedEditMode ? (
           <button
             type="button"
@@ -1408,12 +1408,12 @@ function WorkoutSetRow({
   };
 
   return (
-    <div className="rounded-xl bg-slate-950/40 border border-slate-900 px-3.5 py-3 shadow-inner">
+    <div className="rounded-xl border border-slate-650 bg-slate-850/85 px-3 py-2.5 shadow-inner">
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={() => void handleToggleSetType()}
-          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-black transition-all hover:brightness-110 active:scale-95 border ${typeBadges[currentType].className}`}
+          className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-black transition-all hover:brightness-110 active:scale-95 ${typeBadges[currentType].className}`}
           aria-label={`Toggle type for Set ${set.setNo}, current: ${currentType}`}
         >
           <span>{locale === 'ko' ? '세트' : 'Set'} {set.setNo}</span>
@@ -1423,21 +1423,21 @@ function WorkoutSetRow({
         </button>
         <div className="flex items-center gap-1">
           {!set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3 ? (
-            <span className="rounded-md bg-rose-500/10 px-2 py-0.5 text-[9px] font-black text-rose-400 border border-rose-500/20 shadow-[0_0_8px_rgba(244,63,94,0.1)]">
+            <span className="rounded-md border border-rose-500/20 bg-rose-500/10 px-2 py-0.5 text-[11px] font-black text-rose-300 shadow-[0_0_8px_rgba(244,63,94,0.1)]">
               Hard
             </span>
           ) : null}
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+      <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+        <label className="text-xs font-extrabold uppercase text-slate-200">
           kg
-          <div className="mt-1.5 grid grid-cols-[1.75rem_1fr_1.75rem] overflow-hidden rounded-xl bg-slate-900 border border-slate-800/80 focus-within:ring-1 focus-within:ring-cyan-400 focus-within:border-cyan-400 transition-all shadow-inner">
+          <div className="mt-1 grid grid-cols-[1.75rem_1fr_1.75rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 shadow-inner transition-all focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400">
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'weightKg', -2.5)}
-              className="min-h-10 text-sm font-bold text-slate-400 hover:text-slate-200 active:bg-slate-800 transition-all active:scale-90"
+              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-white active:scale-90 active:bg-slate-650"
             >
               -
             </button>
@@ -1457,30 +1457,30 @@ function WorkoutSetRow({
                 }
               }}
               placeholder="kg"
-              className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-white outline-none"
+              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-white outline-none"
             />
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'weightKg', 2.5)}
-              className="min-h-10 text-sm font-bold text-cyan-400 hover:text-cyan-300 active:bg-slate-800 transition-all active:scale-90"
+              className="min-h-10 text-base font-bold text-cyan-200 transition-all hover:text-cyan-100 active:scale-90 active:bg-slate-650"
             >
               +
             </button>
           </div>
           {previousSet && previousSet.weightKg > 0 && (
-            <span className="mt-1 block text-[9px] font-bold text-slate-500 normal-case leading-none truncate">
+            <span className="mt-1 block truncate text-[11px] font-bold normal-case leading-none text-slate-300">
               {locale === 'ko' ? `지난: ${previousSet.weightKg}kg` : `Prev: ${previousSet.weightKg}kg`}
             </span>
           )}
         </label>
 
-        <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+        <label className="text-xs font-extrabold uppercase text-slate-200">
           reps
-          <div className="mt-1.5 grid grid-cols-[1.75rem_1fr_1.75rem] overflow-hidden rounded-xl bg-slate-900 border border-slate-800/80 focus-within:ring-1 focus-within:ring-cyan-400 focus-within:border-cyan-400 transition-all shadow-inner">
+          <div className="mt-1 grid grid-cols-[1.75rem_1fr_1.75rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 shadow-inner transition-all focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400">
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'reps', -1)}
-              className="min-h-10 text-sm font-bold text-slate-400 hover:text-slate-200 active:bg-slate-800 transition-all active:scale-90"
+              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-white active:scale-90 active:bg-slate-650"
             >
               -
             </button>
@@ -1500,30 +1500,30 @@ function WorkoutSetRow({
                 }
               }}
               placeholder="reps"
-              className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-white outline-none"
+              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-white outline-none"
             />
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'reps', 1)}
-              className="min-h-10 text-sm font-bold text-cyan-400 hover:text-cyan-300 active:bg-slate-800 transition-all active:scale-90"
+              className="min-h-10 text-base font-bold text-cyan-200 transition-all hover:text-cyan-100 active:scale-90 active:bg-slate-650"
             >
               +
             </button>
           </div>
           {previousSet && previousSet.reps > 0 && (
-            <span className="mt-1 block text-[9px] font-bold text-slate-500 normal-case leading-none truncate">
+            <span className="mt-1 block truncate text-[11px] font-bold normal-case leading-none text-slate-300">
               {locale === 'ko' ? `지난: ${previousSet.reps}회` : `Prev: ${previousSet.reps} reps`}
             </span>
           )}
         </label>
 
-        <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+        <label className="text-xs font-extrabold uppercase text-slate-200">
           RIR
-          <div className="mt-1.5 grid grid-cols-[1.75rem_1fr_1.75rem] overflow-hidden rounded-xl bg-slate-900 border border-slate-800/80 focus-within:ring-1 focus-within:ring-cyan-400 focus-within:border-cyan-400 transition-all shadow-inner">
+          <div className="mt-1 grid grid-cols-[1.75rem_1fr_1.75rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 shadow-inner transition-all focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400">
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'rir', -1)}
-              className="min-h-10 text-sm font-bold text-slate-400 hover:text-slate-200 active:bg-slate-800 transition-all active:scale-90"
+              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-white active:scale-90 active:bg-slate-650"
             >
               -
             </button>
@@ -1543,32 +1543,32 @@ function WorkoutSetRow({
                 }
               }}
               placeholder="RIR"
-              className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-white outline-none"
+              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-white outline-none"
             />
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'rir', 1)}
-              className="min-h-10 text-sm font-bold text-cyan-400 hover:text-cyan-300 active:bg-slate-800 transition-all active:scale-90"
+              className="min-h-10 text-base font-bold text-cyan-200 transition-all hover:text-cyan-100 active:scale-90 active:bg-slate-650"
             >
               +
             </button>
           </div>
           {previousSet && previousSet.rir !== undefined && (
-            <span className="mt-1 block text-[9px] font-bold text-slate-500 normal-case leading-none truncate">
+            <span className="mt-1 block truncate text-[11px] font-bold normal-case leading-none text-slate-300">
               {locale === 'ko' ? `지난: RIR ${previousSet.rir}` : `Prev: RIR ${previousSet.rir}`}
             </span>
           )}
         </label>
       </div>
 
-      <div className="mt-3 grid grid-cols-5 gap-1.5">
+      <div className="mt-2.5 grid grid-cols-5 gap-1.5">
         <button
           type="button"
           onClick={() => void handleToggleWarmup(set)}
-          className={`min-h-9 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 ${
+          className={`min-h-9 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
             set.isWarmup
               ? 'bg-amber-400 text-slate-950 font-extrabold shadow-md shadow-amber-400/20'
-              : 'bg-slate-900 text-slate-400 border border-slate-850 hover:bg-slate-850 hover:text-slate-200'
+              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-white'
           }`}
         >
           {locale === 'ko' ? '준비' : 'Warm'}
@@ -1576,10 +1576,10 @@ function WorkoutSetRow({
         <button
           type="button"
           onClick={() => void handleToggleHardSet(set)}
-          className={`min-h-9 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 ${
+          className={`min-h-9 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
             !set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3
               ? 'bg-rose-500 text-white font-extrabold shadow-md shadow-rose-500/20'
-              : 'bg-slate-900 text-slate-400 border border-slate-850 hover:bg-slate-850 hover:text-slate-200'
+              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-white'
           }`}
         >
           Hard
@@ -1587,10 +1587,10 @@ function WorkoutSetRow({
         <button
           type="button"
           onClick={() => void handleSetChange(set, { isCompleted: !set.isCompleted })}
-          className={`min-h-9 rounded-xl text-xs font-black transition-all duration-300 active:scale-95 ${
+          className={`min-h-9 rounded-xl text-sm font-black transition-all duration-300 active:scale-95 ${
             set.isCompleted
               ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30'
-              : 'bg-slate-900 text-slate-400 border border-slate-850 hover:bg-slate-850 hover:text-slate-200'
+              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-white'
           }`}
         >
           {set.isCompleted ? (locale === 'ko' ? '완료' : 'Done') : (locale === 'ko' ? '기록' : 'Log')}
@@ -1599,7 +1599,7 @@ function WorkoutSetRow({
           type="button"
           onClick={() => void handleCopyPreviousSet(set, previousSet)}
           disabled={!previousSet}
-          className="flex min-h-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-850 text-slate-300 hover:bg-slate-800 hover:text-white disabled:text-slate-700 disabled:border-transparent disabled:bg-slate-950/20 transition-all active:scale-95"
+          className="flex min-h-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 hover:text-white disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
           aria-label="Copy previous values"
           title="Copy previous workout set"
         >
@@ -1609,7 +1609,7 @@ function WorkoutSetRow({
           type="button"
           onClick={() => void handleDeleteSet(set)}
           disabled={log.sets.length === 1}
-          className="flex min-h-9 items-center justify-center rounded-xl bg-slate-900 border border-slate-850 text-rose-400 hover:bg-rose-500/10 disabled:text-slate-700 disabled:border-transparent disabled:bg-slate-950/20 transition-all active:scale-95"
+          className="flex min-h-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-rose-300 transition-all hover:bg-rose-500/10 disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
           aria-label="Delete set"
         >
           <Trash2 aria-hidden="true" size={13} />
