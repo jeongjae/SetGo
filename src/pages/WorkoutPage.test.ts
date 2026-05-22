@@ -7,6 +7,7 @@ import {
   getElapsedMs,
   getLiveSessionElapsedMs,
   shouldConfirmWorkoutExerciseDelete,
+  shouldConfirmWorkoutSetDelete,
 } from './WorkoutPage';
 
 describe('workout elapsed time', () => {
@@ -93,6 +94,23 @@ describe('workout exercise deletion safety', () => {
     expect(shouldConfirmWorkoutExerciseDelete({
       workoutExercise: {},
       sets: [{ weightKg: 0, reps: 0, rir: undefined, isCompleted: false }],
+    })).toBe(false);
+  });
+});
+
+describe('workout set deletion safety', () => {
+  it('asks before deleting a set that has logged values', () => {
+    expect(shouldConfirmWorkoutSetDelete({
+      weightKg: 0,
+      reps: 0,
+      rir: 2,
+      isCompleted: false,
+    })).toBe(true);
+    expect(shouldConfirmWorkoutSetDelete({
+      weightKg: 0,
+      reps: 0,
+      rir: undefined,
+      isCompleted: false,
     })).toBe(false);
   });
 });
