@@ -7,11 +7,11 @@
 - GitHub repo: `https://github.com/jeongjae/SetGo.git`
 - Latest pushed commit before the local cleanup pass: `cdda6d8`
 - Latest local commits:
+  - `2233044 Confirm deleting logged cardio`
   - `e2b9aee Confirm deleting logged workout sets`
   - `b478a8e Confirm deleting logged exercises`
   - `8938d12 Reveal added workout exercise`
   - `c7a85a3 Fix workout exercise progress count`
-  - `5fabc76 Allow cardio only workout completion`
   - `7293e6c Polish mobile workout UI shell`
 - Development URL used in Codex browser: `http://localhost:5174/`
 - Deployment target: GitHub Pages.
@@ -60,7 +60,7 @@ Leave them alone unless the user asks to use or remove them.
 - Cardio-only workout sessions can be completed once at least one cardio record exists.
 - Workout header exercise progress now counts only exercises whose sets are all complete.
 - Newly added workout exercises open immediately and scroll into view for logging.
-- Deleting logged workout exercises or logged sets now asks for confirmation while empty placeholders still delete quickly.
+- Deleting logged workout exercises, sets, or cardio entries now asks for confirmation while empty placeholders still delete quickly.
 
 ## Verification Already Done
 
@@ -108,7 +108,7 @@ git log --oneline -5
 
 Continue SetGo development from `C:\Users\NB-24021500\Projects\SetGo\setgo-starter`.
 Read `AGENTS.md`, `README.md`, and `NEXT_SESSION.md` first.
-The latest local commit is `e2b9aee`.
+The latest local commit is `2233044`.
 Keep Tailwind v3, no backend/auth, local-first Dexie only.
 Do not commit the untracked backup/CSV files.
 Proceed with the next P2 polishing item and verify with tests/build/browser.
