@@ -67,10 +67,10 @@ Leave them alone unless the user asks to use or remove them.
 - Deleting logged workout exercises, sets, or cardio entries now asks for confirmation while empty placeholders still delete quickly.
 - The remaining UI readability pass now brightens dense secondary surfaces in workout logging, routine exercise editing, Calendar status chips, Export persistence hints, Stats mini charts, and the PWA status banner.
 - A final micro-polish pass enlarges Calendar cell status text, brightens Stats trend labels, and makes Export helper/error copy easier to scan.
-- The mockup-driven navigation conversion now adds persistent browse-mode bottom tabs for Today, Calendar, Stats, and More, while Workout retains its dedicated task footer.
+- The mockup-driven navigation conversion now adds persistent browse-mode bottom tabs for Today, Calendar, Stats, and Settings, while Workout retains its dedicated task footer.
 - Today now presents one prominent workout start/continue CTA above global navigation instead of a five-tile action grid.
 - Calendar now keeps its selected-date workout CTA visible above global navigation and allows the month/detail content to scroll together on shorter viewports.
-- More now provides a dedicated entry point for Routine Setup and Export/Restore, and nested screens preserve the More navigation context.
+- Settings now provides a dedicated entry point for Routine Setup and Export/Restore, and nested screens preserve the Settings navigation context.
 - Workout completion entered from Today returns to Today; Calendar-started sessions return to Calendar.
 
 ## Verification Already Done
@@ -110,7 +110,7 @@ Browser checks were also done for:
   - Today sticky workout CTA and global bottom navigation rendered correctly in the in-app browser.
   - Calendar global navigation and fixed primary action were verified, including the shorter-viewport body scroll correction.
   - Workout correctly switches to its task-specific footer without the browse navigation.
-  - Stats and More navigation active states were checked, including nested Routine Setup entry.
+  - Stats and Settings navigation active states were checked, including nested Routine Setup entry.
   - `npm.cmd test -- --run` and `npm.cmd run build` passed.
 - Today page load and fixed-shell height metrics.
 - Routine Setup body scrolling inside the fixed header shell.
