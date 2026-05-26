@@ -11,19 +11,21 @@ export function MorePage({ onNavigate }: MorePageProps) {
 
   return (
     <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3 pt-3 text-slate-100">
-      <header className="shrink-0 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
-        <p className="text-xs font-black uppercase text-cyan-300">{locale === 'ko' ? '더보기' : 'More'}</p>
-        <h1 className="mt-0.5 text-xl font-black text-white">
-          {locale === 'ko' ? '설정 및 데이터' : 'Settings and Data'}
-        </h1>
-        <p className="mt-1.5 text-sm font-semibold leading-5 text-slate-200">
+      <header className="flex shrink-0 items-center gap-2.5">
+        <div>
+          <p className="text-xs font-black uppercase text-cyan-300">{locale === 'ko' ? '더보기' : 'More'}</p>
+          <h1 className="text-xl font-black text-white">
+            {locale === 'ko' ? '설정 및 데이터' : 'Settings and Data'}
+          </h1>
+        </div>
+      </header>
+
+      <div className="inner-scroll min-h-0 space-y-2.5 py-0.5">
+        <p className="px-0.5 text-sm font-semibold leading-5 text-slate-200">
           {locale === 'ko'
             ? '루틴, 운동 라이브러리와 로컬 백업을 관리합니다.'
             : 'Manage routines, the exercise library, and local backups.'}
         </p>
-      </header>
-
-      <div className="inner-scroll min-h-0 space-y-2.5 py-0.5">
         <button
           type="button"
           onClick={() => onNavigate('routineSetup')}
