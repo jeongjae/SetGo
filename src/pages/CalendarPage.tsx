@@ -16,7 +16,6 @@ import type { CalendarPlanOverride, RoutineDay, WorkoutSession } from '../types'
 
 type CalendarPageProps = {
   initialSelectedDateKey?: string;
-  onBack: () => void;
   onSelectedDateChange?: (dateKey: string) => void;
   onStartWorkout: (routineDayId?: string, dateKey?: string, sessionId?: string, createNew?: boolean) => void;
 };
@@ -102,7 +101,6 @@ export function getCalendarExistingWorkoutStartArgs(
 
 export function CalendarPage({
   initialSelectedDateKey,
-  onBack,
   onSelectedDateChange,
   onStartWorkout,
 }: CalendarPageProps) {
@@ -255,24 +253,22 @@ export function CalendarPage({
   const selectedOverrideRoutineDayId = selectedPlanValue !== '__weekly' ? selectedPlanValue || undefined : undefined;
   const startWorkoutRoutineDayId = selectedOverrideRoutineDayId ?? selectedPlan?.routineDay?.id;
   const shouldContinueSelectedSession = selectedInProgressSession !== undefined;
+  const primaryActionLabel = shouldContinueSelectedSession
+    ? selectedDateKey === todayKey ? t(locale, 'continueTodayWorkout') : t(locale, 'continueWorkout')
+    : startWorkoutRoutineDayId
+      ? t(locale, 'startPlannedWorkout')
+      : t(locale, 'startFreeWorkout');
 
   return (
     <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
       <header className="flex shrink-0 items-center gap-2.5">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 shadow-md transition-all hover:bg-slate-650 active:scale-95"
-          aria-label="Back to Today"
-        >
-          <ChevronLeft aria-hidden="true" size={20} />
-        </button>
         <div>
           <p className="text-xs font-extrabold uppercase text-cyan-300">{t(locale, 'calendar')}</p>
           <h1 className="text-xl font-black text-white">{t(locale, 'monthlyWorkoutLog')}</h1>
         </div>
       </header>
 
+      <div className="inner-scroll min-h-0 space-y-2.5 pr-0.5">
       {/* 달력 영역: 높이 고정 (shrink-0) 및 톤업 스타일 */}
       <section className="shrink-0 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
         <div className="flex items-center justify-between gap-3">
@@ -381,7 +377,7 @@ export function CalendarPage({
       </section>
 
       {/* 운동 상세 정보 및 조작부: 내부 스크롤 적용 (inner-scroll) */}
-      <section className="inner-scroll min-h-0 space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
+      <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-650 pb-2">
           <div>
             <p className="text-xs font-black uppercase text-slate-200">{t(locale, 'planDate')}</p>
@@ -479,42 +475,17 @@ export function CalendarPage({
         ) : null}
 
         {!shouldContinueSelectedSession ? (
-          <div className="grid grid-cols-1 gap-2 pt-1 border-t border-slate-750 pt-3">
+          <div className="grid grid-cols-1 gap-2 border-t border-slate-750 pt-3">
             {startWorkoutRoutineDayId ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => onStartWorkout(...getCalendarNewWorkoutStartArgs(selectedDateKey, startWorkoutRoutineDayId))}
-                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 px-3 text-xs font-black text-slate-950 shadow-md shadow-cyan-400/20 active:scale-95 transition-all"
-                >
-                  <Play aria-hidden="true" size={16} />
-                  <span>
-                    {locale === 'ko' ? '계획 루틴으로 기록 추가' : 'Add planned routine record'}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onStartWorkout(...getCalendarNewWorkoutStartArgs(selectedDateKey))}
-                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-850 px-3 text-xs font-black text-slate-200 active:scale-95 transition-all"
-                >
-                  <Play aria-hidden="true" size={16} />
-                  <span>
-                    {locale === 'ko' ? '자유 운동으로 기록 추가' : 'Add free workout record'}
-                  </span>
-                </button>
-              </>
-            ) : (
               <button
                 type="button"
                 onClick={() => onStartWorkout(...getCalendarNewWorkoutStartArgs(selectedDateKey))}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 px-3 text-xs font-black text-slate-950 shadow-md shadow-cyan-400/20 active:scale-95 transition-all"
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-black text-slate-100 transition-all hover:bg-slate-700 active:scale-95"
               >
-                <Play aria-hidden="true" size={16} />
-                <span>
-                  {locale === 'ko' ? '자유 운동으로 기록 추가' : 'Add free workout record'}
-                </span>
+                <Play aria-hidden="true" size={15} />
+                <span>{locale === 'ko' ? '자유 운동으로 기록 추가' : 'Add free workout record'}</span>
               </button>
-            )}
+            ) : null}
             {(selectedPlan || selectedDateKey < todayKey) && (
               <button
                 type="button"
@@ -527,29 +498,24 @@ export function CalendarPage({
               </button>
             )}
           </div>
-        ) : (
-          <div className="pt-1 border-t border-slate-750 pt-3">
-            <button
-              type="button"
-              onClick={() => onStartWorkout(...(
-                shouldContinueSelectedSession
-                  ? getCalendarExistingWorkoutStartArgs(selectedDateKey, selectedInProgressSession.session)
-                  : getCalendarNewWorkoutStartArgs(selectedDateKey, startWorkoutRoutineDayId)
-              ))}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 px-3 text-xs font-black text-slate-950 shadow-md shadow-cyan-400/20 active:scale-95 transition-all"
-            >
-              <Play aria-hidden="true" size={16} />
-              <span>
-                {shouldContinueSelectedSession
-                  ? selectedDateKey === todayKey ? t(locale, 'continueTodayWorkout') : t(locale, 'continueWorkout')
-                  : startWorkoutRoutineDayId
-                    ? t(locale, 'startPlannedWorkout')
-                    : t(locale, 'startFreeWorkout')}
-              </span>
-            </button>
-          </div>
-        )}
+        ) : null}
       </section>
+      </div>
+
+      <footer className="shrink-0 border-t border-slate-650 pt-2.5">
+        <button
+          type="button"
+          onClick={() => onStartWorkout(...(
+            shouldContinueSelectedSession
+              ? getCalendarExistingWorkoutStartArgs(selectedDateKey, selectedInProgressSession.session)
+              : getCalendarNewWorkoutStartArgs(selectedDateKey, startWorkoutRoutineDayId)
+          ))}
+          className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-455 px-3 text-sm font-black text-slate-955 shadow-lg shadow-cyan-400/20 transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-95"
+        >
+          <Play aria-hidden="true" size={18} />
+          <span>{primaryActionLabel}</span>
+        </button>
+      </footer>
     </section>
   );
 }

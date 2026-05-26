@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, Download, Dumbbell, Play, Settings } from 'lucide-react';
+import { Dumbbell, Play } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { db } from '../db/db';
 import {
@@ -11,30 +11,15 @@ import {
 import { seedDefaultExercises } from '../db/seed';
 import { getRecentWorkoutSummaries, getTodayWorkout, type WorkoutSummary } from '../db/workouts';
 import { getExerciseName } from '../domain/exercises';
-import { exerciseCountLabel, getStoredLocale, t, workoutStatusLabel, type MessageKey } from '../i18n/i18n';
-import type { AppView } from '../app/App';
+import { exerciseCountLabel, getStoredLocale, t, workoutStatusLabel } from '../i18n/i18n';
 import type { Routine, RoutineDay, WorkoutSession } from '../types';
 
 type TodayPageProps = {
   refreshKey: number;
-  onNavigate: (view: AppView) => void;
   onStartWorkout: (routineDayId?: string) => void;
 };
 
-const actions: Array<{
-  labelKey: MessageKey;
-  icon: typeof Play;
-  primary?: boolean;
-  view?: AppView;
-}> = [
-  { labelKey: 'startWorkout', icon: Play, primary: true },
-  { labelKey: 'calendar', icon: CalendarDays, view: 'calendar' },
-  { labelKey: 'stats', icon: BarChart3, view: 'stats' },
-  { labelKey: 'settings', icon: Settings, view: 'routineSetup' },
-  { labelKey: 'export', icon: Download, view: 'export' },
-];
-
-export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageProps) {
+export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const [activeRoutine, setActiveRoutine] = useState<Routine | undefined>();
   const [routineDays, setRoutineDays] = useState<RoutineDay[]>([]);
   const [inProgressSession, setInProgressSession] = useState<WorkoutSession | undefined>();
@@ -117,11 +102,11 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
     : isTodayRestDay
       ? t(locale, 'restDay')
       : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
-  const actionLabel = (labelKey: MessageKey) => {
-    if (labelKey === 'startWorkout') return locale === 'ko' ? '운동일지' : 'Workout Log';
-    if (labelKey === 'export') return locale === 'ko' ? '가져오기/내보내기' : 'Export/Restore';
-    return t(locale, labelKey);
-  };
+  const workoutCtaLabel = inProgressSession
+    ? t(locale, 'continueTodayWorkout')
+    : selectedRoutineDayId
+      ? t(locale, 'startPlannedWorkout')
+      : t(locale, 'startFreeWorkout');
 
   return (
     <section className="viewport-locked mx-auto max-w-md gap-2.5 p-3.5">
@@ -244,35 +229,16 @@ export function TodayPage({ refreshKey, onNavigate, onStartWorkout }: TodayPageP
         </section>
       </div>
 
-      {/* Grid of Dynamic Premium Navigation Actions */}
-      <nav aria-label="Today actions" className="grid shrink-0 grid-cols-2 gap-2">
-        {actions.map(({ labelKey, icon: Icon, primary, view }) => (
-          <button
-            key={labelKey}
-            type="button"
-            onClick={() => {
-              if (labelKey === 'startWorkout') {
-                onStartWorkout(selectedRoutineDayId);
-                return;
-              }
-
-              if (view) onNavigate(view);
-            }}
-            className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl border px-3 text-sm font-bold shadow-lg transition-all active:scale-95 ${
-              primary
-                ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 border-cyan-400 text-slate-950 shadow-cyan-500/20 hover:opacity-95'
-                : 'bg-slate-750/90 border-slate-650 text-slate-100 hover:bg-slate-650 hover:text-white'
-            }`}
-          >
-            <Icon aria-hidden="true" size={20} className={primary ? 'animate-pulse shrink-0' : 'shrink-0'} />
-            <span className="text-sm">
-              {labelKey === 'startWorkout' && !inProgressSession && isTodayRestDay && !selectedRoutineDayId
-                ? t(locale, 'startFreeWorkout')
-                : actionLabel(labelKey)}
-            </span>
-          </button>
-        ))}
-      </nav>
+      <footer className="shrink-0 border-t border-slate-650 pt-2.5">
+        <button
+          type="button"
+          onClick={() => onStartWorkout(selectedRoutineDayId)}
+          className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-455 px-4 text-base font-black text-slate-955 shadow-lg shadow-cyan-400/20 transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-95"
+        >
+          <Play aria-hidden="true" size={19} />
+          <span>{workoutCtaLabel}</span>
+        </button>
+      </footer>
     </section>
   );
 }

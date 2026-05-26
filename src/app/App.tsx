@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { PwaStatus } from './PwaStatus';
+import { AppBottomNav } from './AppBottomNav';
 import { CalendarPage } from '../pages/CalendarPage';
 import { ExportPage } from '../pages/ExportPage';
+import { MorePage } from '../pages/MorePage';
 import { RoutineSetupPage } from '../pages/RoutineSetupPage';
 import { StatsPage } from '../pages/StatsPage';
 import { TodayPage } from '../pages/TodayPage';
@@ -10,8 +12,8 @@ import { getOrCreateTodayWorkout, getOrCreateWorkoutForDate } from '../db/workou
 import { formatDateKey } from '../utils/date';
 import { requestPersistentStorage } from '../db/db';
 
-export type AppView = 'today' | 'calendar' | 'routineSetup' | 'export' | 'stats' | 'workout';
-type WorkoutReturnView = 'today' | 'calendar' | 'export';
+export type AppView = 'today' | 'calendar' | 'stats' | 'more' | 'routineSetup' | 'export' | 'workout';
+type WorkoutReturnView = 'today' | 'calendar';
 
 function describeStartupError(error: unknown) {
   if (error instanceof Error) {
@@ -42,7 +44,7 @@ export function App() {
 
   function handleWorkoutCompleted() {
     setRefreshKey((current) => current + 1);
-    setView(workoutReturnView === 'calendar' ? 'calendar' : 'export');
+    setView(workoutReturnView === 'calendar' ? 'calendar' : 'today');
   }
 
   function handleWorkoutSkipped() {
@@ -54,7 +56,7 @@ export function App() {
     setView(workoutReturnView === 'calendar' ? 'calendar' : 'today');
   }
 
-  function handleTodayNavigate(nextView: AppView) {
+  function handleNavigate(nextView: AppView) {
     if (nextView === 'calendar') {
       setCalendarSelectedDateKey(formatDateKey(new Date()));
     }
@@ -89,28 +91,30 @@ export function App() {
   }
 
   const content = view === 'routineSetup'
-    ? <RoutineSetupPage onBack={() => setView('today')} onRoutineSaved={handleRoutineSaved} />
+    ? <RoutineSetupPage onBack={() => setView('more')} onRoutineSaved={handleRoutineSaved} />
     : view === 'calendar'
       ? (
         <CalendarPage
           initialSelectedDateKey={calendarSelectedDateKey}
-          onBack={() => setView('today')}
           onSelectedDateChange={setCalendarSelectedDateKey}
           onStartWorkout={(routineDayId, dateKey, sessionId, createNew) => void handleStartWorkout(routineDayId, dateKey, sessionId, createNew)}
         />
       )
       : view === 'export'
-        ? <ExportPage onBack={() => setView('today')} />
+        ? <ExportPage onBack={() => setView('more')} />
         : view === 'stats'
-          ? <StatsPage onBack={() => setView('today')} />
+          ? <StatsPage />
+          : view === 'more'
+            ? <MorePage onNavigate={handleNavigate} />
           : view === 'workout'
             ? <WorkoutPage sessionId={activeWorkoutSessionId} onBack={handleWorkoutBack} onCompleted={handleWorkoutCompleted} onSkipped={handleWorkoutSkipped} />
-            : <TodayPage refreshKey={refreshKey} onNavigate={handleTodayNavigate} onStartWorkout={(routineDayId) => void handleStartWorkout(routineDayId)} />;
+            : <TodayPage refreshKey={refreshKey} onStartWorkout={(routineDayId) => void handleStartWorkout(routineDayId)} />;
 
   return (
     <main className="app-shell bg-[#131b26] text-slate-100">
       <PwaStatus />
       {content}
+      {view !== 'workout' ? <AppBottomNav activeView={view} onNavigate={handleNavigate} /> : null}
     </main>
   );
 }
