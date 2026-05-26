@@ -71,6 +71,7 @@ Leave them alone unless the user asks to use or remove them.
 - Today now presents one prominent workout start/continue CTA above global navigation instead of a five-tile action grid.
 - Calendar now keeps its selected-date workout CTA visible above global navigation and allows the month/detail content to scroll together on shorter viewports.
 - Settings now provides a dedicated entry point for Routine Setup and Export/Restore, and nested screens preserve the Settings navigation context.
+- Settings now promotes language switching to a top-level control beside Routine Setup and Export/Restore; the duplicate control was removed from Routine Setup.
 - Workout completion entered from Today returns to Today; Calendar-started sessions return to Calendar.
 
 ## Verification Already Done

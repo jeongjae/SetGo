@@ -30,6 +30,7 @@ function describeStartupError(error: unknown) {
 export function App() {
   const [view, setView] = useState<AppView>('today');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [, setLocaleRefreshKey] = useState(0);
 
   useEffect(() => {
     void requestPersistentStorage();
@@ -105,7 +106,7 @@ export function App() {
         : view === 'stats'
           ? <StatsPage />
           : view === 'more'
-            ? <MorePage onNavigate={handleNavigate} />
+            ? <MorePage onNavigate={handleNavigate} onLocaleChanged={() => setLocaleRefreshKey((current) => current + 1)} />
           : view === 'workout'
             ? <WorkoutPage sessionId={activeWorkoutSessionId} onBack={handleWorkoutBack} onCompleted={handleWorkoutCompleted} onSkipped={handleWorkoutSkipped} />
             : <TodayPage refreshKey={refreshKey} onStartWorkout={(routineDayId) => void handleStartWorkout(routineDayId)} />;
