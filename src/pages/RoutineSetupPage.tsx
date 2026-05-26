@@ -14,7 +14,7 @@ import {
   labelForCategory,
   labelForStage,
 } from '../domain/exercises';
-import { exerciseCountLabel, getStoredLocale, saveStoredLocale, t, type AppLocale } from '../i18n/i18n';
+import { exerciseCountLabel, getStoredLocale, t } from '../i18n/i18n';
 import {
   activateRoutineTemplate,
   addExerciseToRoutineDay,
@@ -81,7 +81,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
   const [newExerciseNameEn, setNewExerciseNameEn] = useState('');
   const [newExerciseCategory, setNewExerciseCategory] = useState<ExerciseCategory>('chest');
   const [editingExerciseId, setEditingExerciseId] = useState<string | undefined>();
-  const [locale, setLocale] = useState<AppLocale>(() => getStoredLocale());
+  const [locale] = useState(() => getStoredLocale());
   const [setupTab, setSetupTab] = useState<SetupTab>('routine');
   const [resetStatus, setResetStatus] = useState<string | undefined>();
   const initialRoutinePlanSnapshot = useRef<RoutinePlanSnapshot | undefined>(undefined);
@@ -336,35 +336,6 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
 
       {/* 2. 중앙 본문 스크롤 영역 (flex-1 overflow-y-auto overscroll-contain) */}
       <div className="inner-scroll -mx-2 flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-2 py-2.5 scrollbar-none">
-        {/* 언어 전환 바 */}
-        <section className="flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3 shadow-md">
-          <div>
-            <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'language')}</p>
-            <p className="mt-0.5 text-sm font-bold text-slate-100">
-              {locale === 'ko' ? '한국어 (KR)' : 'English (US)'}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-650 bg-slate-850 p-1">
-            {(['ko', 'en'] as AppLocale[]).map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => {
-                  saveStoredLocale(item);
-                  setLocale(item);
-                }}
-                className={`min-h-7 rounded-md px-2.5 text-xs font-extrabold transition-all active:scale-95 ${
-                  locale === item
-                    ? 'bg-cyan-400 text-slate-950 font-black shadow-sm'
-                    : 'text-slate-100 hover:bg-slate-750 hover:text-white'
-                }`}
-              >
-                {item === 'ko' ? '한국어' : 'EN'}
-              </button>
-            ))}
-          </div>
-        </section>
-
         {/* 탭: 루틴 설정 */}
         {setupTab === 'routine' && (
           <div className="flex flex-col gap-2.5">

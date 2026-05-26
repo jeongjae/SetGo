@@ -110,7 +110,8 @@ Changes from current:
 ### Settings
 
 - A new browse-mode destination replacing direct Settings/Export tiles from Today.
-- Sections: Routine and weekly schedule, Exercise library, Data export/restore, Language, PWA/storage status.
+- Top-level actions: Routine and weekly schedule, Data export/restore, and direct Language switching.
+- Supporting status: local storage/PWA status; Exercise library remains within Routine Setup.
 - Routine editing may open a nested detail surface; global navigation stays visible when practical.
 
 ## Component Model
@@ -211,6 +212,7 @@ Implemented in the current working tree:
 
 - Added browse-mode bottom navigation for Today, Calendar, Stats and Settings.
 - Added a Settings hub for Routine Setup and Export/Restore entry.
+- Promoted Language to a direct top-level Settings control and removed the duplicate language switch from Routine Setup.
 - Replaced Today's five-tile action grid with one persistent workout CTA.
 - Moved Calendar's primary start/continue action into a persistent bottom CTA.
 - Made Calendar month content and selected-day detail scroll together on shorter viewports while keeping the CTA visible.
