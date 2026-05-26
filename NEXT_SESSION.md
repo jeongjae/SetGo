@@ -67,6 +67,11 @@ Leave them alone unless the user asks to use or remove them.
 - Deleting logged workout exercises, sets, or cardio entries now asks for confirmation while empty placeholders still delete quickly.
 - The remaining UI readability pass now brightens dense secondary surfaces in workout logging, routine exercise editing, Calendar status chips, Export persistence hints, Stats mini charts, and the PWA status banner.
 - A final micro-polish pass enlarges Calendar cell status text, brightens Stats trend labels, and makes Export helper/error copy easier to scan.
+- The mockup-driven navigation conversion now adds persistent browse-mode bottom tabs for Today, Calendar, Stats, and More, while Workout retains its dedicated task footer.
+- Today now presents one prominent workout start/continue CTA above global navigation instead of a five-tile action grid.
+- Calendar now keeps its selected-date workout CTA visible above global navigation and allows the month/detail content to scroll together on shorter viewports.
+- More now provides a dedicated entry point for Routine Setup and Export/Restore, and nested screens preserve the More navigation context.
+- Workout completion entered from Today returns to Today; Calendar-started sessions return to Calendar.
 
 ## Verification Already Done
 
@@ -101,6 +106,12 @@ Browser checks were also done for:
 - May 22 micro-polish pass:
   - Calendar cell plan/status labels and the month legend were rechecked after the last size increase.
   - Export first viewport was rechecked after enlarging the copy action and backup helper text.
+- May 26 mockup-aligned navigation pass:
+  - Today sticky workout CTA and global bottom navigation rendered correctly in the in-app browser.
+  - Calendar global navigation and fixed primary action were verified, including the shorter-viewport body scroll correction.
+  - Workout correctly switches to its task-specific footer without the browse navigation.
+  - Stats and More navigation active states were checked, including nested Routine Setup entry.
+  - `npm.cmd test -- --run` and `npm.cmd run build` passed.
 - Today page load and fixed-shell height metrics.
 - Routine Setup body scrolling inside the fixed header shell.
 - Calendar date detail scrolling inside the fixed month view.
@@ -109,16 +120,15 @@ Browser checks were also done for:
 
 ## Suggested Next Development Order
 
-1. Continue P2 polishing around workout logging usability.
-2. Run the remaining real-device UAT on iPhone Safari / Home Screen after GitHub Pages deploy:
+1. Run the remaining real-device UAT on iPhone Safari / Home Screen after GitHub Pages deploy:
    - horizontal movement should be reduced or gone.
    - if still present, inspect individual wide elements such as tables, `<pre>`, SVG charts, or chip rows.
    - verify keyboard entry, Add to Home Screen relaunch, and offline shell from the installed PWA.
-3. Decide how AI comments should work long term:
+2. Decide how AI comments should work long term:
    - current version is local deterministic summary only.
    - mobile works offline because it does not call an API.
    - future improvement can add optional user-triggered external AI export/prompt flow.
-4. Continue expanding regression coverage when a P2 polish item touches a shared workout or import path.
+3. Continue expanding regression coverage when a further change touches a shared workout or import path.
 
 ## Useful Commands
 

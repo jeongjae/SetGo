@@ -1655,7 +1655,7 @@ function WorkoutSetRow({
               : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-white'
           }`}
         >
-          {set.isCompleted ? (locale === 'ko' ? '완료' : 'Done') : (locale === 'ko' ? '기록' : 'Log')}
+          {set.isCompleted ? (locale === 'ko' ? '완료됨' : 'Done') : (locale === 'ko' ? '완료' : 'Complete')}
         </button>
         <button
           type="button"

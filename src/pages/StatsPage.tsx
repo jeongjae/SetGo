@@ -1,14 +1,10 @@
-import { AlertTriangle, BarChart3, ChevronLeft } from 'lucide-react';
+import { AlertTriangle, BarChart3 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { db } from '../db/db';
 import { getExerciseCategories, getExerciseName, isWarmupOnlyExercise } from '../domain/exercises';
 import { getStoredLocale, t, tf } from '../i18n/i18n';
 import { formatDateKey } from '../utils/date';
 import type { ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
-
-type StatsPageProps = {
-  onBack: () => void;
-};
 
 type Locale = 'ko' | 'en';
 type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulder' | 'biceps' | 'triceps' | 'core';
@@ -644,7 +640,7 @@ function MiniSparkBars({ history }: { history: ExercisePerformance['oneRmHistory
   );
 }
 
-export function StatsPage({ onBack }: StatsPageProps) {
+export function StatsPage() {
   const [locale] = useState<Locale>(() => getStoredLocale());
   const [stats, setStats] = useState<StatsView>(() => buildEmptyStats(locale));
   
@@ -723,14 +719,6 @@ export function StatsPage({ onBack }: StatsPageProps) {
   return (
     <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
       <header className="flex shrink-0 items-center gap-2.5">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 shadow-md transition-all hover:bg-slate-650 active:scale-95"
-          aria-label="Back to Today"
-        >
-          <ChevronLeft aria-hidden="true" size={20} />
-        </button>
         <div>
           <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'stats')}</p>
           <h1 className="text-xl font-black text-white">{c.title}</h1>
