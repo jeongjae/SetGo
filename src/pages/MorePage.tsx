@@ -13,7 +13,7 @@ export function MorePage({ onNavigate }: MorePageProps) {
     <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3 pt-3 text-slate-100">
       <header className="flex shrink-0 items-center gap-2.5">
         <div>
-          <p className="text-xs font-black uppercase text-cyan-300">{locale === 'ko' ? '더보기' : 'More'}</p>
+          <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'settings')}</p>
           <h1 className="text-xl font-black text-white">
             {locale === 'ko' ? '설정 및 데이터' : 'Settings and Data'}
           </h1>

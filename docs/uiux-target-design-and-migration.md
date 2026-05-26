@@ -24,7 +24,7 @@ Why:
 
 Use two bottom-area modes:
 
-1. Browse mode: persistent global bottom navigation on Today, Calendar, Stats, and More.
+1. Browse mode: persistent global bottom navigation on Today, Calendar, Stats, and Settings.
 2. Workout mode: replace global navigation with a workout-specific action bar while logging.
 
 This avoids accidental navigation during a workout while retaining fast access in the rest of the app.
@@ -40,7 +40,7 @@ Four destinations are persistent in browse mode:
 | Today | Today's plan and resume/start action | `today` |
 | Calendar | Monthly records and selected-day action | `calendar` |
 | Stats | Training trends and analysis | `stats` |
-| More | Routine setup, exercise library, export/restore, language and storage | new container around `routineSetup` and `export` |
+| Settings | Routine setup, exercise library, export/restore, language and storage | new container around `routineSetup` and `export` |
 
 `Workout` is not a global tab. It is a focused task entered through a primary action.
 
@@ -63,13 +63,13 @@ Four destinations are persistent in browse mode:
 - Planned exercise preview as a concise list, not a large tag cloud.
 - Recent workout summary card.
 - One prominent sticky CTA immediately above global navigation: `Start workout` or `Continue workout`.
-- Global bottom navigation: Today, Calendar, Stats, More.
+- Global bottom navigation: Today, Calendar, Stats, Settings.
 
 Changes from current:
 
 - Remove the 2-column five-button action grid.
 - Move Calendar, Stats, and Settings access into global navigation.
-- Place Export/Restore under More.
+- Place Export/Restore under Settings.
 
 ### Calendar
 
@@ -107,7 +107,7 @@ Changes from current:
 - Summary KPI strip, trend card, muscle analysis and insights scroll above navigation.
 - AI/export action remains a contextual secondary button in content.
 
-### More
+### Settings
 
 - A new browse-mode destination replacing direct Settings/Export tiles from Today.
 - Sections: Routine and weekly schedule, Exercise library, Data export/restore, Language, PWA/storage status.
@@ -135,27 +135,27 @@ Introduce these presentation components without changing Dexie/domain behavior:
 | Calendar | CTA is inside scrollable selected-day panel | Promote contextual CTA to sticky bottom area |
 | Workout | Dedicated fixed footer exists | Refine action hierarchy; keep focused mode |
 | Stats | Back-to-Today only | Add global navigation |
-| Routine Setup | Back-to-Today and internal tabs | Enter via More and decide nested footer behavior |
-| Export | Back-to-Today only | Move into More/Data section or retain nested page with global navigation |
+| Routine Setup | Back-to-Today and internal tabs | Enter via Settings and decide nested footer behavior |
+| Export | Back-to-Today only | Move into Settings/Data section or retain nested page with global navigation |
 
 ## Migration Plan
 
 ### Phase 0: Baseline And Decisions
 
 - Capture current mobile screenshots for Today, Calendar, Workout, Stats and Export.
-- Confirm the four browse-mode tabs and whether Routine Setup opens inline under More or as a nested route.
+- Confirm the four browse-mode tabs and whether Routine Setup opens inline under Settings or as a nested route.
 - Add focused tests for navigation-state preservation when returning from Workout.
 
 Deliverable: accepted target navigation map and baseline captures.
 
 ### Phase 1: App Shell And Browse Navigation
 
-- Extend `AppView` with a `more` browse destination or create a More container.
+- Extend `AppView` with a `more` browse destination or create a Settings container.
 - Add `AppBottomNav` at the app-shell level for non-workout views.
 - Reserve safe-area-aware content space so scrollable content never hides behind the nav.
-- Route Settings/Routine and Export entry through More.
+- Route Routine and Export entry through Settings.
 
-Deliverable: Today, Calendar, Stats and More are reachable through a stable bottom nav.
+Deliverable: Today, Calendar, Stats and Settings are reachable through a stable bottom nav.
 
 ### Phase 2: Today Conversion
 
@@ -183,11 +183,11 @@ Deliverable: a calendar that always exposes the relevant workout action without 
 
 Deliverable: faster logging workflow consistent with the target mockup.
 
-### Phase 5: Stats And More Consolidation
+### Phase 5: Stats And Settings Consolidation
 
 - Apply browse navigation to Stats.
-- Build the More landing surface.
-- Place Routine Setup, Exercise Library, Export/Restore and storage/PWA status under More.
+- Build the Settings landing surface.
+- Place Routine Setup, Exercise Library, Export/Restore and storage/PWA status under Settings.
 - Avoid forcing the user back through Today for section switching.
 
 Deliverable: complete browse-mode information architecture.
@@ -209,8 +209,8 @@ Start with the shared shell and navigation before detailed visual polish. The cu
 
 Implemented in the current working tree:
 
-- Added browse-mode bottom navigation for Today, Calendar, Stats and More.
-- Added a More hub for Routine Setup and Export/Restore entry.
+- Added browse-mode bottom navigation for Today, Calendar, Stats and Settings.
+- Added a Settings hub for Routine Setup and Export/Restore entry.
 - Replaced Today's five-tile action grid with one persistent workout CTA.
 - Moved Calendar's primary start/continue action into a persistent bottom CTA.
 - Made Calendar month content and selected-day detail scroll together on shorter viewports while keeping the CTA visible.
@@ -221,7 +221,7 @@ Verified:
 
 - `npm.cmd test -- --run`
 - `npm.cmd run build`
-- In-app browser checks for Today, Calendar, Workout, Stats, More and nested Routine Setup navigation state.
+- In-app browser checks for Today, Calendar, Workout, Stats, Settings and nested Routine Setup navigation state.
 
 Remaining release validation:
 

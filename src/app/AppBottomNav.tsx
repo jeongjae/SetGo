@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, Home, Menu } from 'lucide-react';
+import { BarChart3, CalendarDays, Home, Settings } from 'lucide-react';
 import type { AppView } from './App';
 import { getStoredLocale, t } from '../i18n/i18n';
 
@@ -13,7 +13,7 @@ const navigationItems = [
   { view: 'today', icon: Home, labelKey: 'today' },
   { view: 'calendar', icon: CalendarDays, labelKey: 'calendar' },
   { view: 'stats', icon: BarChart3, labelKey: 'stats' },
-  { view: 'more', icon: Menu, labelKey: 'more' },
+  { view: 'more', icon: Settings, labelKey: 'settings' },
 ] as const;
 
 function browseActiveView(view: AppView): BrowseView {
