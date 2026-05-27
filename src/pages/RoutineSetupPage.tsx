@@ -448,6 +448,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
               <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'activeRoutine')}</p>
               {activeRoutine ? (
                 <input
+                  key={activeRoutine.id}
                   aria-label="Active routine name"
                   type="text"
                   defaultValue={activeRoutineName}
@@ -924,6 +925,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                 {/* 루틴 요일 이름 수정 인풋 */}
                 <div className="flex items-center justify-between gap-2.5">
                   <input
+                    key={selectedDay.routineDay.id}
                     aria-label="Routine day name"
                     type="text"
                     defaultValue={selectedDay.routineDay.name}
