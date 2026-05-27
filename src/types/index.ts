@@ -17,7 +17,8 @@ export type RoutineSplitType =
   | 'push_pull_assist_3'
   | 'upper_lower_4'
   | 'full_body_3'
-  | 'classic_5';
+  | 'classic_5'
+  | 'custom';
 
 export type WorkoutStatus = 'planned' | 'in_progress' | 'completed' | 'skipped';
 

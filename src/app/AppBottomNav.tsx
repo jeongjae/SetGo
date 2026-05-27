@@ -17,7 +17,7 @@ const navigationItems = [
 ] as const;
 
 function browseActiveView(view: AppView): BrowseView {
-  return view === 'routineSetup' || view === 'export' ? 'more' : view as BrowseView;
+  return view === 'routines' || view === 'exercises' || view === 'weeklyPlan' || view === 'export' ? 'more' : view as BrowseView;
 }
 
 export function AppBottomNav({ activeView, onNavigate }: AppBottomNavProps) {
