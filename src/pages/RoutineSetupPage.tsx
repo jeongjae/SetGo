@@ -73,6 +73,7 @@ type RoutinePlanSnapshot = {
 export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onReviewCalendar }: RoutineSetupPageProps) {
   const [activeRoutine, setActiveRoutine] = useState<Routine | undefined>();
   const [savedRoutines, setSavedRoutines] = useState<Routine[]>([]);
+  const [showRoutineTemplates, setShowRoutineTemplates] = useState(false);
   const [savingSplitType, setSavingSplitType] = useState<RoutineSplitType | undefined>();
   const [dayPlans, setDayPlans] = useState<RoutineDayPlan[]>([]);
   const [exercises, setExercises] = useState<ExerciseMaster[]>([]);
@@ -149,6 +150,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
     setActiveRoutine(routine);
     setSelectedDayId(undefined);
     setSavingSplitType(undefined);
+    setShowRoutineTemplates(false);
     onRoutineSaved();
     await loadSetup(true);
   }
@@ -157,6 +159,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
     const routine = await createCustomRoutine(locale === 'ko' ? '나의 루틴' : 'My Routine');
     setActiveRoutine(routine);
     setSelectedDayId(undefined);
+    setShowRoutineTemplates(false);
     onRoutineSaved();
     await loadSetup(true);
   }
@@ -444,93 +447,76 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
         {/* 탭: 루틴 설정 */}
         {setupTab === 'routine' && (
           <div className="flex flex-col gap-2.5">
-            <section className="shrink-0 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-md">
-              <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'activeRoutine')}</p>
-              {activeRoutine ? (
-                <input
-                  key={activeRoutine.id}
-                  aria-label="Active routine name"
-                  type="text"
-                  defaultValue={activeRoutineName}
-                  onBlur={(event) => void handleUpdateRoutineName(event.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 text-base font-bold text-white outline-none transition-all focus:ring-1 focus:ring-cyan-400"
-                />
-              ) : (
-                <h2 className="mt-1 text-sm font-bold text-slate-200">{t(locale, 'noActiveRoutine')}</h2>
-              )}
-            </section>
-
-            {savedRoutines.length > 0 ? (
-              <section className="space-y-2 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5">
-                <p className="text-xs font-extrabold uppercase text-slate-200">
-                  {locale === 'ko' ? '저장된 루틴 선택' : 'Saved routines'}
-                </p>
-                <div className="grid gap-2">
+            <section className="shrink-0 space-y-2.5 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-md">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'activeRoutine')}</p>
+                <button
+                  type="button"
+                  onClick={() => void handleCreateCustomRoutine()}
+                  className="flex min-h-8 items-center gap-1 rounded-lg border border-cyan-500/45 bg-slate-850 px-2.5 text-xs font-bold text-cyan-300 active:scale-95"
+                >
+                  <Plus aria-hidden="true" size={13} />
+                  <span>{locale === 'ko' ? '직접 만들기' : 'New'}</span>
+                </button>
+              </div>
+              {savedRoutines.length > 0 ? (
+                <select
+                  aria-label={locale === 'ko' ? '활성 루틴 선택' : 'Select active routine'}
+                  value={activeRoutine?.id ?? ''}
+                  onChange={(event) => void handleSelectStoredRoutine(event.target.value)}
+                  className="min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-white outline-none focus:ring-1 focus:ring-cyan-400"
+                >
                   {savedRoutines.map((routine) => (
-                    <button
-                      key={routine.id}
-                      type="button"
-                      onClick={() => void handleSelectStoredRoutine(routine.id)}
-                      className={`flex min-h-10 items-center justify-between rounded-xl border px-3 text-left text-sm font-bold ${
-                        routine.id === activeRoutine?.id
-                          ? 'border-cyan-400 bg-cyan-950/40 text-cyan-200'
-                          : 'border-slate-650 bg-slate-850 text-slate-100'
-                      }`}
-                    >
-                      <span className="truncate">{routine.name}</span>
-                      {routine.id === activeRoutine?.id ? <Check aria-hidden="true" size={15} /> : null}
-                    </button>
+                    <option key={routine.id} value={routine.id}>{routine.name}</option>
                   ))}
-                </div>
-              </section>
-            ) : null}
-
-            {/* 루틴 템플릿 목록 */}
-            <button
-              type="button"
-              onClick={() => void handleCreateCustomRoutine()}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-3 text-sm font-black text-slate-950 shadow-md active:scale-95"
-            >
-              <Plus aria-hidden="true" size={16} />
-              <span>{locale === 'ko' ? '직접 루틴 만들기' : 'Create custom routine'}</span>
-            </button>
-            <div className="grid shrink-0 gap-2">
-              {routineTemplates.map((template) => {
-                const isActive = activeRoutine?.splitType === template.splitType;
-                const isSaving = savingSplitType === template.splitType;
-
-                return (
-                  <button
-                    key={template.splitType}
-                    type="button"
-                    onClick={() => void handleActivate(template.splitType)}
-                    className={`w-full rounded-2xl border bg-slate-750/90 p-3.5 text-left shadow-md transition-all active:scale-[0.98] ${
-                      isActive
-                        ? 'border-cyan-400 bg-slate-750 shadow-[0_0_10px_rgba(34,211,238,0.1)]'
-                        : 'border-slate-650 hover:bg-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
+                </select>
+              ) : (
+                <h2 className="text-sm font-bold text-slate-200">{t(locale, 'noActiveRoutine')}</h2>
+              )}
+              {activeRoutine ? (
+                <label className="block text-xs font-bold text-slate-200">
+                  {locale === 'ko' ? '루틴 이름' : 'Routine name'}
+                  <input
+                    key={activeRoutine.id}
+                    aria-label="Active routine name"
+                    type="text"
+                    defaultValue={activeRoutineName}
+                    onBlur={(event) => void handleUpdateRoutineName(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 text-base font-bold text-white outline-none transition-all focus:ring-1 focus:ring-cyan-400"
+                  />
+                </label>
+              ) : null}
+              <button
+                type="button"
+                aria-expanded={showRoutineTemplates}
+                onClick={() => setShowRoutineTemplates((current) => !current)}
+                className="flex min-h-10 w-full items-center justify-between rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100"
+              >
+                <span>{locale === 'ko' ? '템플릿에서 시작' : 'Start from template'}</span>
+                <span className="text-cyan-300">{showRoutineTemplates ? '−' : '+'}</span>
+              </button>
+              {showRoutineTemplates ? (
+                <div className="grid gap-2 border-t border-slate-650 pt-2.5">
+                  {routineTemplates.map((template) => {
+                    const isSaving = savingSplitType === template.splitType;
+                    return (
+                      <button
+                        key={template.splitType}
+                        type="button"
+                        onClick={() => void handleActivate(template.splitType)}
+                        className="rounded-xl border border-slate-650 bg-slate-850 p-3 text-left transition-all hover:bg-slate-700 active:scale-[0.98]"
+                      >
                         <h2 className="text-sm font-black text-white">{getRoutineTemplateName(template, locale)}</h2>
                         <p className="mt-1 text-xs font-medium leading-relaxed text-slate-100">{getRoutineTemplateSummary(template, locale)}</p>
-                      </div>
-                      {isActive ? (
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-slate-950 shadow-md">
-                          <Check aria-hidden="true" size={14} className="stroke-[3px]" />
-                        </span>
-                      ) : null}
-                    </div>
-                    <p className={`mt-2 text-xs font-black uppercase ${isActive ? 'text-cyan-300' : 'text-slate-200'}`}>
-                      {isSaving
-                        ? locale === 'ko' ? '로컬 저장 중...' : 'Saving...'
-                        : isActive ? locale === 'ko' ? '● 활성 루틴' : '● Active'
-                        : locale === 'ko' ? '활성화하기' : 'Activate Plan'}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
+                        <p className="mt-2 text-xs font-black uppercase text-cyan-300">
+                          {isSaving ? (locale === 'ko' ? '생성 중...' : 'Creating...') : (locale === 'ko' ? '선택' : 'Choose')}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </section>
           </div>
         )}
 
