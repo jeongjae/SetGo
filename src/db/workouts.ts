@@ -649,6 +649,18 @@ export async function updateWorkoutSessionMemo(sessionId: string, memo: string):
   });
 }
 
+export async function updateWorkoutSessionRoutine(
+  sessionId: string,
+  routineId?: string,
+  routineDayId?: string,
+): Promise<void> {
+  await db.workoutSessions.update(sessionId, {
+    routineId,
+    routineDayId,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
 export async function updateWorkoutExerciseMemo(workoutExerciseId: string, memo: string): Promise<void> {
   await db.workoutExercises.update(workoutExerciseId, {
     memo: memo.trim() || undefined,

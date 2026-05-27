@@ -1,5 +1,5 @@
-import { ChevronRight, Database, Dumbbell, FileDown, Languages } from 'lucide-react';
-import { useState } from 'react';
+import { CalendarClock, ChevronRight, Database, Dumbbell, FileDown, Info, Languages, Library, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { getStoredLocale, saveStoredLocale, t, type AppLocale } from '../i18n/i18n';
 import type { AppView } from '../app/App';
 
@@ -10,6 +10,20 @@ type MorePageProps = {
 
 export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
   const [locale, setLocale] = useState<AppLocale>(() => getStoredLocale());
+  const [showStorageInfo, setShowStorageInfo] = useState(false);
+
+  useEffect(() => {
+    if (!showStorageInfo) return undefined;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setShowStorageInfo(false);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showStorageInfo]);
 
   function handleLocaleChange(nextLocale: AppLocale) {
     saveStoredLocale(nextLocale);
@@ -19,13 +33,23 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
 
   return (
     <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3 pt-3 text-slate-100">
-      <header className="flex shrink-0 items-center gap-2.5">
+      <header className="flex shrink-0 items-center justify-between gap-2.5">
         <div>
           <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'settings')}</p>
           <h1 className="text-xl font-black text-white">
             {locale === 'ko' ? '설정 및 데이터' : 'Settings and Data'}
           </h1>
         </div>
+        <button
+          type="button"
+          aria-label={locale === 'ko' ? '데이터 저장 정보' : 'Data storage information'}
+          aria-haspopup="dialog"
+          aria-expanded={showStorageInfo}
+          onClick={() => setShowStorageInfo(true)}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750/90 text-cyan-300 shadow-md transition-all hover:bg-slate-650 active:scale-95"
+        >
+          <Info aria-hidden="true" size={21} />
+        </button>
       </header>
 
       <div className="inner-scroll min-h-0 space-y-2.5 py-0.5">
@@ -34,22 +58,27 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
             ? '루틴, 운동 라이브러리와 로컬 백업을 관리합니다.'
             : 'Manage routines, the exercise library, and local backups.'}
         </p>
-        <button
-          type="button"
-          onClick={() => onNavigate('routineSetup')}
-          className="flex w-full items-center gap-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 text-left shadow-lg transition-all hover:bg-slate-650 active:scale-[0.98]"
-        >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-400 text-slate-950">
-            <Dumbbell aria-hidden="true" size={22} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-black text-white">{t(locale, 'routineSetup')}</span>
-            <span className="mt-0.5 block text-xs font-semibold text-slate-200">
-              {locale === 'ko' ? '루틴, 운동 목록, 주간 계획' : 'Routines, exercises, weekly plan'}
+        {[
+          { view: 'routines' as AppView, icon: Dumbbell, title: t(locale, 'routine'), detail: locale === 'ko' ? '루틴 선택 및 편집' : 'Choose and edit routines' },
+          { view: 'exercises' as AppView, icon: Library, title: t(locale, 'exercises'), detail: locale === 'ko' ? '운동 검색, 추가, 변경' : 'Search, add and edit exercises' },
+          { view: 'weeklyPlan' as AppView, icon: CalendarClock, title: t(locale, 'weeklyPlan'), detail: locale === 'ko' ? '기간 및 요일별 계획' : 'Schedule dates and days' },
+        ].map(({ view, icon: Icon, title, detail }, index) => (
+          <button
+            key={view}
+            type="button"
+            onClick={() => onNavigate(view)}
+            className="flex w-full items-center gap-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 text-left shadow-lg transition-all hover:bg-slate-650 active:scale-[0.98]"
+          >
+            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${index === 0 ? 'bg-cyan-400 text-slate-950' : 'border border-slate-650 bg-slate-850 text-cyan-300'}`}>
+              <Icon aria-hidden="true" size={22} />
             </span>
-          </span>
-          <ChevronRight aria-hidden="true" size={19} className="text-slate-200" />
-        </button>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-black text-white">{title}</span>
+              <span className="mt-0.5 block text-xs font-semibold text-slate-200">{detail}</span>
+            </span>
+            <ChevronRight aria-hidden="true" size={19} className="text-slate-200" />
+          </button>
+        ))}
 
         <button
           type="button"
@@ -96,18 +125,49 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
           </div>
         </section>
 
-        <section className="flex items-center gap-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-lg">
-          <Database aria-hidden="true" size={19} className="shrink-0 text-emerald-300" />
-          <div>
-            <p className="text-xs font-black text-white">{t(locale, 'localData')} · IndexedDB</p>
-            <p className="mt-0.5 text-xs font-semibold leading-5 text-slate-200">
+      </div>
+
+      {showStorageInfo ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-5 backdrop-blur-sm"
+          onClick={() => setShowStorageInfo(false)}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="storage-info-title"
+            aria-describedby="storage-info-description"
+            className="w-full max-w-sm rounded-2xl border border-slate-650 bg-slate-750 p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-850 text-emerald-300">
+                  <Database aria-hidden="true" size={21} />
+                </span>
+                <div>
+                  <p id="storage-info-title" className="text-sm font-black text-white">{t(locale, 'localData')}</p>
+                  <p className="mt-0.5 text-xs font-bold text-emerald-300">IndexedDB</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                autoFocus
+                aria-label={locale === 'ko' ? '닫기' : 'Close'}
+                onClick={() => setShowStorageInfo(false)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-200 transition-all hover:bg-slate-650 hover:text-white active:scale-95"
+              >
+                <X aria-hidden="true" size={19} />
+              </button>
+            </div>
+            <p id="storage-info-description" className="mt-3 text-sm font-semibold leading-6 text-slate-200">
               {locale === 'ko'
                 ? '저장 데이터는 이 기기에만 보관됩니다. 정기적으로 백업해 주세요.'
                 : 'Your data stays on this device. Create backups regularly.'}
             </p>
-          </div>
-        </section>
-      </div>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }

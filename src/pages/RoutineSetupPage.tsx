@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Check, ChevronLeft, EyeOff, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, Check, ChevronLeft, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { db } from '../db/db';
@@ -16,30 +16,34 @@ import {
 } from '../domain/exercises';
 import { exerciseCountLabel, getStoredLocale, t } from '../i18n/i18n';
 import {
+  activateStoredRoutine,
   activateRoutineTemplate,
   addExerciseToRoutineDay,
+  createCustomRoutine,
   deleteRoutineExercisePlan,
   getActiveRoutine,
   getActiveRoutineDayPlans,
   getActiveWeeklySchedule,
   getRoutineDayDisplayName,
+  getAllRoutines,
   getRoutineTemplateName,
   getRoutineTemplateSummary,
-  getRoutineSplitName,
   moveRoutineExercisePlan,
   routineTemplates,
-  saveWeeklyScheduleDay,
+  saveWeeklySchedule,
   updateActiveRoutineName,
   updateRoutineExercisePlan,
   updateRoutineDayName,
   type RoutineDayPlan,
   type WeeklyScheduleView,
 } from '../db/routines';
-import type { ExerciseCategory, ExerciseMaster, ExerciseStage, Routine, RoutineExercisePlan, RoutineSplitType, Weekday } from '../types';
+import type { ExerciseCategory, ExerciseMaster, ExerciseStage, Routine, RoutineDay, RoutineExercisePlan, RoutineSplitType, Weekday } from '../types';
 
 type RoutineSetupPageProps = {
+  initialSection: SetupTab;
   onBack: () => void;
   onRoutineSaved: () => void;
+  onReviewCalendar: () => void;
 };
 
 const weekdayLabels = {
@@ -50,20 +54,25 @@ const exerciseCategories: Array<{ label: string; value: ExerciseCategory | 'all'
   { label: 'All', value: 'all' },
   ...exerciseCategoryOptions.map((category) => ({ label: category.label, value: category.value })),
 ];
-const exerciseStages: Array<{ label: string; value: ExerciseStage | 'all' }> = [
-  { label: 'All', value: 'all' },
-  ...exerciseStageOptions.map((stage) => ({ label: stage.label, value: stage.value })),
-];
 type SetupTab = 'routine' | 'library' | 'schedule';
+type ExerciseLibraryMode = 'search' | 'add' | 'edit';
+
+function addDays(dateKey: string, days: number): string {
+  const date = new Date(`${dateKey}T12:00:00`);
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
 
 type RoutinePlanSnapshot = {
   routineId: string;
-  routineDayIds: string[];
+  routineName: string;
+  routineDays: RoutineDay[];
   plans: RoutineExercisePlan[];
 };
 
-export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPageProps) {
+export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onReviewCalendar }: RoutineSetupPageProps) {
   const [activeRoutine, setActiveRoutine] = useState<Routine | undefined>();
+  const [savedRoutines, setSavedRoutines] = useState<Routine[]>([]);
   const [savingSplitType, setSavingSplitType] = useState<RoutineSplitType | undefined>();
   const [dayPlans, setDayPlans] = useState<RoutineDayPlan[]>([]);
   const [exercises, setExercises] = useState<ExerciseMaster[]>([]);
@@ -73,7 +82,6 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
   const [addingDayId, setAddingDayId] = useState<string | undefined>();
   const [exerciseSearch, setExerciseSearch] = useState('');
   const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState<ExerciseCategory | 'all'>('all');
-  const [exerciseStageFilter, setExerciseStageFilter] = useState<ExerciseStage | 'all'>('all');
   const [routineAddSearch, setRoutineAddSearch] = useState('');
   const [routineAddCategoryFilter, setRoutineAddCategoryFilter] = useState<ExerciseCategory | 'all'>('all');
   const [routineAddStageFilter, setRoutineAddStageFilter] = useState<ExerciseStage | 'all'>('all');
@@ -81,20 +89,29 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
   const [newExerciseNameEn, setNewExerciseNameEn] = useState('');
   const [newExerciseCategory, setNewExerciseCategory] = useState<ExerciseCategory>('chest');
   const [editingExerciseId, setEditingExerciseId] = useState<string | undefined>();
+  const [pendingExerciseDraft, setPendingExerciseDraft] = useState<ExerciseMaster | undefined>();
+  const [exerciseLibraryMode, setExerciseLibraryMode] = useState<ExerciseLibraryMode>('search');
+  const [showHiddenExercises, setShowHiddenExercises] = useState(false);
   const [locale] = useState(() => getStoredLocale());
-  const [setupTab, setSetupTab] = useState<SetupTab>('routine');
+  const [setupTab] = useState<SetupTab>(initialSection);
+  const [scheduleStartDate, setScheduleStartDate] = useState('');
+  const [scheduleEndDate, setScheduleEndDate] = useState('');
+  const [scheduleDirty, setScheduleDirty] = useState(false);
+  const [scheduleStatus, setScheduleStatus] = useState<string | undefined>();
   const [resetStatus, setResetStatus] = useState<string | undefined>();
   const initialRoutinePlanSnapshot = useRef<RoutinePlanSnapshot | undefined>(undefined);
+  const initialExerciseSnapshot = useRef<ExerciseMaster | undefined>(undefined);
 
   async function loadSetup(captureRoutineSnapshot = false) {
     await seedDefaultExercises();
 
-    const [routine, plans, schedule, exerciseMasters, allExerciseMasters] = await Promise.all([
+    const [routine, plans, schedule, exerciseMasters, allExerciseMasters, routines] = await Promise.all([
       getActiveRoutine(),
       getActiveRoutineDayPlans(),
       getActiveWeeklySchedule(),
       db.exercises.filter((exercise) => exercise.isActive && !getExerciseCategories(exercise).includes('cardio')).toArray(),
-      db.exercises.filter((exercise) => exercise.isActive).toArray(),
+      db.exercises.toArray(),
+      getAllRoutines(),
     ]);
 
     setActiveRoutine(routine);
@@ -102,12 +119,18 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
     setWeeklySchedule(schedule);
     setExercises(exerciseMasters);
     setExerciseLibrary(allExerciseMasters);
+    setSavedRoutines(routines);
     setSelectedDayId((current) => current ?? plans[0]?.routineDay.id);
+    const today = new Date().toISOString().slice(0, 10);
+    setScheduleStartDate(routine?.endDate ? routine.startDate : today);
+    setScheduleEndDate(routine?.endDate ?? addDays(today, 27));
+    setScheduleDirty(Boolean(routine && !routine.endDate));
 
     if (captureRoutineSnapshot && routine) {
       initialRoutinePlanSnapshot.current = {
         routineId: routine.id,
-        routineDayIds: plans.map((plan) => plan.routineDay.id),
+        routineName: routine.name,
+        routineDays: plans.map((plan) => ({ ...plan.routineDay })),
         plans: plans.flatMap((plan) => plan.plans.map((item) => ({ ...item.plan }))),
       };
     }
@@ -126,6 +149,21 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
     setActiveRoutine(routine);
     setSelectedDayId(undefined);
     setSavingSplitType(undefined);
+    onRoutineSaved();
+    await loadSetup(true);
+  }
+
+  async function handleCreateCustomRoutine() {
+    const routine = await createCustomRoutine(locale === 'ko' ? '나의 루틴' : 'My Routine');
+    setActiveRoutine(routine);
+    setSelectedDayId(undefined);
+    onRoutineSaved();
+    await loadSetup(true);
+  }
+
+  async function handleSelectStoredRoutine(routineId: string) {
+    await activateStoredRoutine(routineId);
+    setSelectedDayId(undefined);
     onRoutineSaved();
     await loadSetup(true);
   }
@@ -150,9 +188,28 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
     await loadSetup();
   }
 
-  async function handleWeeklyScheduleChange(weekday: Weekday, routineDayId: string) {
-    await saveWeeklyScheduleDay(weekday, routineDayId || undefined);
+  function handleWeeklyScheduleChange(weekday: Weekday, routineDayId: string) {
+    setWeeklySchedule((current) => current.map((entry) => (
+      entry.weekday === weekday
+        ? { ...entry, routineDayId: routineDayId || undefined, isRestDay: !routineDayId }
+        : entry
+    )));
+    setScheduleDirty(true);
+  }
+
+  async function handleSaveWeeklySchedule() {
+    if (!activeRoutine || !scheduleStartDate || !scheduleEndDate || scheduleEndDate < scheduleStartDate) return;
+    await saveWeeklySchedule(activeRoutine.id, scheduleStartDate, scheduleEndDate, weeklySchedule);
+    setScheduleDirty(false);
+    setScheduleStatus(locale === 'ko' ? '주간 계획을 저장했습니다.' : 'Weekly plan saved.');
+    onRoutineSaved();
+    window.setTimeout(() => setScheduleStatus(undefined), 1600);
+  }
+
+  async function handleCancelWeeklySchedule() {
     await loadSetup();
+    setScheduleStatus(locale === 'ko' ? '변경을 취소했습니다.' : 'Changes discarded.');
+    window.setTimeout(() => setScheduleStatus(undefined), 1600);
   }
 
   async function handleUpdateRoutineName(name: string) {
@@ -172,14 +229,28 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
     await loadSetup();
   }
 
+  async function handleSaveRoutineChanges() {
+    setResetStatus(locale === 'ko' ? '루틴 변경을 저장했습니다.' : 'Routine changes saved.');
+    onRoutineSaved();
+    await loadSetup(true);
+    window.setTimeout(() => setResetStatus(undefined), 1800);
+  }
+
   async function handleRevertRoutineChanges() {
     const snapshot = initialRoutinePlanSnapshot.current;
     if (!snapshot) return;
 
-    await db.transaction('rw', db.routineExercisePlans, async () => {
+    await db.transaction('rw', db.routines, db.routineDays, db.routineExercisePlans, async () => {
+      await db.routines.update(snapshot.routineId, {
+        name: snapshot.routineName,
+        updatedAt: new Date().toISOString(),
+      });
+      if (snapshot.routineDays.length > 0) {
+        await db.routineDays.bulkPut(snapshot.routineDays.map((day) => ({ ...day })));
+      }
       await Promise.all(
-        snapshot.routineDayIds.map((routineDayId) => (
-          db.routineExercisePlans.where('routineDayId').equals(routineDayId).delete()
+        snapshot.routineDays.map((routineDay) => (
+          db.routineExercisePlans.where('routineDayId').equals(routineDay.id).delete()
         )),
       );
 
@@ -188,7 +259,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
       }
     });
 
-    setResetStatus(locale === 'ko' ? '화면 진입 시점의 루틴 운동으로 되돌렸습니다.' : 'Routine changes reverted to the state from when this screen opened.');
+    setResetStatus(locale === 'ko' ? '루틴 변경을 취소했습니다.' : 'Routine changes discarded.');
     onRoutineSaved();
     await loadSetup();
     window.setTimeout(() => setResetStatus(undefined), 1800);
@@ -201,7 +272,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
     const now = new Date().toISOString();
     const id = `custom_${name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}_${Date.now()}`;
 
-    await db.exercises.put({
+    const draft: ExerciseMaster = {
       id,
       nameKo: name,
       nameEn: newExerciseNameEn.trim() || name,
@@ -214,18 +285,59 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
       isActive: true,
       createdAt: now,
       updatedAt: now,
-    });
+    };
 
     setNewExerciseName('');
     setNewExerciseNameEn('');
-    await loadSetup();
+    setPendingExerciseDraft(draft);
+    setEditingExerciseId(id);
+    setExerciseLibraryMode('edit');
+    initialExerciseSnapshot.current = undefined;
   }
 
   async function handleDeactivateExercise(exerciseId: string) {
+    if (!window.confirm(locale === 'ko' ? '이 운동을 목록에서 숨길까요?' : 'Hide this exercise from the list?')) return;
     await db.exercises.update(exerciseId, {
       isActive: false,
       updatedAt: new Date().toISOString(),
     });
+    setEditingExerciseId(undefined);
+    setExerciseLibraryMode('search');
+    setPendingExerciseDraft(undefined);
+    await loadSetup();
+  }
+
+  async function handleRestoreExercise(exerciseId: string) {
+    await db.exercises.update(exerciseId, {
+      isActive: true,
+      updatedAt: new Date().toISOString(),
+    });
+    await loadSetup();
+  }
+
+  function handleSelectExerciseForEdit(exercise: ExerciseMaster) {
+    setEditingExerciseId(exercise.id);
+    setExerciseLibraryMode('edit');
+    initialExerciseSnapshot.current = { ...exercise };
+    setPendingExerciseDraft(undefined);
+  }
+
+  async function handleSaveExerciseChanges() {
+    if (pendingExerciseDraft) {
+      await db.exercises.put({ ...pendingExerciseDraft });
+      setPendingExerciseDraft(undefined);
+    }
+    initialExerciseSnapshot.current = editingExercise ? { ...editingExercise } : undefined;
+    await loadSetup();
+  }
+
+  async function handleCancelExerciseChanges() {
+    if (!pendingExerciseDraft && initialExerciseSnapshot.current) {
+      await db.exercises.put({ ...initialExerciseSnapshot.current });
+    }
+    setPendingExerciseDraft(undefined);
+    setEditingExerciseId(undefined);
+    setExerciseLibraryMode('search');
     await loadSetup();
   }
 
@@ -233,6 +345,20 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
     exerciseId: string,
     values: Partial<Pick<ExerciseMaster, 'nameKo' | 'nameEn' | 'description' | 'categoryTags' | 'stageTags'>>,
   ) {
+    if (pendingExerciseDraft?.id === exerciseId) {
+      const categoryTags = values.categoryTags ?? getExerciseCategories(pendingExerciseDraft);
+      const stageTags = values.stageTags ?? getExerciseStages(pendingExerciseDraft);
+      setPendingExerciseDraft({
+        ...pendingExerciseDraft,
+        ...values,
+        category: categoryTags[0] ?? pendingExerciseDraft.category,
+        categoryTags,
+        stage: stageTags[0] ?? pendingExerciseDraft.stage,
+        stageTags,
+        updatedAt: new Date().toISOString(),
+      });
+      return;
+    }
     const existing = await db.exercises.get(exerciseId);
     if (!existing) return;
 
@@ -269,10 +395,10 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
   const selectedExerciseIds = new Set(selectedDay?.plans.map((item) => item.exercise.id) ?? []);
   const availableExercises = exercises.filter((exercise) => !selectedExerciseIds.has(exercise.id));
   const filteredExerciseLibrary = exerciseLibrary.filter((exercise) => {
-    return exerciseMatchesFilters(exercise, {
+    return (showHiddenExercises ? !exercise.isActive : exercise.isActive) && exerciseMatchesFilters(exercise, {
       query: exerciseSearch,
       category: exerciseCategoryFilter,
-      stage: exerciseStageFilter,
+      stage: 'all',
     });
   });
   const routineAddFinderState: ExerciseFinderState = {
@@ -286,52 +412,31 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
     setRoutineAddStageFilter(state.stage);
   };
   const resetRoutineAddFinderState = () => updateRoutineAddFinderState(emptyExerciseFinderState);
-  const editingExercise = exerciseLibrary.find((exercise) => exercise.id === editingExerciseId) ?? filteredExerciseLibrary[0];
-  const setupSections: Array<{ id: SetupTab; label: string }> = [
-    { id: 'routine', label: t(locale, 'routine') },
-    { id: 'library', label: t(locale, 'exercises') },
-    { id: 'schedule', label: t(locale, 'weeklyPlan') },
-  ];
-  const activeRoutineName = activeRoutine
-    ? getRoutineSplitName(activeRoutine.splitType, locale) ?? activeRoutine.name
-    : undefined;
+  const editingExercise = pendingExerciseDraft?.id === editingExerciseId
+    ? pendingExerciseDraft
+    : exerciseLibrary.find((exercise) => exercise.id === editingExerciseId);
+  const activeRoutineName = activeRoutine?.name;
 
   return (
     <section className="viewport-locked mx-auto flex max-w-md select-none flex-col gap-0 overflow-hidden bg-[#131b26] px-3.5 py-3 text-slate-100">
-      {/* 1. 상단 고정 헤더 & 탭바 영역 (shrink-0) */}
+      {/* 설정 하위 화면 헤더 */}
       <header className="flex shrink-0 flex-col gap-2.5 border-b border-slate-650 pb-2.5">
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={onBack}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 shadow-md transition-all hover:bg-slate-650 active:scale-95"
-            aria-label="Back to Today"
+            aria-label={locale === 'ko' ? '설정으로 돌아가기' : 'Back to Settings'}
           >
             <ChevronLeft aria-hidden="true" size={20} />
           </button>
           <div>
-            <p className="text-xs font-black uppercase leading-none text-cyan-300">{t(locale, 'routineSetup')}</p>
-            <h1 className="mt-0.5 text-lg font-extrabold text-white">{t(locale, 'setUpTraining')}</h1>
+            <p className="text-xs font-black uppercase leading-none text-cyan-300">{t(locale, 'settings')}</p>
+            <h1 className="mt-0.5 text-lg font-extrabold text-white">
+              {setupTab === 'routine' ? t(locale, 'routine') : setupTab === 'library' ? t(locale, 'exerciseLibrary') : t(locale, 'weeklyPlan')}
+            </h1>
           </div>
         </div>
-
-        {/* 3단 대분류 탭 */}
-        <nav aria-label="Routine setup sections" className="grid grid-cols-3 gap-1.5 rounded-xl border border-slate-650 bg-slate-850 p-1 shadow-inner">
-          {setupSections.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setSetupTab(item.id as SetupTab)}
-              className={`min-h-9 rounded-lg px-2 text-xs font-bold transition-all active:scale-95 ${
-                setupTab === item.id
-                  ? 'bg-cyan-400 text-slate-950 font-black shadow-md'
-                  : 'text-slate-100 hover:bg-slate-750 hover:text-white'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
       </header>
 
       {/* 2. 중앙 본문 스크롤 영역 (flex-1 overflow-y-auto overscroll-contain) */}
@@ -354,7 +459,40 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
               )}
             </section>
 
+            {savedRoutines.length > 0 ? (
+              <section className="space-y-2 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5">
+                <p className="text-xs font-extrabold uppercase text-slate-200">
+                  {locale === 'ko' ? '저장된 루틴 선택' : 'Saved routines'}
+                </p>
+                <div className="grid gap-2">
+                  {savedRoutines.map((routine) => (
+                    <button
+                      key={routine.id}
+                      type="button"
+                      onClick={() => void handleSelectStoredRoutine(routine.id)}
+                      className={`flex min-h-10 items-center justify-between rounded-xl border px-3 text-left text-sm font-bold ${
+                        routine.id === activeRoutine?.id
+                          ? 'border-cyan-400 bg-cyan-950/40 text-cyan-200'
+                          : 'border-slate-650 bg-slate-850 text-slate-100'
+                      }`}
+                    >
+                      <span className="truncate">{routine.name}</span>
+                      {routine.id === activeRoutine?.id ? <Check aria-hidden="true" size={15} /> : null}
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
             {/* 루틴 템플릿 목록 */}
+            <button
+              type="button"
+              onClick={() => void handleCreateCustomRoutine()}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-3 text-sm font-black text-slate-950 shadow-md active:scale-95"
+            >
+              <Plus aria-hidden="true" size={16} />
+              <span>{locale === 'ko' ? '직접 루틴 만들기' : 'Create custom routine'}</span>
+            </button>
             <div className="grid shrink-0 gap-2">
               {routineTemplates.map((template) => {
                 const isActive = activeRoutine?.splitType === template.splitType;
@@ -404,6 +542,32 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
               <h2 className="mt-0.5 text-sm font-black text-white">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
               <p className="mt-1 text-xs font-medium leading-normal text-slate-100">{t(locale, 'routinePlanFor')}</p>
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-xs font-bold text-slate-100">
+                {locale === 'ko' ? '시작일' : 'Start date'}
+                <input
+                  type="date"
+                  value={scheduleStartDate}
+                  onChange={(event) => {
+                    setScheduleStartDate(event.target.value);
+                    setScheduleDirty(true);
+                  }}
+                  className="mt-1 min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-2 text-sm font-semibold text-white"
+                />
+              </label>
+              <label className="text-xs font-bold text-slate-100">
+                {locale === 'ko' ? '종료일' : 'End date'}
+                <input
+                  type="date"
+                  value={scheduleEndDate}
+                  onChange={(event) => {
+                    setScheduleEndDate(event.target.value);
+                    setScheduleDirty(true);
+                  }}
+                  className="mt-1 min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-2 text-sm font-semibold text-white"
+                />
+              </label>
+            </div>
             <div className="space-y-2">
               {weeklySchedule.map((schedule) => (
                 <label
@@ -414,7 +578,7 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                   <select
                     aria-label={`${weekdayLabels[locale][schedule.weekday]} routine day`}
                     value={schedule.isRestDay ? '' : schedule.routineDayId ?? ''}
-                    onChange={(event) => void handleWeeklyScheduleChange(schedule.weekday, event.target.value)}
+                    onChange={(event) => handleWeeklyScheduleChange(schedule.weekday, event.target.value)}
                     className="min-h-9 w-full cursor-pointer rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100 outline-none focus:ring-1 focus:ring-cyan-400"
                   >
                     <option value="">{t(locale, 'rest')}</option>
@@ -427,6 +591,33 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                 </label>
               ))}
             </div>
+            {scheduleStatus ? <p className="rounded-xl bg-cyan-950 px-3 py-2 text-xs font-bold text-cyan-200">{scheduleStatus}</p> : null}
+            <div className="grid grid-cols-2 gap-2 border-t border-slate-650 pt-2.5">
+              <button
+                type="button"
+                onClick={() => void handleCancelWeeklySchedule()}
+                className="min-h-11 rounded-xl border border-slate-650 bg-slate-850 text-sm font-bold text-slate-100"
+              >
+                {locale === 'ko' ? '취소' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSaveWeeklySchedule()}
+                disabled={!activeRoutine || !scheduleDirty || !scheduleStartDate || !scheduleEndDate || scheduleEndDate < scheduleStartDate}
+                className="min-h-11 rounded-xl bg-cyan-400 text-sm font-black text-slate-950 disabled:bg-slate-650 disabled:text-slate-400"
+              >
+                {t(locale, 'save')}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={onReviewCalendar}
+              disabled={scheduleDirty || !activeRoutine}
+              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/40 bg-slate-850 text-sm font-bold text-cyan-300 disabled:border-slate-650 disabled:text-slate-500"
+            >
+              <CalendarDays aria-hidden="true" size={17} />
+              <span>{scheduleDirty ? (locale === 'ko' ? '저장 후 캘린더에서 확인' : 'Save before preview') : (locale === 'ko' ? '캘린더에서 확인' : 'Review in calendar')}</span>
+            </button>
           </section>
         )}
 
@@ -440,57 +631,63 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
               </h2>
             </div>
 
-            {/* 운동 검색 */}
-            <div className="flex items-center gap-2.5 rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 shadow-inner transition-all focus-within:ring-1 focus-within:ring-cyan-400">
-              <Search aria-hidden="true" size={15} className="shrink-0 text-slate-200" />
-              <input
-                aria-label="Search exercise library"
-                type="search"
-                value={exerciseSearch}
-                onChange={(event) => setExerciseSearch(event.target.value)}
-                placeholder={t(locale, 'searchExercises')}
-                className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-100 outline-none placeholder:text-slate-400"
-              />
-            </div>
+            <nav className="grid grid-cols-3 gap-1 rounded-xl border border-slate-650 bg-slate-850 p-1">
+              {([
+                ['search', locale === 'ko' ? '검색' : 'Search'],
+                ['add', locale === 'ko' ? '추가' : 'Add'],
+                ['edit', locale === 'ko' ? '변경' : 'Edit'],
+              ] as Array<[ExerciseLibraryMode, string]>).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setExerciseLibraryMode(value)}
+                  className={`min-h-9 rounded-lg text-sm font-bold ${exerciseLibraryMode === value ? 'bg-cyan-400 text-slate-950' : 'text-slate-100'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
 
-            {/* 운동 필터 칩 */}
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {exerciseCategories.map((category) => (
-                  <button
-                    key={category.label}
-                    type="button"
-                    onClick={() => setExerciseCategoryFilter(category.value)}
-                    className={`min-h-8 shrink-0 rounded-lg px-2.5 text-xs font-black transition-all active:scale-95 ${
-                      exerciseCategoryFilter === category.value
-                        ? 'bg-cyan-400 text-slate-950 shadow-sm'
-                        : 'border border-slate-650 bg-slate-850 text-slate-100 hover:bg-slate-700 hover:text-white'
-                    }`}
+            {/* 운동 검색 */}
+            {exerciseLibraryMode !== 'add' ? (
+              <div className="grid gap-2">
+                <div className="flex items-center gap-2.5 rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 shadow-inner focus-within:ring-1 focus-within:ring-cyan-400">
+                  <Search aria-hidden="true" size={15} className="shrink-0 text-slate-200" />
+                  <input
+                    aria-label="Search exercise library"
+                    type="search"
+                    value={exerciseSearch}
+                    onChange={(event) => setExerciseSearch(event.target.value)}
+                    placeholder={t(locale, 'searchExercises')}
+                    className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-100 outline-none placeholder:text-slate-400"
+                  />
+                </div>
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <select
+                    aria-label="Exercise category filter"
+                    value={exerciseCategoryFilter}
+                    onChange={(event) => setExerciseCategoryFilter(event.target.value as ExerciseCategory | 'all')}
+                    className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-white"
                   >
-                    {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {exerciseStages.map((stage) => (
+                    {exerciseCategories.map((category) => (
+                      <option key={category.value} value={category.value}>
+                        {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
+                      </option>
+                    ))}
+                  </select>
                   <button
-                    key={stage.value}
                     type="button"
-                    onClick={() => setExerciseStageFilter(stage.value)}
-                    className={`min-h-8 shrink-0 rounded-lg px-2.5 text-xs font-black transition-all active:scale-95 ${
-                      exerciseStageFilter === stage.value
-                        ? 'bg-cyan-400 text-slate-950 shadow-sm'
-                        : 'border border-slate-650 bg-slate-850 text-slate-100 hover:bg-slate-700 hover:text-white'
-                    }`}
+                    onClick={() => setShowHiddenExercises((current) => !current)}
+                    className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-bold text-slate-100"
                   >
-                    {stage.value === 'all' ? t(locale, 'all') : labelForStage(stage.value, locale)}
+                    {showHiddenExercises ? (locale === 'ko' ? '사용 중' : 'Active') : (locale === 'ko' ? '숨긴 운동' : 'Hidden')}
                   </button>
-                ))}
+                </div>
               </div>
-            </div>
+            ) : null}
 
             {/* 신규 등록 폼 */}
-            <div className="grid gap-2 border-t border-slate-900 pt-3">
+            {exerciseLibraryMode === 'add' ? <div className="grid gap-2 border-t border-slate-900 pt-3">
               <input
                 aria-label="New exercise Korean name"
                 type="text"
@@ -499,28 +696,6 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                 placeholder={t(locale, 'koreanName')}
                 className="min-h-9 min-w-0 rounded-xl border border-slate-650 bg-slate-850 px-3.5 text-sm font-medium text-white outline-none placeholder:text-slate-400 focus:ring-1 focus:ring-cyan-400"
               />
-              <div className="grid grid-cols-[1fr_6.5rem] gap-2">
-                <input
-                  aria-label="New exercise English name"
-                  type="text"
-                  value={newExerciseNameEn}
-                  onChange={(event) => setNewExerciseNameEn(event.target.value)}
-                  placeholder={t(locale, 'englishName')}
-                  className="min-h-9 min-w-0 rounded-xl border border-slate-650 bg-slate-850 px-3.5 text-sm font-medium text-white outline-none placeholder:text-slate-400 focus:ring-1 focus:ring-cyan-400"
-                />
-                <select
-                  aria-label="New exercise category"
-                  value={newExerciseCategory}
-                  onChange={(event) => setNewExerciseCategory(event.target.value as ExerciseCategory)}
-                  className="min-h-9 rounded-xl border border-slate-650 bg-slate-850 px-2 text-sm font-medium text-white outline-none focus:ring-1 focus:ring-cyan-400"
-                >
-                  {exerciseCategoryOptions.map((category) => (
-                    <option key={category.value} value={category.value} className="bg-slate-850">
-                      {labelForCategory(category.value, locale)}
-                    </option>
-                  ))}
-                </select>
-              </div>
               <button
                 type="button"
                 onClick={() => void handleCreateExercise()}
@@ -530,15 +705,18 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                 <Plus aria-hidden="true" size={14} />
                 <span>{t(locale, 'addExercise')}</span>
               </button>
-            </div>
+              <p className="text-xs font-semibold text-slate-200">
+                {locale === 'ko' ? '운동 추가 후 변경 화면에서 설명과 분류를 입력합니다.' : 'Add an exercise, then enter details in Edit.'}
+              </p>
+            </div> : null}
 
             {/* 운동 목록 세로 2열 그리드 */}
-            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 border-t border-slate-900 pt-3 scrollbar-thin">
+            {exerciseLibraryMode !== 'add' ? <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 border-t border-slate-900 pt-3 scrollbar-thin">
               {filteredExerciseLibrary.map((exercise) => (
                 <button
                   key={exercise.id}
                   type="button"
-                  onClick={() => setEditingExerciseId(exercise.id)}
+                  onClick={() => handleSelectExerciseForEdit(exercise)}
                   className={`flex items-center rounded-xl p-2 text-left border transition-all active:scale-95 ${
                     editingExercise?.id === exercise.id
                       ? 'bg-cyan-400 border-cyan-400 text-slate-950 font-bold shadow-sm'
@@ -558,10 +736,10 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                   </div>
                 </button>
               ))}
-            </div>
+            </div> : null}
 
             {/* 상세 운동 속성 편집 (선택 시 활성화) */}
-            {editingExercise && (
+            {exerciseLibraryMode === 'edit' && editingExercise && (
               <div key={editingExercise.id} className="space-y-3 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-inner">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
@@ -570,14 +748,23 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                     </div>
                     <h3 className="text-xs font-bold text-white leading-tight">{getExerciseName(editingExercise, locale)}</h3>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => void handleDeactivateExercise(editingExercise.id)}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:text-rose-300 active:scale-95"
-                    aria-label={`Deactivate ${getExerciseName(editingExercise, locale)}`}
-                  >
-                    <EyeOff aria-hidden="true" size={14} />
-                  </button>
+                  {editingExercise.isActive ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleDeactivateExercise(editingExercise.id)}
+                      className="min-h-8 shrink-0 rounded-lg border border-slate-650 bg-slate-750 px-2.5 text-xs font-bold text-rose-300"
+                    >
+                      {locale === 'ko' ? '목록에서 숨기기' : 'Hide from list'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void handleRestoreExercise(editingExercise.id)}
+                      className="min-h-8 shrink-0 rounded-lg border border-cyan-500/40 bg-slate-750 px-2.5 text-xs font-bold text-cyan-300"
+                    >
+                      {locale === 'ko' ? '목록에 복원' : 'Restore'}
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid gap-2.5">
@@ -664,6 +851,22 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
                     </div>
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-2 border-t border-slate-650 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => void handleCancelExerciseChanges()}
+                    className="min-h-10 rounded-xl border border-slate-650 bg-slate-750 text-sm font-bold text-slate-100"
+                  >
+                    {locale === 'ko' ? '취소' : 'Cancel'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleSaveExerciseChanges()}
+                    className="min-h-10 rounded-xl bg-cyan-400 text-sm font-black text-slate-950"
+                  >
+                    {t(locale, 'save')}
+                  </button>
+                </div>
               </div>
             )}
           </section>
@@ -674,14 +877,23 @@ export function RoutineSetupPage({ onBack, onRoutineSaved }: RoutineSetupPagePro
           <section className="shrink-0 space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-md">
             <div className="flex items-center justify-between gap-3 border-b border-slate-650 pb-2.5">
               <p className="text-xs font-bold uppercase text-slate-200">{t(locale, 'routineDays')}</p>
-              <button
-                type="button"
-                onClick={() => void handleRevertRoutineChanges()}
-                className="flex min-h-7 items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 px-2.5 py-1 text-xs font-bold text-slate-200 transition-all active:scale-95 border border-slate-700"
-              >
-                <RotateCcw aria-hidden="true" size={12} />
-                <span>{locale === 'ko' ? '변경 취소' : 'Undo'}</span>
-              </button>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => void handleRevertRoutineChanges()}
+                  className="flex min-h-8 items-center gap-1 rounded-lg border border-slate-650 bg-slate-850 px-2 text-xs font-bold text-slate-100"
+                >
+                  <RotateCcw aria-hidden="true" size={12} />
+                  <span>{locale === 'ko' ? '취소' : 'Cancel'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSaveRoutineChanges()}
+                  className="min-h-8 rounded-lg bg-cyan-400 px-3 text-xs font-black text-slate-950"
+                >
+                  {t(locale, 'save')}
+                </button>
+              </div>
             </div>
             {resetStatus && (
               <p className="rounded-xl bg-cyan-950/80 border border-cyan-900/50 px-3 py-2 text-xs font-bold text-cyan-200">

@@ -5,6 +5,7 @@ import {
   getActiveRoutine,
   getActiveRoutineDays,
   getActiveWeeklySchedule,
+  isRoutineScheduledForDate,
   getRoutineDayDisplayName,
   saveCalendarPlanOverride,
 } from '../db/routines';
@@ -18,6 +19,9 @@ type CalendarPageProps = {
   initialSelectedDateKey?: string;
   onSelectedDateChange?: (dateKey: string) => void;
   onStartWorkout: (routineDayId?: string, dateKey?: string, sessionId?: string, createNew?: boolean) => void;
+  onEditHistoricalWorkout: (sessionId: string, dateKey: string) => void;
+  reviewingWeeklyPlan?: boolean;
+  onReturnToWeeklyPlan?: () => void;
 };
 
 type CalendarDay = {
@@ -103,6 +107,9 @@ export function CalendarPage({
   initialSelectedDateKey,
   onSelectedDateChange,
   onStartWorkout,
+  onEditHistoricalWorkout,
+  reviewingWeeklyPlan = false,
+  onReturnToWeeklyPlan,
 }: CalendarPageProps) {
   const today = new Date();
   const todayKey = formatDateKey(today);
@@ -168,6 +175,8 @@ export function CalendarPage({
               status: day.key < todayKey ? 'missed' : 'planned',
             } satisfies CalendarPlan];
           }
+
+          if (!isRoutineScheduledForDate(activeRoutine, day.key)) return [];
 
           const daySchedule = schedule.find((item) => item.weekday === day.date.getDay());
           if (!daySchedule || daySchedule.isRestDay || !daySchedule.routineDayId) return [];
@@ -442,7 +451,9 @@ export function CalendarPage({
                       </button>
                       <button
                         type="button"
-                        onClick={() => onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, summary.session))}
+                        onClick={() => summary.session.status === 'completed'
+                          ? onEditHistoricalWorkout(summary.session.id, selectedDateKey)
+                          : onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, summary.session))}
                         className="flex-1 min-h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 px-3 text-xs font-black text-slate-200 active:scale-95 transition-all"
                       >
                         {locale === 'ko' ? '기록 보기/수정' : 'View/Edit'}
@@ -452,7 +463,9 @@ export function CalendarPage({
                     <>
                       <button
                         type="button"
-                        onClick={() => onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, summary.session))}
+                        onClick={() => summary.session.status === 'completed'
+                          ? onEditHistoricalWorkout(summary.session.id, selectedDateKey)
+                          : onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, summary.session))}
                         className="flex-1 min-h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 px-3 text-xs font-black text-cyan-400 active:scale-95 transition-all"
                       >
                         {locale === 'ko' ? '운동기록 수정' : 'Edit record'}
@@ -502,7 +515,16 @@ export function CalendarPage({
       </section>
       </div>
 
-      <footer className="shrink-0 border-t border-slate-650 pt-2.5">
+      <footer className="shrink-0 space-y-2 border-t border-slate-650 pt-2.5">
+        {reviewingWeeklyPlan ? (
+          <button
+            type="button"
+            onClick={onReturnToWeeklyPlan}
+            className="flex min-h-11 w-full items-center justify-center rounded-xl border border-cyan-500/40 bg-slate-850 px-3 text-sm font-bold text-cyan-300"
+          >
+            {locale === 'ko' ? '주간 계획으로 돌아가기' : 'Return to weekly plan'}
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={() => onStartWorkout(...(

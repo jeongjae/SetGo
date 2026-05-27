@@ -102,6 +102,7 @@ const routineTemplateExerciseIds: Record<RoutineSplitType, string[][]> = {
     ['military_press', 'shoulder_press', 'side_lateral_raise', 'bentover_lateral_raise', 'face_pull'],
     ['barbell_curl', 'cable_pushdown', 'dumbbell_curl', 'lying_triceps_extension', 'hammer_curl', 'overhead_triceps_extension'],
   ],
+  custom: [],
 };
 
 export function getRoutineTemplateName(template: RoutineTemplate, locale: 'ko' | 'en'): string {
@@ -188,6 +189,24 @@ export async function getActiveRoutine() {
   return db.routines.filter((routine) => routine.isActive).first();
 }
 
+export async function getAllRoutines(): Promise<Routine[]> {
+  return db.routines.toArray();
+}
+
+export async function getRoutineDays(routineId: string): Promise<RoutineDay[]> {
+  return db.routineDays.where('routineId').equals(routineId).sortBy('sequence');
+}
+
+export async function activateStoredRoutine(routineId: string): Promise<void> {
+  const now = new Date().toISOString();
+  const routines = await db.routines.toArray();
+  await db.routines.bulkPut(routines.map((routine) => ({
+    ...routine,
+    isActive: routine.id === routineId,
+    updatedAt: now,
+  })));
+}
+
 export async function getActiveRoutineDays(): Promise<RoutineDay[]> {
   const routine = await getActiveRoutine();
   if (!routine) return [];
@@ -236,6 +255,42 @@ export async function saveWeeklyScheduleDay(weekday: Weekday, routineDayId?: str
   await db.weeklySchedules.put(schedule);
 }
 
+export async function saveWeeklySchedule(
+  routineId: string,
+  startDate: string,
+  endDate: string,
+  schedule: WeeklyScheduleView[],
+): Promise<void> {
+  const now = new Date().toISOString();
+
+  await db.transaction('rw', db.routines, db.weeklySchedules, async () => {
+    const routines = await db.routines.toArray();
+    await db.routines.bulkPut(routines.map((routine) => ({
+      ...routine,
+      isActive: routine.id === routineId,
+      ...(routine.id === routineId ? { startDate, endDate } : {}),
+      updatedAt: now,
+    })));
+    await db.weeklySchedules.where('routineId').equals(routineId).delete();
+    await db.weeklySchedules.bulkPut(schedule.map((entry) => ({
+      id: `${routineId}_weekday_${entry.weekday}`,
+      routineId,
+      weekday: entry.weekday,
+      routineDayId: entry.routineDayId,
+      isRestDay: entry.isRestDay,
+    })));
+  });
+}
+
+export function isRoutineScheduledForDate(
+  routine: Pick<Routine, 'startDate' | 'endDate'> | undefined,
+  dateKey: string,
+): boolean {
+  if (!routine) return false;
+  if (dateKey < routine.startDate) return false;
+  return !routine.endDate || dateKey <= routine.endDate;
+}
+
 export async function getSuggestedRoutineDayForDate(date = new Date()): Promise<RoutineDay | undefined> {
   const scheduledRoutineDay = await getRoutineScheduleForDate(date);
   return scheduledRoutineDay.routineDay;
@@ -273,6 +328,10 @@ export async function getRoutineScheduleForDate(date = new Date()): Promise<Rout
       routineDay,
       isRestDay: override.isRestDay || !routineDay,
     };
+  }
+
+  if (!isRoutineScheduledForDate(routine, dateKey)) {
+    return { isRestDay: true };
   }
 
   const todaySchedule = schedule.find((item) => item.weekday === date.getDay());
@@ -406,6 +465,35 @@ export async function activateRoutineTemplate(template: RoutineTemplate): Promis
 
       await db.routineExercisePlans.bulkPut(starterPlans);
     }
+  });
+
+  return routine;
+}
+
+export async function createCustomRoutine(name: string): Promise<Routine> {
+  const now = new Date().toISOString();
+  const routineId = `routine_custom_${Date.now()}`;
+  const routine: Routine = {
+    id: routineId,
+    name: name.trim() || '나의 루틴',
+    splitType: 'custom',
+    startDate: formatDateKey(new Date()),
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await db.transaction('rw', db.routines, db.routineDays, async () => {
+    const routines = await db.routines.toArray();
+    await db.routines.bulkPut(routines.map((item) => ({ ...item, isActive: false, updatedAt: now })));
+    await db.routines.put(routine);
+    await db.routineDays.put({
+      id: `${routineId}_day_1`,
+      routineId,
+      code: 'day_1',
+      name: '운동 A',
+      sequence: 1,
+    });
   });
 
   return routine;

@@ -1,8 +1,8 @@
 import { ArrowDown, ArrowUp, Check, ChevronLeft, ClipboardList, Clock3, Copy, Plus, RefreshCw, Trash2 } from 'lucide-react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { db } from '../db/db';
-import { getRoutineDayDisplayName } from '../db/routines';
+import { getAllRoutines, getRoutineDayDisplayName, getRoutineDays } from '../db/routines';
 import { getExerciseIcon } from '../utils/exerciseIcon';
 import { formatDateKey } from '../utils/date';
 import {
@@ -27,18 +27,27 @@ import {
   skipWorkoutSession,
   updateCardioRecord,
   updateWorkoutExerciseMemo,
+  updateWorkoutSessionRoutine,
   updateWorkoutSessionMemo,
   updateWorkoutSet,
   type ActiveWorkout,
   type WorkoutExerciseLog,
 } from '../db/workouts';
-import type { CardioRecord, ExerciseCategory, ExerciseMaster, ExerciseStage, WorkoutExercise, WorkoutSession, WorkoutSet, WorkoutSetType } from '../types';
+import type { CardioRecord, ExerciseCategory, ExerciseMaster, ExerciseStage, Routine, RoutineDay, WorkoutExercise, WorkoutSession, WorkoutSet, WorkoutSetType } from '../types';
 
 type WorkoutPageProps = {
+  mode?: 'active' | 'history-edit';
   sessionId?: string;
   onBack: () => void;
   onCompleted: () => void;
   onSkipped: () => void;
+};
+
+type HistoryEditSnapshot = {
+  session: WorkoutSession;
+  workoutExercises: WorkoutExercise[];
+  workoutSets: WorkoutSet[];
+  cardioRecords: CardioRecord[];
 };
 
 function formatElapsed(ms: number): string {
@@ -124,7 +133,7 @@ export function shouldConfirmCardioDelete(
     || Boolean(cardioRecord.memo?.trim());
 }
 
-export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
+export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
   const [workout, setWorkout] = useState<ActiveWorkout | undefined>();
   const [logs, setLogs] = useState<WorkoutExerciseLog[]>([]);
   const [cardioRecords, setCardioRecords] = useState<CardioRecord[]>([]);
@@ -142,6 +151,11 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
   const [restRemaining, setRestRemaining] = useState(0);
   const [isRestTimerActive, setIsRestTimerActive] = useState(false);
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
+  const [savedRoutines, setSavedRoutines] = useState<Routine[]>([]);
+  const [historyRoutineId, setHistoryRoutineId] = useState('');
+  const [historyRoutineDayId, setHistoryRoutineDayId] = useState('');
+  const [historyRoutineDays, setHistoryRoutineDays] = useState<RoutineDay[]>([]);
+  const historyEditSnapshot = useRef<HistoryEditSnapshot | undefined>(undefined);
 
   const loggedCardioRecords = useMemo(() => {
     return cardioRecords.filter((cardioRecord) => cardioRecord.isDraft !== true);
@@ -227,11 +241,77 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
     setLogs(workoutLogs);
     setCardioRecords(cardio);
     setExercises(exerciseMasters);
+
+    if (mode === 'history-edit') {
+      if (historyEditSnapshot.current?.session.id !== todayWorkout.session.id) {
+        historyEditSnapshot.current = {
+          session: { ...todayWorkout.session },
+          workoutExercises: workoutLogs.map((log) => ({ ...log.workoutExercise })),
+          workoutSets: workoutLogs.flatMap((log) => log.sets.map((set) => ({ ...set }))),
+          cardioRecords: cardio.map((record) => ({ ...record })),
+        };
+      }
+      const routines = await getAllRoutines();
+      setSavedRoutines(routines);
+      setHistoryRoutineId(todayWorkout.session.routineId ?? '');
+      setHistoryRoutineDayId(todayWorkout.session.routineDayId ?? '');
+      setHistoryRoutineDays(todayWorkout.session.routineId ? await getRoutineDays(todayWorkout.session.routineId) : []);
+    }
   }
 
   useEffect(() => {
     void loadWorkout();
-  }, [sessionId]);
+  }, [sessionId, mode]);
+
+  async function handleHistoryRoutineChange(routineId: string) {
+    setHistoryRoutineId(routineId);
+    if (!routineId) {
+      setHistoryRoutineDayId('');
+      setHistoryRoutineDays([]);
+      return;
+    }
+    const days = await getRoutineDays(routineId);
+    setHistoryRoutineDays(days);
+    setHistoryRoutineDayId(days[0]?.id ?? '');
+  }
+
+  async function handleSaveHistoricalEdit() {
+    if (!workout) return;
+    await updateWorkoutSessionRoutine(
+      workout.session.id,
+      historyRoutineId || undefined,
+      historyRoutineId ? historyRoutineDayId || undefined : undefined,
+    );
+    onBack();
+  }
+
+  async function handleCancelHistoricalEdit() {
+    const snapshot = historyEditSnapshot.current;
+    if (!workout || !snapshot) {
+      onBack();
+      return;
+    }
+
+    await db.transaction('rw', db.workoutSessions, db.workoutExercises, db.workoutSets, db.cardioRecords, async () => {
+      const currentExercises = await db.workoutExercises.where('sessionId').equals(workout.session.id).toArray();
+      if (currentExercises.length > 0) {
+        await db.workoutSets.where('workoutExerciseId').anyOf(currentExercises.map((exercise) => exercise.id)).delete();
+      }
+      await db.workoutExercises.where('sessionId').equals(workout.session.id).delete();
+      await db.cardioRecords.where('sessionId').equals(workout.session.id).delete();
+      await db.workoutSessions.put({ ...snapshot.session });
+      if (snapshot.workoutExercises.length > 0) {
+        await db.workoutExercises.bulkPut(snapshot.workoutExercises.map((exercise) => ({ ...exercise })));
+      }
+      if (snapshot.workoutSets.length > 0) {
+        await db.workoutSets.bulkPut(snapshot.workoutSets.map((set) => ({ ...set })));
+      }
+      if (snapshot.cardioRecords.length > 0) {
+        await db.cardioRecords.bulkPut(snapshot.cardioRecords.map((record) => ({ ...record })));
+      }
+    });
+    onBack();
+  }
 
   useEffect(() => {
     const timer = window.setInterval(() => setTimerNow(Date.now()), 1000);
@@ -562,7 +642,8 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
     : formatElapsed(liveSessionElapsed);
 
   const restElapsed = restTimerStartedAt ? formatElapsed(timerNow - restTimerStartedAt) : '--:--';
-  const isCompletedEditMode = workout?.session.status === 'completed' || workout?.session.status === 'skipped';
+  const isHistoricalEditMode = mode === 'history-edit';
+  const isCompletedEditMode = isHistoricalEditMode || workout?.session.status === 'completed' || workout?.session.status === 'skipped';
   const canCompleteWorkout = canCompleteWorkoutLog(completedSetCount, loggedCardioCount);
 
   return (
@@ -712,9 +793,47 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
             </p>
             <p className="mt-1 text-sm font-medium leading-5 text-slate-100">
               {locale === 'ko'
-                ? '세트, 운동, 메모를 수정하면 통계와 내보내기에 바로 반영됩니다.'
-                : 'Set, exercise, and memo edits update stats and exports immediately.'}
+                ? isHistoricalEditMode
+                  ? '수정 내용은 저장할 때 통계와 내보내기에 반영됩니다.'
+                  : '세트, 운동, 메모를 수정하면 통계와 내보내기에 바로 반영됩니다.'
+                : isHistoricalEditMode
+                  ? 'Your changes update stats and exports when saved.'
+                  : 'Set, exercise, and memo edits update stats and exports immediately.'}
             </p>
+          </section>
+        ) : null}
+
+        {isHistoricalEditMode && workout ? (
+          <section className="shrink-0 space-y-2.5 rounded-2xl border border-slate-650 bg-slate-750/90 p-3 shadow-md">
+            <div>
+              <p className="text-xs font-black uppercase text-slate-200">{locale === 'ko' ? '운동 유형' : 'Workout type'}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-100">
+                {locale === 'ko' ? '기존 운동과 세트는 유지하고 소속만 변경합니다.' : 'Existing exercises and sets remain unchanged.'}
+              </p>
+            </div>
+            <select
+              aria-label="Historical workout routine"
+              value={historyRoutineId}
+              onChange={(event) => void handleHistoryRoutineChange(event.target.value)}
+              className="min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-white"
+            >
+              <option value="">{t(locale, 'freeWorkout')}</option>
+              {savedRoutines.map((routine) => (
+                <option key={routine.id} value={routine.id}>{routine.name}</option>
+              ))}
+            </select>
+            {historyRoutineId ? (
+              <select
+                aria-label="Historical workout routine day"
+                value={historyRoutineDayId}
+                onChange={(event) => setHistoryRoutineDayId(event.target.value)}
+                className="min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-white"
+              >
+                {historyRoutineDays.map((day) => (
+                  <option key={day.id} value={day.id}>{getRoutineDayDisplayName(day, locale) ?? day.name}</option>
+                ))}
+              </select>
+            ) : null}
           </section>
         ) : null}
 
@@ -1252,12 +1371,38 @@ export function WorkoutPage({ sessionId, onBack, onCompleted, onSkipped }: Worko
 
       {/* 4. 하단 고정 조작 푸터 영역 (shrink-0) */}
       <footer className="mt-auto flex shrink-0 flex-col gap-2 border-t border-slate-650 bg-[#131b26] pb-1 pt-2.5">
-        {isCompletedEditMode ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex min-h-12 w-full items-center justify-center rounded-xl bg-cyan-400 px-4 text-sm font-bold text-slate-950 hover:bg-cyan-300 active:scale-95 transition-all shadow-md"
-          >
+        {isHistoricalEditMode ? (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAdding((current) => !current);
+                resetExerciseFinderState();
+              }}
+              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-650 bg-slate-750 text-sm font-bold text-slate-100"
+            >
+              <Plus aria-hidden="true" size={16} />
+              {locale === 'ko' ? '개별 운동 추가' : 'Add individual exercise'}
+            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => void handleCancelHistoricalEdit()}
+                className="flex min-h-12 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 px-4 text-sm font-bold text-slate-100"
+              >
+                {locale === 'ko' ? '취소' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSaveHistoricalEdit()}
+                className="flex min-h-12 items-center justify-center rounded-xl bg-cyan-400 px-4 text-sm font-bold text-slate-950 shadow-md"
+              >
+                {t(locale, 'save')}
+              </button>
+            </div>
+          </>
+        ) : isCompletedEditMode ? (
+          <button type="button" onClick={onBack} className="flex min-h-12 w-full items-center justify-center rounded-xl bg-cyan-400 px-4 text-sm font-bold text-slate-950 hover:bg-cyan-300 active:scale-95 transition-all shadow-md">
             {locale === 'ko' ? '편집 완료' : 'Done Editing'}
           </button>
         ) : (

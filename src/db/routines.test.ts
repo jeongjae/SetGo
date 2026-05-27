@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRoutineDayDisplayName, getRoutineTemplateName, getRoutineTemplateSummary, routineTemplates } from './routines';
+import { getRoutineDayDisplayName, getRoutineTemplateName, getRoutineTemplateSummary, isRoutineScheduledForDate, routineTemplates } from './routines';
 
 describe('routine templates', () => {
   it('uses Korean release names for template cards', () => {
@@ -47,5 +47,18 @@ describe('routine templates', () => {
 
     expect(fullBody ? getRoutineTemplateSummary(fullBody, 'ko') : '').toContain('전신: 스쿼트');
     expect(classic5 ? getRoutineTemplateSummary(classic5, 'ko') : '').toContain('가슴');
+  });
+
+  it('applies weekly plans only inside a saved date range', () => {
+    const routine = { startDate: '2026-05-27', endDate: '2026-06-23' };
+
+    expect(isRoutineScheduledForDate(routine, '2026-05-26')).toBe(false);
+    expect(isRoutineScheduledForDate(routine, '2026-05-27')).toBe(true);
+    expect(isRoutineScheduledForDate(routine, '2026-06-23')).toBe(true);
+    expect(isRoutineScheduledForDate(routine, '2026-06-24')).toBe(false);
+  });
+
+  it('keeps legacy routines without an end date open-ended until the user saves a range', () => {
+    expect(isRoutineScheduledForDate({ startDate: '2026-05-01' }, '2026-07-01')).toBe(true);
   });
 });

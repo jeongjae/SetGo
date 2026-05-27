@@ -1,4 +1,4 @@
-import { ChevronLeft, Copy, Download, Upload } from 'lucide-react';
+import { ChevronLeft, Copy, Download, Info, Upload } from 'lucide-react';
 import { type ChangeEvent, useEffect, useState } from 'react';
 import { createBackup, createSettingsBackup, restoreBackup, restoreSettingsBackup } from '../db/backup';
 import { createExerciseCsv, ExerciseCsvImportError, importExerciseCsv } from '../db/exerciseCsv';
@@ -85,6 +85,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
   const [exerciseCsvIssues, setExerciseCsvIssues] = useState<string[]>([]);
   const [settingsBackupStatus, setSettingsBackupStatus] = useState<string | undefined>();
   const [isPersisted, setIsPersisted] = useState(false);
+  const [showPersistenceInfo, setShowPersistenceInfo] = useState(false);
 
   async function loadSummaries(selectedSessionId?: string) {
     const recentSummaries = await getRecentWorkoutSummaries(20);
@@ -299,12 +300,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
           type="button"
           onClick={onBack}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 shadow-md transition-all hover:bg-slate-650 active:scale-95"
-          aria-label="Back to Today"
+          aria-label={locale === 'ko' ? '설정으로 돌아가기' : 'Back to Settings'}
         >
           <ChevronLeft aria-hidden="true" size={20} />
         </button>
         <div>
-          <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'export')}</p>
+          <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'settings')}</p>
           <h1 className="text-xl font-black text-white">{t(locale, 'export')}</h1>
         </div>
       </header>
@@ -367,22 +368,28 @@ export function ExportPage({ onBack }: ExportPageProps) {
         <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
           <div className="flex items-center justify-between">
             <p className="text-xs font-black uppercase text-slate-200">{t(locale, 'localData')}</p>
-            {isPersisted ? (
-              <span className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-black text-emerald-300">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+            <div className="flex items-center gap-1.5">
+              {isPersisted ? (
+                <span className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-black text-emerald-300">
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                  <span>Persistent</span>
                 </span>
-                <span>Persistent 🟢</span>
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/15 px-2 py-0.5 text-[11px] font-black text-amber-300">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+              ) : (
+                <span className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/15 px-2 py-0.5 text-[11px] font-black text-amber-300">
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                  <span>Best-effort</span>
                 </span>
-                <span>Best-effort 🟡</span>
-              </span>
-            )}
+              )}
+              <button
+                type="button"
+                aria-label={locale === 'ko' ? '저장 방식 안내' : 'Storage information'}
+                aria-expanded={showPersistenceInfo}
+                onClick={() => setShowPersistenceInfo((current) => !current)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-650 bg-slate-850 text-cyan-300"
+              >
+                <Info aria-hidden="true" size={14} />
+              </button>
+            </div>
           </div>
           <h2 className="text-base font-black text-white">{t(locale, 'backupRestore')}</h2>
           <p className="text-sm font-semibold leading-relaxed text-slate-100">
@@ -392,11 +399,15 @@ export function ExportPage({ onBack }: ExportPageProps) {
                 : t(locale, 'localDataNote')
             )}
           </p>
-          {!isPersisted && (
+          {showPersistenceInfo && (
             <p className="rounded-xl border border-amber-800 bg-amber-950/25 px-3 py-2.5 text-xs font-bold leading-relaxed text-amber-100">
-              {locale === 'ko'
-                ? '💡 모바일 기기의 Safari/Chrome에서 "홈 화면에 추가"하여 PWA로 설치하면, 브라우저가 데이터를 임의로 지우지 않는 [영구 안심 보존(Persistent)] 권한을 자동으로 획득할 수 있습니다.'
-                : '💡 Add this app to your "Home Screen" (PWA) to automatically gain [Persistent Storage] status, ensuring the browser never auto-deletes your logs.'}
+              {isPersisted
+                ? locale === 'ko'
+                  ? '이 기기에서는 지속 저장소가 허용되었습니다. 중요한 기록은 별도 JSON 백업도 보관하세요.'
+                  : 'Persistent storage is enabled on this device. Keep a JSON backup for important records as well.'
+                : locale === 'ko'
+                  ? '모바일 기기에서 홈 화면에 추가해 설치하면 브라우저 저장소 유지 가능성이 높아집니다. 중요한 기록은 JSON 백업으로 보관하세요.'
+                  : 'Installing to your home screen can improve storage persistence. Keep important records in a JSON backup.'}
             </p>
           )}
           <div className="grid grid-cols-2 gap-3 pt-1">
