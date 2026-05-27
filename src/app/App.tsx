@@ -110,7 +110,8 @@ export function App() {
         initialSection={view === 'routines' ? 'routine' : view === 'exercises' ? 'library' : 'schedule'}
         onBack={() => setView('more')}
         onRoutineSaved={handleRoutineSaved}
-        onReviewCalendar={() => {
+        onReviewCalendar={(dateKey) => {
+          setCalendarSelectedDateKey(dateKey);
           setCalendarReviewingWeeklyPlan(true);
           setView('calendar');
         }}

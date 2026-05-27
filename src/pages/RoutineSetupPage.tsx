@@ -43,7 +43,7 @@ type RoutineSetupPageProps = {
   initialSection: SetupTab;
   onBack: () => void;
   onRoutineSaved: () => void;
-  onReviewCalendar: () => void;
+  onReviewCalendar: (dateKey: string) => void;
 };
 
 const weekdayLabels = {
@@ -633,7 +633,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
             </div>
             <button
               type="button"
-              onClick={onReviewCalendar}
+              onClick={() => onReviewCalendar(scheduleStartDate)}
               disabled={scheduleDirty || !activeRoutine}
               className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/40 bg-slate-850 text-sm font-bold text-cyan-300 disabled:border-slate-650 disabled:text-slate-500"
             >
