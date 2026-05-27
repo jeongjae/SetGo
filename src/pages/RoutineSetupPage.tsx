@@ -73,7 +73,8 @@ type RoutinePlanSnapshot = {
 export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onReviewCalendar }: RoutineSetupPageProps) {
   const [activeRoutine, setActiveRoutine] = useState<Routine | undefined>();
   const [savedRoutines, setSavedRoutines] = useState<Routine[]>([]);
-  const [showRoutineTemplates, setShowRoutineTemplates] = useState(false);
+  const [showRoutineCreator, setShowRoutineCreator] = useState(false);
+  const [showRoutineRename, setShowRoutineRename] = useState(false);
   const [savingSplitType, setSavingSplitType] = useState<RoutineSplitType | undefined>();
   const [dayPlans, setDayPlans] = useState<RoutineDayPlan[]>([]);
   const [exercises, setExercises] = useState<ExerciseMaster[]>([]);
@@ -148,7 +149,8 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
     setActiveRoutine(routine);
     setSelectedDayId(undefined);
     setSavingSplitType(undefined);
-    setShowRoutineTemplates(false);
+    setShowRoutineCreator(false);
+    setShowRoutineRename(false);
     onRoutineSaved();
     await loadSetup(true);
   }
@@ -157,7 +159,8 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
     const routine = await createCustomRoutine(locale === 'ko' ? '나의 루틴' : 'My Routine');
     setActiveRoutine(routine);
     setSelectedDayId(undefined);
-    setShowRoutineTemplates(false);
+    setShowRoutineCreator(false);
+    setShowRoutineRename(false);
     onRoutineSaved();
     await loadSetup(true);
   }
@@ -165,6 +168,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
   async function handleSelectStoredRoutine(routineId: string) {
     await activateStoredRoutine(routineId);
     setSelectedDayId(undefined);
+    setShowRoutineRename(false);
     onRoutineSaved();
     await loadSetup(true);
   }
@@ -215,6 +219,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
 
   async function handleUpdateRoutineName(name: string) {
     await updateActiveRoutineName(name);
+    setShowRoutineRename(false);
     onRoutineSaved();
     await loadSetup();
   }
@@ -468,34 +473,33 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
         {setupTab === 'routine' && (
           <div className="flex flex-col gap-2.5">
             <section className="shrink-0 space-y-2.5 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-md">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'activeRoutine')}</p>
-                <button
-                  type="button"
-                  onClick={() => void handleCreateCustomRoutine()}
-                  className="flex min-h-8 items-center gap-1 rounded-lg border border-cyan-500/45 bg-slate-850 px-2.5 text-xs font-bold text-cyan-300 active:scale-95"
-                >
-                  <Plus aria-hidden="true" size={13} />
-                  <span>{locale === 'ko' ? '직접 만들기' : 'New'}</span>
-                </button>
-              </div>
+              <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'activeRoutine')}</p>
               {savedRoutines.length > 0 ? (
-                <select
-                  aria-label={locale === 'ko' ? '활성 루틴 선택' : 'Select active routine'}
-                  value={activeRoutine?.id ?? ''}
-                  onChange={(event) => void handleSelectStoredRoutine(event.target.value)}
-                  className="min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-white outline-none focus:ring-1 focus:ring-cyan-400"
-                >
-                  {savedRoutines.map((routine) => (
-                    <option key={routine.id} value={routine.id}>{routine.name}</option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <select
+                    aria-label={locale === 'ko' ? '활성 루틴 선택' : 'Select active routine'}
+                    value={activeRoutine?.id ?? ''}
+                    onChange={(event) => void handleSelectStoredRoutine(event.target.value)}
+                    className="min-h-10 min-w-0 rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-white outline-none focus:ring-1 focus:ring-cyan-400"
+                  >
+                    {savedRoutines.map((routine) => (
+                      <option key={routine.id} value={routine.id}>{routine.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowRoutineRename((current) => !current)}
+                    className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-bold text-cyan-300"
+                  >
+                    {locale === 'ko' ? '이름 변경' : 'Rename'}
+                  </button>
+                </div>
               ) : (
                 <h2 className="text-sm font-bold text-slate-200">{t(locale, 'noActiveRoutine')}</h2>
               )}
-              {activeRoutine ? (
+              {activeRoutine && showRoutineRename ? (
                 <label className="block text-xs font-bold text-slate-200">
-                  {locale === 'ko' ? '루틴 이름' : 'Routine name'}
+                  {locale === 'ko' ? '새 이름' : 'New name'}
                   <input
                     key={activeRoutine.id}
                     aria-label="Active routine name"
@@ -508,15 +512,26 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
               ) : null}
               <button
                 type="button"
-                aria-expanded={showRoutineTemplates}
-                onClick={() => setShowRoutineTemplates((current) => !current)}
+                aria-expanded={showRoutineCreator}
+                onClick={() => setShowRoutineCreator((current) => !current)}
                 className="flex min-h-10 w-full items-center justify-between rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100"
               >
-                <span>{locale === 'ko' ? '템플릿에서 시작' : 'Start from template'}</span>
-                <span className="text-cyan-300">{showRoutineTemplates ? '−' : '+'}</span>
+                <span>{locale === 'ko' ? '새 루틴 만들기' : 'Create new routine'}</span>
+                <span className="text-cyan-300">{showRoutineCreator ? '−' : '+'}</span>
               </button>
-              {showRoutineTemplates ? (
+              {showRoutineCreator ? (
                 <div className="grid gap-2 border-t border-slate-650 pt-2.5">
+                  <button
+                    type="button"
+                    onClick={() => void handleCreateCustomRoutine()}
+                    className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-cyan-400 px-3 text-sm font-black text-slate-950"
+                  >
+                    <Plus aria-hidden="true" size={15} />
+                    <span>{locale === 'ko' ? '직접 만들기' : 'Create from scratch'}</span>
+                  </button>
+                  <p className="pt-1 text-xs font-extrabold uppercase text-slate-200">
+                    {locale === 'ko' ? '템플릿에서 시작' : 'Start from template'}
+                  </p>
                   {routineTemplates.map((template) => {
                     const isSaving = savingSplitType === template.splitType;
                     return (
