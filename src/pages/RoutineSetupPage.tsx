@@ -55,7 +55,7 @@ const exerciseCategories: Array<{ label: string; value: ExerciseCategory | 'all'
   ...exerciseCategoryOptions.map((category) => ({ label: category.label, value: category.value })),
 ];
 type SetupTab = 'routine' | 'library' | 'schedule';
-type ExerciseLibraryMode = 'search' | 'add' | 'edit';
+type ExerciseLibraryMode = 'browse' | 'add';
 
 function addDays(dateKey: string, days: number): string {
   const date = new Date(`${dateKey}T12:00:00`);
@@ -86,12 +86,10 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
   const [routineAddSearch, setRoutineAddSearch] = useState('');
   const [routineAddCategoryFilter, setRoutineAddCategoryFilter] = useState<ExerciseCategory | 'all'>('all');
   const [routineAddStageFilter, setRoutineAddStageFilter] = useState<ExerciseStage | 'all'>('all');
-  const [newExerciseName, setNewExerciseName] = useState('');
-  const [newExerciseNameEn, setNewExerciseNameEn] = useState('');
-  const [newExerciseCategory, setNewExerciseCategory] = useState<ExerciseCategory>('chest');
   const [editingExerciseId, setEditingExerciseId] = useState<string | undefined>();
   const [pendingExerciseDraft, setPendingExerciseDraft] = useState<ExerciseMaster | undefined>();
-  const [exerciseLibraryMode, setExerciseLibraryMode] = useState<ExerciseLibraryMode>('search');
+  const [exerciseLibraryMode, setExerciseLibraryMode] = useState<ExerciseLibraryMode>('browse');
+  const [isEditingExercise, setIsEditingExercise] = useState(false);
   const [showHiddenExercises, setShowHiddenExercises] = useState(false);
   const [locale] = useState(() => getStoredLocale());
   const [setupTab] = useState<SetupTab>(initialSection);
@@ -268,33 +266,27 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
     window.setTimeout(() => setResetStatus(undefined), 1800);
   }
 
-  async function handleCreateExercise() {
-    const name = newExerciseName.trim();
-    if (!name) return;
-
+  function handleStartAddExercise() {
     const now = new Date().toISOString();
-    const id = `custom_${name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}_${Date.now()}`;
-
     const draft: ExerciseMaster = {
-      id,
-      nameKo: name,
-      nameEn: newExerciseNameEn.trim() || name,
+      id: `custom_${Date.now()}`,
+      nameKo: '',
+      nameEn: '',
       stage: 'main',
       stageTags: ['main'],
-      category: newExerciseCategory,
-      categoryTags: [newExerciseCategory],
-      defaultEmoji: newExerciseCategory.slice(0, 2).toUpperCase(),
+      category: 'chest',
+      categoryTags: ['chest'],
+      defaultEmoji: 'CH',
       isDefault: false,
       isActive: true,
       createdAt: now,
       updatedAt: now,
     };
 
-    setNewExerciseName('');
-    setNewExerciseNameEn('');
     setPendingExerciseDraft(draft);
-    setEditingExerciseId(id);
-    setExerciseLibraryMode('edit');
+    setEditingExerciseId(draft.id);
+    setExerciseLibraryMode('add');
+    setIsEditingExercise(true);
     initialExerciseSnapshot.current = undefined;
   }
 
@@ -305,7 +297,8 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
       updatedAt: new Date().toISOString(),
     });
     setEditingExerciseId(undefined);
-    setExerciseLibraryMode('search');
+    setExerciseLibraryMode('browse');
+    setIsEditingExercise(false);
     setPendingExerciseDraft(undefined);
     await loadSetup();
   }
@@ -318,19 +311,29 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
     await loadSetup();
   }
 
-  function handleSelectExerciseForEdit(exercise: ExerciseMaster) {
+  function handleSelectExercise(exercise: ExerciseMaster) {
     setEditingExerciseId(exercise.id);
-    setExerciseLibraryMode('edit');
+    setExerciseLibraryMode('browse');
+    setIsEditingExercise(false);
+    setPendingExerciseDraft(undefined);
+  }
+
+  function handleBeginExerciseEdit(exercise: ExerciseMaster) {
+    setEditingExerciseId(exercise.id);
+    setIsEditingExercise(true);
     initialExerciseSnapshot.current = { ...exercise };
     setPendingExerciseDraft(undefined);
   }
 
   async function handleSaveExerciseChanges() {
+    if (!editingExercise?.nameKo.trim()) return;
     if (pendingExerciseDraft) {
       await db.exercises.put({ ...pendingExerciseDraft });
       setPendingExerciseDraft(undefined);
     }
     initialExerciseSnapshot.current = editingExercise ? { ...editingExercise } : undefined;
+    setExerciseLibraryMode('browse');
+    setIsEditingExercise(false);
     await loadSetup();
   }
 
@@ -340,8 +343,24 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
     }
     setPendingExerciseDraft(undefined);
     setEditingExerciseId(undefined);
-    setExerciseLibraryMode('search');
+    setExerciseLibraryMode('browse');
+    setIsEditingExercise(false);
     await loadSetup();
+  }
+
+  async function handleExerciseLibraryModeChange(nextMode: ExerciseLibraryMode) {
+    if (nextMode === exerciseLibraryMode && !isEditingExercise) return;
+    if (isEditingExercise) {
+      await handleCancelExerciseChanges();
+    }
+    if (nextMode === 'add') {
+      handleStartAddExercise();
+      return;
+    }
+    setExerciseLibraryMode('browse');
+    setPendingExerciseDraft(undefined);
+    setEditingExerciseId(undefined);
+    setIsEditingExercise(false);
   }
 
   async function handleUpdateExercise(
@@ -418,6 +437,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
   const editingExercise = pendingExerciseDraft?.id === editingExerciseId
     ? pendingExerciseDraft
     : exerciseLibrary.find((exercise) => exercise.id === editingExerciseId);
+  const exerciseEditorOpen = exerciseLibraryMode === 'add' || isEditingExercise;
   const activeRoutineName = activeRoutine?.name;
 
   return (
@@ -618,16 +638,15 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
               </h2>
             </div>
 
-            <nav className="grid grid-cols-3 gap-1 rounded-xl border border-slate-650 bg-slate-850 p-1">
+            <nav className="grid grid-cols-2 gap-1 rounded-xl border border-slate-650 bg-slate-850 p-1">
               {([
-                ['search', locale === 'ko' ? '검색' : 'Search'],
-                ['add', locale === 'ko' ? '추가' : 'Add'],
-                ['edit', locale === 'ko' ? '변경' : 'Edit'],
+                ['browse', locale === 'ko' ? '검색 / 변경' : 'Search / Edit'],
+                ['add', locale === 'ko' ? '운동 추가' : 'Add Exercise'],
               ] as Array<[ExerciseLibraryMode, string]>).map(([value, label]) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setExerciseLibraryMode(value)}
+                  onClick={() => void handleExerciseLibraryModeChange(value)}
                   className={`min-h-9 rounded-lg text-sm font-bold ${exerciseLibraryMode === value ? 'bg-cyan-400 text-slate-950' : 'text-slate-100'}`}
                 >
                   {label}
@@ -636,7 +655,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
             </nav>
 
             {/* 운동 검색 */}
-            {exerciseLibraryMode !== 'add' ? (
+            {exerciseLibraryMode === 'browse' ? (
               <div className="grid gap-2">
                 <div className="flex items-center gap-2.5 rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 shadow-inner focus-within:ring-1 focus-within:ring-cyan-400">
                   <Search aria-hidden="true" size={15} className="shrink-0 text-slate-200" />
@@ -673,37 +692,13 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
               </div>
             ) : null}
 
-            {/* 신규 등록 폼 */}
-            {exerciseLibraryMode === 'add' ? <div className="grid gap-2 border-t border-slate-900 pt-3">
-              <input
-                aria-label="New exercise Korean name"
-                type="text"
-                value={newExerciseName}
-                onChange={(event) => setNewExerciseName(event.target.value)}
-                placeholder={t(locale, 'koreanName')}
-                className="min-h-9 min-w-0 rounded-xl border border-slate-650 bg-slate-850 px-3.5 text-sm font-medium text-white outline-none placeholder:text-slate-400 focus:ring-1 focus:ring-cyan-400"
-              />
-              <button
-                type="button"
-                onClick={() => void handleCreateExercise()}
-                disabled={!newExerciseName.trim()}
-                className="flex min-h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-cyan-400 px-3 text-sm font-bold text-slate-950 shadow-md shadow-cyan-500/10 transition-all disabled:border disabled:border-slate-650 disabled:bg-slate-750 disabled:text-slate-400 active:scale-95"
-              >
-                <Plus aria-hidden="true" size={14} />
-                <span>{t(locale, 'addExercise')}</span>
-              </button>
-              <p className="text-xs font-semibold text-slate-200">
-                {locale === 'ko' ? '운동 추가 후 변경 화면에서 설명과 분류를 입력합니다.' : 'Add an exercise, then enter details in Edit.'}
-              </p>
-            </div> : null}
-
             {/* 운동 목록 세로 2열 그리드 */}
-            {exerciseLibraryMode !== 'add' ? <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 border-t border-slate-900 pt-3 scrollbar-thin">
+            {exerciseLibraryMode === 'browse' ? <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 border-t border-slate-900 pt-3 scrollbar-thin">
               {filteredExerciseLibrary.map((exercise) => (
                 <button
                   key={exercise.id}
                   type="button"
-                  onClick={() => handleSelectExerciseForEdit(exercise)}
+                  onClick={() => handleSelectExercise(exercise)}
                   className={`flex items-center rounded-xl p-2 text-left border transition-all active:scale-95 ${
                     editingExercise?.id === exercise.id
                       ? 'bg-cyan-400 border-cyan-400 text-slate-950 font-bold shadow-sm'
@@ -725,17 +720,27 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
               ))}
             </div> : null}
 
-            {/* 상세 운동 속성 편집 (선택 시 활성화) */}
-            {exerciseLibraryMode === 'edit' && editingExercise && (
+            {/* 선택 운동 상세 조회 및 명시적 편집 */}
+            {editingExercise && (
               <div key={editingExercise.id} className="space-y-3 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-inner">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-sm">
                       {getExerciseIcon(editingExercise.defaultEmoji)}
                     </div>
-                    <h3 className="text-xs font-bold text-white leading-tight">{getExerciseName(editingExercise, locale)}</h3>
+                    <h3 className="text-xs font-bold text-white leading-tight">
+                      {editingExercise.nameKo ? getExerciseName(editingExercise, locale) : (locale === 'ko' ? '새 운동' : 'New exercise')}
+                    </h3>
                   </div>
-                  {editingExercise.isActive ? (
+                  {!exerciseEditorOpen ? (
+                    <button
+                      type="button"
+                      onClick={() => handleBeginExerciseEdit(editingExercise)}
+                      className="min-h-8 shrink-0 rounded-lg bg-cyan-400 px-3 text-xs font-black text-slate-950"
+                    >
+                      {locale === 'ko' ? '변경' : 'Edit'}
+                    </button>
+                  ) : editingExercise.isActive && exerciseLibraryMode !== 'add' ? (
                     <button
                       type="button"
                       onClick={() => void handleDeactivateExercise(editingExercise.id)}
@@ -743,7 +748,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     >
                       {locale === 'ko' ? '목록에서 숨기기' : 'Hide from list'}
                     </button>
-                  ) : (
+                  ) : exerciseLibraryMode !== 'add' ? (
                     <button
                       type="button"
                       onClick={() => void handleRestoreExercise(editingExercise.id)}
@@ -751,9 +756,11 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     >
                       {locale === 'ko' ? '목록에 복원' : 'Restore'}
                     </button>
-                  )}
+                  ) : null}
                 </div>
 
+                {exerciseEditorOpen ? (
+                  <>
                 <div className="grid gap-2.5">
                   <label className="text-xs font-bold uppercase text-slate-200">
                     {t(locale, 'koreanName')}
@@ -849,11 +856,47 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   <button
                     type="button"
                     onClick={() => void handleSaveExerciseChanges()}
-                    className="min-h-10 rounded-xl bg-cyan-400 text-sm font-black text-slate-950"
+                    disabled={!editingExercise.nameKo.trim()}
+                    className="min-h-10 rounded-xl bg-cyan-400 text-sm font-black text-slate-950 disabled:bg-slate-650 disabled:text-slate-400"
                   >
                     {t(locale, 'save')}
                   </button>
                 </div>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-650 bg-slate-750 p-3 text-xs">
+                      <div>
+                        <p className="font-bold uppercase text-slate-300">{t(locale, 'koreanName')}</p>
+                        <p className="mt-1 text-sm font-bold text-white">{editingExercise.nameKo}</p>
+                      </div>
+                      <div>
+                        <p className="font-bold uppercase text-slate-300">{t(locale, 'englishName')}</p>
+                        <p className="mt-1 text-sm font-bold text-white">{editingExercise.nameEn ?? '-'}</p>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-slate-650 bg-slate-750 p-3">
+                      <p className="text-xs font-bold uppercase text-slate-300">{t(locale, 'description')}</p>
+                      <p className="mt-1 text-sm font-medium leading-5 text-slate-100">
+                        {editingExercise.description || (locale === 'ko' ? '설명이 없습니다.' : 'No description.')}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-xl border border-slate-650 bg-slate-750 p-3">
+                        <p className="text-xs font-bold uppercase text-slate-300">{t(locale, 'categories')}</p>
+                        <p className="mt-1 text-sm font-bold text-white">
+                          {getExerciseCategories(editingExercise).map((category) => labelForCategory(category, locale)).join(' / ')}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-slate-650 bg-slate-750 p-3">
+                        <p className="text-xs font-bold uppercase text-slate-300">{t(locale, 'stages')}</p>
+                        <p className="mt-1 text-sm font-bold text-white">
+                          {getExerciseStages(editingExercise).map((stage) => labelForStage(stage, locale)).join(' / ')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </section>
