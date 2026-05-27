@@ -103,6 +103,15 @@ export function getCalendarExistingWorkoutStartArgs(
   return [session.routineDayId, selectedDateKey, session.id];
 }
 
+export function shouldShowCalendarPlanIndicator(
+  isCurrentMonth: boolean,
+  hasPlan: boolean,
+  hasWorkoutSummaries: boolean,
+  reviewingWeeklyPlan: boolean,
+): boolean {
+  return isCurrentMonth && hasPlan && (reviewingWeeklyPlan || !hasWorkoutSummaries);
+}
+
 export function CalendarPage({
   initialSelectedDateKey,
   onSelectedDateChange,
@@ -313,7 +322,12 @@ export function CalendarPage({
             const hasSkipped = daySummaries.some((s) => s.session.status === 'skipped');
             const hasCompleted = daySummaries.some((s) => s.session.status === 'completed');
             const hasInProgress = daySummaries.some((s) => s.session.status === 'in_progress');
-            const showPlanDot = day.isCurrentMonth && dayPlan && daySummaries.length === 0;
+            const showPlanDot = shouldShowCalendarPlanIndicator(
+              day.isCurrentMonth,
+              Boolean(dayPlan),
+              daySummaries.length > 0,
+              reviewingWeeklyPlan,
+            );
             const totalVolume = daySummaries.reduce((sum, summary) => sum + summary.session.totalStrengthVolumeKg, 0);
 
             const isSelected = selectedDateKey === day.key;
