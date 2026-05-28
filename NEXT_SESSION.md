@@ -5,28 +5,26 @@
 - Project path: `C:\Users\NB-24021500\Projects\SetGo\setgo-starter`
 - App: Vite React TypeScript PWA, local-first, Dexie/IndexedDB only.
 - GitHub repo: `https://github.com/jeongjae/SetGo.git`
-- Latest pushed commit before the local cleanup pass: `cdda6d8`
-- Latest local commits:
-  - `2233044 Confirm deleting logged cardio`
-  - `e2b9aee Confirm deleting logged workout sets`
-  - `b478a8e Confirm deleting logged exercises`
-  - `8938d12 Reveal added workout exercise`
-  - `c7a85a3 Fix workout exercise progress count`
-  - `7293e6c Polish mobile workout UI shell`
-- Development URL used in Codex browser: `http://localhost:5174/`
+- Current branch: `main`
+- Latest pushed commit: `5c84064 Restore CSV save picker`
+- Latest deployed verification URL: `https://jeongjae.github.io/SetGo/?verify=5c84064`
+- Local development URL currently in use: `http://localhost:5174/`
 - Deployment target: GitHub Pages.
 
-## Important Rules
+## Hard Rules
 
 - Keep Tailwind on v3.4.17. Do not migrate to Tailwind v4 yet.
 - Do not add a backend.
 - Do not add authentication.
 - Keep data local-first with IndexedDB through Dexie.
 - Do not commit local export/backup artifacts unless explicitly requested.
+- Use `apply_patch` for manual file edits.
 
 ## Current Git Status Notes
 
-The app source cleanup pass is committed locally. These local files are intentionally untracked user/export artifacts:
+Source is clean relative to `origin/main` except this handoff file if it has not been committed.
+
+These local files are intentionally untracked user/export artifacts. Leave them alone unless the user explicitly asks to use or remove them:
 
 - `setgo-backup-2026-05-20T08-30-04.json`
 - `setgo-backup-2026-05-20T08-54-52.json`
@@ -34,102 +32,101 @@ The app source cleanup pass is committed locally. These local files are intentio
 - `setgo-exercises-2026-05-20T08-57-35.csv`
 - `setgo-exercises-2026-05-21T10-43-35.csv`
 - `setgo-exercises-2026-05-22T07-12-01.csv`
+- `setgo-exercises-2026-05-28T02-48-00.csv`
+- `setgo-exercises-2026-05-28T03-29-38.csv`
 - `setgo-settings-2026-05-20T08-57-27.json`
 - `setgo-settings-2026-05-22T07-11-56.json`
-
-Leave them alone unless the user asks to use or remove them.
+- `setgo-settings-2026-05-28T03-26-30.json`
 
 ## Recent Completed Work
 
-- Fixed mobile horizontal shake by locking app-level horizontal overflow in `src/styles.css`.
-- Added shared exercise finder component:
-  - `src/components/ExerciseFinder.tsx`
-  - Used in workout add/replace and routine setup add flows.
-- CSV exercise import validation errors are now shown persistently on the export/restore page.
-- Workout start from Today routine selection was fixed.
-- Calendar now preserves selected date after opening/editing a workout.
-- Workout stats page was expanded with KPI, charts, muscle analysis, performance table, warnings, and local rule-based AI comment.
-- Export/restore includes workout logs and settings data paths.
-- A follow-up viewport polish pass is keeping page headers/actions fixed while the page body scrolls inside the PWA shell.
-- External font loading was removed so the app shell remains network-independent after install.
-- Tailwind now registers the intermediate slate/accent shades and spacing tokens used by the premium mobile UI pass.
-- Backdated Calendar workout records now show their date in the workout header instead of a misleading multi-day live timer.
-- Stats trend, warning, target-range, and local analysis summary text now use i18n message templates.
-- Workout regressions now cover first backdated Calendar session creation and routine-plan values seeding into new workout logs.
-- Exercise CSV import validation now has direct coverage for missing columns and aggregated row-level issues.
-- Calendar start/edit button arguments now have direct regression coverage for selected-date workouts.
-- Workout start selection now has direct coverage for resuming in-progress records versus creating explicit new Calendar records.
-- Workout rest timer surfaces now use the same remaining-time countdown formatting.
-- Cardio-only workout sessions can be completed once at least one cardio record is confirmed from its draft.
-- Strength workouts now require at least one completed set before the workout completion action unlocks.
-- Workout header exercise progress now counts only exercises whose sets are all complete.
-- Newly added workout exercises open immediately and scroll into view for logging.
-- Deleting logged workout exercises, sets, or cardio entries now asks for confirmation while empty placeholders still delete quickly.
-- The remaining UI readability pass now brightens dense secondary surfaces in workout logging, routine exercise editing, Calendar status chips, Export persistence hints, Stats mini charts, and the PWA status banner.
-- A final micro-polish pass enlarges Calendar cell status text, brightens Stats trend labels, and makes Export helper/error copy easier to scan.
-- The mockup-driven navigation conversion now adds persistent browse-mode bottom tabs for Today, Calendar, Stats, and Settings, while Workout retains its dedicated task footer.
-- Today now presents one prominent workout start/continue CTA above global navigation instead of a five-tile action grid.
-- Calendar now keeps its selected-date workout CTA visible above global navigation and allows the month/detail content to scroll together on shorter viewports.
-- Settings now provides a dedicated entry point for Routine Setup and Export/Restore, and nested screens preserve the Settings navigation context.
-- Settings now promotes language switching to a top-level control beside Routine Setup and Export/Restore; the duplicate control was removed from Routine Setup.
-- Workout completion entered from Today returns to Today; Calendar-started sessions return to Calendar.
+- Implemented mockup-aligned bottom navigation across Today, Calendar, Stats, and Settings.
+- Split Settings into shallow entries for Routine, Exercise, Weekly Plan, Language, and Export/Import.
+- Reworked Routine management around saved routines, creation, draft editing, Save/Cancel, and active routine selection.
+- Reworked Exercise Library toward search/edit and add flows.
+- Added weekly plan date range and Calendar review flow.
+- Added Calendar historical workout edit mode so completed records can keep completed status while changing assignment, exercises, sets, and cardio.
+- Fixed weekly plan Calendar review visibility.
+- Condensed the Statistics page into a shorter summary/details structure.
+- Fixed CSV export 0-byte path twice:
+  - `768e38e`: delayed `Blob URL` revocation and added CSV serialization tests.
+  - `3accb36`: temporarily forced CSV through download fallback.
+  - `5c84064`: restored CSV save picker while writing CSV contents as text instead of a `Blob`.
+
+## Current Export/Import Status
+
+Latest intended behavior on `?verify=5c84064`:
+
+- Full JSON backup: uses save picker when available, writes JSON text.
+- Settings JSON backup: uses save picker when available, writes JSON text.
+- CSV export: uses save picker when available, writes CSV text with UTF-8 BOM.
+- CSV fallback: if save picker is unavailable or cancelled, uses `<a download>` and delayed `URL.revokeObjectURL`.
+- Full JSON restore: file input accepts `application/json`.
+- Settings JSON restore: file input accepts `application/json`.
+- CSV import: file input accepts `.csv,text/csv`.
+- Markdown copy: uses browser clipboard.
+
+Important browser automation limitation:
+
+- Codex in-app browser does not support actual file downloads, native save dialogs, or virtual clipboard reads.
+- Therefore, file size and save-picker UI must be verified manually in a normal browser/PWA.
+- The latest user-facing issue before handoff: user noticed CSV save folder popup missing on `?verify=3accb36`; fixed and deployed as `?verify=5c84064`.
 
 ## Verification Already Done
 
-Latest checks before handoff:
+Latest checks passed:
 
 ```powershell
 npm.cmd test -- --run
 npm.cmd run build
 ```
 
-Both passed again during the May 22 desktop UAT and readability-density UI pass.
+Current test count: 51 passing.
 
-Browser checks were also done for:
+Latest GitHub Actions deploy:
 
-- May 22 desktop UAT:
-  - Today loads after a fresh browser reload.
-  - Routine Setup opens and exposes the `루틴`, `운동`, and `주간 계획` tabs.
-  - Calendar skip status was round-tripped on the May 21 in-progress session and restored with `스킵 취소`.
-  - A temporary bench press exercise was added to the May 21 free workout, a `42.5 kg x 8 @ RIR 2` set was logged, save-time feedback and the rest timer appeared, and the temporary exercise was removed again.
-  - A follow-up empty-workout check confirmed that a placeholder strength exercise alone no longer unlocks workout completion; logging a set unlocks it.
-  - Markdown export copied to the clipboard and full JSON backup reported a browser download start.
-  - Stats empty state still renders when there are no completed workout records.
-- May 22 readability-density UI pass:
-  - Today and Workout were checked at mobile width after brightening the graphite palette, enlarging input labels, and tightening card spacing.
-  - Workout set entry, exercise addition finder, and fixed footer were checked with visible set rows.
-  - Calendar, empty Stats, Export, Routine Setup routine tab, exercise library tab, and weekly plan tab were checked in the in-app browser.
-  - Cardio draft logging was checked: a new manual cardio draft stays in the workout log, `Log cardio and continue` confirms it, and sessions without strength logs return to the exercise finder.
-- May 22 final UI finishing pass:
-  - Workout visible set rows and bottom actions were rechecked after brightening secondary buttons and the rest-timer surface.
-  - Routine Setup routine and exercise library surfaces were rechecked after enlarging exercise metadata and edit controls.
-  - Export local-data persistence messaging and the empty Stats state were rechecked at mobile width.
-- May 22 micro-polish pass:
-  - Calendar cell plan/status labels and the month legend were rechecked after the last size increase.
-  - Export first viewport was rechecked after enlarging the copy action and backup helper text.
-- May 26 mockup-aligned navigation pass:
-  - Today sticky workout CTA and global bottom navigation rendered correctly in the in-app browser.
-  - Calendar global navigation and fixed primary action were verified, including the shorter-viewport body scroll correction.
-  - Workout correctly switches to its task-specific footer without the browse navigation.
-  - Stats and Settings navigation active states were checked, including nested Routine Setup entry.
-  - `npm.cmd test -- --run` and `npm.cmd run build` passed.
-- Today page load and fixed-shell height metrics.
-- Routine Setup body scrolling inside the fixed header shell.
-- Calendar date detail scrolling inside the fixed month view.
-- Workout entry from Calendar, add-exercise finder, fixed workout footer, rest countdown render, cardio-only completion enable/cleanup, added-exercise reveal/cleanup, and empty set/exercise delete cleanup.
-- Stats empty state and Export long-content scrolling.
+- Run: `26552649800`
+- Commit: `5c84064`
+- Conclusion: success
 
-## Suggested Next Development Order
+Browser checks done on latest deploy:
 
-1. Run the remaining real-device UAT on iPhone Safari / Home Screen after GitHub Pages deploy:
-   - horizontal movement should be reduced or gone.
-   - if still present, inspect individual wide elements such as tables, `<pre>`, SVG charts, or chip rows.
-   - verify keyboard entry, Add to Home Screen relaunch, and offline shell from the installed PWA.
-2. Decide how AI comments should work long term:
-   - current version is local deterministic summary only.
-   - mobile works offline because it does not call an API.
-   - future improvement can add optional user-triggered external AI export/prompt flow.
-3. Continue expanding regression coverage when a further change touches a shared workout or import path.
+- `https://jeongjae.github.io/SetGo/?verify=5c84064` loads.
+- Settings screen opens.
+- Export/Import screen opens.
+- CSV export button is visible.
+
+Browser checks done on previous deploy `?verify=3accb36`:
+
+- Export/Import screen opened.
+- Full backup, settings backup, and CSV export buttons clicked without page crash.
+- Success messages appeared for the export buttons.
+- Restore/import input `accept` attributes were confirmed.
+
+## Known Follow-Up / Manual UAT Needed
+
+1. In a normal browser, not Codex in-app browser, open:
+
+   `https://jeongjae.github.io/SetGo/?verify=5c84064`
+
+2. Go to Settings -> Export/Import -> CSV export.
+
+3. Confirm:
+
+   - Native save-location popup appears.
+   - Saved CSV file is not 0 bytes.
+   - CSV opens with headers:
+     `id,nameKo,nameEn,categoryTags,stageTags,description,icon,isActive`
+   - Korean text is readable in Excel/Numbers/Sheets.
+
+4. Test other export/import paths manually:
+
+   - Full JSON backup creates a non-empty JSON.
+   - Settings JSON backup creates a non-empty JSON.
+   - Full JSON restore asks for confirmation and restores data.
+   - Settings restore asks for confirmation and does not delete existing workout logs.
+   - CSV import updates exercise fields and shows validation issues for bad rows.
+   - Markdown copy works in the installed PWA and mobile Safari/Chrome.
 
 ## Useful Commands
 
@@ -138,15 +135,15 @@ cd C:\Users\NB-24021500\Projects\SetGo\setgo-starter
 npm.cmd run dev
 npm.cmd test -- --run
 npm.cmd run build
-git status --short
-git log --oneline -5
+git status --short --branch
+git log --oneline --decorate -6
 ```
 
 ## Suggested Opening Prompt For New Session
 
 Continue SetGo development from `C:\Users\NB-24021500\Projects\SetGo\setgo-starter`.
 Read `AGENTS.md`, `README.md`, and `NEXT_SESSION.md` first.
-The latest local commit is `2233044`.
+Latest deployed commit is `5c84064` at `https://jeongjae.github.io/SetGo/?verify=5c84064`.
 Keep Tailwind v3, no backend/auth, local-first Dexie only.
-Do not commit the untracked backup/CSV files.
-Proceed with the next P2 polishing item and verify with tests/build/browser.
+Do not commit or delete untracked backup/CSV artifacts.
+Start by manually verifying the Export/Import save-picker and file-size behavior in a normal browser/PWA, then continue with the next UI/UX issue the user reports.
