@@ -1,8 +1,10 @@
-import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
+﻿import { Bed, ChevronLeft, ChevronRight, Dumbbell, Footprints, Play } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   clearCalendarPlanOverride,
   getActiveRoutine,
+  getCyclePlanItemForDate,
+  getRoutineCyclePlan,
   getActiveRoutineDays,
   getActiveWeeklySchedule,
   isRoutineScheduledForDate,
@@ -13,7 +15,7 @@ import { getMonthlyWorkoutSummaries, getOrCreateWorkoutForDate, skipWorkoutSessi
 import { formatDateKey } from '../utils/date';
 import { db } from '../db/db';
 import { exerciseCountLabel, getStoredLocale, t, workoutStatusLabel } from '../i18n/i18n';
-import type { CalendarPlanOverride, RoutineDay, WorkoutSession } from '../types';
+import type { CalendarPlanOverride, RoutineDay, WorkoutPlanKind, WorkoutSession } from '../types';
 
 type CalendarPageProps = {
   initialSelectedDateKey?: string;
@@ -33,7 +35,7 @@ type CalendarDay = {
 type CalendarPlan = {
   date: string;
   routineDay?: RoutineDay;
-  status: 'planned' | 'missed';
+  kind: WorkoutPlanKind;
 };
 
 type CalendarWorkoutStartArgs = [
@@ -48,8 +50,11 @@ const weekdayLabels = {
   en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
 };
 
-function statusLabel(status: CalendarPlan['status'], locale: 'ko' | 'en') {
-  return status === 'missed' ? t(locale, 'missed') : t(locale, 'planned');
+function planKindLabel(kind: WorkoutPlanKind, locale: 'ko' | 'en') {
+  if (kind === 'free') return locale === 'ko' ? '자유운동' : 'Free';
+  if (kind === 'running') return locale === 'ko' ? '러닝' : 'Running';
+  if (kind === 'rest') return t(locale, 'rest');
+  return locale === 'ko' ? '운동' : 'Workout';
 }
 
 function buildCalendarDays(year: number, monthIndex: number): CalendarDay[] {
@@ -78,15 +83,36 @@ function monthFromDate(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
-function statusColor(status: WorkoutSummary['session']['status']) {
-  if (status === 'completed') return 'bg-emerald-400 shadow-[0_0_6px_#34d399]';
-  if (status === 'in_progress') return 'bg-cyan-400 shadow-[0_0_6px_#22d3ee]';
-  if (status === 'skipped') return 'bg-slate-400';
-  return 'bg-amber-300';
+function getOverrideKind(override: CalendarPlanOverride): WorkoutPlanKind {
+  if (override.kind) return override.kind;
+  if (override.isRestDay || !override.routineDayId) return 'rest';
+  return 'routine';
 }
 
-function planColor(status: CalendarPlan['status']) {
-  return status === 'missed' ? 'bg-rose-500' : 'bg-cyan-400';
+function hasWorkoutSummaryContent(summary: WorkoutSummary): boolean {
+  return summary.exerciseCount > 0
+    || summary.cardioCount > 0
+    || summary.session.totalStrengthVolumeKg > 0;
+}
+
+function isRunningOnlySummary(summary: WorkoutSummary): boolean {
+  return summary.cardioCount > 0
+    && summary.exerciseCount === 0
+    && summary.session.totalStrengthVolumeKg === 0;
+}
+
+function getSummaryPlanValue(summary: WorkoutSummary): string | undefined {
+  if (isRunningOnlySummary(summary)) return 'running';
+  if (summary.exerciseCount > 0 || summary.session.totalStrengthVolumeKg > 0) {
+    return summary.session.routineDayId ? `routine:${summary.session.routineDayId}` : 'free';
+  }
+  return undefined;
+}
+
+function shouldShowWorkoutSummaryCard(summary: WorkoutSummary): boolean {
+  return summary.session.status === 'in_progress'
+    || summary.session.status === 'skipped'
+    || hasWorkoutSummaryContent(summary);
 }
 
 export function getCalendarNewWorkoutStartArgs(
@@ -159,9 +185,10 @@ export function CalendarPage({
   useEffect(() => {
     async function loadMonth() {
       const activeRoutine = await getActiveRoutine();
-      const [monthlySummaries, schedule, loadedRoutineDays, overrides] = await Promise.all([
+      const [monthlySummaries, schedule, cycleItems, loadedRoutineDays, overrides] = await Promise.all([
         getMonthlyWorkoutSummaries(visibleMonth.getFullYear(), visibleMonth.getMonth()),
         getActiveWeeklySchedule(),
+        activeRoutine ? getRoutineCyclePlan(activeRoutine.id) : [],
         getActiveRoutineDays(),
         activeRoutine ? db.calendarPlanOverrides.where('routineId').equals(activeRoutine.id).toArray() : [],
       ]);
@@ -176,16 +203,26 @@ export function CalendarPage({
         .flatMap((day) => {
           const override = overridesByDateMap[day.key];
           if (override) {
-            if (override.isRestDay || !override.routineDayId) return [];
+            const kind = getOverrideKind(override);
+            const routineDay = override.routineDayId ? routineDayById.get(override.routineDayId) : undefined;
 
             return [{
               date: day.key,
-              routineDay: routineDayById.get(override.routineDayId),
-              status: day.key < todayKey ? 'missed' : 'planned',
+              kind,
+              routineDay,
             } satisfies CalendarPlan];
           }
 
           if (!isRoutineScheduledForDate(activeRoutine, day.key)) return [];
+
+          const cycleItem = getCyclePlanItemForDate(activeRoutine, cycleItems, day.key);
+          if (cycleItem) {
+            return [{
+              date: day.key,
+              kind: cycleItem.kind,
+              routineDay: cycleItem.routineDayId ? routineDayById.get(cycleItem.routineDayId) : undefined,
+            } satisfies CalendarPlan];
+          }
 
           const daySchedule = schedule.find((item) => item.weekday === day.date.getDay());
           if (!daySchedule || daySchedule.isRestDay || !daySchedule.routineDayId) return [];
@@ -193,7 +230,7 @@ export function CalendarPage({
           return [{
             date: day.key,
             routineDay: routineDayById.get(daySchedule.routineDayId),
-            status: day.key < todayKey ? 'missed' : 'planned',
+            kind: 'routine',
           } satisfies CalendarPlan];
         });
 
@@ -221,10 +258,12 @@ export function CalendarPage({
   }
 
   async function handlePlanChange(value: string) {
-    if (value === '__weekly') {
+    if (value === '__cycle') {
       await clearCalendarPlanOverride(selectedDateKey);
+    } else if (value === 'rest' || value === 'running' || value === 'free') {
+      await saveCalendarPlanOverride(selectedDateKey, value);
     } else {
-      await saveCalendarPlanOverride(selectedDateKey, value || undefined);
+      await saveCalendarPlanOverride(selectedDateKey, 'routine', value.replace(/^routine:/, ''));
     }
 
     setReloadKey((current) => current + 1);
@@ -263,19 +302,41 @@ export function CalendarPage({
 
   const selectedOverride = overridesByDate[selectedDateKey];
   const selectedSummaries = summariesByDate[selectedDateKey] ?? [];
+  const visibleSelectedSummaries = selectedSummaries.filter(shouldShowWorkoutSummaryCard);
   const selectedPlan = plansByDate[selectedDateKey];
+  const selectedRecordPlanValue = selectedSummaries
+    .map(getSummaryPlanValue)
+    .find((value): value is string => value !== undefined);
   const selectedPlanValue = selectedOverride
-    ? selectedOverride.isRestDay ? '' : selectedOverride.routineDayId ?? ''
-    : selectedPlan?.routineDay ? '__weekly' : '';
+    ? selectedRecordPlanValue ?? (
+      getOverrideKind(selectedOverride) === 'routine'
+        ? `routine:${selectedOverride.routineDayId ?? ''}`
+        : getOverrideKind(selectedOverride)
+    )
+    : selectedRecordPlanValue ?? (selectedPlan ? '__cycle' : 'rest');
   const selectedInProgressSession = selectedSummaries.find((summary) => summary.session.status === 'in_progress');
-  const selectedOverrideRoutineDayId = selectedPlanValue !== '__weekly' ? selectedPlanValue || undefined : undefined;
-  const startWorkoutRoutineDayId = selectedOverrideRoutineDayId ?? selectedPlan?.routineDay?.id;
+  const selectedOverrideRoutineDayId = selectedPlanValue.startsWith('routine:') ? selectedPlanValue.replace(/^routine:/, '') : undefined;
+  const startWorkoutRoutineDayId = selectedOverrideRoutineDayId ?? (selectedPlan?.kind === 'routine' ? selectedPlan.routineDay?.id : undefined);
+  const selectedPlanKind: WorkoutPlanKind = selectedPlanValue.startsWith('routine:')
+    ? 'routine'
+    : selectedPlanValue === '__cycle'
+      ? selectedPlan?.kind ?? 'rest'
+      : (selectedPlanValue as WorkoutPlanKind);
   const shouldContinueSelectedSession = selectedInProgressSession !== undefined;
-  const primaryActionLabel = shouldContinueSelectedSession
+  const recordActionLabel = shouldContinueSelectedSession
     ? selectedDateKey === todayKey ? t(locale, 'continueTodayWorkout') : t(locale, 'continueWorkout')
-    : startWorkoutRoutineDayId
-      ? t(locale, 'startPlannedWorkout')
-      : t(locale, 'startFreeWorkout');
+    : locale === 'ko' ? '운동 기록 하기' : 'Log workout';
+  const recordActionDisabled = !shouldContinueSelectedSession && selectedPlanKind === 'rest';
+
+  function handleRecordSelectedDate() {
+    if (shouldContinueSelectedSession) {
+      onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, selectedInProgressSession.session));
+      return;
+    }
+
+    if (selectedPlanKind === 'rest') return;
+    onStartWorkout(...getCalendarNewWorkoutStartArgs(selectedDateKey, startWorkoutRoutineDayId));
+  }
 
   return (
     <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
@@ -287,7 +348,7 @@ export function CalendarPage({
       </header>
 
       <div className="inner-scroll min-h-0 space-y-2.5 pr-0.5">
-      {/* 달력 영역: 높이 고정 (shrink-0) 및 톤업 스타일 */}
+      {/* ?щ젰 ?곸뿭: ?믪씠 怨좎젙 (shrink-0) 諛??ㅼ뾽 ?ㅽ???*/}
       <section className="shrink-0 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
         <div className="flex items-center justify-between gap-3">
           <button
@@ -319,25 +380,30 @@ export function CalendarPage({
           {calendarDays.map((day) => {
             const daySummaries = summariesByDate[day.key] ?? [];
             const dayPlan = plansByDate[day.key];
-            const hasSkipped = daySummaries.some((s) => s.session.status === 'skipped');
             const hasCompleted = daySummaries.some((s) => s.session.status === 'completed');
             const hasInProgress = daySummaries.some((s) => s.session.status === 'in_progress');
-            const showPlanDot = shouldShowCalendarPlanIndicator(
-              day.isCurrentMonth,
-              Boolean(dayPlan),
-              daySummaries.length > 0,
-              reviewingWeeklyPlan,
-            );
             const totalVolume = daySummaries.reduce((sum, summary) => sum + summary.session.totalStrengthVolumeKg, 0);
+            const hasRecord = hasCompleted || hasInProgress;
+            const hasRunningRecord = daySummaries.some((summary) => summary.cardioCount > 0 && summary.exerciseCount === 0);
+            const hasStrengthRecord = daySummaries.some((summary) => summary.exerciseCount > 0 || summary.session.totalStrengthVolumeKg > 0);
+            const displayKind: WorkoutPlanKind | undefined = hasRunningRecord
+              ? 'running'
+              : hasStrengthRecord
+                ? 'routine'
+                : dayPlan?.kind ?? (day.isCurrentMonth ? 'rest' : undefined);
+            const highlightsFuturePlan = Boolean(displayKind && displayKind !== 'rest');
+            const usesLightCellText = hasRecord || day.key === todayKey || (day.key > todayKey && highlightsFuturePlan);
 
             const isSelected = selectedDateKey === day.key;
             let cellStyle = '';
             if (isSelected) {
-              cellStyle = 'bg-cyan-950/70 border-cyan-400 text-white ring-1 ring-cyan-400/50 shadow-[0_0_12px_-2px_rgba(34,211,238,0.35)]';
-            } else if (hasCompleted) {
-              cellStyle = 'bg-emerald-950/40 border-emerald-500/60 text-slate-100 hover:bg-emerald-950/60 shadow-[0_0_8px_-2px_rgba(16,185,129,0.25)]';
-            } else if (hasInProgress) {
-              cellStyle = 'bg-cyan-950/40 border-cyan-500/60 text-slate-100 hover:bg-cyan-950/60 shadow-[0_0_8px_-2px_rgba(34,211,238,0.25)]';
+              cellStyle = 'bg-emerald-600/90 border-emerald-300 text-white ring-1 ring-emerald-300/70 shadow-[0_0_14px_-2px_rgba(52,211,153,0.45)]';
+            } else if (hasRecord && day.key <= todayKey) {
+              cellStyle = 'bg-yellow-100/90 border-yellow-300 text-slate-950 hover:bg-yellow-100';
+            } else if (day.key === todayKey) {
+              cellStyle = 'bg-rose-100/90 border-rose-300 text-slate-950 hover:bg-rose-100';
+            } else if (day.key > todayKey && day.isCurrentMonth && highlightsFuturePlan) {
+              cellStyle = 'bg-sky-100/90 border-sky-300 text-slate-950 hover:bg-sky-100';
             } else if (day.isCurrentMonth) {
               cellStyle = 'bg-slate-850/75 border-slate-650 text-slate-100 hover:bg-slate-700';
             } else {
@@ -349,41 +415,22 @@ export function CalendarPage({
                 type="button"
                 key={day.key}
                 onClick={() => selectDate(day.key)}
-                aria-label={`${day.key} ${dayPlan ? getRoutineDayDisplayName(dayPlan.routineDay, locale) ?? statusLabel(dayPlan.status, locale) : ''}`.trim()}
+                aria-label={`${day.key} ${displayKind ? planKindLabel(displayKind, locale) : ''}`.trim()}
                 className={`flex aspect-square min-h-12 flex-col rounded-xl p-1.5 border transition-all duration-200 active:scale-95 ${cellStyle}`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className={`text-xs font-black ${isSelected ? 'text-cyan-200' : 'text-slate-100'}`}>{day.date.getDate()}</span>
-                  {hasCompleted && <span className="text-[11px] filter drop-shadow">🏋️‍♂️</span>}
-                </div>
-                <div className="mt-auto flex items-center gap-0.5">
-                  {daySummaries.slice(0, 3).map((summary) => (
-                    <span
-                      key={summary.session.id}
-                      className={`h-1.5 w-1.5 rounded-full ${statusColor(summary.session.status)}`}
-                      aria-label={`${summary.session.date} ${workoutStatusLabel(locale, summary.session.status)}`}
-                    />
-                  ))}
-                  {showPlanDot ? (
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${planColor(dayPlan.status)}`}
-                      aria-label={`${day.key} ${statusLabel(dayPlan.status, locale)}`}
-                    />
-                  ) : null}
+                  <span className={`text-xs font-black ${isSelected ? 'text-white' : usesLightCellText ? 'text-slate-950' : 'text-slate-100'}`}>{day.date.getDate()}</span>
+                  {displayKind === 'routine' || displayKind === 'free' ? <Dumbbell aria-hidden="true" size={13} /> : null}
+                  {displayKind === 'running' ? <Footprints aria-hidden="true" size={13} /> : null}
+                  {displayKind === 'rest' ? <Bed aria-hidden="true" size={13} /> : null}
                 </div>
                 {totalVolume > 0 ? (
                   <span className="mt-0.5 truncate text-[11px] font-black text-emerald-300">
                     {totalVolume.toLocaleString()}kg
                   </span>
-                ) : hasSkipped ? (
-                  <span className="mt-0.5 inline-block rounded border border-slate-650 bg-slate-750 px-1 py-0.2 text-[10px] font-black uppercase text-slate-100">
-                    {locale === 'ko' ? '스킵' : 'Skip'}
-                  </span>
-                ) : showPlanDot ? (
-                  <span className={`mt-0.5 truncate text-[11px] font-extrabold ${
-                    dayPlan.status === 'missed' ? 'text-rose-450' : 'text-cyan-400'
-                  }`}>
-                    {getRoutineDayDisplayName(dayPlan.routineDay, locale) ?? statusLabel(dayPlan.status, locale)}
+                ) : displayKind ? (
+                  <span className="mt-0.5 truncate text-[11px] font-extrabold text-current">
+                    {displayKind === 'routine' ? getRoutineDayDisplayName(dayPlan?.routineDay, locale) ?? planKindLabel(displayKind, locale) : planKindLabel(displayKind, locale)}
                   </span>
                 ) : null}
               </button>
@@ -392,14 +439,13 @@ export function CalendarPage({
         </div>
 
         <div className="mt-3 flex items-center justify-between border-t border-slate-650 pt-2.5 text-xs font-black uppercase text-slate-100">
-          <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />{t(locale, 'completed')}</span>
-          <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />{t(locale, 'inProgress')}</span>
-          <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-cyan-400" />{t(locale, 'planned')}</span>
-          <span className="flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-rose-500" />{t(locale, 'missed')}</span>
+          <span className="flex items-center gap-1.5"><Dumbbell aria-hidden="true" size={13} />{locale === 'ko' ? '운동' : 'Workout'}</span>
+          <span className="flex items-center gap-1.5"><Bed aria-hidden="true" size={13} />{t(locale, 'rest')}</span>
+          <span className="flex items-center gap-1.5"><Footprints aria-hidden="true" size={13} />{locale === 'ko' ? '러닝' : 'Running'}</span>
         </div>
       </section>
 
-      {/* 운동 상세 정보 및 조작부: 내부 스크롤 적용 (inner-scroll) */}
+        {/* Selected date details */}
       <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-650 pb-2">
           <div>
@@ -419,7 +465,7 @@ export function CalendarPage({
         
         <div className="space-y-1">
           <label htmlFor="calendar-workout-plan-select" className="block text-xs font-extrabold text-slate-100">
-            {locale === 'ko' ? '이 날의 계획 수정' : 'Modify plan for this date'}
+            {locale === 'ko' ? '이 날짜의 운동계획 수정' : 'Modify plan for this date'}
           </label>
           <select
             id="calendar-workout-plan-select"
@@ -428,80 +474,106 @@ export function CalendarPage({
             onChange={(event) => void handlePlanChange(event.target.value)}
             className="min-h-10 w-full cursor-pointer rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-semibold text-slate-100 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
           >
-            <option value="__weekly" className="bg-slate-900 text-slate-200">{t(locale, 'useWeeklySchedule')}</option>
-            <option value="" className="bg-slate-900 text-slate-200">{t(locale, 'rest')}</option>
+            <option value="__cycle" className="bg-slate-900 text-slate-200">{locale === 'ko' ? '운동사이클 따르기' : 'Follow workout cycle'}</option>
+            <option value="rest" className="bg-slate-900 text-slate-200">{t(locale, 'rest')}</option>
+            <option value="running" className="bg-slate-900 text-slate-200">{locale === 'ko' ? '러닝' : 'Running'}</option>
+            <option value="free" className="bg-slate-900 text-slate-200">{locale === 'ko' ? '자유운동' : 'Free workout'}</option>
             {routineDays.map((routineDay) => (
-              <option key={routineDay.id} value={routineDay.id} className="bg-slate-900 text-slate-200">
+              <option key={routineDay.id} value={`routine:${routineDay.id}`} className="bg-slate-900 text-slate-200">
                 {getRoutineDayDisplayName(routineDay, locale)}
               </option>
             ))}
           </select>
         </div>
 
-        {selectedSummaries.length > 0 ? (
+        {visibleSelectedSummaries.length > 0 ? (
           <div className="grid gap-3">
-            {selectedSummaries.map((summary) => (
-              <div key={summary.session.id} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-xl">
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-sm font-black text-white tracking-wide">
-                    {getRoutineDayDisplayName(summary.routineDay, locale) ?? summary.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}
-                  </h3>
-                  <span className="rounded-lg border border-slate-650 bg-slate-750 px-2.5 py-1 text-xs font-black text-cyan-200">
-                    {workoutStatusLabel(locale, summary.session.status)}
-                  </span>
-                </div>
-                <p className="text-xs font-bold text-slate-300">
-                  {exerciseCountLabel(locale, summary.exerciseCount)} / <span className="text-emerald-450 font-black">{summary.session.totalStrengthVolumeKg.toLocaleString()} kg</span>
-                </p>
-                <div className="flex gap-2 pt-1">
-                  {summary.session.status === 'skipped' ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => void handleUnskipSession(summary.session.id)}
-                        className="flex-1 min-h-10 rounded-xl bg-cyan-400 hover:bg-cyan-300 px-3 text-xs font-black text-slate-950 active:scale-95 transition-all shadow-md shadow-cyan-400/20"
-                      >
-                        {locale === 'ko' ? '스킵 취소' : 'Unskip'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => summary.session.status === 'completed'
-                          ? onEditHistoricalWorkout(summary.session.id, selectedDateKey)
-                          : onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, summary.session))}
-                        className="flex-1 min-h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 px-3 text-xs font-black text-slate-200 active:scale-95 transition-all"
-                      >
-                        {locale === 'ko' ? '기록 보기/수정' : 'View/Edit'}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => summary.session.status === 'completed'
-                          ? onEditHistoricalWorkout(summary.session.id, selectedDateKey)
-                          : onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, summary.session))}
-                        className="flex-1 min-h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 px-3 text-xs font-black text-cyan-400 active:scale-95 transition-all"
-                      >
-                        {locale === 'ko' ? '운동기록 수정' : 'Edit record'}
-                      </button>
-                      {summary.session.status === 'in_progress' && (
+            {visibleSelectedSummaries.map((summary) => {
+              const isRunningOnly = isRunningOnlySummary(summary);
+
+              return (
+                <div key={summary.session.id} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-xl">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-sm font-black text-white tracking-wide">
+                      {isRunningOnly
+                        ? planKindLabel('running', locale)
+                        : getRoutineDayDisplayName(summary.routineDay, locale) ?? summary.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}
+                    </h3>
+                    <span className="rounded-lg border border-slate-650 bg-slate-750 px-2.5 py-1 text-xs font-black text-cyan-200">
+                      {workoutStatusLabel(locale, summary.session.status)}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-300">
+                    {isRunningOnly
+                      ? `${summary.cardioCount}${locale === 'ko' ? '개 러닝 기록' : ' running record'}`
+                      : (
+                        <>
+                          {exerciseCountLabel(locale, summary.exerciseCount)} / <span className="text-emerald-450 font-black">{summary.session.totalStrengthVolumeKg.toLocaleString()} kg</span>
+                        </>
+                      )}
+                  </p>
+                  <div className="flex gap-2 pt-1">
+                    {summary.session.status === 'skipped' ? (
+                      <>
                         <button
                           type="button"
-                          onClick={() => void handleSkipSession(summary.session.id)}
-                          className="min-h-10 flex-1 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-black text-slate-100 transition-all hover:bg-slate-700 active:scale-95"
+                          onClick={() => void handleUnskipSession(summary.session.id)}
+                          className="flex-1 min-h-10 rounded-xl bg-cyan-400 hover:bg-cyan-300 px-3 text-xs font-black text-slate-950 active:scale-95 transition-all shadow-md shadow-cyan-400/20"
                         >
-                          {locale === 'ko' ? '스킵하기' : 'Skip Workout'}
+                          {locale === 'ko' ? '건너뛰기 취소' : 'Unskip'}
                         </button>
-                      )}
-                    </>
-                  )}
+                        <button
+                          type="button"
+                          onClick={() => summary.session.status === 'completed'
+                            ? onEditHistoricalWorkout(summary.session.id, selectedDateKey)
+                            : onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, summary.session))}
+                          className="flex-1 min-h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 px-3 text-xs font-black text-slate-200 active:scale-95 transition-all"
+                        >
+                          {locale === 'ko' ? '기록 보기/수정' : 'View/Edit'}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => summary.session.status === 'completed'
+                            ? onEditHistoricalWorkout(summary.session.id, selectedDateKey)
+                            : onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, summary.session))}
+                          className="flex-1 min-h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 px-3 text-xs font-black text-cyan-400 active:scale-95 transition-all"
+                        >
+                          {locale === 'ko' ? `${isRunningOnly ? '러닝' : '운동'}기록 수정` : 'Edit record'}
+                        </button>
+                        {false && summary.session.status === 'in_progress' && (
+                          <button
+                            type="button"
+                            onClick={() => void handleSkipSession(summary.session.id)}
+                            className="min-h-10 flex-1 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-black text-slate-100 transition-all hover:bg-slate-700 active:scale-95"
+                          >
+                            {locale === 'ko' ? '건너뛰기' : 'Skip Workout'}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : null}
 
-        {!shouldContinueSelectedSession ? (
+        <div className="grid grid-cols-1 gap-2 border-t border-slate-750 pt-3">
+          <button
+            type="button"
+            onClick={handleRecordSelectedDate}
+            disabled={recordActionDisabled}
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-black text-slate-100 transition-all hover:bg-slate-700 active:scale-95 disabled:text-slate-500 disabled:hover:bg-slate-850"
+          >
+            <Play aria-hidden="true" size={15} />
+            <span>{recordActionLabel}</span>
+          </button>
+        </div>
+
+        {false && !shouldContinueSelectedSession ? (
           <div className="grid grid-cols-1 gap-2 border-t border-slate-750 pt-3">
             {startWorkoutRoutineDayId ? (
               <button
@@ -513,14 +585,14 @@ export function CalendarPage({
                 <span>{locale === 'ko' ? '자유 운동으로 기록 추가' : 'Add free workout record'}</span>
               </button>
             ) : null}
-            {(selectedPlan || selectedDateKey < todayKey) && (
+            {false && (selectedPlan || selectedDateKey < todayKey) && (
               <button
                 type="button"
                 onClick={() => void handleSkipNewSession()}
                 className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-850 px-3 text-xs font-bold text-rose-400 active:scale-95 transition-all"
               >
                 <span>
-                  {locale === 'ko' ? '운동 스킵 (Skip Workout)' : 'Skip Workout'}
+                  {locale === 'ko' ? '운동 건너뛰기' : 'Skip Workout'}
                 </span>
               </button>
             )}
@@ -536,10 +608,10 @@ export function CalendarPage({
             onClick={onReturnToWeeklyPlan}
             className="flex min-h-11 w-full items-center justify-center rounded-xl border border-cyan-500/40 bg-slate-850 px-3 text-sm font-bold text-cyan-300"
           >
-            {locale === 'ko' ? '주간 계획으로 돌아가기' : 'Return to weekly plan'}
+            {locale === 'ko' ? '운동계획으로 돌아가기' : 'Return to workout plan'}
           </button>
         ) : null}
-        <button
+        {false && <button
           type="button"
           onClick={() => onStartWorkout(...(
             shouldContinueSelectedSession
@@ -549,8 +621,8 @@ export function CalendarPage({
           className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-455 px-3 text-sm font-black text-slate-955 shadow-lg shadow-cyan-400/20 transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-95"
         >
           <Play aria-hidden="true" size={18} />
-          <span>{primaryActionLabel}</span>
-        </button>
+          <span>{recordActionLabel}</span>
+        </button>}
       </footer>
     </section>
   );

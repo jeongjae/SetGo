@@ -1,4 +1,4 @@
-import { CalendarClock, ChevronRight, Database, Dumbbell, FileDown, Info, Languages, Library, X } from 'lucide-react';
+﻿import { CalendarClock, ChevronRight, Database, Dumbbell, FileDown, Info, Languages, Library, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getStoredLocale, saveStoredLocale, t, type AppLocale } from '../i18n/i18n';
 import type { AppView } from '../app/App';
@@ -60,8 +60,8 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
         </p>
         {[
           { view: 'routines' as AppView, icon: Dumbbell, title: t(locale, 'routine'), detail: locale === 'ko' ? '루틴 선택 및 편집' : 'Choose and edit routines' },
-          { view: 'exercises' as AppView, icon: Library, title: t(locale, 'exercises'), detail: locale === 'ko' ? '운동 검색, 추가, 변경' : 'Search, add and edit exercises' },
-          { view: 'weeklyPlan' as AppView, icon: CalendarClock, title: t(locale, 'weeklyPlan'), detail: locale === 'ko' ? '기간 및 요일별 계획' : 'Schedule dates and days' },
+          { view: 'exercises' as AppView, icon: Library, title: locale === 'ko' ? '운동 라이브러리' : t(locale, 'exerciseLibrary'), detail: locale === 'ko' ? '운동 검색, 추가, 변경' : 'Search, add and edit exercises' },
+          { view: 'weeklyPlan' as AppView, icon: CalendarClock, title: locale === 'ko' ? '운동 사이클 계획' : t(locale, 'weeklyPlan'), detail: locale === 'ko' ? '운동/휴식/러닝 사이클' : 'Workout, rest, and running cycle' },
         ].map(({ view, icon: Icon, title, detail }, index) => (
           <button
             key={view}

@@ -29,6 +29,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const [plannedExerciseNames, setPlannedExerciseNames] = useState<string[]>([]);
   const [latestFinishedWorkout, setLatestFinishedWorkout] = useState<WorkoutSummary | undefined>();
   const [isTodayRestDay, setIsTodayRestDay] = useState(false);
+  const [isTodayRunningPlan, setIsTodayRunningPlan] = useState(false);
   const [locale] = useState(() => getStoredLocale());
 
   const todayLabel = useMemo(() => new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
@@ -58,8 +59,9 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         setNextRoutineDay(nextDay);
         setLatestFinishedWorkout(recentWorkouts.find((summary) => summary.session.status !== 'in_progress'));
         setIsTodayRestDay(todaySchedule.isRestDay);
+        setIsTodayRunningPlan(todaySchedule.kind === 'running');
         setSelectedRoutineDayId((current) => {
-          const scheduledRoutineDayId = todaySchedule.isRestDay ? undefined : todaySchedule.routineDay?.id;
+          const scheduledRoutineDayId = todaySchedule.kind === 'routine' && !todaySchedule.isRestDay ? todaySchedule.routineDay?.id : undefined;
           const nextSelection = todayWorkout?.session.routineDayId
             ?? scheduledRoutineDayId
             ?? (days.some((day) => day.id === current) ? current : undefined);
@@ -99,13 +101,17 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
     : undefined;
   const planLabel = inProgressSession
     ? `${t(locale, 'continueWorkout')}: ${getRoutineDayDisplayName(selectedRoutineDay ?? todayRoutineDay, locale) ?? t(locale, 'freeWorkout')}`
+    : isTodayRunningPlan
+      ? locale === 'ko' ? '러닝' : 'Running'
     : isTodayRestDay
       ? t(locale, 'restDay')
       : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
   const workoutCtaLabel = inProgressSession
     ? t(locale, 'continueTodayWorkout')
+    : isTodayRunningPlan
+      ? locale === 'ko' ? '러닝 시작' : 'Start Running'
     : selectedRoutineDayId
-      ? t(locale, 'startPlannedWorkout')
+      ? locale === 'ko' ? '운동 시작' : 'Start Workout'
       : t(locale, 'startFreeWorkout');
 
   return (
