@@ -389,7 +389,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
   }
 
   async function handleDeactivateExercise(exerciseId: string) {
-    if (!window.confirm(locale === 'ko' ? '???대룞??紐⑸줉?먯꽌 ?④만源뚯슂?' : 'Hide this exercise from the list?')) return;
+    if (!window.confirm(locale === 'ko' ? '이 운동을 목록에서 숨길까요?' : 'Hide this exercise from the list?')) return;
     await db.exercises.update(exerciseId, {
       isActive: false,
       updatedAt: new Date().toISOString(),
@@ -834,13 +834,13 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
             ) : null}
 
             {/* ?대룞 紐⑸줉 ?몃줈 2??洹몃━??*/}
-            {exerciseLibraryMode === 'browse' ? <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 border-t border-slate-900 pt-3 scrollbar-thin">
+            {exerciseLibraryMode === 'browse' ? <div className="grid min-h-[24rem] max-h-[calc(100dvh-22rem)] auto-rows-[3.75rem] grid-cols-2 content-start gap-2 overflow-y-auto border-t border-slate-900 pt-3 pr-1 scrollbar-thin">
               {filteredExerciseLibrary.map((exercise) => (
                 <button
                   key={exercise.id}
                   type="button"
                   onClick={() => handleSelectExercise(exercise)}
-                  className={`flex items-center rounded-xl p-2 text-left border transition-all active:scale-95 ${
+                  className={`flex h-full items-center rounded-xl p-2 text-left border transition-all active:scale-95 ${
                     editingExercise?.id === exercise.id
                       ? 'bg-cyan-400 border-cyan-400 text-slate-950 font-bold shadow-sm'
                       : 'border-slate-650 bg-slate-850 text-slate-100 hover:border-cyan-400/50 hover:bg-slate-700'
@@ -870,7 +870,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                       {getExerciseIcon(editingExercise.defaultEmoji)}
                     </div>
                     <h3 className="text-xs font-bold text-white leading-tight">
-                      {editingExercise.nameKo ? getExerciseName(editingExercise, locale) : (locale === 'ko' ? '???대룞' : 'New exercise')}
+                      {editingExercise.nameKo ? getExerciseName(editingExercise, locale) : (locale === 'ko' ? '새 운동' : 'New exercise')}
                     </h3>
                   </div>
                   {!exerciseEditorOpen ? (
@@ -895,7 +895,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                       onClick={() => void handleRestoreExercise(editingExercise.id)}
                       className="min-h-8 shrink-0 rounded-lg border border-cyan-500/40 bg-slate-750 px-2.5 text-xs font-bold text-cyan-300"
                     >
-                      {locale === 'ko' ? '紐⑸줉??蹂듭썝' : 'Restore'}
+                      {locale === 'ko' ? '목록에 복원' : 'Restore'}
                     </button>
                   ) : null}
                 </div>
@@ -1019,7 +1019,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     <div className="rounded-xl border border-slate-650 bg-slate-750 p-3">
                       <p className="text-xs font-bold uppercase text-slate-300">{t(locale, 'description')}</p>
                       <p className="mt-1 text-sm font-medium leading-5 text-slate-100">
-                        {editingExercise.description || (locale === 'ko' ? '?ㅻ챸???놁뒿?덈떎.' : 'No description.')}
+                        {editingExercise.description || (locale === 'ko' ? '설명이 없습니다.' : 'No description.')}
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
