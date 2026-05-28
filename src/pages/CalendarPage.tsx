@@ -286,13 +286,6 @@ export function CalendarPage({
   }
 
   useEffect(() => {
-    const isSelectedDateVisible = calendarDays.some((day) => day.key === selectedDateKey && day.isCurrentMonth);
-    if (!isSelectedDateVisible) {
-      selectDate(formatDateKey(visibleMonth));
-    }
-  }, [calendarDays, selectedDateKey, visibleMonth]);
-
-  useEffect(() => {
     if (!initialSelectedDateKey) return;
 
     const initialDate = dateFromKey(initialSelectedDateKey);
