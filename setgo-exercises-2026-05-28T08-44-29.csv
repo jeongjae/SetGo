@@ -1,0 +1,58 @@
+﻿id,nameKo,nameEn,categoryTags,stageTags,description,icon,isActive
+barbell_curl,바벨 컬,Barbell Curl,biceps,main,바벨을 사용해 이두근 전체에 고중량 자극을 주고 두툼한 앞팔을 형성하는 강력한 팔 운동입니다.,BI,true
+barbell_row,바벨 로우,Barbell Row,back,main,,BI,true
+barbell_squat,바벨 스쿼트,Barbell Squat,legs,main,,LG,true
+bench_press,벤치 프레스,Bench Press,chest,main,,CH,true
+bentover_lateral_raise,벤트오버 레터럴 레이즈,Bent-Over Lateral Raise,shoulder,main,상체를 숙여 후면 삼각근을 고립 자극함으로써 어깨 뒷면의 입체감을 완성하는 고립 운동입니다.,SH,true
+bodyweight_squat,맨몸 스쿼트,Bodyweight Squat,bodyweight|legs,warmup|main,무게 없이 자신의 체중만을 이용해 스쿼트 자세를 익히고 하체 관절을 웜업하는 훌륭한 맨손 하체 운동입니다.,BW,true
+cable_curl,케이블 컬,Cable Curl,biceps,main,,BI,true
+cable_pushdown,케이블 푸시다운,Cable Pushdown,chest,main,,TR,true
+calf_raise,카프 레이즈,Standing Calf Raise,legs,main|cooldown,"뒤꿈치를 들어 올려 종아리 근육(비복근, 가자미근)의 탄력과 발목 안정성을 극대화시키는 운동입니다.",LG,true
+chest_press,체스트 프레스,Chest Press,triceps|chest,main,,CH,true
+concentration_curl,컨센트레이션 컬,Concentration Curl,biceps,main,,BI,true
+crunch,크런치,Crunch,bodyweight,main,상부 복직근을 집중적으로 쥐어짜 선명하고 탄탄한 복근 라인을 만드는 데 기여하는 대표적인 복부 운동입니다.,BW,true
+deadlift,데드리프트,Conventional Deadlift,back|legs,main,전신 후면 사슬 근육 전체를 단련하고 강력한 코어와 파워를 형성하는 피트니스 3대 핵심 운동 중 하나입니다.,BK,true
+dips,딥스,Dips,triceps,main,,TR,true
+dumbbell_curl,덤벨 컬,Dumbbell Curl,biceps,main,,BI,true
+dumbbell_fly,덤벨 플라이,Dumbbell Fly,chest,main,덤벨을 사용하여 가슴 안쪽 라인을 다듬고 대흉근을 깊게 스트레칭하는 데 효과적인 고립 운동입니다.,CH,true
+dumbbell_front_raise,덤벨 프런트레이즈,Dumbbell Front Raise,shoulder,main,,CH,true
+dumbbell_press,덤벨 프레스,Dumbbell Press,chest,main,,CH,true
+dumbbell_row,덤벨 로우,Dumbbell Row,back,main,,BK,true
+elliptical,엘립티컬,Elliptical,cardio,main,관절 충격이 거의 없도록 타원형 궤적을 그리며 상하체를 함께 흔드는 전신 고효율 유산소 운동기구입니다.,CA,true
+ez_bar_curl,이지바 컬,EZ Bar Curl,biceps,main,,BI,true
+face_pull,페이스 풀,Face Pull,shoulder|back,main|cooldown,"케이블을 얼굴 쪽으로 당겨 후면 삼각근과 회전근개, 상부 승모근 등 어깨 후면 건강을 관리하는 최고의 운동입니다.",SH,true
+hack_squat,핵스쿼트,Hack Squat,legs,main,,LG,true
+hammer_curl,해머 컬,Hammer Curl,biceps,main,덤벨을 세로로 쥐어 이두근 외측과 상완요골근을 자극하여 팔 전체의 볼륨과 두께를 보강하는 이두 운동입니다.,BI,true
+hanging_leg_raise,행잉 레그 레이즈,Hanging Leg Raise,bodyweight,main,철봉에 매달려 다리를 올리며 하부 복직근과 코어 근력을 강력하게 활성화하는 상급 복부 트레이닝입니다.,BW,true
+hip_abduction,힙어덕션,Hip Abduction,legs,main,내전근 자극,LG,true
+incline_bench_press,인클라인 벤치프레스,Incline Bench Press,chest|shoulder|triceps,main,,CH,true
+incline_dumbbell_curl,인클라인 덤벨 컬,Incline Dumbbell Curl,biceps,main,,BI,true
+indoor_bike,실내 자전거,Indoor Bike,cardio,warmup,,CA,true
+joint_mobility,관절 가동성,Joint Mobility,mobility,warmup|cooldown,,MO,true
+lat_pulldown,랫풀다운,Lat Pulldown,back,main,,BK,true
+leg_extension,레그 익스텐션,Leg Extension,legs,main,,LG,true
+leg_press,레그 프레스,Leg Press,legs,main,,LG,true
+lunge,런지,Lunge,bodyweight,warmup,,LG,true
+lying_leg_curl,라잉 레그 컬,Lying Leg Curl,legs,main,엎드려 다리를 당겨 허벅지 뒤쪽(햄스트링) 근육을 완벽하게 고립하고 발달시키는 대표적인 하체 고립 운동입니다.,LG,true
+lying_triceps_extension,라잉 트라이셉스 익스텐션,Lying Triceps Extension,triceps,main,누운 자세에서 이마 방향으로 바벨을 내렸다 올리며 상완삼두근 장두의 거대한 볼륨을 만들어내는 대표적인 삼두 운동입니다.,TR,true
+military_press,밀리터리 프레스,Military Press,shoulder|triceps,main,바벨을 서서 머리 위로 밀어 올려 코어와 어깨 근육 전체의 협응력을 기르는 전통적인 프레스 운동입니다.,SH,true
+outdoor_running,야외 러닝,Outdoor Running,cardio,main,,CA,true
+overhead_cable_extension,오버헤드 케이블 익스텐션,Overhead Cable Extension,triceps,main,,TR,true
+overhead_triceps_extension,오버헤드 삼두 익스텐션,Overhead Triceps Extension,triceps,main,덤벨이나 케이블을 머리 뒤에서 위로 들어 올려 삼두근 장두 부위를 강력하게 스트레칭 및 수축하는 운동입니다.,TR,true
+peck_deck_fly,펙덱 플라이,Pec Deck Fly,chest,main,머신을 이용해 가슴 근육의 수축과 이완을 안전하게 극대화하고 안쪽 가슴 라인을 강화하는 운동입니다.,CH,true
+plank,플랭크,Plank,bodyweight,main|cooldown,몸을 일직선으로 곧게 펴고 버텨 복부 내 심부 코어 근육과 전신 협응력을 극대화시키는 정적 버티기 운동입니다.,BW,true
+pull_up,풀업,Pull-up,back|bodyweight,main,,BK,true
+push_up,푸시업,Push-up,bodyweight|chest|triceps,warmup,"준비운동, 맨손 가슴 운동, 마무리 운동으로 사용할 수 있습니다.",BW,true
+romanian_deadlift,루마니안 데드리프트,Romanian Deadlift,legs,main,,LG,true
+rope_pushdown,로프 푸시다운,Rope Pushdown,triceps,main,,TR,true
+seated_cable_row,시티드 케이블 로우,Seated Cable Row,back,main,,BK,true
+seated_leg_curl,시티드 레그 컬,Seated Leg Curl,legs,main,,LG,true
+shoulder_press,숄더 프레스,Shoulder Press,shoulder,main,,SH,true
+side_lateral_raise,사이드 레터럴 레이즈,Side Lateral Raise,shoulder,main,,SH,true
+smith_bench_press,스미스 벤치프레스,Smith Bench Press,chest,main,,CH,true
+smith_incline_bench_press,스미스 인클라인 벤치프레스,Smith Incline Bench Press,chest,main,,CH,true
+stair_climber,천국의 계단,Stair Climber,cardio,main,"끝없는 계단을 오르는 모방 동작으로, 엄청난 칼로리 소모와 힙업 효과를 동시에 자아내는 지옥의 인기 유산소 기구입니다.",CA,true
+standing_barbell_curl,스탠딩 바벨 컬,Standing Barbell Curl,biceps,main,,BI,true
+stretching,스트레칭,Stretching,mobility,warmup,,MO,true
+trapmill,트랩밀,Trapmill,cardio,warmup|main,,CA,true
+treadmill,트레드밀,Treadmill,cardio,warmup|main,,CA,true

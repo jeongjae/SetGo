@@ -6,7 +6,6 @@ import {
   getNextRoutineDayAfterLatestWorkout,
   getRoutineDayDisplayName,
   getRoutineScheduleForDate,
-  getRoutineSplitName,
 } from '../db/routines';
 import { seedDefaultExercises } from '../db/seed';
 import { getRecentWorkoutSummaries, getTodayWorkout, type WorkoutSummary } from '../db/workouts';
@@ -18,6 +17,13 @@ type TodayPageProps = {
   refreshKey: number;
   onStartWorkout: (routineDayId?: string) => void;
 };
+
+function getRoutinePlanPrefix(routine: Routine | undefined, locale: 'ko' | 'en'): string | undefined {
+  if (!routine) return undefined;
+  const splitNumber = routine.name.match(/(\d+)[-\s]?Day/i)?.[1] ?? routine.name.match(/(\d+)분할/)?.[1];
+  if (splitNumber) return locale === 'ko' ? `${splitNumber}분할 루틴` : `${splitNumber}-Day Routine`;
+  return routine.name;
+}
 
 export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const [activeRoutine, setActiveRoutine] = useState<Routine | undefined>();
@@ -96,11 +102,11 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   }, [locale, selectedRoutineDayId]);
 
   const selectedRoutineDay = routineDays.find((routineDay) => routineDay.id === selectedRoutineDayId);
-  const activeRoutineName = activeRoutine
-    ? getRoutineSplitName(activeRoutine.splitType, locale) ?? activeRoutine.name
-    : undefined;
+  const activeRoutineName = activeRoutine?.name;
+  const routinePlanPrefix = getRoutinePlanPrefix(activeRoutine, locale);
+  const selectedRoutineDayLabel = getRoutineDayDisplayName(selectedRoutineDay ?? todayRoutineDay, locale) ?? t(locale, 'freeWorkout');
   const planLabel = inProgressSession
-    ? `${t(locale, 'continueWorkout')}: ${getRoutineDayDisplayName(selectedRoutineDay ?? todayRoutineDay, locale) ?? t(locale, 'freeWorkout')}`
+    ? `${routinePlanPrefix ?? t(locale, 'routine')}: ${selectedRoutineDayLabel}`
     : isTodayRunningPlan
       ? locale === 'ko' ? '러닝' : 'Running'
     : isTodayRestDay
@@ -113,6 +119,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
     : selectedRoutineDayId
       ? locale === 'ko' ? '운동 시작' : 'Start Workout'
       : t(locale, 'startFreeWorkout');
+  const workoutRecordLabel = locale === 'ko' ? '운동 기록' : 'Log workout';
 
   return (
     <section className="viewport-locked mx-auto max-w-md gap-2.5 p-3.5">
@@ -242,7 +249,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
           className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-455 px-4 text-base font-black text-slate-955 shadow-lg shadow-cyan-400/20 transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-95"
         >
           <Play aria-hidden="true" size={19} />
-          <span>{workoutCtaLabel}</span>
+          <span>{workoutRecordLabel}</span>
         </button>
       </footer>
     </section>

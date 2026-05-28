@@ -1,0 +1,2160 @@
+{
+  "app": "SetGo",
+  "kind": "settings",
+  "version": 1,
+  "exportedAt": "2026-05-28T08:44:50.234Z",
+  "settings": {
+    "locale": "ko"
+  },
+  "data": {
+    "exercises": [
+      {
+        "id": "barbell_curl",
+        "nameKo": "바벨 컬",
+        "nameEn": "Barbell Curl",
+        "category": "biceps",
+        "categoryTags": [
+          "biceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "바벨을 사용해 이두근 전체에 고중량 자극을 주고 두툼한 앞팔을 형성하는 강력한 팔 운동입니다.",
+        "defaultEmoji": "BI",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "barbell_row",
+        "nameKo": "바벨 로우",
+        "nameEn": "Barbell Row",
+        "category": "back",
+        "categoryTags": [
+          "back"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "BI",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "barbell_squat",
+        "nameKo": "바벨 스쿼트",
+        "nameEn": "Barbell Squat",
+        "category": "legs",
+        "categoryTags": [
+          "legs"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "LG",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "bench_press",
+        "nameKo": "벤치 프레스",
+        "nameEn": "Bench Press",
+        "category": "chest",
+        "categoryTags": [
+          "chest"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "CH",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:24:33.956Z"
+      },
+      {
+        "id": "bentover_lateral_raise",
+        "nameKo": "벤트오버 레터럴 레이즈",
+        "nameEn": "Bent-Over Lateral Raise",
+        "category": "shoulder",
+        "categoryTags": [
+          "shoulder"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "상체를 숙여 후면 삼각근을 고립 자극함으로써 어깨 뒷면의 입체감을 완성하는 고립 운동입니다.",
+        "defaultEmoji": "SH",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "bodyweight_squat",
+        "nameKo": "맨몸 스쿼트",
+        "nameEn": "Bodyweight Squat",
+        "category": "bodyweight",
+        "categoryTags": [
+          "bodyweight",
+          "legs"
+        ],
+        "stage": "warmup",
+        "stageTags": [
+          "warmup",
+          "main"
+        ],
+        "description": "무게 없이 자신의 체중만을 이용해 스쿼트 자세를 익히고 하체 관절을 웜업하는 훌륭한 맨손 하체 운동입니다.",
+        "defaultEmoji": "BW",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "cable_curl",
+        "nameKo": "케이블 컬",
+        "nameEn": "Cable Curl",
+        "category": "biceps",
+        "categoryTags": [
+          "biceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "BI",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "cable_pushdown",
+        "nameKo": "케이블 푸시다운",
+        "nameEn": "Cable Pushdown",
+        "category": "chest",
+        "categoryTags": [
+          "chest"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "TR",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:24:36.122Z"
+      },
+      {
+        "id": "calf_raise",
+        "nameKo": "카프 레이즈",
+        "nameEn": "Standing Calf Raise",
+        "category": "legs",
+        "categoryTags": [
+          "legs"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main",
+          "cooldown"
+        ],
+        "description": "뒤꿈치를 들어 올려 종아리 근육(비복근, 가자미근)의 탄력과 발목 안정성을 극대화시키는 운동입니다.",
+        "defaultEmoji": "LG",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "chest_press",
+        "nameKo": "체스트 프레스",
+        "nameEn": "Chest Press",
+        "category": "triceps",
+        "categoryTags": [
+          "triceps",
+          "chest"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "CH",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:24:40.637Z"
+      },
+      {
+        "id": "concentration_curl",
+        "nameKo": "컨센트레이션 컬",
+        "nameEn": "Concentration Curl",
+        "category": "biceps",
+        "categoryTags": [
+          "biceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "BI",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "crunch",
+        "nameKo": "크런치",
+        "nameEn": "Crunch",
+        "category": "bodyweight",
+        "categoryTags": [
+          "bodyweight"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "상부 복직근을 집중적으로 쥐어짜 선명하고 탄탄한 복근 라인을 만드는 데 기여하는 대표적인 복부 운동입니다.",
+        "defaultEmoji": "BW",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "deadlift",
+        "nameKo": "데드리프트",
+        "nameEn": "Conventional Deadlift",
+        "category": "back",
+        "categoryTags": [
+          "back",
+          "legs"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "전신 후면 사슬 근육 전체를 단련하고 강력한 코어와 파워를 형성하는 피트니스 3대 핵심 운동 중 하나입니다.",
+        "defaultEmoji": "BK",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "dips",
+        "nameKo": "딥스",
+        "nameEn": "Dips",
+        "category": "triceps",
+        "categoryTags": [
+          "triceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "TR",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "dumbbell_curl",
+        "nameKo": "덤벨 컬",
+        "nameEn": "Dumbbell Curl",
+        "category": "biceps",
+        "categoryTags": [
+          "biceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "BI",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "dumbbell_fly",
+        "nameKo": "덤벨 플라이",
+        "nameEn": "Dumbbell Fly",
+        "category": "chest",
+        "categoryTags": [
+          "chest"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "덤벨을 사용하여 가슴 안쪽 라인을 다듬고 대흉근을 깊게 스트레칭하는 데 효과적인 고립 운동입니다.",
+        "defaultEmoji": "CH",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "dumbbell_front_raise",
+        "nameKo": "덤벨 프런트레이즈",
+        "nameEn": "Dumbbell Front Raise",
+        "category": "shoulder",
+        "categoryTags": [
+          "shoulder"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "CH",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "dumbbell_press",
+        "nameKo": "덤벨 프레스",
+        "nameEn": "Dumbbell Press",
+        "category": "chest",
+        "categoryTags": [
+          "chest"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "CH",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "dumbbell_row",
+        "nameKo": "덤벨 로우",
+        "nameEn": "Dumbbell Row",
+        "category": "back",
+        "categoryTags": [
+          "back"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "BK",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "elliptical",
+        "nameKo": "엘립티컬",
+        "nameEn": "Elliptical",
+        "category": "cardio",
+        "categoryTags": [
+          "cardio"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "관절 충격이 거의 없도록 타원형 궤적을 그리며 상하체를 함께 흔드는 전신 고효율 유산소 운동기구입니다.",
+        "defaultEmoji": "CA",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "ez_bar_curl",
+        "nameKo": "이지바 컬",
+        "nameEn": "EZ Bar Curl",
+        "category": "biceps",
+        "categoryTags": [
+          "biceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "BI",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "face_pull",
+        "nameKo": "페이스 풀",
+        "nameEn": "Face Pull",
+        "category": "shoulder",
+        "categoryTags": [
+          "shoulder",
+          "back"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main",
+          "cooldown"
+        ],
+        "description": "케이블을 얼굴 쪽으로 당겨 후면 삼각근과 회전근개, 상부 승모근 등 어깨 후면 건강을 관리하는 최고의 운동입니다.",
+        "defaultEmoji": "SH",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "hack_squat",
+        "nameKo": "핵스쿼트",
+        "nameEn": "Hack Squat",
+        "category": "legs",
+        "categoryTags": [
+          "legs"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "LG",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "hammer_curl",
+        "nameKo": "해머 컬",
+        "nameEn": "Hammer Curl",
+        "category": "biceps",
+        "categoryTags": [
+          "biceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "덤벨을 세로로 쥐어 이두근 외측과 상완요골근을 자극하여 팔 전체의 볼륨과 두께를 보강하는 이두 운동입니다.",
+        "defaultEmoji": "BI",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "hanging_leg_raise",
+        "nameKo": "행잉 레그 레이즈",
+        "nameEn": "Hanging Leg Raise",
+        "category": "bodyweight",
+        "categoryTags": [
+          "bodyweight"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "철봉에 매달려 다리를 올리며 하부 복직근과 코어 근력을 강력하게 활성화하는 상급 복부 트레이닝입니다.",
+        "defaultEmoji": "BW",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "hip_abduction",
+        "nameKo": "힙어덕션",
+        "nameEn": "Hip Abduction",
+        "category": "legs",
+        "categoryTags": [
+          "legs"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "내전근 자극",
+        "defaultEmoji": "LG",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "incline_bench_press",
+        "nameKo": "인클라인 벤치프레스",
+        "nameEn": "Incline Bench Press",
+        "category": "chest",
+        "categoryTags": [
+          "chest",
+          "shoulder",
+          "triceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "CH",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "incline_dumbbell_curl",
+        "nameKo": "인클라인 덤벨 컬",
+        "nameEn": "Incline Dumbbell Curl",
+        "category": "biceps",
+        "categoryTags": [
+          "biceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "BI",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "indoor_bike",
+        "nameKo": "실내 자전거",
+        "nameEn": "Indoor Bike",
+        "category": "cardio",
+        "categoryTags": [
+          "cardio"
+        ],
+        "stage": "warmup",
+        "stageTags": [
+          "warmup"
+        ],
+        "defaultEmoji": "CA",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "joint_mobility",
+        "nameKo": "관절 가동성",
+        "nameEn": "Joint Mobility",
+        "category": "mobility",
+        "categoryTags": [
+          "mobility"
+        ],
+        "stage": "warmup",
+        "stageTags": [
+          "warmup",
+          "cooldown"
+        ],
+        "defaultEmoji": "MO",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "lat_pulldown",
+        "nameKo": "랫풀다운",
+        "nameEn": "Lat Pulldown",
+        "category": "back",
+        "categoryTags": [
+          "back"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "BK",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "leg_extension",
+        "nameKo": "레그 익스텐션",
+        "nameEn": "Leg Extension",
+        "category": "legs",
+        "categoryTags": [
+          "legs"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "LG",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "leg_press",
+        "nameKo": "레그 프레스",
+        "nameEn": "Leg Press",
+        "category": "legs",
+        "categoryTags": [
+          "legs"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "LG",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "lunge",
+        "nameKo": "런지",
+        "nameEn": "Lunge",
+        "category": "bodyweight",
+        "categoryTags": [
+          "bodyweight"
+        ],
+        "stage": "warmup",
+        "stageTags": [
+          "warmup"
+        ],
+        "defaultEmoji": "LG",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "lying_leg_curl",
+        "nameKo": "라잉 레그 컬",
+        "nameEn": "Lying Leg Curl",
+        "category": "legs",
+        "categoryTags": [
+          "legs"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "엎드려 다리를 당겨 허벅지 뒤쪽(햄스트링) 근육을 완벽하게 고립하고 발달시키는 대표적인 하체 고립 운동입니다.",
+        "defaultEmoji": "LG",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "lying_triceps_extension",
+        "nameKo": "라잉 트라이셉스 익스텐션",
+        "nameEn": "Lying Triceps Extension",
+        "category": "triceps",
+        "categoryTags": [
+          "triceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "누운 자세에서 이마 방향으로 바벨을 내렸다 올리며 상완삼두근 장두의 거대한 볼륨을 만들어내는 대표적인 삼두 운동입니다.",
+        "defaultEmoji": "TR",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "military_press",
+        "nameKo": "밀리터리 프레스",
+        "nameEn": "Military Press",
+        "category": "shoulder",
+        "categoryTags": [
+          "shoulder",
+          "triceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "바벨을 서서 머리 위로 밀어 올려 코어와 어깨 근육 전체의 협응력을 기르는 전통적인 프레스 운동입니다.",
+        "defaultEmoji": "SH",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "outdoor_running",
+        "nameKo": "야외 러닝",
+        "nameEn": "Outdoor Running",
+        "category": "cardio",
+        "categoryTags": [
+          "cardio"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "CA",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "overhead_cable_extension",
+        "nameKo": "오버헤드 케이블 익스텐션",
+        "nameEn": "Overhead Cable Extension",
+        "category": "triceps",
+        "categoryTags": [
+          "triceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "TR",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "overhead_triceps_extension",
+        "nameKo": "오버헤드 삼두 익스텐션",
+        "nameEn": "Overhead Triceps Extension",
+        "category": "triceps",
+        "categoryTags": [
+          "triceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "덤벨이나 케이블을 머리 뒤에서 위로 들어 올려 삼두근 장두 부위를 강력하게 스트레칭 및 수축하는 운동입니다.",
+        "defaultEmoji": "TR",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "peck_deck_fly",
+        "nameKo": "펙덱 플라이",
+        "nameEn": "Pec Deck Fly",
+        "category": "chest",
+        "categoryTags": [
+          "chest"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "머신을 이용해 가슴 근육의 수축과 이완을 안전하게 극대화하고 안쪽 가슴 라인을 강화하는 운동입니다.",
+        "defaultEmoji": "CH",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "plank",
+        "nameKo": "플랭크",
+        "nameEn": "Plank",
+        "category": "bodyweight",
+        "categoryTags": [
+          "bodyweight"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main",
+          "cooldown"
+        ],
+        "description": "몸을 일직선으로 곧게 펴고 버텨 복부 내 심부 코어 근육과 전신 협응력을 극대화시키는 정적 버티기 운동입니다.",
+        "defaultEmoji": "BW",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "pull_up",
+        "nameKo": "풀업",
+        "nameEn": "Pull-up",
+        "category": "back",
+        "categoryTags": [
+          "back",
+          "bodyweight"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "BK",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "push_up",
+        "nameKo": "푸시업",
+        "nameEn": "Push-up",
+        "category": "bodyweight",
+        "categoryTags": [
+          "bodyweight",
+          "chest",
+          "triceps"
+        ],
+        "stage": "warmup",
+        "stageTags": [
+          "warmup"
+        ],
+        "description": "준비운동, 맨손 가슴 운동, 마무리 운동으로 사용할 수 있습니다.",
+        "defaultEmoji": "BW",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "romanian_deadlift",
+        "nameKo": "루마니안 데드리프트",
+        "nameEn": "Romanian Deadlift",
+        "category": "legs",
+        "categoryTags": [
+          "legs"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "LG",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "rope_pushdown",
+        "nameKo": "로프 푸시다운",
+        "nameEn": "Rope Pushdown",
+        "category": "triceps",
+        "categoryTags": [
+          "triceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "TR",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "seated_cable_row",
+        "nameKo": "시티드 케이블 로우",
+        "nameEn": "Seated Cable Row",
+        "category": "back",
+        "categoryTags": [
+          "back"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "BK",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "seated_leg_curl",
+        "nameKo": "시티드 레그 컬",
+        "nameEn": "Seated Leg Curl",
+        "category": "legs",
+        "categoryTags": [
+          "legs"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "LG",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "shoulder_press",
+        "nameKo": "숄더 프레스",
+        "nameEn": "Shoulder Press",
+        "category": "shoulder",
+        "categoryTags": [
+          "shoulder"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "SH",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "side_lateral_raise",
+        "nameKo": "사이드 레터럴 레이즈",
+        "nameEn": "Side Lateral Raise",
+        "category": "shoulder",
+        "categoryTags": [
+          "shoulder"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "SH",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "smith_bench_press",
+        "nameKo": "스미스 벤치프레스",
+        "nameEn": "Smith Bench Press",
+        "category": "chest",
+        "categoryTags": [
+          "chest"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "CH",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "smith_incline_bench_press",
+        "nameKo": "스미스 인클라인 벤치프레스",
+        "nameEn": "Smith Incline Bench Press",
+        "category": "chest",
+        "categoryTags": [
+          "chest"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "CH",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "stair_climber",
+        "nameKo": "천국의 계단",
+        "nameEn": "Stair Climber",
+        "category": "cardio",
+        "categoryTags": [
+          "cardio"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "description": "끝없는 계단을 오르는 모방 동작으로, 엄청난 칼로리 소모와 힙업 효과를 동시에 자아내는 지옥의 인기 유산소 기구입니다.",
+        "defaultEmoji": "CA",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:06:14.410Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "standing_barbell_curl",
+        "nameKo": "스탠딩 바벨 컬",
+        "nameEn": "Standing Barbell Curl",
+        "category": "biceps",
+        "categoryTags": [
+          "biceps"
+        ],
+        "stage": "main",
+        "stageTags": [
+          "main"
+        ],
+        "defaultEmoji": "BI",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "stretching",
+        "nameKo": "스트레칭",
+        "nameEn": "Stretching",
+        "category": "mobility",
+        "categoryTags": [
+          "mobility"
+        ],
+        "stage": "warmup",
+        "stageTags": [
+          "warmup"
+        ],
+        "defaultEmoji": "MO",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "trapmill",
+        "nameKo": "트랩밀",
+        "nameEn": "Trapmill",
+        "category": "cardio",
+        "categoryTags": [
+          "cardio"
+        ],
+        "stage": "warmup",
+        "stageTags": [
+          "warmup",
+          "main"
+        ],
+        "defaultEmoji": "CA",
+        "isDefault": false,
+        "isActive": true,
+        "createdAt": "2026-05-22T06:09:19.758Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      },
+      {
+        "id": "treadmill",
+        "nameKo": "트레드밀",
+        "nameEn": "Treadmill",
+        "category": "cardio",
+        "categoryTags": [
+          "cardio"
+        ],
+        "stage": "warmup",
+        "stageTags": [
+          "warmup",
+          "main"
+        ],
+        "defaultEmoji": "CA",
+        "isDefault": true,
+        "isActive": true,
+        "createdAt": "2026-05-15T08:43:29.250Z",
+        "updatedAt": "2026-05-22T06:09:19.758Z"
+      }
+    ],
+    "routines": [
+      {
+        "id": "routine_chest_back_legs_3",
+        "name": "3-Day Chest / Back / Legs",
+        "splitType": "chest_back_legs_3",
+        "startDate": "2026-05-22",
+        "isActive": false,
+        "createdAt": "2026-05-22T06:13:42.461Z",
+        "updatedAt": "2026-05-22T06:27:00.369Z"
+      },
+      {
+        "id": "routine_classic_5",
+        "name": "Classic 5-Day Bodypart Split",
+        "splitType": "classic_5",
+        "startDate": "2026-05-22",
+        "isActive": false,
+        "createdAt": "2026-05-22T06:26:09.025Z",
+        "updatedAt": "2026-05-22T06:27:00.369Z"
+      },
+      {
+        "id": "routine_push_pull_assist_3",
+        "name": "3-Day Push / Pull / Assist",
+        "splitType": "push_pull_assist_3",
+        "startDate": "2026-05-22",
+        "isActive": false,
+        "createdAt": "2026-05-22T06:25:58.082Z",
+        "updatedAt": "2026-05-22T06:27:00.369Z"
+      },
+      {
+        "id": "routine_upper_lower_2",
+        "name": "2-Day Upper / Lower",
+        "splitType": "upper_lower_2",
+        "startDate": "2026-05-22",
+        "isActive": false,
+        "createdAt": "2026-05-22T06:11:25.335Z",
+        "updatedAt": "2026-05-22T06:27:00.369Z"
+      },
+      {
+        "id": "routine_upper_lower_4",
+        "name": "4-Day Upper / Lower",
+        "splitType": "upper_lower_4",
+        "startDate": "2026-05-22",
+        "isActive": true,
+        "createdAt": "2026-05-22T06:27:00.369Z",
+        "updatedAt": "2026-05-22T06:27:00.369Z"
+      }
+    ],
+    "routineDays": [
+      {
+        "id": "routine_chest_back_legs_3_day_1",
+        "routineId": "routine_chest_back_legs_3",
+        "code": "chest",
+        "name": "Chest",
+        "sequence": 1
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_2",
+        "routineId": "routine_chest_back_legs_3",
+        "code": "back",
+        "name": "Back",
+        "sequence": 2
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_3",
+        "routineId": "routine_chest_back_legs_3",
+        "code": "legs",
+        "name": "Legs",
+        "sequence": 3
+      },
+      {
+        "id": "routine_classic_5_day_1",
+        "routineId": "routine_classic_5",
+        "code": "chest_focus",
+        "name": "Chest Focus",
+        "sequence": 1
+      },
+      {
+        "id": "routine_classic_5_day_2",
+        "routineId": "routine_classic_5",
+        "code": "back_focus",
+        "name": "Back Focus",
+        "sequence": 2
+      },
+      {
+        "id": "routine_classic_5_day_3",
+        "routineId": "routine_classic_5",
+        "code": "legs_focus",
+        "name": "Legs Focus",
+        "sequence": 3
+      },
+      {
+        "id": "routine_classic_5_day_4",
+        "routineId": "routine_classic_5",
+        "code": "shoulders_focus",
+        "name": "Shoulders Focus",
+        "sequence": 4
+      },
+      {
+        "id": "routine_classic_5_day_5",
+        "routineId": "routine_classic_5",
+        "code": "arms_focus",
+        "name": "Arms Focus",
+        "sequence": 5
+      },
+      {
+        "id": "routine_push_pull_assist_3_day_1",
+        "routineId": "routine_push_pull_assist_3",
+        "code": "push",
+        "name": "Push",
+        "sequence": 1
+      },
+      {
+        "id": "routine_push_pull_assist_3_day_2",
+        "routineId": "routine_push_pull_assist_3",
+        "code": "pull",
+        "name": "Pull",
+        "sequence": 2
+      },
+      {
+        "id": "routine_push_pull_assist_3_day_3",
+        "routineId": "routine_push_pull_assist_3",
+        "code": "assist",
+        "name": "Assist",
+        "sequence": 3
+      },
+      {
+        "id": "routine_upper_lower_2_day_1",
+        "routineId": "routine_upper_lower_2",
+        "code": "upper",
+        "name": "Upper",
+        "sequence": 1
+      },
+      {
+        "id": "routine_upper_lower_2_day_2",
+        "routineId": "routine_upper_lower_2",
+        "code": "upper",
+        "name": "Upper",
+        "sequence": 2
+      },
+      {
+        "id": "routine_upper_lower_4_day_1",
+        "routineId": "routine_upper_lower_4",
+        "code": "upper_a",
+        "name": "Upper A",
+        "sequence": 1
+      },
+      {
+        "id": "routine_upper_lower_4_day_2",
+        "routineId": "routine_upper_lower_4",
+        "code": "lower_a",
+        "name": "Lower A",
+        "sequence": 2
+      },
+      {
+        "id": "routine_upper_lower_4_day_3",
+        "routineId": "routine_upper_lower_4",
+        "code": "upper_b",
+        "name": "Upper B",
+        "sequence": 3
+      },
+      {
+        "id": "routine_upper_lower_4_day_4",
+        "routineId": "routine_upper_lower_4",
+        "code": "lower_b",
+        "name": "Lower B",
+        "sequence": 4
+      }
+    ],
+    "weeklySchedules": [
+      {
+        "id": "routine_upper_lower_4_weekday_0",
+        "routineId": "routine_upper_lower_4",
+        "weekday": 0,
+        "routineDayId": "routine_upper_lower_4_day_2",
+        "isRestDay": false
+      },
+      {
+        "id": "routine_upper_lower_4_weekday_1",
+        "routineId": "routine_upper_lower_4",
+        "weekday": 1,
+        "isRestDay": true
+      },
+      {
+        "id": "routine_upper_lower_4_weekday_2",
+        "routineId": "routine_upper_lower_4",
+        "weekday": 2,
+        "routineDayId": "routine_upper_lower_4_day_1",
+        "isRestDay": false
+      },
+      {
+        "id": "routine_upper_lower_4_weekday_3",
+        "routineId": "routine_upper_lower_4",
+        "weekday": 3,
+        "isRestDay": true
+      },
+      {
+        "id": "routine_upper_lower_4_weekday_4",
+        "routineId": "routine_upper_lower_4",
+        "weekday": 4,
+        "routineDayId": "routine_upper_lower_4_day_2",
+        "isRestDay": false
+      },
+      {
+        "id": "routine_upper_lower_4_weekday_5",
+        "routineId": "routine_upper_lower_4",
+        "weekday": 5,
+        "isRestDay": true
+      },
+      {
+        "id": "routine_upper_lower_4_weekday_6",
+        "routineId": "routine_upper_lower_4",
+        "weekday": 6,
+        "routineDayId": "routine_upper_lower_4_day_1",
+        "isRestDay": false
+      }
+    ],
+    "routineCyclePlanItems": [],
+    "calendarPlanOverrides": [
+      {
+        "id": "routine_upper_lower_4_2026-05-16",
+        "date": "2026-05-16",
+        "routineId": "routine_upper_lower_4",
+        "routineDayId": "routine_upper_lower_4_day_3",
+        "isRestDay": false,
+        "createdAt": "2026-05-22T07:06:56.561Z",
+        "updatedAt": "2026-05-22T07:06:56.561Z"
+      },
+      {
+        "id": "routine_upper_lower_4_2026-05-17",
+        "date": "2026-05-17",
+        "routineId": "routine_upper_lower_4",
+        "routineDayId": "routine_upper_lower_4_day_4",
+        "isRestDay": false,
+        "createdAt": "2026-05-22T07:03:41.145Z",
+        "updatedAt": "2026-05-22T07:03:41.145Z"
+      },
+      {
+        "id": "routine_upper_lower_4_2026-05-18",
+        "date": "2026-05-18",
+        "routineId": "routine_upper_lower_4",
+        "routineDayId": "routine_upper_lower_4_day_4",
+        "isRestDay": false,
+        "createdAt": "2026-05-22T06:57:51.594Z",
+        "updatedAt": "2026-05-22T06:57:53.480Z"
+      },
+      {
+        "id": "routine_upper_lower_4_2026-05-19",
+        "date": "2026-05-19",
+        "routineId": "routine_upper_lower_4",
+        "routineDayId": "routine_upper_lower_4_day_1",
+        "isRestDay": false,
+        "createdAt": "2026-05-22T06:46:11.709Z",
+        "updatedAt": "2026-05-22T06:46:11.709Z"
+      },
+      {
+        "id": "routine_upper_lower_4_2026-05-21",
+        "date": "2026-05-21",
+        "routineId": "routine_upper_lower_4",
+        "isRestDay": true,
+        "createdAt": "2026-05-22T06:45:35.105Z",
+        "updatedAt": "2026-05-22T06:45:35.105Z"
+      }
+    ],
+    "routineExercisePlans": [
+      {
+        "id": "routine_chest_back_legs_3_day_1_bench_press",
+        "routineDayId": "routine_chest_back_legs_3_day_1",
+        "exerciseId": "bench_press",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_1_chest_press",
+        "routineDayId": "routine_chest_back_legs_3_day_1",
+        "exerciseId": "chest_press",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 50
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_1_dumbbell_curl",
+        "routineDayId": "routine_chest_back_legs_3_day_1",
+        "exerciseId": "dumbbell_curl",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 12
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_1_incline_bench_press",
+        "routineDayId": "routine_chest_back_legs_3_day_1",
+        "exerciseId": "incline_bench_press",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_2_cable_pushdown",
+        "routineDayId": "routine_chest_back_legs_3_day_2",
+        "exerciseId": "cable_pushdown",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_2_lat_pulldown",
+        "routineDayId": "routine_chest_back_legs_3_day_2",
+        "exerciseId": "lat_pulldown",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 50
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_2_pull_up",
+        "routineDayId": "routine_chest_back_legs_3_day_2",
+        "exerciseId": "pull_up",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 30
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_2_seated_cable_row",
+        "routineDayId": "routine_chest_back_legs_3_day_2",
+        "exerciseId": "seated_cable_row",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 50
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_3_barbell_squat",
+        "routineDayId": "routine_chest_back_legs_3_day_3",
+        "exerciseId": "barbell_squat",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_3_leg_press",
+        "routineDayId": "routine_chest_back_legs_3_day_3",
+        "exerciseId": "leg_press",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 200
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_3_romanian_deadlift",
+        "routineDayId": "routine_chest_back_legs_3_day_3",
+        "exerciseId": "romanian_deadlift",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 60
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_3_shoulder_press",
+        "routineDayId": "routine_chest_back_legs_3_day_3",
+        "exerciseId": "shoulder_press",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 25
+      },
+      {
+        "id": "routine_chest_back_legs_3_day_3_side_lateral_raise",
+        "routineDayId": "routine_chest_back_legs_3_day_3",
+        "exerciseId": "side_lateral_raise",
+        "order": 5,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 8
+      },
+      {
+        "id": "routine_classic_5_day_1_bench_press",
+        "routineDayId": "routine_classic_5_day_1",
+        "exerciseId": "bench_press",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_classic_5_day_1_dips",
+        "routineDayId": "routine_classic_5_day_1",
+        "exerciseId": "dips",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_1_incline_bench_press",
+        "routineDayId": "routine_classic_5_day_1",
+        "exerciseId": "incline_bench_press",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_classic_5_day_1_peck_deck_fly",
+        "routineDayId": "routine_classic_5_day_1",
+        "exerciseId": "peck_deck_fly",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 50
+      },
+      {
+        "id": "routine_classic_5_day_2_barbell_row",
+        "routineDayId": "routine_classic_5_day_2",
+        "exerciseId": "barbell_row",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_2_deadlift",
+        "routineDayId": "routine_classic_5_day_2",
+        "exerciseId": "deadlift",
+        "order": 5,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_2_lat_pulldown",
+        "routineDayId": "routine_classic_5_day_2",
+        "exerciseId": "lat_pulldown",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_2_pull_up",
+        "routineDayId": "routine_classic_5_day_2",
+        "exerciseId": "pull_up",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_2_seated_cable_row",
+        "routineDayId": "routine_classic_5_day_2",
+        "exerciseId": "seated_cable_row",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_3_barbell_squat",
+        "routineDayId": "routine_classic_5_day_3",
+        "exerciseId": "barbell_squat",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_3_calf_raise",
+        "routineDayId": "routine_classic_5_day_3",
+        "exerciseId": "calf_raise",
+        "order": 5,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_3_leg_extension",
+        "routineDayId": "routine_classic_5_day_3",
+        "exerciseId": "leg_extension",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_3_leg_press",
+        "routineDayId": "routine_classic_5_day_3",
+        "exerciseId": "leg_press",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_3_lying_leg_curl",
+        "routineDayId": "routine_classic_5_day_3",
+        "exerciseId": "lying_leg_curl",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_4_bentover_lateral_raise",
+        "routineDayId": "routine_classic_5_day_4",
+        "exerciseId": "bentover_lateral_raise",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_4_face_pull",
+        "routineDayId": "routine_classic_5_day_4",
+        "exerciseId": "face_pull",
+        "order": 5,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_4_military_press",
+        "routineDayId": "routine_classic_5_day_4",
+        "exerciseId": "military_press",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_4_shoulder_press",
+        "routineDayId": "routine_classic_5_day_4",
+        "exerciseId": "shoulder_press",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_4_side_lateral_raise",
+        "routineDayId": "routine_classic_5_day_4",
+        "exerciseId": "side_lateral_raise",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_5_barbell_curl",
+        "routineDayId": "routine_classic_5_day_5",
+        "exerciseId": "barbell_curl",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_5_cable_pushdown",
+        "routineDayId": "routine_classic_5_day_5",
+        "exerciseId": "cable_pushdown",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_5_dumbbell_curl",
+        "routineDayId": "routine_classic_5_day_5",
+        "exerciseId": "dumbbell_curl",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_5_hammer_curl",
+        "routineDayId": "routine_classic_5_day_5",
+        "exerciseId": "hammer_curl",
+        "order": 5,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_5_lying_triceps_extension",
+        "routineDayId": "routine_classic_5_day_5",
+        "exerciseId": "lying_triceps_extension",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_classic_5_day_5_overhead_triceps_extension",
+        "routineDayId": "routine_classic_5_day_5",
+        "exerciseId": "overhead_triceps_extension",
+        "order": 6,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_push_pull_assist_3_day_1_bench_press",
+        "routineDayId": "routine_push_pull_assist_3_day_1",
+        "exerciseId": "bench_press",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_push_pull_assist_3_day_1_leg_press",
+        "routineDayId": "routine_push_pull_assist_3_day_1",
+        "exerciseId": "leg_press",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_push_pull_assist_3_day_1_push_up",
+        "routineDayId": "routine_push_pull_assist_3_day_1",
+        "exerciseId": "push_up",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_push_pull_assist_3_day_1_shoulder_press",
+        "routineDayId": "routine_push_pull_assist_3_day_1",
+        "exerciseId": "shoulder_press",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_push_pull_assist_3_day_2_lat_pulldown",
+        "routineDayId": "routine_push_pull_assist_3_day_2",
+        "exerciseId": "lat_pulldown",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_push_pull_assist_3_day_2_pull_up",
+        "routineDayId": "routine_push_pull_assist_3_day_2",
+        "exerciseId": "pull_up",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_push_pull_assist_3_day_2_romanian_deadlift",
+        "routineDayId": "routine_push_pull_assist_3_day_2",
+        "exerciseId": "romanian_deadlift",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_push_pull_assist_3_day_2_seated_cable_row",
+        "routineDayId": "routine_push_pull_assist_3_day_2",
+        "exerciseId": "seated_cable_row",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_upper_lower_2_day_1_bench_press",
+        "routineDayId": "routine_upper_lower_2_day_1",
+        "exerciseId": "bench_press",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_upper_lower_2_day_1_cable_pushdown",
+        "routineDayId": "routine_upper_lower_2_day_1",
+        "exerciseId": "cable_pushdown",
+        "order": 5,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_upper_lower_2_day_1_dumbbell_curl",
+        "routineDayId": "routine_upper_lower_2_day_1",
+        "exerciseId": "dumbbell_curl",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 12
+      },
+      {
+        "id": "routine_upper_lower_2_day_1_lat_pulldown",
+        "routineDayId": "routine_upper_lower_2_day_1",
+        "exerciseId": "lat_pulldown",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 50
+      },
+      {
+        "id": "routine_upper_lower_2_day_1_seated_cable_row",
+        "routineDayId": "routine_upper_lower_2_day_1",
+        "exerciseId": "seated_cable_row",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 50
+      },
+      {
+        "id": "routine_upper_lower_2_day_2_barbell_squat",
+        "routineDayId": "routine_upper_lower_2_day_2",
+        "exerciseId": "barbell_squat",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_upper_lower_2_day_2_leg_press",
+        "routineDayId": "routine_upper_lower_2_day_2",
+        "exerciseId": "leg_press",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 200
+      },
+      {
+        "id": "routine_upper_lower_2_day_2_romanian_deadlift",
+        "routineDayId": "routine_upper_lower_2_day_2",
+        "exerciseId": "romanian_deadlift",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 60
+      },
+      {
+        "id": "routine_upper_lower_2_day_2_shoulder_press",
+        "routineDayId": "routine_upper_lower_2_day_2",
+        "exerciseId": "shoulder_press",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 25
+      },
+      {
+        "id": "routine_upper_lower_2_day_2_side_lateral_raise",
+        "routineDayId": "routine_upper_lower_2_day_2",
+        "exerciseId": "side_lateral_raise",
+        "order": 5,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 6
+      },
+      {
+        "id": "routine_upper_lower_4_day_1_bench_press",
+        "routineDayId": "routine_upper_lower_4_day_1",
+        "exerciseId": "bench_press",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_upper_lower_4_day_1_cable_pushdown",
+        "routineDayId": "routine_upper_lower_4_day_1",
+        "exerciseId": "cable_pushdown",
+        "order": 8,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 45
+      },
+      {
+        "id": "routine_upper_lower_4_day_1_chest_press_1779432853833",
+        "routineDayId": "routine_upper_lower_4_day_1",
+        "exerciseId": "chest_press",
+        "order": 5,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 60
+      },
+      {
+        "id": "routine_upper_lower_4_day_1_dumbbell_curl",
+        "routineDayId": "routine_upper_lower_4_day_1",
+        "exerciseId": "dumbbell_curl",
+        "order": 7,
+        "plannedSets": 3,
+        "plannedReps": 12,
+        "plannedRir": 2,
+        "plannedWeightKg": 12
+      },
+      {
+        "id": "routine_upper_lower_4_day_1_incline_bench_press",
+        "routineDayId": "routine_upper_lower_4_day_1",
+        "exerciseId": "incline_bench_press",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_upper_lower_4_day_1_lat_pulldown",
+        "routineDayId": "routine_upper_lower_4_day_1",
+        "exerciseId": "lat_pulldown",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 50
+      },
+      {
+        "id": "routine_upper_lower_4_day_1_peck_deck_fly_1779432892885",
+        "routineDayId": "routine_upper_lower_4_day_1",
+        "exerciseId": "peck_deck_fly",
+        "order": 6,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 50
+      },
+      {
+        "id": "routine_upper_lower_4_day_1_seated_cable_row_1779431288488",
+        "routineDayId": "routine_upper_lower_4_day_1",
+        "exerciseId": "seated_cable_row",
+        "order": 4,
+        "plannedSets": 6,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 60
+      },
+      {
+        "id": "routine_upper_lower_4_day_2_leg_extension_1779431781416",
+        "routineDayId": "routine_upper_lower_4_day_2",
+        "exerciseId": "leg_extension",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 12,
+        "plannedRir": 2,
+        "plannedWeightKg": 70
+      },
+      {
+        "id": "routine_upper_lower_4_day_2_leg_press",
+        "routineDayId": "routine_upper_lower_4_day_2",
+        "exerciseId": "leg_press",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 12,
+        "plannedRir": 2,
+        "plannedWeightKg": 200
+      },
+      {
+        "id": "routine_upper_lower_4_day_2_lying_leg_curl_1779431797244",
+        "routineDayId": "routine_upper_lower_4_day_2",
+        "exerciseId": "lying_leg_curl",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 12,
+        "plannedRir": 2,
+        "plannedWeightKg": 50
+      },
+      {
+        "id": "routine_upper_lower_4_day_2_romanian_deadlift",
+        "routineDayId": "routine_upper_lower_4_day_2",
+        "exerciseId": "romanian_deadlift",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 12,
+        "plannedRir": 2,
+        "plannedWeightKg": 60
+      },
+      {
+        "id": "routine_upper_lower_4_day_2_shoulder_press",
+        "routineDayId": "routine_upper_lower_4_day_2",
+        "exerciseId": "shoulder_press",
+        "order": 5,
+        "plannedSets": 3,
+        "plannedReps": 12,
+        "plannedRir": 2,
+        "plannedWeightKg": 25
+      },
+      {
+        "id": "routine_upper_lower_4_day_2_side_lateral_raise_1779433786013",
+        "routineDayId": "routine_upper_lower_4_day_2",
+        "exerciseId": "side_lateral_raise",
+        "order": 6,
+        "plannedSets": 3,
+        "plannedReps": 20,
+        "plannedRir": 2,
+        "plannedWeightKg": 5
+      },
+      {
+        "id": "routine_upper_lower_4_day_3_cable_pushdown",
+        "routineDayId": "routine_upper_lower_4_day_3",
+        "exerciseId": "cable_pushdown",
+        "order": 7,
+        "plannedSets": 3,
+        "plannedReps": 20,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_upper_lower_4_day_3_chest_press",
+        "routineDayId": "routine_upper_lower_4_day_3",
+        "exerciseId": "chest_press",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_upper_lower_4_day_3_dumbbell_curl",
+        "routineDayId": "routine_upper_lower_4_day_3",
+        "exerciseId": "dumbbell_curl",
+        "order": 6,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 10
+      },
+      {
+        "id": "routine_upper_lower_4_day_3_incline_bench_press_1779431931049",
+        "routineDayId": "routine_upper_lower_4_day_3",
+        "exerciseId": "incline_bench_press",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 12,
+        "plannedRir": 2,
+        "plannedWeightKg": 30
+      },
+      {
+        "id": "routine_upper_lower_4_day_3_lat_pulldown_1779433830116",
+        "routineDayId": "routine_upper_lower_4_day_3",
+        "exerciseId": "lat_pulldown",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2,
+        "plannedWeightKg": 60
+      },
+      {
+        "id": "routine_upper_lower_4_day_3_pull_up",
+        "routineDayId": "routine_upper_lower_4_day_3",
+        "exerciseId": "pull_up",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 30
+      },
+      {
+        "id": "routine_upper_lower_4_day_3_seated_cable_row",
+        "routineDayId": "routine_upper_lower_4_day_3",
+        "exerciseId": "seated_cable_row",
+        "order": 5,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_upper_lower_4_day_4_calf_raise_1779432022784",
+        "routineDayId": "routine_upper_lower_4_day_4",
+        "exerciseId": "calf_raise",
+        "order": 6,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 15
+      },
+      {
+        "id": "routine_upper_lower_4_day_4_hip_abduction_1779432035196",
+        "routineDayId": "routine_upper_lower_4_day_4",
+        "exerciseId": "hip_abduction",
+        "order": 5,
+        "plannedSets": 6,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 65
+      },
+      {
+        "id": "routine_upper_lower_4_day_4_leg_extension_1779432053789",
+        "routineDayId": "routine_upper_lower_4_day_4",
+        "exerciseId": "leg_extension",
+        "order": 3,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 65
+      },
+      {
+        "id": "routine_upper_lower_4_day_4_leg_press",
+        "routineDayId": "routine_upper_lower_4_day_4",
+        "exerciseId": "leg_press",
+        "order": 1,
+        "plannedSets": 3,
+        "plannedReps": 12,
+        "plannedRir": 2,
+        "plannedWeightKg": 180
+      },
+      {
+        "id": "routine_upper_lower_4_day_4_lying_leg_curl_1779432067418",
+        "routineDayId": "routine_upper_lower_4_day_4",
+        "exerciseId": "lying_leg_curl",
+        "order": 4,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 45
+      },
+      {
+        "id": "routine_upper_lower_4_day_4_romanian_deadlift",
+        "routineDayId": "routine_upper_lower_4_day_4",
+        "exerciseId": "romanian_deadlift",
+        "order": 2,
+        "plannedSets": 3,
+        "plannedReps": 12,
+        "plannedRir": 2,
+        "plannedWeightKg": 40
+      },
+      {
+        "id": "routine_upper_lower_4_day_4_shoulder_press_1779433881615",
+        "routineDayId": "routine_upper_lower_4_day_4",
+        "exerciseId": "shoulder_press",
+        "order": 7,
+        "plannedSets": 3,
+        "plannedReps": 10,
+        "plannedRir": 2
+      },
+      {
+        "id": "routine_upper_lower_4_day_4_side_lateral_raise",
+        "routineDayId": "routine_upper_lower_4_day_4",
+        "exerciseId": "side_lateral_raise",
+        "order": 8,
+        "plannedSets": 3,
+        "plannedReps": 15,
+        "plannedRir": 2,
+        "plannedWeightKg": 6
+      }
+    ]
+  }
+}
