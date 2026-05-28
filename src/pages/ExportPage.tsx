@@ -264,7 +264,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
     const bom = '\uFEFF';
     const contents = `${bom}${csv}`;
     const filename = `setgo-exercises-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.csv`;
-    const saveMode = await saveTextFile(contents, filename, 'text/csv;charset=utf-8', { preferPicker: false });
+    const saveMode = await saveTextFile(contents, filename, 'text/csv;charset=utf-8');
     setExerciseCsvIssues([]);
     setExerciseCsvStatus(
       locale === 'ko'
