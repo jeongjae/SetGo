@@ -26,16 +26,26 @@ type SavePickerWindow = Window & {
     }>;
   }) => Promise<{
     createWritable: () => Promise<{
-      write: (blob: Blob) => Promise<void>;
+      write: (data: string) => Promise<void>;
       close: () => Promise<void>;
     }>;
   }>;
 };
 
-async function saveFile(blob: Blob, filename: string, mimeType: string): Promise<'picked' | 'downloaded'> {
-  const picker = window as SavePickerWindow;
+type SaveFileOptions = {
+  preferPicker?: boolean;
+};
 
-  if (picker.showSaveFilePicker) {
+async function saveTextFile(
+  contents: string,
+  filename: string,
+  mimeType: string,
+  options: SaveFileOptions = {},
+): Promise<'picked' | 'downloaded'> {
+  const picker = window as SavePickerWindow;
+  const preferPicker = options.preferPicker ?? true;
+
+  if (preferPicker && picker.showSaveFilePicker) {
     try {
       const handle = await picker.showSaveFilePicker({
         suggestedName: filename,
@@ -45,7 +55,7 @@ async function saveFile(blob: Blob, filename: string, mimeType: string): Promise
         }],
       });
       const writable = await handle.createWritable();
-      await writable.write(blob);
+      await writable.write(contents);
       await writable.close();
       return 'picked';
     } catch (error) {
@@ -53,6 +63,7 @@ async function saveFile(blob: Blob, filename: string, mimeType: string): Promise
     }
   }
 
+  const blob = new Blob([contents], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -151,9 +162,9 @@ export function ExportPage({ onBack }: ExportPageProps) {
 
   async function handleBackup() {
     const backup = await createBackup();
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const json = JSON.stringify(backup, null, 2);
     const filename = `setgo-backup-${backup.exportedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`;
-    const saveMode = await saveFile(blob, filename, 'application/json');
+    const saveMode = await saveTextFile(json, filename, 'application/json');
     setBackupSummary(
       locale === 'ko'
         ? `${backup.data.workoutSessions.length}개 세션, ${backup.data.exercises.length}개 운동, ${backup.data.routineExercisePlans.length}개 루틴 계획을 내보냈습니다. ${savedMessage(locale, filename, saveMode)}`
@@ -202,9 +213,9 @@ export function ExportPage({ onBack }: ExportPageProps) {
 
   async function handleSettingsBackup() {
     const backup = await createSettingsBackup();
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const json = JSON.stringify(backup, null, 2);
     const filename = `setgo-settings-${backup.exportedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`;
-    const saveMode = await saveFile(blob, filename, 'application/json');
+    const saveMode = await saveTextFile(json, filename, 'application/json');
     setSettingsBackupStatus(
       locale === 'ko'
         ? `${backup.data.routines.length}개 루틴, ${backup.data.exercises.length}개 운동, ${backup.data.weeklySchedules.length}개 주간계획을 저장했습니다. ${savedMessage(locale, filename, saveMode)}`
@@ -251,9 +262,9 @@ export function ExportPage({ onBack }: ExportPageProps) {
   async function handleExerciseCsvExport() {
     const csv = await createExerciseCsv();
     const bom = '\uFEFF';
-    const blob = new Blob([bom, csv], { type: 'text/csv;charset=utf-8' });
+    const contents = `${bom}${csv}`;
     const filename = `setgo-exercises-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.csv`;
-    const saveMode = await saveFile(blob, filename, 'text/csv');
+    const saveMode = await saveTextFile(contents, filename, 'text/csv;charset=utf-8', { preferPicker: false });
     setExerciseCsvIssues([]);
     setExerciseCsvStatus(
       locale === 'ko'
