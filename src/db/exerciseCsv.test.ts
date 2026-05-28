@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildExerciseCsvImport, ExerciseCsvImportError } from './exerciseCsv';
+import { buildExerciseCsvImport, ExerciseCsvImportError, serializeExerciseCsv } from './exerciseCsv';
 
 function throwImportError(issues: string[]) {
   throw new ExerciseCsvImportError(issues);
@@ -68,5 +68,36 @@ describe('buildExerciseCsvImport', () => {
         'Row 3: Invalid boolean value: maybe',
       ]));
     }
+  });
+});
+
+describe('serializeExerciseCsv', () => {
+  it('exports a non-empty header row when the library is empty', () => {
+    const csv = serializeExerciseCsv([]);
+
+    expect(csv).toBe('id,nameKo,nameEn,categoryTags,stageTags,description,icon,isActive');
+    expect(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }).size).toBeGreaterThan(0);
+  });
+
+  it('escapes text fields when exporting exercise rows', () => {
+    const csv = serializeExerciseCsv([{
+      id: 'bench_press',
+      nameKo: 'Bench Press',
+      nameEn: 'Bench, "Press"',
+      category: 'chest',
+      categoryTags: ['chest', 'triceps'],
+      stage: 'main',
+      stageTags: ['main'],
+      description: 'line 1\nline 2',
+      defaultEmoji: 'CH',
+      isDefault: true,
+      isActive: true,
+      createdAt: '2026-05-27T00:00:00.000Z',
+      updatedAt: '2026-05-27T00:00:00.000Z',
+    }]);
+
+    expect(csv).toContain('bench_press');
+    expect(csv).toContain('"Bench, ""Press"""');
+    expect(csv).toContain('"line 1\nline 2"');
   });
 });

@@ -57,8 +57,12 @@ async function saveFile(blob: Blob, filename: string, mimeType: string): Promise
   const anchor = document.createElement('a');
   anchor.href = url;
   anchor.download = filename;
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
   anchor.click();
-  URL.revokeObjectURL(url);
+  anchor.remove();
+  // Keep the blob available until the browser has consumed the download.
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
   return 'downloaded';
 }
 

@@ -122,7 +122,10 @@ function parseBoolean(value: string, fallback: boolean): boolean {
 }
 
 export async function createExerciseCsv(): Promise<string> {
-  const exercises = await db.exercises.orderBy('id').toArray();
+  return serializeExerciseCsv(await db.exercises.orderBy('id').toArray());
+}
+
+export function serializeExerciseCsv(exercises: ExerciseMaster[]): string {
   const rows = exercises.map((exercise) => [
     exercise.id,
     exercise.nameKo,
