@@ -402,6 +402,9 @@ export function CalendarPage({
             } else {
               cellStyle = 'bg-slate-900/40 border-transparent text-slate-500';
             }
+            const todayOutline = day.key === todayKey
+              ? ' ring-2 ring-rose-300 border-rose-400'
+              : '';
 
             return (
               <button
@@ -409,7 +412,7 @@ export function CalendarPage({
                 key={day.key}
                 onClick={() => selectDate(day.key)}
                 aria-label={`${day.key} ${displayKind ? planKindLabel(displayKind, locale) : ''}`.trim()}
-                className={`flex aspect-square min-h-12 flex-col rounded-xl p-1.5 border transition-all duration-200 active:scale-95 ${cellStyle}`}
+                className={`flex aspect-square min-h-12 flex-col rounded-xl p-1.5 border transition-all duration-200 active:scale-95 ${cellStyle}${todayOutline}`}
               >
                 <div className="flex items-center justify-between w-full">
                   <span className={`text-xs font-black ${isSelected ? 'text-white' : usesLightCellText ? 'text-slate-950' : 'text-slate-100'}`}>{day.date.getDate()}</span>
