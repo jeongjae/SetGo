@@ -5,6 +5,7 @@ import type {
   CardioRecord,
   ExerciseMaster,
   Routine,
+  RoutineCyclePlanItem,
   RoutineDay,
   RoutineExercisePlan,
   WeeklySchedule,
@@ -22,6 +23,7 @@ export type SetGoBackup = {
     routines: Routine[];
     routineDays: RoutineDay[];
     weeklySchedules: WeeklySchedule[];
+    routineCyclePlanItems?: RoutineCyclePlanItem[];
     calendarPlanOverrides?: CalendarPlanOverride[];
     routineExercisePlans: RoutineExercisePlan[];
     workoutSessions: WorkoutSession[];
@@ -45,6 +47,7 @@ export type SetGoSettingsBackup = {
     | 'routines'
     | 'routineDays'
     | 'weeklySchedules'
+    | 'routineCyclePlanItems'
     | 'calendarPlanOverrides'
     | 'routineExercisePlans'
   >;
@@ -56,6 +59,7 @@ export async function createBackup(): Promise<SetGoBackup> {
     routines,
     routineDays,
     weeklySchedules,
+    routineCyclePlanItems,
     calendarPlanOverrides,
     routineExercisePlans,
     workoutSessions,
@@ -67,6 +71,7 @@ export async function createBackup(): Promise<SetGoBackup> {
     db.routines.toArray(),
     db.routineDays.toArray(),
     db.weeklySchedules.toArray(),
+    db.routineCyclePlanItems.toArray(),
     db.calendarPlanOverrides.toArray(),
     db.routineExercisePlans.toArray(),
     db.workoutSessions.toArray(),
@@ -84,6 +89,7 @@ export async function createBackup(): Promise<SetGoBackup> {
       routines,
       routineDays,
       weeklySchedules,
+      routineCyclePlanItems,
       calendarPlanOverrides,
       routineExercisePlans,
       workoutSessions,
@@ -100,6 +106,7 @@ export async function createSettingsBackup(): Promise<SetGoSettingsBackup> {
     routines,
     routineDays,
     weeklySchedules,
+    routineCyclePlanItems,
     calendarPlanOverrides,
     routineExercisePlans,
   ] = await Promise.all([
@@ -107,6 +114,7 @@ export async function createSettingsBackup(): Promise<SetGoSettingsBackup> {
     db.routines.toArray(),
     db.routineDays.toArray(),
     db.weeklySchedules.toArray(),
+    db.routineCyclePlanItems.toArray(),
     db.calendarPlanOverrides.toArray(),
     db.routineExercisePlans.toArray(),
   ]);
@@ -124,6 +132,7 @@ export async function createSettingsBackup(): Promise<SetGoSettingsBackup> {
       routines,
       routineDays,
       weeklySchedules,
+      routineCyclePlanItems,
       calendarPlanOverrides,
       routineExercisePlans,
     },
@@ -149,6 +158,7 @@ export async function restoreBackup(input: unknown): Promise<void> {
     db.routines,
     db.routineDays,
     db.weeklySchedules,
+    db.routineCyclePlanItems,
     db.calendarPlanOverrides,
     db.routineExercisePlans,
     db.workoutSessions,
@@ -163,6 +173,7 @@ export async function restoreBackup(input: unknown): Promise<void> {
         db.workoutSessions.clear(),
         db.routineExercisePlans.clear(),
         db.weeklySchedules.clear(),
+        db.routineCyclePlanItems.clear(),
         db.calendarPlanOverrides.clear(),
         db.routineDays.clear(),
         db.routines.clear(),
@@ -173,6 +184,7 @@ export async function restoreBackup(input: unknown): Promise<void> {
       await db.routines.bulkPut(routines);
       await db.routineDays.bulkPut(backup.data.routineDays ?? []);
       await db.weeklySchedules.bulkPut(backup.data.weeklySchedules ?? []);
+      await db.routineCyclePlanItems.bulkPut(backup.data.routineCyclePlanItems ?? []);
       await db.calendarPlanOverrides.bulkPut(backup.data.calendarPlanOverrides ?? []);
       await db.routineExercisePlans.bulkPut(backup.data.routineExercisePlans ?? []);
       await db.workoutSessions.bulkPut(backup.data.workoutSessions ?? []);
@@ -202,6 +214,7 @@ export async function restoreSettingsBackup(input: unknown): Promise<void> {
     db.routines,
     db.routineDays,
     db.weeklySchedules,
+    db.routineCyclePlanItems,
     db.calendarPlanOverrides,
     db.routineExercisePlans,
     db.workoutExercises,
@@ -226,6 +239,7 @@ export async function restoreSettingsBackup(input: unknown): Promise<void> {
     await Promise.all([
       db.routineExercisePlans.clear(),
       db.weeklySchedules.clear(),
+      db.routineCyclePlanItems.clear(),
       db.calendarPlanOverrides.clear(),
       db.routineDays.clear(),
       db.routines.clear(),
@@ -236,6 +250,7 @@ export async function restoreSettingsBackup(input: unknown): Promise<void> {
     await db.routines.bulkPut(routines);
     await db.routineDays.bulkPut(backup.data.routineDays ?? []);
     await db.weeklySchedules.bulkPut(backup.data.weeklySchedules ?? []);
+    await db.routineCyclePlanItems.bulkPut(backup.data.routineCyclePlanItems ?? []);
     await db.calendarPlanOverrides.bulkPut(backup.data.calendarPlanOverrides ?? []);
     await db.routineExercisePlans.bulkPut(backup.data.routineExercisePlans ?? []);
   });

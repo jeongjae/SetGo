@@ -3,11 +3,13 @@ import type {
   CalendarPlanOverride,
   ExerciseMaster,
   Routine,
+  RoutineCyclePlanItem,
   RoutineDay,
   RoutineExercisePlan,
   RoutineSplitType,
   Weekday,
   WeeklySchedule,
+  WorkoutPlanKind,
 } from '../types';
 import { formatDateKey } from '../utils/date';
 
@@ -158,14 +160,53 @@ export type WeeklyScheduleView = {
   isRestDay: boolean;
 };
 
+export type RoutineCyclePlanView = {
+  id?: string;
+  order: number;
+  kind: WorkoutPlanKind;
+  routineDayId?: string;
+};
+
 export type RoutineScheduleForDate = {
   schedule?: WeeklyScheduleView;
+  cycleItem?: RoutineCyclePlanItem;
   override?: CalendarPlanOverride;
   routineDay?: RoutineDay;
+  kind: WorkoutPlanKind;
   isRestDay: boolean;
 };
 
 const weekdays: Weekday[] = [0, 1, 2, 3, 4, 5, 6];
+
+function parseDateKey(dateKey: string): Date {
+  return new Date(`${dateKey}T12:00:00`);
+}
+
+function diffDays(startDateKey: string, dateKey: string): number {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.floor((parseDateKey(dateKey).getTime() - parseDateKey(startDateKey).getTime()) / msPerDay);
+}
+
+function normalizePlanKind(item: Pick<CalendarPlanOverride, 'kind' | 'routineDayId' | 'isRestDay'>): WorkoutPlanKind {
+  if (item.kind) return item.kind;
+  if (item.isRestDay || !item.routineDayId) return 'rest';
+  return 'routine';
+}
+
+function normalizeCycleItem(
+  item: RoutineCyclePlanView,
+  routineId: string,
+  index: number,
+): RoutineCyclePlanItem {
+  const order = index + 1;
+  return {
+    id: item.id ?? `${routineId}_cycle_${order}_${Date.now()}`,
+    routineId,
+    order,
+    kind: item.kind,
+    routineDayId: item.kind === 'routine' ? item.routineDayId : undefined,
+  };
+}
 
 async function getCalendarPlanOverrideForRoutineDate(
   routineId: string,
@@ -282,6 +323,68 @@ export async function saveWeeklySchedule(
   });
 }
 
+export async function getRoutineCyclePlan(routineId: string): Promise<RoutineCyclePlanItem[]> {
+  return db.routineCyclePlanItems.where('routineId').equals(routineId).sortBy('order');
+}
+
+export async function getActiveRoutineCyclePlan(): Promise<RoutineCyclePlanItem[]> {
+  const routine = await getActiveRoutine();
+  return routine ? getRoutineCyclePlan(routine.id) : [];
+}
+
+export function getCyclePlanItemForDate(
+  routine: Pick<Routine, 'startDate'> | undefined,
+  cycleItems: RoutineCyclePlanItem[],
+  dateKey: string,
+): RoutineCyclePlanItem | undefined {
+  if (!routine || cycleItems.length === 0) return undefined;
+
+  const daysFromStart = diffDays(routine.startDate, dateKey);
+  if (daysFromStart < 0) return undefined;
+
+  return cycleItems[daysFromStart % cycleItems.length];
+}
+
+export async function saveRoutineCyclePlan(
+  routineId: string,
+  startDate: string,
+  cycleItems: RoutineCyclePlanView[],
+): Promise<void> {
+  const now = new Date().toISOString();
+  const normalizedItems = cycleItems
+    .filter((item) => item.kind !== 'routine' || item.routineDayId)
+    .map((item, index) => normalizeCycleItem(item, routineId, index));
+
+  await db.transaction('rw', db.routines, db.routineCyclePlanItems, async () => {
+    await db.routines.update(routineId, {
+      startDate,
+      endDate: undefined,
+      updatedAt: now,
+    });
+    await db.routineCyclePlanItems.where('routineId').equals(routineId).delete();
+    if (normalizedItems.length > 0) {
+      await db.routineCyclePlanItems.bulkPut(normalizedItems);
+    }
+  });
+}
+
+export function buildCyclePlanPreview(
+  routine: Pick<Routine, 'startDate'> | undefined,
+  cycleItems: RoutineCyclePlanItem[],
+  startDate: string,
+  dayCount: number,
+): Array<{ date: string; item?: RoutineCyclePlanItem }> {
+  return Array.from({ length: dayCount }, (_, index) => {
+    const date = parseDateKey(startDate);
+    date.setDate(date.getDate() + index);
+    const dateKey = formatDateKey(date);
+    return {
+      date: dateKey,
+      item: getCyclePlanItemForDate(routine ? { ...routine, startDate } : undefined, cycleItems, dateKey),
+    };
+  });
+}
+
 export function isRoutineScheduledForDate(
   routine: Pick<Routine, 'startDate' | 'endDate'> | undefined,
   dateKey: string,
@@ -312,13 +415,18 @@ export async function getNextRoutineDayAfterLatestWorkout(): Promise<RoutineDay 
 
 export async function getRoutineScheduleForDate(date = new Date()): Promise<RoutineScheduleForDate> {
   const routine = await getActiveRoutine();
-  const [days, schedule] = await Promise.all([getActiveRoutineDays(), getActiveWeeklySchedule()]);
+  const [days, schedule, cycleItems] = await Promise.all([
+    getActiveRoutineDays(),
+    getActiveWeeklySchedule(),
+    routine ? getRoutineCyclePlan(routine.id) : Promise.resolve([]),
+  ]);
   const dateKey = formatDateKey(date);
   const override = routine
     ? await getCalendarPlanOverrideForRoutineDate(routine.id, dateKey)
     : undefined;
 
   if (override) {
+    const kind = normalizePlanKind(override);
     const routineDay = override.routineDayId
       ? days.find((day) => day.id === override.routineDayId)
       : undefined;
@@ -326,18 +434,34 @@ export async function getRoutineScheduleForDate(date = new Date()): Promise<Rout
     return {
       override,
       routineDay,
-      isRestDay: override.isRestDay || !routineDay,
+      kind,
+      isRestDay: kind === 'rest' || (kind === 'routine' && !routineDay),
     };
   }
 
   if (!isRoutineScheduledForDate(routine, dateKey)) {
-    return { isRestDay: true };
+    return { kind: 'rest', isRestDay: true };
+  }
+
+  const cycleItem = getCyclePlanItemForDate(routine, cycleItems, dateKey);
+  if (cycleItem) {
+    const routineDay = cycleItem.routineDayId
+      ? days.find((day) => day.id === cycleItem.routineDayId)
+      : undefined;
+
+    return {
+      cycleItem,
+      routineDay,
+      kind: cycleItem.kind,
+      isRestDay: cycleItem.kind === 'rest' || (cycleItem.kind === 'routine' && !routineDay),
+    };
   }
 
   const todaySchedule = schedule.find((item) => item.weekday === date.getDay());
 
   if (!todaySchedule) {
     return {
+      kind: 'rest',
       isRestDay: true,
     };
   }
@@ -345,6 +469,7 @@ export async function getRoutineScheduleForDate(date = new Date()): Promise<Rout
   if (todaySchedule.isRestDay || !todaySchedule.routineDayId) {
     return {
       schedule: todaySchedule,
+      kind: 'rest',
       isRestDay: true,
     };
   }
@@ -354,23 +479,39 @@ export async function getRoutineScheduleForDate(date = new Date()): Promise<Rout
   return {
     schedule: todaySchedule,
     routineDay,
+    kind: routineDay ? 'routine' : 'rest',
     isRestDay: !routineDay,
   };
 }
 
-export async function saveCalendarPlanOverride(dateKey: string, routineDayId?: string): Promise<void> {
+export async function saveCalendarPlanOverride(
+  dateKey: string,
+  kindOrRoutineDayId?: WorkoutPlanKind | string,
+  routineDayId?: string,
+): Promise<void> {
   const routine = await getActiveRoutine();
   if (!routine) return;
 
   const now = new Date().toISOString();
   const existing = await getCalendarPlanOverrideForRoutineDate(routine.id, dateKey);
+  const isExplicitKind = kindOrRoutineDayId === 'routine'
+    || kindOrRoutineDayId === 'rest'
+    || kindOrRoutineDayId === 'running'
+    || kindOrRoutineDayId === 'free';
+  const kind = isExplicitKind
+    ? kindOrRoutineDayId
+    : kindOrRoutineDayId ? 'routine' : 'rest';
+  const nextRoutineDayId = kind === 'routine'
+    ? (isExplicitKind ? routineDayId : kindOrRoutineDayId)
+    : undefined;
 
   await db.calendarPlanOverrides.put({
     id: existing?.id ?? `${routine.id}_${dateKey}`,
     date: dateKey,
     routineId: routine.id,
-    routineDayId,
-    isRestDay: !routineDayId,
+    kind,
+    routineDayId: nextRoutineDayId,
+    isRestDay: kind === 'rest',
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   });

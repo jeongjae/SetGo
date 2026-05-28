@@ -1,5 +1,5 @@
 import { db } from './db';
-import { getActiveRoutine, getSuggestedRoutineDayForDate } from './routines';
+import { getActiveRoutine, getRoutineScheduleForDate } from './routines';
 import type { CardioRecord, ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 import { formatDateKey, getTimeBand } from '../utils/date';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg, calculateSessionStrengthVolumeKg } from '../domain/volume';
@@ -13,6 +13,7 @@ export type ActiveWorkout = {
 
 export type WorkoutSummary = ActiveWorkout & {
   exerciseCount: number;
+  cardioCount: number;
 };
 
 export type WorkoutExerciseLog = {
@@ -122,12 +123,14 @@ export async function getOrCreateWorkoutForDate(
       return [] as RoutineDay[];
     })
     : [];
-  const scheduledRoutineDay = selectedRoutineDayId
+  const scheduledPlan = selectedRoutineDayId
     ? undefined
-    : await getSuggestedRoutineDayForDate(sessionDate).catch((error) => {
-      console.warn('Failed to load scheduled routine day while starting workout', error);
+    : await getRoutineScheduleForDate(sessionDate).catch((error) => {
+      console.warn('Failed to load scheduled plan while starting workout', error);
       return undefined;
     });
+  const scheduledRoutineDay = scheduledPlan?.kind === 'routine' ? scheduledPlan.routineDay : undefined;
+  const shouldSeedRunning = !selectedRoutineDayId && scheduledPlan?.kind === 'running';
   const routineDay = routineDays.find((day) => day.id === selectedRoutineDayId)
     ?? scheduledRoutineDay;
 
@@ -148,6 +151,9 @@ export async function getOrCreateWorkoutForDate(
     if (existingExerciseCount === 0 && existingSession.routineDayId) {
       await seedWorkoutExercisesFromRoutineDay(existingSession.id, existingSession.routineDayId);
     }
+    if (shouldSeedRunning) {
+      await ensureRunningDraft(existingSession.id);
+    }
     await dedupeWorkoutExercisesByExercise(existingSession.id);
 
     const existingRoutineDay = existingSession.routineDayId
@@ -165,6 +171,9 @@ export async function getOrCreateWorkoutForDate(
 
   await db.workoutSessions.put(session);
   await seedWorkoutExercisesFromRoutineDay(session.id, routineDay?.id);
+  if (shouldSeedRunning) {
+    await ensureRunningDraft(session.id);
+  }
 
   return {
     session,
@@ -360,6 +369,13 @@ export async function addCardioRecordToWorkout(sessionId: string): Promise<void>
   });
 }
 
+async function ensureRunningDraft(sessionId: string): Promise<void> {
+  const existingCount = await db.cardioRecords.where('sessionId').equals(sessionId).count();
+  if (existingCount > 0) return;
+
+  await addCardioRecordToWorkout(sessionId);
+}
+
 export async function updateCardioRecord(
   cardioRecordId: string,
   values: Partial<CardioRecord>,
@@ -430,10 +446,15 @@ async function getPreviousExerciseRecord(
 }
 
 export async function getWorkoutSummary(session: WorkoutSession): Promise<WorkoutSummary> {
-  const [routine, routineDay, exerciseCount] = await Promise.all([
+  const [routine, routineDay, exerciseCount, cardioCount] = await Promise.all([
     session.routineId ? db.routines.get(session.routineId) : undefined,
     session.routineDayId ? db.routineDays.get(session.routineDayId) : undefined,
     db.workoutExercises.where('sessionId').equals(session.id).count(),
+    db.cardioRecords
+      .where('sessionId')
+      .equals(session.id)
+      .filter((record) => record.isDraft !== true)
+      .count(),
   ]);
 
   return {
@@ -441,6 +462,7 @@ export async function getWorkoutSummary(session: WorkoutSession): Promise<Workou
     routineName: routine?.name,
     routineDay,
     exerciseCount,
+    cardioCount,
   };
 }
 

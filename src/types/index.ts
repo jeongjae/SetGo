@@ -24,6 +24,8 @@ export type WorkoutStatus = 'planned' | 'in_progress' | 'completed' | 'skipped';
 
 export type WorkoutExerciseStatus = 'planned' | 'completed' | 'skipped';
 
+export type WorkoutPlanKind = 'routine' | 'rest' | 'running' | 'free';
+
 export type TimeBand = 'early' | 'morning' | 'afternoon' | 'evening';
 
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -71,10 +73,19 @@ export type WeeklySchedule = {
   isRestDay: boolean;
 };
 
+export type RoutineCyclePlanItem = {
+  id: string;
+  routineId: string;
+  order: number;
+  kind: WorkoutPlanKind;
+  routineDayId?: string;
+};
+
 export type CalendarPlanOverride = {
   id: string;
   date: string;
   routineId: string;
+  kind?: WorkoutPlanKind;
   routineDayId?: string;
   isRestDay: boolean;
   createdAt: string;

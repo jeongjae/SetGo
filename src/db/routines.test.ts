@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRoutineDayDisplayName, getRoutineTemplateName, getRoutineTemplateSummary, isRoutineScheduledForDate, routineTemplates } from './routines';
+import { getCyclePlanItemForDate, getRoutineDayDisplayName, getRoutineTemplateName, getRoutineTemplateSummary, isRoutineScheduledForDate, routineTemplates } from './routines';
 
 describe('routine templates', () => {
   it('uses Korean release names for template cards', () => {
@@ -60,5 +60,20 @@ describe('routine templates', () => {
 
   it('keeps legacy routines without an end date open-ended until the user saves a range', () => {
     expect(isRoutineScheduledForDate({ startDate: '2026-05-01' }, '2026-07-01')).toBe(true);
+  });
+
+  it('repeats routine, rest, and running cycle items by date', () => {
+    const routine = { startDate: '2026-05-01' };
+    const cycle = [
+      { id: 'c1', routineId: 'r1', order: 1, kind: 'routine' as const, routineDayId: 'upper' },
+      { id: 'c2', routineId: 'r1', order: 2, kind: 'routine' as const, routineDayId: 'lower' },
+      { id: 'c3', routineId: 'r1', order: 3, kind: 'running' as const },
+      { id: 'c4', routineId: 'r1', order: 4, kind: 'rest' as const },
+    ];
+
+    expect(getCyclePlanItemForDate(routine, cycle, '2026-05-01')?.routineDayId).toBe('upper');
+    expect(getCyclePlanItemForDate(routine, cycle, '2026-05-03')?.kind).toBe('running');
+    expect(getCyclePlanItemForDate(routine, cycle, '2026-05-04')?.kind).toBe('rest');
+    expect(getCyclePlanItemForDate(routine, cycle, '2026-05-05')?.routineDayId).toBe('upper');
   });
 });
