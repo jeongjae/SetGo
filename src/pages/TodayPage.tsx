@@ -68,11 +68,9 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         setIsTodayRunningPlan(todaySchedule.kind === 'running');
         setSelectedRoutineDayId((current) => {
           const scheduledRoutineDayId = todaySchedule.kind === 'routine' && !todaySchedule.isRestDay ? todaySchedule.routineDay?.id : undefined;
-          const nextSelection = todayWorkout?.session.routineDayId
+          return todayWorkout?.session.routineDayId
             ?? scheduledRoutineDayId
             ?? (days.some((day) => day.id === current) ? current : undefined);
-
-          return nextSelection;
         });
       } catch (error) {
         console.error('Failed to load local SetGo data', error);
@@ -112,59 +110,48 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
     : isTodayRestDay
       ? t(locale, 'restDay')
       : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
-  const workoutCtaLabel = inProgressSession
-    ? t(locale, 'continueTodayWorkout')
-    : isTodayRunningPlan
-      ? locale === 'ko' ? '러닝 시작' : 'Start Running'
-    : selectedRoutineDayId
-      ? locale === 'ko' ? '운동 시작' : 'Start Workout'
-      : t(locale, 'startFreeWorkout');
   const workoutRecordLabel = locale === 'ko' ? '운동 기록' : 'Log workout';
 
   return (
-    <section className="viewport-locked mx-auto max-w-md gap-2.5 p-3.5">
-      
-      {/* Hero Welcome Card */}
-      <header className="shrink-0 overflow-hidden rounded-2xl border border-slate-650 bg-slate-750/95 p-3.5 shadow-xl">
-        <p className="text-xs font-extrabold uppercase text-cyan-300">{t(locale, 'today')}</p>
-        <h1 className="mt-0.5 text-[2rem] font-extrabold leading-none text-cyan-200">
-          SetGo
-        </h1>
-        <p className="mt-1 text-sm font-bold text-slate-100">{todayLabel}</p>
+    <section className="viewport-locked mx-auto max-w-md gap-3 bg-background p-3.5">
+      <header className="relative min-h-[9.5rem] shrink-0 overflow-hidden rounded-[1.75rem] border border-slate-650 bg-white px-5 py-4 shadow-card">
+        <div aria-hidden="true" className="absolute -right-10 -top-14 h-56 w-56 rounded-full border border-accent-soft" />
+        <div aria-hidden="true" className="absolute -right-4 -top-7 h-44 w-44 rounded-full border border-accent-soft" />
+        <div aria-hidden="true" className="absolute right-6 top-3 h-32 w-32 rounded-full border border-accent-soft" />
+        <p className="relative text-sm font-extrabold text-accent-dark">{t(locale, 'today')}</p>
+        <h1 className="relative mt-2 text-[2.75rem] font-black leading-none text-primary">SetGo</h1>
+        <p className="relative mt-3 text-base font-bold text-text-secondary">{todayLabel}</p>
       </header>
 
-      {/* Middle Scrollable Section */}
-      <div className="inner-scroll space-y-2.5 pr-0.5 py-0.5">
-
-        {/* Active Routine Card */}
-        <section className="flex flex-col gap-2.5 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
-          <div className="flex items-start gap-2.5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-300 text-slate-950 shadow-md shadow-cyan-500/20">
-              <Dumbbell aria-hidden="true" size={22} />
+      <div className="inner-scroll space-y-3 py-0.5 pr-0.5">
+        <section className="flex flex-col gap-3 rounded-[1.5rem] border border-slate-650 bg-white p-4 shadow-card">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-accent/20 bg-accent-soft text-accent-dark">
+              <Dumbbell aria-hidden="true" size={26} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'activeRoutine')}</p>
-              <h2 className="mt-0.5 truncate text-base font-bold text-white">
+              <p className="text-sm font-bold text-text-secondary">{t(locale, 'activeRoutine')}</p>
+              <h2 className="mt-0.5 truncate text-xl font-black text-primary">
                 {activeRoutineName ?? t(locale, 'noActiveRoutine')}
               </h2>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-650 bg-slate-850/85 px-3 py-2.5">
-            <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'todaysPlan')}</p>
-            <p className="mt-1 flex items-center gap-1.5 text-base font-bold text-cyan-200">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
+          <div className="rounded-2xl border border-accent/15 bg-accent-soft/55 px-4 py-3">
+            <p className="text-sm font-bold text-text-secondary">{t(locale, 'todaysPlan')}</p>
+            <p className="mt-1.5 flex items-center gap-2 text-lg font-black text-accent-dark">
+              <span className="inline-block h-3 w-3 rounded-full bg-accent-dark" />
               {planLabel}
             </p>
           </div>
 
-          <p className="text-sm font-medium leading-5 text-slate-100">
+          <p className="text-sm font-medium leading-5 text-text-secondary">
             {inProgressSession
               ? locale === 'ko' ? '진행 중인 운동을 이어서 기록합니다.' : 'An in-progress workout will continue from its saved routine day.'
               : isTodayRestDay && activeRoutine
               ? locale === 'ko' ? '휴식일에 운동한다면 다음 루틴을 선택하세요.' : 'Tap the next routine if you decide to train on this rest day.'
               : activeRoutine
-              ? locale === 'ko' ? '주간 계획에 맞춰 오늘 루틴을 불러왔습니다. 시작 전 다른 루틴으로 바꿀 수 있습니다.' : 'Today is matched to your weekly schedule. You can choose a different routine day before starting.'
+              ? locale === 'ko' ? '운동 사이클에 맞춰 오늘 루틴을 불러왔습니다. 시작 전 다른 루틴으로 바꿀 수 있습니다.' : 'Today is matched to your workout cycle. You can choose a different routine day before starting.'
               : locale === 'ko' ? '루틴 설정에서 첫 운동 계획을 만들어 보세요.' : 'Choose Routine Setup to create your first local plan.'}
           </p>
 
@@ -172,28 +159,27 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             <button
               type="button"
               onClick={() => setSelectedRoutineDayId(nextRoutineDay.id)}
-              className={`min-h-10 w-full rounded-xl border px-3 text-left text-sm font-bold transition-all active:scale-98 ${
+              className={`min-h-11 w-full rounded-xl border px-3 text-left text-sm font-bold transition-all active:scale-95 ${
                 selectedRoutineDayId === nextRoutineDay.id
-                  ? 'bg-cyan-400 border-cyan-400 text-slate-950 shadow-md shadow-cyan-400/20'
-                  : 'bg-slate-850 border-slate-650 text-slate-100 hover:bg-slate-750'
+                  ? 'border-accent-dark bg-accent-dark text-white shadow-accent'
+                  : 'border-slate-650 bg-white text-primary hover:bg-accent-soft'
               }`}
             >
-              {locale === 'ko' ? '💡 추천 다음 루틴' : '💡 Recommended Next'}: {getRoutineDayDisplayName(nextRoutineDay, locale)}
+              {locale === 'ko' ? '추천 다음 루틴' : 'Recommended Next'}: {getRoutineDayDisplayName(nextRoutineDay, locale)}
             </button>
           ) : null}
 
-          {/* Dynamic Horizontal Split Planner Tags */}
           {routineDays.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {routineDays.map((routineDay) => (
                 <button
                   key={routineDay.id}
                   type="button"
                   onClick={() => setSelectedRoutineDayId(routineDay.id)}
-                  className={`min-h-9 rounded-full border px-3 text-sm font-bold transition-all active:scale-95 ${
+                  className={`min-h-11 rounded-2xl border px-4 text-sm font-bold transition-all active:scale-95 ${
                     selectedRoutineDayId === routineDay.id
-                      ? 'bg-cyan-400 border-cyan-400 text-slate-950 shadow-md shadow-cyan-400/20'
-                      : 'bg-slate-850 border-slate-650 text-slate-100 hover:bg-slate-750'
+                      ? 'border-accent-dark bg-accent-dark text-white shadow-accent'
+                      : 'border-slate-650 bg-white text-primary hover:bg-accent-soft'
                   }`}
                 >
                   {getRoutineDayDisplayName(routineDay, locale)}
@@ -202,13 +188,12 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             </div>
           ) : null}
 
-          {/* Planned Exercises Pills Carousel */}
           {plannedExerciseNames.length > 0 ? (
-            <div className="rounded-xl border border-slate-650 bg-slate-850/85 px-3 py-2.5">
-              <p className="mb-1.5 text-xs font-extrabold uppercase text-slate-200">{t(locale, 'plannedExercises')}</p>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="rounded-2xl border border-slate-650 bg-surface-muted px-3 py-3">
+              <p className="mb-2 text-sm font-bold text-text-secondary">{t(locale, 'plannedExercises')}</p>
+              <div className="flex flex-wrap gap-2">
                 {plannedExerciseNames.slice(0, 6).map((exerciseName) => (
-                  <span key={exerciseName} className="rounded-lg border border-slate-650 bg-slate-750 px-2.5 py-1 text-xs font-bold text-slate-100">
+                  <span key={exerciseName} className="rounded-xl border border-accent-dark/65 bg-white px-2.5 py-1.5 text-xs font-bold text-primary">
                     {exerciseName}
                   </span>
                 ))}
@@ -217,38 +202,37 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
           ) : null}
         </section>
 
-        {/* Last Workout Summary Card */}
-        <section className="rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
-          <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'lastWorkout')}</p>
-          <h2 className="mt-1 flex items-center gap-2 text-base font-bold text-white">
+        <section className="rounded-[1.5rem] border border-slate-650 bg-white p-4 shadow-card">
+          <p className="text-sm font-bold text-text-secondary">{t(locale, 'lastWorkout')}</p>
+          <h2 className="mt-1.5 flex items-center gap-2 text-base font-black text-primary">
             {latestFinishedWorkout ? (
               <>
-                <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
-                <span className="text-slate-200">{latestFinishedWorkout.session.date}</span>
+                <span className="inline-block h-3 w-3 rounded-full bg-success" />
+                <span>{latestFinishedWorkout.session.date}</span>
                 <span className="text-slate-400">/</span>
-                <span className="text-cyan-300 font-bold">
+                <span className="font-black text-success">
                   {getRoutineDayDisplayName(latestFinishedWorkout.routineDay, locale) ?? latestFinishedWorkout.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}
                 </span>
               </>
             ) : (
-              <span className="text-slate-350">{t(locale, 'noFinishedWorkout')}</span>
+              <span className="text-text-muted">{t(locale, 'noFinishedWorkout')}</span>
             )}
           </h2>
-          <p className="mt-1.5 text-sm font-semibold leading-5 text-slate-100">
+          <p className="mt-1.5 text-sm font-semibold leading-5 text-text-secondary">
             {latestFinishedWorkout
-              ? `${workoutStatusLabel(locale, latestFinishedWorkout.session.status)} • ${exerciseCountLabel(locale, latestFinishedWorkout.exerciseCount)} • ${latestFinishedWorkout.session.totalStrengthVolumeKg.toLocaleString()} kg`
-              : locale === 'ko' ? '운동을 완료하거나 건너뛰면 기록이 누적됩니다.' : 'Complete or skip a session to build your local history.'}
+              ? `${workoutStatusLabel(locale, latestFinishedWorkout.session.status)} · ${exerciseCountLabel(locale, latestFinishedWorkout.exerciseCount)} · ${latestFinishedWorkout.session.totalStrengthVolumeKg.toLocaleString()} kg`
+              : locale === 'ko' ? '운동을 완료하면 기록이 쌓입니다.' : 'Complete a session to build your local history.'}
           </p>
         </section>
       </div>
 
-      <footer className="shrink-0 border-t border-slate-650 pt-2.5">
+      <footer className="shrink-0 pt-1">
         <button
           type="button"
           onClick={() => onStartWorkout(selectedRoutineDayId)}
-          className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-455 px-4 text-base font-black text-slate-955 shadow-lg shadow-cyan-400/20 transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-95"
+          className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-hover px-4 text-lg font-black text-white shadow-lg shadow-primary/15 transition-all active:scale-95"
         >
-          <Play aria-hidden="true" size={19} />
+          <Play aria-hidden="true" size={20} />
           <span>{workoutRecordLabel}</span>
         </button>
       </footer>

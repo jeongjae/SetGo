@@ -653,7 +653,7 @@ function DetailSection({
     <details className="group rounded-2xl border border-slate-650 bg-slate-750/90 shadow-xl">
       <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-3">
         <div>
-          <h2 className="text-sm font-black text-white">{title}</h2>
+          <h2 className="text-sm font-black text-slate-100">{title}</h2>
           <p className="mt-0.5 text-xs font-semibold text-slate-300">{summary}</p>
         </div>
         <span className="shrink-0 text-lg font-black text-cyan-300 group-open:rotate-45">+</span>
@@ -748,7 +748,7 @@ export function StatsPage() {
       <header className="flex shrink-0 items-center gap-2.5">
         <div>
           <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'stats')}</p>
-          <h1 className="text-xl font-black text-white">{c.title}</h1>
+          <h1 className="text-xl font-black text-slate-100">{c.title}</h1>
         </div>
       </header>
 
@@ -759,7 +759,7 @@ export function StatsPage() {
               <BarChart3 aria-hidden="true" size={24} />
             </div>
             <div className="space-y-2">
-              <h2 className="text-base font-black text-white tracking-wide">{c.emptyTitle}</h2>
+              <h2 className="text-base font-black text-slate-100 tracking-wide">{c.emptyTitle}</h2>
               <p className="text-xs leading-relaxed text-slate-300 font-semibold max-w-xs">{c.emptyBody}</p>
             </div>
           </section>
@@ -772,7 +772,7 @@ export function StatsPage() {
                 <p className="text-xs font-black uppercase text-cyan-300">
                   {locale === 'ko' ? '이번 주 요약' : 'This Week'}
                 </p>
-                <h2 className="mt-0.5 text-base font-black text-white">
+                <h2 className="mt-0.5 text-base font-black text-slate-100">
                   {tf(locale, 'statsWorkoutDaysValue', { days: stats.workoutDays })} / {Math.round(stats.totalVolumeKg).toLocaleString()}kg
                 </h2>
               </div>
@@ -793,7 +793,7 @@ export function StatsPage() {
               ].map(([label, value]) => (
                 <div key={label} className="rounded-xl border border-slate-650 bg-slate-850/80 px-2 py-2 text-center">
                   <p className="text-[11px] font-black uppercase text-slate-300">{label}</p>
-                  <p className="mt-1 text-base font-black text-white">{value}</p>
+                  <p className="mt-1 text-base font-black text-slate-100">{value}</p>
                 </div>
               ))}
             </div>
@@ -801,7 +801,7 @@ export function StatsPage() {
 
           <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-black text-white">{c.recentTrend}</h2>
+              <h2 className="text-base font-black text-slate-100">{c.recentTrend}</h2>
               <span className="text-xs font-bold text-slate-300">{locale === 'ko' ? '볼륨' : 'Volume'}</span>
             </div>
             <MiniLineChart weeks={stats.weeks} locale={locale} peakLabel={c.peak} />
@@ -822,7 +822,7 @@ export function StatsPage() {
             <div className="flex items-center gap-2.5">
               <AlertTriangle aria-hidden="true" size={17} className={stats.warnings.length > 0 ? 'text-amber-400' : 'text-emerald-400'} />
               <div>
-                <h2 className="text-sm font-black text-white">{c.recoveryWarnings}</h2>
+                <h2 className="text-sm font-black text-slate-100">{c.recoveryWarnings}</h2>
                 <p className={`mt-0.5 text-xs font-bold ${stats.warnings.length > 0 ? 'text-amber-200' : 'text-emerald-300'}`}>
                   {warningSummary}
                 </p>
@@ -875,7 +875,7 @@ export function StatsPage() {
               {stats.muscleStats.map((muscle) => (
                 <div key={muscle.group} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-lg">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-black text-white tracking-wide">{muscleLabels[locale][muscle.group]}</p>
+                    <p className="text-sm font-black text-slate-100 tracking-wide">{muscleLabels[locale][muscle.group]}</p>
                     <Badge status={muscle.status} locale={locale} />
                   </div>
                   <div className="grid grid-cols-3 gap-2 rounded-xl border border-slate-650 bg-slate-750/80 py-1.5 text-center">
@@ -928,14 +928,14 @@ export function StatsPage() {
               ) : stats.performances.map((performance) => (
                 <div key={performance.id} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-lg">
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-sm font-black text-white tracking-wide">{performance.name}</h3>
+                    <h3 className="text-sm font-black text-slate-100 tracking-wide">{performance.name}</h3>
                     <span className="rounded-lg border border-cyan-800 bg-cyan-950 px-2 py-0.5 text-xs font-black text-cyan-200">{formatPct(performance.fourWeekChangePct)}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl border border-slate-650 bg-slate-750/80 px-3 py-2.5 text-xs font-semibold text-slate-100">
-                    <p>{c.recentWeight} <span className="font-black text-white">{performance.recentWeightKg.toFixed(1)}kg</span></p>
-                    <p>{c.bestWeight} <span className="font-black text-white">{performance.bestWeightKg.toFixed(1)}kg</span></p>
-                    <p>{c.recentVolume} <span className="font-black text-white">{Math.round(performance.recentVolumeKg).toLocaleString()}kg</span></p>
-                    <p>{c.bestVolume} <span className="font-black text-white">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
+                    <p>{c.recentWeight} <span className="font-black text-slate-100">{performance.recentWeightKg.toFixed(1)}kg</span></p>
+                    <p>{c.bestWeight} <span className="font-black text-slate-100">{performance.bestWeightKg.toFixed(1)}kg</span></p>
+                    <p>{c.recentVolume} <span className="font-black text-slate-100">{Math.round(performance.recentVolumeKg).toLocaleString()}kg</span></p>
+                    <p>{c.bestVolume} <span className="font-black text-slate-100">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
                     <p className="col-span-2 border-t border-slate-800 pt-2 mt-0.5">{c.estimatedOneRm} <span className="font-black text-cyan-300">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
                   </div>
                   {performance.oneRmHistory.length > 0 ? (

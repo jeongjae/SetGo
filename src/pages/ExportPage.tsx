@@ -321,7 +321,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
         </button>
         <div>
           <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'settings')}</p>
-          <h1 className="text-xl font-black text-white">{t(locale, 'export')}</h1>
+          <h1 className="text-xl font-black text-slate-100">{t(locale, 'export')}</h1>
         </div>
       </header>
 
@@ -330,7 +330,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
         <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
           <div>
             <p className="text-xs font-black uppercase text-slate-200">{t(locale, 'workoutSession')}</p>
-            <h2 className="mt-1 text-base font-black text-white">
+            <h2 className="mt-1 text-base font-black text-slate-100">
               {summary ? `${summary.session.date} / ${workoutStatusLabel(locale, summary.session.status)}` : locale === 'ko' ? '저장된 운동이 없습니다' : 'No workout saved yet'}
             </h2>
             <p className="mt-1.5 text-xs leading-relaxed text-slate-300 font-semibold">
@@ -406,7 +406,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
               </button>
             </div>
           </div>
-          <h2 className="text-base font-black text-white">{t(locale, 'backupRestore')}</h2>
+          <h2 className="text-base font-black text-slate-100">{t(locale, 'backupRestore')}</h2>
           <p className="text-sm font-semibold leading-relaxed text-slate-100">
             {backupSummary ?? (
               locale === 'ko'
@@ -461,7 +461,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
             <p className="text-xs font-black uppercase text-slate-200">
               {locale === 'ko' ? '설정 데이터' : 'Settings Data'}
             </p>
-            <h2 className="mt-1 text-base font-black text-white">
+            <h2 className="mt-1 text-base font-black text-slate-100">
               {locale === 'ko' ? '루틴 / 운동 / 주간계획 백업' : 'Routine / Exercise / Weekly Plan Backup'}
             </h2>
           </div>
@@ -500,7 +500,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
             <p className="text-xs font-black uppercase text-slate-200">
               {locale === 'ko' ? '운동 라이브러리' : 'Exercise Library'}
             </p>
-            <h2 className="mt-1 text-base font-black text-white">
+            <h2 className="mt-1 text-base font-black text-slate-100">
               {locale === 'ko' ? 'CSV 일괄 수정' : 'Bulk CSV Edit'}
             </h2>
           </div>

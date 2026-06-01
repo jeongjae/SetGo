@@ -101,7 +101,7 @@ export function ExerciseFinder({
           value={state.query}
           onChange={(event) => updateState({ query: event.target.value })}
           placeholder={t(locale, 'searchExercises')}
-          className="min-w-0 flex-1 bg-transparent text-base font-medium text-white outline-none placeholder:text-slate-400"
+          className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-100 outline-none placeholder:text-slate-400"
         />
         {hasFilters ? (
           <button
@@ -189,7 +189,7 @@ export function ExerciseFinder({
                   {/* Exercise Name & Tags */}
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="block truncate text-base font-bold text-white transition-colors group-hover:text-cyan-300">
+                      <span className="block truncate text-base font-bold text-slate-100 transition-colors group-hover:text-cyan-300">
                         {getExerciseName(exercise, locale)}
                       </span>
                       {isCustom && (

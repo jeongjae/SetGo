@@ -36,7 +36,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
       <header className="flex shrink-0 items-center justify-between gap-2.5">
         <div>
           <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'settings')}</p>
-          <h1 className="text-xl font-black text-white">
+          <h1 className="text-xl font-black text-slate-100">
             {locale === 'ko' ? '설정 및 데이터' : 'Settings and Data'}
           </h1>
         </div>
@@ -73,7 +73,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
               <Icon aria-hidden="true" size={22} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-black text-white">{title}</span>
+              <span className="block text-sm font-black text-slate-100">{title}</span>
               <span className="mt-0.5 block text-xs font-semibold text-slate-200">{detail}</span>
             </span>
             <ChevronRight aria-hidden="true" size={19} className="text-slate-200" />
@@ -89,7 +89,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
             <FileDown aria-hidden="true" size={21} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-black text-white">{t(locale, 'export')}</span>
+            <span className="block text-sm font-black text-slate-100">{t(locale, 'export')}</span>
             <span className="mt-0.5 block text-xs font-semibold text-slate-200">
               {locale === 'ko' ? 'Markdown, JSON 백업, CSV 관리' : 'Markdown, JSON backup, CSV management'}
             </span>
@@ -102,7 +102,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
             <Languages aria-hidden="true" size={21} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-black text-white">{t(locale, 'language')}</span>
+            <span className="block text-sm font-black text-slate-100">{t(locale, 'language')}</span>
             <span className="mt-0.5 block text-xs font-semibold text-slate-200">
               {locale === 'ko' ? '앱 표시 언어' : 'Display language'}
             </span>
@@ -116,7 +116,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                 className={`min-h-8 rounded-md px-2.5 text-xs font-extrabold transition-all active:scale-95 ${
                   locale === item
                     ? 'bg-cyan-400 text-slate-950 font-black shadow-sm'
-                    : 'text-slate-100 hover:bg-slate-750 hover:text-white'
+                    : 'text-slate-100 hover:bg-slate-750 hover:text-slate-100'
                 }`}
               >
                 {item === 'ko' ? '한국어' : 'EN'}
@@ -146,7 +146,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                   <Database aria-hidden="true" size={21} />
                 </span>
                 <div>
-                  <p id="storage-info-title" className="text-sm font-black text-white">{t(locale, 'localData')}</p>
+                  <p id="storage-info-title" className="text-sm font-black text-slate-100">{t(locale, 'localData')}</p>
                   <p className="mt-0.5 text-xs font-bold text-emerald-300">IndexedDB</p>
                 </div>
               </div>
@@ -155,7 +155,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                 autoFocus
                 aria-label={locale === 'ko' ? '닫기' : 'Close'}
                 onClick={() => setShowStorageInfo(false)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-200 transition-all hover:bg-slate-650 hover:text-white active:scale-95"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-200 transition-all hover:bg-slate-650 hover:text-slate-100 active:scale-95"
               >
                 <X aria-hidden="true" size={19} />
               </button>
