@@ -820,16 +820,16 @@ export function StatsPage() {
 
           <section className="rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
             <div className="flex items-center gap-2.5">
-              <AlertTriangle aria-hidden="true" size={17} className={stats.warnings.length > 0 ? 'text-amber-400' : 'text-emerald-400'} />
+              <AlertTriangle aria-hidden="true" size={17} className={stats.warnings.length > 0 ? 'text-danger' : 'text-emerald-400'} />
               <div>
                 <h2 className="text-sm font-black text-slate-100">{c.recoveryWarnings}</h2>
-                <p className={`mt-0.5 text-xs font-bold ${stats.warnings.length > 0 ? 'text-amber-200' : 'text-emerald-300'}`}>
+                <p className={`mt-0.5 text-xs font-bold ${stats.warnings.length > 0 ? 'text-danger' : 'text-emerald-300'}`}>
                   {warningSummary}
                 </p>
               </div>
             </div>
             {stats.warnings.length > 0 ? (
-              <p className="mt-3 rounded-xl border border-amber-900 bg-amber-950/30 px-3 py-2.5 text-xs font-bold leading-relaxed text-amber-200">
+              <p className="mt-3 rounded-xl border border-danger/35 bg-danger/10 px-3 py-2.5 text-xs font-bold leading-relaxed text-danger">
                 {stats.warnings[0]}
               </p>
             ) : null}
@@ -840,7 +840,7 @@ export function StatsPage() {
                 </summary>
                 <div className="mt-2 grid gap-2">
                   {stats.warnings.slice(1).map((warning) => (
-                    <p key={warning} className="text-xs font-bold leading-relaxed text-amber-200">{warning}</p>
+                    <p key={warning} className="text-xs font-bold leading-relaxed text-danger">{warning}</p>
                   ))}
                 </div>
               </details>

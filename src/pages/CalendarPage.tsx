@@ -385,7 +385,6 @@ export function CalendarPage({
                 ? 'routine'
                 : dayPlan?.kind ?? (day.isCurrentMonth ? 'rest' : undefined);
             const highlightsFuturePlan = Boolean(displayKind && displayKind !== 'rest');
-            const usesLightCellText = hasRecord || day.key === todayKey || (day.key > todayKey && highlightsFuturePlan);
 
             const isSelected = selectedDateKey === day.key;
             let cellStyle = '';
@@ -414,18 +413,18 @@ export function CalendarPage({
                 aria-label={`${day.key} ${displayKind ? planKindLabel(displayKind, locale) : ''}`.trim()}
                 className={`flex aspect-square min-h-12 flex-col rounded-xl p-1.5 border transition-all duration-200 active:scale-95 ${cellStyle}${todayOutline}`}
               >
-                <div className="flex items-center justify-between w-full">
-                  <span className={`text-xs font-black ${isSelected ? 'text-slate-100' : usesLightCellText ? 'text-slate-950' : 'text-slate-100'}`}>{day.date.getDate()}</span>
+                <div className="flex w-full items-center justify-between text-primary">
+                  <span className="text-xs font-black text-primary">{day.date.getDate()}</span>
                   {displayKind === 'routine' || displayKind === 'free' ? <Dumbbell aria-hidden="true" size={13} /> : null}
                   {displayKind === 'running' ? <Footprints aria-hidden="true" size={13} /> : null}
                   {displayKind === 'rest' ? <Bed aria-hidden="true" size={13} /> : null}
                 </div>
                 {totalVolume > 0 ? (
-                  <span className="mt-0.5 truncate text-[11px] font-black text-emerald-300">
+                  <span className="mt-0.5 truncate text-[11px] font-black text-success">
                     {totalVolume.toLocaleString()}kg
                   </span>
                 ) : displayKind ? (
-                  <span className="mt-0.5 truncate text-[11px] font-extrabold text-current">
+                  <span className="mt-0.5 truncate text-[11px] font-extrabold text-primary">
                     {displayKind === 'routine' ? getRoutineDayDisplayName(dayPlan?.routineDay, locale) ?? planKindLabel(displayKind, locale) : planKindLabel(displayKind, locale)}
                   </span>
                 ) : null}

@@ -113,18 +113,18 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const workoutRecordLabel = locale === 'ko' ? '운동 기록' : 'Log workout';
 
   return (
-    <section className="viewport-locked mx-auto max-w-md gap-3 bg-background p-3.5">
-      <header className="relative min-h-[9.5rem] shrink-0 overflow-hidden rounded-[1.75rem] border border-slate-650 bg-white px-5 py-4 shadow-card">
+    <section className="viewport-locked mx-auto max-w-md gap-3 bg-background p-3.5 [@media(max-height:820px)]:gap-2 [@media(max-height:820px)]:p-3">
+      <header className="relative min-h-[9.5rem] shrink-0 overflow-hidden rounded-[1.75rem] border border-slate-650 bg-white px-5 py-4 shadow-card [@media(max-height:820px)]:min-h-[7.5rem] [@media(max-height:820px)]:px-4 [@media(max-height:820px)]:py-3">
         <div aria-hidden="true" className="absolute -right-10 -top-14 h-56 w-56 rounded-full border border-accent-soft" />
         <div aria-hidden="true" className="absolute -right-4 -top-7 h-44 w-44 rounded-full border border-accent-soft" />
         <div aria-hidden="true" className="absolute right-6 top-3 h-32 w-32 rounded-full border border-accent-soft" />
         <p className="relative text-sm font-extrabold text-accent-dark">{t(locale, 'today')}</p>
-        <h1 className="relative mt-2 text-[2.75rem] font-black leading-none text-primary">SetGo</h1>
-        <p className="relative mt-3 text-base font-bold text-text-secondary">{todayLabel}</p>
+        <h1 className="relative mt-2 text-[2.75rem] font-black leading-none text-primary [@media(max-height:820px)]:mt-1 [@media(max-height:820px)]:text-[2.25rem]">SetGo</h1>
+        <p className="relative mt-3 text-base font-bold text-text-secondary [@media(max-height:820px)]:mt-2 [@media(max-height:820px)]:text-sm">{todayLabel}</p>
       </header>
 
-      <div className="inner-scroll space-y-3 py-0.5 pr-0.5">
-        <section className="flex flex-col gap-3 rounded-[1.5rem] border border-slate-650 bg-white p-4 shadow-card">
+      <div className="inner-scroll space-y-3 py-0.5 pr-0.5 [@media(max-height:820px)]:space-y-2">
+        <section className="flex flex-col gap-3 rounded-[1.5rem] border border-slate-650 bg-white p-4 shadow-card [@media(max-height:820px)]:gap-2 [@media(max-height:820px)]:p-3">
           <div className="flex items-start gap-3">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-accent/20 bg-accent-soft text-accent-dark">
               <Dumbbell aria-hidden="true" size={26} />
@@ -202,7 +202,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
           ) : null}
         </section>
 
-        <section className="rounded-[1.5rem] border border-slate-650 bg-white p-4 shadow-card">
+        <section className="rounded-[1.5rem] border border-slate-650 bg-white p-4 shadow-card [@media(max-height:820px)]:p-3">
           <p className="text-sm font-bold text-text-secondary">{t(locale, 'lastWorkout')}</p>
           <h2 className="mt-1.5 flex items-center gap-2 text-base font-black text-primary">
             {latestFinishedWorkout ? (
