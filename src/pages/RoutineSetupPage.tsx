@@ -539,7 +539,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
   const activeRoutineName = activeRoutine?.name;
 
   return (
-    <section className="viewport-locked mx-auto flex max-w-md select-none flex-col gap-0 overflow-hidden bg-[#131b26] px-3.5 py-3 text-slate-100">
+    <section className="viewport-locked mx-auto flex max-w-md select-none flex-col gap-0 overflow-hidden bg-background px-3.5 py-3 text-slate-100">
       {/* ?ㅼ젙 ?섏쐞 ?붾㈃ ?ㅻ뜑 */}
       <header className="flex shrink-0 flex-col gap-2.5 border-b border-slate-650 pb-2.5">
         <div className="flex items-center gap-2.5">
@@ -553,7 +553,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
           </button>
           <div>
             <p className="text-xs font-black uppercase leading-none text-cyan-300">{t(locale, 'settings')}</p>
-            <h1 className="mt-0.5 text-lg font-extrabold text-white">
+            <h1 className="mt-0.5 text-lg font-extrabold text-slate-100">
               {setupTab === 'routine' ? t(locale, 'routine') : setupTab === 'library' ? t(locale, 'exerciseLibrary') : t(locale, 'weeklyPlan')}
             </h1>
           </div>
@@ -573,7 +573,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     aria-label={locale === 'ko' ? '활성 루틴 선택' : 'Select active routine'}
                     value={activeRoutine?.id ?? ''}
                     onChange={(event) => void handleSelectStoredRoutine(event.target.value)}
-                    className="min-h-10 min-w-0 rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-white outline-none focus:ring-1 focus:ring-cyan-400"
+                    className="min-h-10 min-w-0 rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100 outline-none focus:ring-1 focus:ring-cyan-400"
                   >
                     {savedRoutines.map((routine) => (
                       <option key={routine.id} value={routine.id}>{routine.name}</option>
@@ -599,7 +599,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     type="text"
                     defaultValue={activeRoutineName}
                     onBlur={(event) => void handleUpdateRoutineName(event.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 text-base font-bold text-white outline-none transition-all focus:ring-1 focus:ring-cyan-400"
+                    className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 text-base font-bold text-slate-100 outline-none transition-all focus:ring-1 focus:ring-cyan-400"
                   />
                 </label>
               ) : null}
@@ -634,7 +634,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                         onClick={() => void handleActivate(template.splitType)}
                         className="rounded-xl border border-slate-650 bg-slate-850 p-3 text-left transition-all hover:bg-slate-700 active:scale-[0.98]"
                       >
-                        <h2 className="text-sm font-black text-white">{getRoutineTemplateName(template, locale)}</h2>
+                        <h2 className="text-sm font-black text-slate-100">{getRoutineTemplateName(template, locale)}</h2>
                         <p className="mt-1 text-xs font-medium leading-relaxed text-slate-100">{getRoutineTemplateSummary(template, locale)}</p>
                         <p className="mt-2 text-xs font-black uppercase text-cyan-300">
                           {isSaving ? (locale === 'ko' ? '생성 중...' : 'Creating...') : (locale === 'ko' ? '선택' : 'Choose')}
@@ -654,7 +654,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
             <p className="text-xs font-bold uppercase text-slate-200">{t(locale, 'weeklyPlan')}</p>
             <div className="rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2.5">
               <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'activeRoutine')}</p>
-              <h2 className="mt-0.5 text-sm font-black text-white">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
+              <h2 className="mt-0.5 text-sm font-black text-slate-100">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
               <p className="mt-1 text-xs font-medium leading-normal text-slate-100">{t(locale, 'routinePlanFor')}</p>
             </div>
             <label className="block text-xs font-bold text-slate-100">
@@ -666,7 +666,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   setScheduleStartDate(event.target.value);
                   setScheduleDirty(true);
                 }}
-                className="mt-1 min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-2 text-sm font-semibold text-white"
+                className="mt-1 min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-2 text-sm font-semibold text-slate-100"
               />
             </label>
             {cyclePlan.length === 0 ? (
@@ -774,7 +774,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
           <section className="shrink-0 space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-md">
             <div>
               <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'exerciseLibrary')}</p>
-              <h2 className="mt-0.5 text-base font-bold text-white">
+              <h2 className="mt-0.5 text-base font-bold text-slate-100">
                 {locale === 'ko' ? `${exerciseLibrary.length}개의 등록된 운동` : `${exerciseLibrary.length} Exercises`}
               </h2>
             </div>
@@ -814,7 +814,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     aria-label="Exercise category filter"
                     value={exerciseCategoryFilter}
                     onChange={(event) => setExerciseCategoryFilter(event.target.value as ExerciseCategory | 'all')}
-                    className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-white"
+                    className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100"
                   >
                     {exerciseCategories.map((category) => (
                       <option key={category.value} value={category.value}>
@@ -869,7 +869,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-sm">
                       {getExerciseIcon(editingExercise.defaultEmoji)}
                     </div>
-                    <h3 className="text-xs font-bold text-white leading-tight">
+                    <h3 className="text-xs font-bold text-slate-100 leading-tight">
                       {editingExercise.nameKo ? getExerciseName(editingExercise, locale) : (locale === 'ko' ? '새 운동' : 'New exercise')}
                     </h3>
                   </div>
@@ -1009,11 +1009,11 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-650 bg-slate-750 p-3 text-xs">
                       <div>
                         <p className="font-bold uppercase text-slate-300">{t(locale, 'koreanName')}</p>
-                        <p className="mt-1 text-sm font-bold text-white">{editingExercise.nameKo}</p>
+                        <p className="mt-1 text-sm font-bold text-slate-100">{editingExercise.nameKo}</p>
                       </div>
                       <div>
                         <p className="font-bold uppercase text-slate-300">{t(locale, 'englishName')}</p>
-                        <p className="mt-1 text-sm font-bold text-white">{editingExercise.nameEn ?? '-'}</p>
+                        <p className="mt-1 text-sm font-bold text-slate-100">{editingExercise.nameEn ?? '-'}</p>
                       </div>
                     </div>
                     <div className="rounded-xl border border-slate-650 bg-slate-750 p-3">
@@ -1025,13 +1025,13 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     <div className="grid grid-cols-2 gap-2">
                       <div className="rounded-xl border border-slate-650 bg-slate-750 p-3">
                         <p className="text-xs font-bold uppercase text-slate-300">{t(locale, 'categories')}</p>
-                        <p className="mt-1 text-sm font-bold text-white">
+                        <p className="mt-1 text-sm font-bold text-slate-100">
                           {getExerciseCategories(editingExercise).map((category) => labelForCategory(category, locale)).join(' / ')}
                         </p>
                       </div>
                       <div className="rounded-xl border border-slate-650 bg-slate-750 p-3">
                         <p className="text-xs font-bold uppercase text-slate-300">{t(locale, 'stages')}</p>
-                        <p className="mt-1 text-sm font-bold text-white">
+                        <p className="mt-1 text-sm font-bold text-slate-100">
                           {getExerciseStages(editingExercise).map((stage) => labelForStage(stage, locale)).join(' / ')}
                         </p>
                       </div>
@@ -1082,7 +1082,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   className={`min-h-8 shrink-0 rounded-full px-3.5 text-xs font-black transition-all active:scale-95 border ${
                     selectedDay?.routineDay.id === dayPlan.routineDay.id
                       ? 'bg-cyan-400 border-cyan-400 text-slate-950 shadow-sm'
-                      : 'border-slate-650 bg-slate-850 text-slate-100 hover:bg-slate-700 hover:text-white'
+                      : 'border-slate-650 bg-slate-850 text-slate-100 hover:bg-slate-700 hover:text-slate-100'
                   }`}
                 >
                   {getRoutineDayDisplayName(dayPlan.routineDay, locale)}
@@ -1100,7 +1100,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     type="text"
                     defaultValue={selectedDay.routineDay.name}
                     onBlur={(event) => void handleUpdateRoutineDayName(selectedDay.routineDay.id, event.target.value)}
-                    className="min-w-0 flex-1 rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 text-base font-black text-white outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
+                    className="min-w-0 flex-1 rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 text-base font-black text-slate-100 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
                   />
                   <button
                     type="button"
@@ -1147,7 +1147,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                               {getExerciseIcon(exercise.defaultEmoji)}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-black leading-tight text-white">{getExerciseName(exercise, locale)}</p>
+                              <p className="truncate text-sm font-black leading-tight text-slate-100">{getExerciseName(exercise, locale)}</p>
                               <p className="mt-0.5 truncate text-xs font-bold text-slate-200">
                                 {getExerciseCategories(exercise).map((category) => labelForCategory(category, locale)).join(' / ')}
                               </p>
@@ -1158,7 +1158,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                               type="button"
                               onClick={() => void handleMovePlan(plan.id, -1)}
                               disabled={planIndex === 0}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 hover:text-white disabled:pointer-events-none disabled:opacity-30 active:scale-95"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 hover:text-slate-100 disabled:pointer-events-none disabled:opacity-30 active:scale-95"
                               aria-label={`Move ${getExerciseName(exercise, locale)} up`}
                             >
                               <ArrowUp aria-hidden="true" size={13} />
@@ -1167,7 +1167,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                               type="button"
                               onClick={() => void handleMovePlan(plan.id, 1)}
                               disabled={planIndex === selectedDay.plans.length - 1}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 hover:text-white disabled:pointer-events-none disabled:opacity-30 active:scale-95"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 hover:text-slate-100 disabled:pointer-events-none disabled:opacity-30 active:scale-95"
                               aria-label={`Move ${getExerciseName(exercise, locale)} down`}
                             >
                               <ArrowDown aria-hidden="true" size={13} />

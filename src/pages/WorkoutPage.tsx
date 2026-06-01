@@ -651,7 +651,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   const canCompleteWorkout = canCompleteWorkoutLog(completedSetCount, loggedCardioCount);
 
   return (
-    <section className="viewport-locked mx-auto flex max-w-md select-none flex-col overflow-hidden bg-[#131b26] px-3.5 py-3 text-slate-100">
+    <section className="viewport-locked mx-auto flex max-w-md select-none flex-col overflow-hidden bg-background px-3.5 py-3 text-slate-100">
       {/* 1. 상단 고정 헤더 영역 (shrink-0) */}
       <header className="shrink-0 flex flex-col gap-1.5 border-b border-slate-650 pb-2.5">
         <div className="flex items-center justify-between gap-3">
@@ -668,7 +668,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               <p className="text-xs font-black uppercase leading-none text-cyan-300">
                 {workout ? workoutStatusLabel(locale, workout.session.status) : (locale === 'ko' ? '불러오는 중...' : 'Loading...')}
               </p>
-              <h1 className="mt-0.5 max-w-[150px] truncate text-lg font-extrabold leading-tight text-white md:max-w-[210px]">
+              <h1 className="mt-0.5 max-w-[150px] truncate text-lg font-extrabold leading-tight text-slate-100 md:max-w-[210px]">
                 {workoutTitle}
               </h1>
             </div>
@@ -677,7 +677,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           {/* 콤팩트 실시간 대시보드 */}
           <div className="flex items-center gap-1.5 shrink-0">
             {!isCompletedEditMode && sessionElapsed ? (
-              <div className="flex items-center gap-1 rounded-xl border border-slate-650 bg-slate-850 px-2.5 py-1 text-sm font-bold text-white shadow-inner">
+              <div className="flex items-center gap-1 rounded-xl border border-slate-650 bg-slate-850 px-2.5 py-1 text-sm font-bold text-slate-100 shadow-inner">
                 <Clock3 size={13} className="text-slate-200" />
                 <span className="font-mono tracking-wide">{sessionElapsed}</span>
               </div>
@@ -707,7 +707,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                   setRestRemaining(restDuration);
                   setIsRestTimerActive(true);
                 }}
-                className="flex items-center gap-1 rounded-xl border border-slate-650 bg-slate-850 px-2.5 py-1 text-sm font-bold text-slate-100 hover:text-white"
+                className="flex items-center gap-1 rounded-xl border border-slate-650 bg-slate-850 px-2.5 py-1 text-sm font-bold text-slate-100 hover:text-slate-100"
               >
                 <span>Rest</span>
                 <span className="font-mono tracking-wide">{restElapsed}</span>
@@ -819,7 +819,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               aria-label="Historical workout routine"
               value={historyRoutineId}
               onChange={(event) => void handleHistoryRoutineChange(event.target.value)}
-              className="min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-white"
+              className="min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100"
             >
               <option value="">{t(locale, 'freeWorkout')}</option>
               {savedRoutines.map((routine) => (
@@ -831,7 +831,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 aria-label="Historical workout routine day"
                 value={historyRoutineDayId}
                 onChange={(event) => setHistoryRoutineDayId(event.target.value)}
-                className="min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-white"
+                className="min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100"
               >
                 {historyRoutineDays.map((day) => (
                   <option key={day.id} value={day.id}>{getRoutineDayDisplayName(day, locale) ?? day.name}</option>
@@ -902,7 +902,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     </div>
                     <div className="flex flex-col gap-0.5">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <h2 className="text-base font-extrabold leading-tight text-white">
+                        <h2 className="text-base font-extrabold leading-tight text-slate-100">
                           {getExerciseName(log.exercise, locale)}
                         </h2>
                         {allCompleted && (
@@ -944,7 +944,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           type="button"
                           onClick={() => void handleMoveExercise(log.workoutExercise.id, -1)}
                           disabled={index === 0}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all duration-200 hover:bg-slate-650 hover:text-white disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all duration-200 hover:bg-slate-650 hover:text-slate-100 disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
                           aria-label={`Move ${log.exercise.nameKo} up`}
                         >
                           <ArrowUp aria-hidden="true" size={15} />
@@ -953,7 +953,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           type="button"
                           onClick={() => void handleMoveExercise(log.workoutExercise.id, 1)}
                           disabled={index === logs.length - 1}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all duration-200 hover:bg-slate-650 hover:text-white disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all duration-200 hover:bg-slate-650 hover:text-slate-100 disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
                           aria-label={`Move ${log.exercise.nameKo} down`}
                         >
                           <ArrowDown aria-hidden="true" size={15} />
@@ -1082,7 +1082,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'cardio')}</p>
-              <h2 className="mt-0.5 text-base font-bold text-white">
+              <h2 className="mt-0.5 text-base font-bold text-slate-100">
                 {cardioRecords.length === 0 ? (locale === 'ko' ? '러닝' : 'Optional Running') : `${cardioRecords.length} ${t(locale, 'cardio')}`}
               </h2>
             </div>
@@ -1130,7 +1130,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                         {cardioRecord.environment === 'indoor' ? '🏠' : '🌳'}
                       </span>
                       <div>
-                        <p className="text-sm font-bold text-white">
+                        <p className="text-sm font-bold text-slate-100">
                           {displayName}
                         </p>
                         {cardioRecord.isDraft ? (
@@ -1158,7 +1158,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                       className={`flex-1 rounded-lg py-1.5 text-xs font-extrabold transition-all active:scale-95 ${
                         cardioRecord.environment === 'indoor'
                           ? 'bg-slate-800 text-cyan-300 shadow-sm border border-slate-700/50'
-                          : 'text-slate-100 hover:bg-slate-650 hover:text-white'
+                          : 'text-slate-100 hover:bg-slate-650 hover:text-slate-100'
                       }`}
                     >
                       {locale === 'ko' ? '실내 러닝' : 'Indoor'}
@@ -1169,7 +1169,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                       className={`flex-1 rounded-lg py-1.5 text-xs font-extrabold transition-all active:scale-95 ${
                         cardioRecord.environment === 'outdoor'
                           ? 'bg-slate-800 text-cyan-300 shadow-sm border border-slate-700/50'
-                          : 'text-slate-100 hover:bg-slate-650 hover:text-white'
+                          : 'text-slate-100 hover:bg-slate-650 hover:text-slate-100'
                       }`}
                     >
                       {locale === 'ko' ? '야외 러닝' : 'Outdoor'}
@@ -1187,7 +1187,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           onChange={(event) => void handleUpdateCardio(cardioRecord, {
                             machineType: event.target.value as CardioRecord['machineType'],
                           })}
-                          className="mt-1 min-h-10 w-full rounded-xl border border-slate-650 bg-slate-750 px-3 text-sm font-medium text-white outline-none"
+                          className="mt-1 min-h-10 w-full rounded-xl border border-slate-650 bg-slate-750 px-3 text-sm font-medium text-slate-100 outline-none"
                         >
                           <option value="treadmill">{locale === 'ko' ? '🏃‍♂️ 트레드밀 (러닝머신)' : '🏃‍♂️ Treadmill'}</option>
                           <option value="indoor_bike">{locale === 'ko' ? '🚴‍♂️ 실내 자전거' : '🚴‍♂️ Indoor Bike'}</option>
@@ -1204,7 +1204,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           defaultValue={cardioRecord.location ?? ''}
                           onBlur={(event) => void handleUpdateCardio(cardioRecord, { location: event.target.value.trim() })}
                           placeholder={locale === 'ko' ? '예: 동네 공원, 러닝 트랙 등' : 'e.g. Park, track, river'}
-                          className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-750 px-3.5 py-2 text-sm font-medium text-white outline-none focus:border-cyan-400"
+                          className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-750 px-3.5 py-2 text-sm font-medium text-slate-100 outline-none focus:border-cyan-400"
                         />
                       </label>
                     )}
@@ -1220,7 +1220,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                               const nextVal = Math.max(0, Number(((cardioRecord.distanceKm || 0) - 0.5).toFixed(1)));
                               void handleUpdateCardio(cardioRecord, { distanceKm: nextVal || undefined });
                             }}
-                            className="min-h-10 text-sm font-bold text-slate-100 hover:text-white active:bg-slate-850/50"
+                            className="min-h-10 text-sm font-bold text-slate-100 hover:text-slate-100 active:bg-slate-850/50"
                           >
                             -
                           </button>
@@ -1235,7 +1235,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                               void handleUpdateCardio(cardioRecord, { distanceKm: val });
                             }}
                             placeholder="0.0"
-                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-white outline-none"
+                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-slate-100 outline-none"
                           />
                           <button
                             type="button"
@@ -1259,7 +1259,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                               const nextVal = Math.max(1, minutes - 5);
                               void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
                             }}
-                            className="min-h-10 text-sm font-bold text-slate-100 hover:text-white active:bg-slate-850/50"
+                            className="min-h-10 text-sm font-bold text-slate-100 hover:text-slate-100 active:bg-slate-850/50"
                           >
                             -
                           </button>
@@ -1274,7 +1274,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                               void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, val) });
                             }}
                             placeholder="min"
-                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-white outline-none"
+                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-slate-100 outline-none"
                           />
                           <button
                             type="button"
@@ -1299,7 +1299,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                                 const nextVal = Math.max(0, (cardioRecord.inclinePercent || 0) - 1);
                                 void handleUpdateCardio(cardioRecord, { inclinePercent: nextVal });
                               }}
-                              className="min-h-10 text-sm font-bold text-slate-100 hover:text-white active:bg-slate-850/50"
+                              className="min-h-10 text-sm font-bold text-slate-100 hover:text-slate-100 active:bg-slate-850/50"
                             >
                               -
                             </button>
@@ -1314,7 +1314,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                                 void handleUpdateCardio(cardioRecord, { inclinePercent: val });
                               }}
                               placeholder="%"
-                              className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-white outline-none"
+                              className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-slate-100 outline-none"
                             />
                             <button
                               type="button"
@@ -1340,7 +1340,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                       defaultValue={cardioRecord.memo ?? ''}
                       onBlur={(event) => void handleUpdateCardio(cardioRecord, { memo: event.target.value.trim() || undefined })}
                       placeholder={locale === 'ko' ? '속도 변경, 컨디션 피드백 등' : 'e.g. Speed changes, energy feedback'}
-                      className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-750 px-3.5 py-2 text-sm font-medium text-white outline-none focus:border-cyan-400"
+                      className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-750 px-3.5 py-2 text-sm font-medium text-slate-100 outline-none focus:border-cyan-400"
                     />
                   </label>
 
@@ -1374,7 +1374,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       </div>
 
       {/* 4. 하단 고정 조작 푸터 영역 (shrink-0) */}
-      <footer className="mt-auto flex shrink-0 flex-col gap-2 border-t border-slate-650 bg-[#131b26] pb-1 pt-2.5">
+      <footer className="mt-auto flex shrink-0 flex-col gap-2 border-t border-slate-650 bg-background pb-1 pt-2.5">
         {isHistoricalEditMode ? (
           <>
             <button
@@ -1459,7 +1459,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-100">{t(locale, 'resting')}</p>
-                <p className="text-lg font-black text-white tracking-wider font-mono">
+                <p className="text-lg font-black text-slate-100 tracking-wider font-mono">
                   {formatCountdownSeconds(restRemaining)}
                 </p>
               </div>
@@ -1648,7 +1648,7 @@ function WorkoutSetRow({
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'weightKg', -2.5)}
-              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-white active:scale-90 active:bg-slate-650"
+              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-slate-100 active:scale-90 active:bg-slate-650"
             >
               -
             </button>
@@ -1668,7 +1668,7 @@ function WorkoutSetRow({
                 }
               }}
               placeholder="kg"
-              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-white outline-none"
+              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-slate-100 outline-none"
             />
             <button
               type="button"
@@ -1691,7 +1691,7 @@ function WorkoutSetRow({
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'reps', -1)}
-              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-white active:scale-90 active:bg-slate-650"
+              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-slate-100 active:scale-90 active:bg-slate-650"
             >
               -
             </button>
@@ -1711,7 +1711,7 @@ function WorkoutSetRow({
                 }
               }}
               placeholder="reps"
-              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-white outline-none"
+              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-slate-100 outline-none"
             />
             <button
               type="button"
@@ -1734,7 +1734,7 @@ function WorkoutSetRow({
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'rir', -1)}
-              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-white active:scale-90 active:bg-slate-650"
+              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-slate-100 active:scale-90 active:bg-slate-650"
             >
               -
             </button>
@@ -1754,7 +1754,7 @@ function WorkoutSetRow({
                 }
               }}
               placeholder="RIR"
-              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-white outline-none"
+              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-slate-100 outline-none"
             />
             <button
               type="button"
@@ -1779,7 +1779,7 @@ function WorkoutSetRow({
           className={`min-h-9 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
             set.isWarmup
               ? 'bg-amber-400 text-slate-950 font-extrabold shadow-md shadow-amber-400/20'
-              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-white'
+              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-slate-100'
           }`}
         >
           {locale === 'ko' ? '준비' : 'Warm'}
@@ -1789,8 +1789,8 @@ function WorkoutSetRow({
           onClick={() => void handleToggleHardSet(set)}
           className={`min-h-9 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
             !set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3
-              ? 'bg-rose-500 text-white font-extrabold shadow-md shadow-rose-500/20'
-              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-white'
+              ? 'bg-rose-500 text-slate-100 font-extrabold shadow-md shadow-rose-500/20'
+              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-slate-100'
           }`}
         >
           Hard
@@ -1801,7 +1801,7 @@ function WorkoutSetRow({
           className={`min-h-9 rounded-xl text-sm font-black transition-all duration-300 active:scale-95 ${
             set.isCompleted
               ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30'
-              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-white'
+              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-slate-100'
           }`}
         >
           {set.isCompleted ? (locale === 'ko' ? '완료됨' : 'Done') : (locale === 'ko' ? '완료' : 'Complete')}
@@ -1810,7 +1810,7 @@ function WorkoutSetRow({
           type="button"
           onClick={() => void handleCopyPreviousSet(set, previousSet)}
           disabled={!previousSet}
-          className="flex min-h-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 hover:text-white disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
+          className="flex min-h-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 hover:text-slate-100 disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
           aria-label="Copy previous values"
           title="Copy previous workout set"
         >

@@ -336,7 +336,7 @@ export function CalendarPage({
       <header className="flex shrink-0 items-center gap-2.5">
         <div>
           <p className="text-xs font-extrabold uppercase text-cyan-300">{t(locale, 'calendar')}</p>
-          <h1 className="text-xl font-black text-white">{t(locale, 'monthlyWorkoutLog')}</h1>
+          <h1 className="text-xl font-black text-slate-100">{t(locale, 'monthlyWorkoutLog')}</h1>
         </div>
       </header>
 
@@ -347,16 +347,16 @@ export function CalendarPage({
           <button
             type="button"
             onClick={() => changeMonth(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-850 text-slate-100 transition-all hover:bg-slate-700 hover:text-white active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-850 text-slate-100 transition-all hover:bg-slate-700 hover:text-slate-100 active:scale-95"
             aria-label="Previous month"
           >
             <ChevronLeft aria-hidden="true" size={18} />
           </button>
-          <h2 className="text-base font-black text-white">{monthFormatter.format(visibleMonth)}</h2>
+          <h2 className="text-base font-black text-slate-100">{monthFormatter.format(visibleMonth)}</h2>
           <button
             type="button"
             onClick={() => changeMonth(1)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-850 text-slate-100 transition-all hover:bg-slate-700 hover:text-white active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-850 text-slate-100 transition-all hover:bg-slate-700 hover:text-slate-100 active:scale-95"
             aria-label="Next month"
           >
             <ChevronRight aria-hidden="true" size={18} />
@@ -390,7 +390,7 @@ export function CalendarPage({
             const isSelected = selectedDateKey === day.key;
             let cellStyle = '';
             if (isSelected) {
-              cellStyle = 'bg-emerald-600/90 border-emerald-300 text-white ring-1 ring-emerald-300/70 shadow-[0_0_14px_-2px_rgba(52,211,153,0.45)]';
+              cellStyle = 'bg-emerald-600/90 border-emerald-300 text-slate-100 ring-1 ring-emerald-300/70 shadow-[0_0_14px_-2px_rgba(52,211,153,0.45)]';
             } else if (hasRecord && day.key <= todayKey) {
               cellStyle = 'bg-yellow-100/90 border-yellow-300 text-slate-950 hover:bg-yellow-100';
             } else if (day.key === todayKey) {
@@ -415,7 +415,7 @@ export function CalendarPage({
                 className={`flex aspect-square min-h-12 flex-col rounded-xl p-1.5 border transition-all duration-200 active:scale-95 ${cellStyle}${todayOutline}`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className={`text-xs font-black ${isSelected ? 'text-white' : usesLightCellText ? 'text-slate-950' : 'text-slate-100'}`}>{day.date.getDate()}</span>
+                  <span className={`text-xs font-black ${isSelected ? 'text-slate-100' : usesLightCellText ? 'text-slate-950' : 'text-slate-100'}`}>{day.date.getDate()}</span>
                   {displayKind === 'routine' || displayKind === 'free' ? <Dumbbell aria-hidden="true" size={13} /> : null}
                   {displayKind === 'running' ? <Footprints aria-hidden="true" size={13} /> : null}
                   {displayKind === 'rest' ? <Bed aria-hidden="true" size={13} /> : null}
@@ -446,7 +446,7 @@ export function CalendarPage({
         <div className="flex items-center justify-between border-b border-slate-650 pb-2">
           <div>
             <p className="text-xs font-black uppercase text-slate-200">{t(locale, 'planDate')}</p>
-            <h2 className="mt-0.5 text-base font-black text-white">{selectedDateKey}</h2>
+            <h2 className="mt-0.5 text-base font-black text-slate-100">{selectedDateKey}</h2>
           </div>
           {selectedDateKey !== todayKey ? (
             <button
@@ -490,7 +490,7 @@ export function CalendarPage({
               return (
                 <div key={summary.session.id} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-xl">
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-sm font-black text-white tracking-wide">
+                    <h3 className="text-sm font-black text-slate-100 tracking-wide">
                       {isRunningOnly
                         ? planKindLabel('running', locale)
                         : getRoutineDayDisplayName(summary.routineDay, locale) ?? summary.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}
