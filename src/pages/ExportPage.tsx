@@ -429,12 +429,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
             <button
               type="button"
               onClick={() => void handleBackup()}
-              className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200"
+              className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border-strong bg-surface-muted px-3 text-xs font-black text-primary transition-all duration-200 hover:bg-accent-soft active:scale-95"
             >
               <Download aria-hidden="true" size={15} />
               <span>{backupStatus === 'downloaded' ? t(locale, 'downloaded') : t(locale, 'backupJson')}</span>
             </button>
-            <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200">
+            <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border-strong bg-surface-muted px-3 text-xs font-black text-primary transition-all duration-200 hover:bg-accent-soft active:scale-95">
               <Upload aria-hidden="true" size={15} />
               <span>
                 {restoreStatus === 'restored'
@@ -476,12 +476,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
             <button
               type="button"
               onClick={() => void handleSettingsBackup()}
-              className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200"
+              className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border-strong bg-surface-muted px-3 text-xs font-black text-primary transition-all duration-200 hover:bg-accent-soft active:scale-95"
             >
               <Download aria-hidden="true" size={15} />
               <span>{locale === 'ko' ? '설정 저장' : 'Export Settings'}</span>
             </button>
-            <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200">
+            <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border-strong bg-surface-muted px-3 text-xs font-black text-primary transition-all duration-200 hover:bg-accent-soft active:scale-95">
               <Upload aria-hidden="true" size={15} />
               <span>{locale === 'ko' ? '설정 복원' : 'Restore Settings'}</span>
               <input
