@@ -123,7 +123,7 @@ describe('workout date binding and session creation safety (Scenario C)', () => 
     );
 
     expect(historicalSession).toMatchObject({
-      id: 'workout_2026-05-10',
+      id: 'workout_2026-05-10_1779355800000',
       date: '2026-05-10',
       startedAt: '2026-05-10T12:00:00.000',
       timeBand: 'afternoon',
@@ -139,6 +139,21 @@ describe('workout date binding and session creation safety (Scenario C)', () => 
 
     expect(extraSession.id).toBe(`workout_2026-05-20_${now.getTime()}`);
     expect(extraSession.startedAt).toBe(now.toISOString());
+  });
+
+  it('does not reuse the id of a deleted first session when the same date is started again', () => {
+    const deletedSession = createWorkoutSessionForDate(
+      '2026-05-20',
+      new Date('2026-05-20T09:00:00.000Z'),
+      0,
+    );
+    const replacementSession = createWorkoutSessionForDate(
+      '2026-05-20',
+      new Date('2026-05-20T10:00:00.000Z'),
+      0,
+    );
+
+    expect(replacementSession.id).not.toBe(deletedSession.id);
   });
 });
 

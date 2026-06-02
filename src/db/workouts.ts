@@ -55,15 +55,15 @@ export function selectReusableInProgressSession(
 export function createWorkoutSessionForDate(
   date: string,
   now: Date,
-  existingSessionCount: number,
+  _existingSessionCount: number,
   routineId?: string,
   routineDayId?: string,
 ): WorkoutSession {
   const timestamp = now.toISOString();
-  const isFirstBackdatedSession = existingSessionCount === 0 && date !== formatDateKey(now);
+  const isFirstBackdatedSession = _existingSessionCount === 0 && date !== formatDateKey(now);
 
   return {
-    id: existingSessionCount === 0 ? `workout_${date}` : `workout_${date}_${now.getTime()}`,
+    id: `workout_${date}_${now.getTime()}`,
     date,
     startedAt: isFirstBackdatedSession ? `${date}T12:00:00.000` : timestamp,
     timeBand: getTimeBand(new Date(`${date}T12:00:00`)),
@@ -169,6 +169,7 @@ export async function getOrCreateWorkoutForDate(
 
   const session = sessionSelection.session;
 
+  await clearWorkoutSessionRecords(session.id);
   await db.workoutSessions.put(session);
   await seedWorkoutExercisesFromRoutineDay(session.id, routineDay?.id);
   if (shouldSeedRunning) {
@@ -640,6 +641,10 @@ export async function deleteWorkoutExercise(workoutExerciseId: string): Promise<
 }
 
 export async function deleteWorkoutSession(sessionId: string): Promise<void> {
+  await clearWorkoutSessionRecords(sessionId, true);
+}
+
+async function clearWorkoutSessionRecords(sessionId: string, deleteSession = false): Promise<void> {
   const workoutExercises = await db.workoutExercises.where('sessionId').equals(sessionId).toArray();
 
   await db.transaction('rw', db.workoutSessions, db.workoutExercises, db.workoutSets, db.cardioRecords, async () => {
@@ -648,7 +653,9 @@ export async function deleteWorkoutSession(sessionId: string): Promise<void> {
     }
     await db.workoutExercises.where('sessionId').equals(sessionId).delete();
     await db.cardioRecords.where('sessionId').equals(sessionId).delete();
-    await db.workoutSessions.delete(sessionId);
+    if (deleteSession) {
+      await db.workoutSessions.delete(sessionId);
+    }
   });
 }
 
