@@ -67,7 +67,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         setInProgressSession(todayWorkout?.session);
         setTodayRoutineDay(todaySchedule.routineDay);
         setNextRoutineDay(nextDay);
-        setLatestFinishedWorkout(recentWorkouts.find((summary) => summary.session.status !== 'in_progress'));
+        setLatestFinishedWorkout(recentWorkouts.find((summary) => summary.session.status === 'completed'));
         setIsTodayRestDay(todaySchedule.isRestDay);
         setIsTodayRunningPlan(todaySchedule.kind === 'running');
         setTodayInProgressWorkouts(todayWorkouts.filter((summary) => summary.session.status === 'in_progress'));
