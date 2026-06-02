@@ -44,6 +44,7 @@ async function saveTextFile(
 ): Promise<'picked' | 'downloaded'> {
   const picker = window as SavePickerWindow;
   const preferPicker = options.preferPicker ?? true;
+  const pickerMimeType = mimeType.split(';', 1)[0];
 
   if (preferPicker && picker.showSaveFilePicker) {
     try {
@@ -51,7 +52,7 @@ async function saveTextFile(
         suggestedName: filename,
         types: [{
           description: filename.endsWith('.csv') ? 'CSV file' : 'JSON file',
-          accept: { [mimeType]: [filename.endsWith('.csv') ? '.csv' : '.json'] },
+          accept: { [pickerMimeType]: [filename.endsWith('.csv') ? '.csv' : '.json'] },
         }],
       });
       const writable = await handle.createWritable();

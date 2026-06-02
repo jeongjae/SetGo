@@ -323,6 +323,12 @@ export async function getTodayWorkout(): Promise<ActiveWorkout | undefined> {
   };
 }
 
+export async function getWorkoutSummariesForDate(date: string): Promise<WorkoutSummary[]> {
+  const sessions = (await getWorkoutSessionsForDate(date))
+    .sort((a, b) => (b.startedAt ?? b.createdAt).localeCompare(a.startedAt ?? a.createdAt));
+  return Promise.all(sessions.map(getWorkoutSummary));
+}
+
 export async function getWorkoutExerciseLogs(sessionId: string): Promise<WorkoutExerciseLog[]> {
   const workoutExercises = await db.workoutExercises.where('sessionId').equals(sessionId).sortBy('order');
 
@@ -630,6 +636,19 @@ export async function deleteWorkoutExercise(workoutExerciseId: string): Promise<
       )),
     );
     await refreshSessionVolume(workoutExercise.sessionId);
+  });
+}
+
+export async function deleteWorkoutSession(sessionId: string): Promise<void> {
+  const workoutExercises = await db.workoutExercises.where('sessionId').equals(sessionId).toArray();
+
+  await db.transaction('rw', db.workoutSessions, db.workoutExercises, db.workoutSets, db.cardioRecords, async () => {
+    if (workoutExercises.length > 0) {
+      await db.workoutSets.where('workoutExerciseId').anyOf(workoutExercises.map((exercise) => exercise.id)).delete();
+    }
+    await db.workoutExercises.where('sessionId').equals(sessionId).delete();
+    await db.cardioRecords.where('sessionId').equals(sessionId).delete();
+    await db.workoutSessions.delete(sessionId);
   });
 }
 

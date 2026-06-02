@@ -1,4 +1,4 @@
-﻿import { Bed, ChevronLeft, ChevronRight, Dumbbell, Footprints, Play } from 'lucide-react';
+﻿import { Bed, ChevronLeft, ChevronRight, Dumbbell, Footprints, Play, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   clearCalendarPlanOverride,
@@ -11,7 +11,7 @@ import {
   getRoutineDayDisplayName,
   saveCalendarPlanOverride,
 } from '../db/routines';
-import { getMonthlyWorkoutSummaries, getOrCreateWorkoutForDate, skipWorkoutSession, unskipWorkoutSession, type WorkoutSummary } from '../db/workouts';
+import { deleteWorkoutSession, getMonthlyWorkoutSummaries, getOrCreateWorkoutForDate, skipWorkoutSession, unskipWorkoutSession, type WorkoutSummary } from '../db/workouts';
 import { formatDateKey } from '../utils/date';
 import { db } from '../db/db';
 import { exerciseCountLabel, getStoredLocale, t, workoutStatusLabel } from '../i18n/i18n';
@@ -285,6 +285,18 @@ export function CalendarPage({
     setReloadKey((current) => current + 1);
   }
 
+  async function handleDeleteSession(sessionId: string) {
+    const shouldDelete = window.confirm(
+      locale === 'ko'
+        ? '이 운동 기록을 삭제할까요? 입력한 세트와 러닝 기록도 함께 삭제됩니다.'
+        : 'Delete this workout record? Its sets and running records will also be removed.',
+    );
+    if (!shouldDelete) return;
+
+    await deleteWorkoutSession(sessionId);
+    setReloadKey((current) => current + 1);
+  }
+
   useEffect(() => {
     if (!initialSelectedDateKey) return;
 
@@ -300,19 +312,24 @@ export function CalendarPage({
   const selectedRecordPlanValue = selectedSummaries
     .map(getSummaryPlanValue)
     .find((value): value is string => value !== undefined);
+  const selectedCyclePlanValue = selectedPlan
+    ? selectedPlan.kind === 'routine'
+      ? `routine:${selectedPlan.routineDay?.id ?? ''}`
+      : selectedPlan.kind
+    : '__none';
   const selectedPlanValue = selectedOverride
     ? selectedRecordPlanValue ?? (
       getOverrideKind(selectedOverride) === 'routine'
         ? `routine:${selectedOverride.routineDayId ?? ''}`
         : getOverrideKind(selectedOverride)
     )
-    : selectedRecordPlanValue ?? (selectedPlan ? '__cycle' : 'rest');
+    : selectedRecordPlanValue ?? selectedCyclePlanValue;
   const selectedInProgressSession = selectedSummaries.find((summary) => summary.session.status === 'in_progress');
   const selectedOverrideRoutineDayId = selectedPlanValue.startsWith('routine:') ? selectedPlanValue.replace(/^routine:/, '') : undefined;
   const startWorkoutRoutineDayId = selectedOverrideRoutineDayId ?? (selectedPlan?.kind === 'routine' ? selectedPlan.routineDay?.id : undefined);
   const selectedPlanKind: WorkoutPlanKind = selectedPlanValue.startsWith('routine:')
     ? 'routine'
-    : selectedPlanValue === '__cycle'
+    : selectedPlanValue === '__cycle' || selectedPlanValue === '__none'
       ? selectedPlan?.kind ?? 'rest'
       : (selectedPlanValue as WorkoutPlanKind);
   const shouldContinueSelectedSession = selectedInProgressSession !== undefined;
@@ -389,7 +406,7 @@ export function CalendarPage({
             const isSelected = selectedDateKey === day.key;
             let cellStyle = '';
             if (isSelected) {
-              cellStyle = 'bg-emerald-600/90 border-emerald-300 text-slate-100 ring-1 ring-emerald-300/70 shadow-[0_0_14px_-2px_rgba(52,211,153,0.45)]';
+              cellStyle = 'bg-emerald-600/90 border-emerald-300 text-slate-100 ring-1 ring-emerald-300/70 shadow-[0_0_14px_-2px_rgba(46,196,182,0.45)]';
             } else if (hasRecord && day.key <= todayKey) {
               cellStyle = 'bg-yellow-100/90 border-yellow-300 text-slate-950 hover:bg-yellow-100';
             } else if (day.key === todayKey) {
@@ -469,6 +486,7 @@ export function CalendarPage({
             onChange={(event) => void handlePlanChange(event.target.value)}
             className="min-h-10 w-full cursor-pointer rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-semibold text-slate-100 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
           >
+            <option value="__none" disabled className="bg-slate-900 text-slate-200">{locale === 'ko' ? '없음' : 'None'}</option>
             <option value="__cycle" className="bg-slate-900 text-slate-200">{locale === 'ko' ? '운동사이클 따르기' : 'Follow workout cycle'}</option>
             <option value="rest" className="bg-slate-900 text-slate-200">{t(locale, 'rest')}</option>
             <option value="running" className="bg-slate-900 text-slate-200">{locale === 'ko' ? '러닝' : 'Running'}</option>
@@ -550,6 +568,14 @@ export function CalendarPage({
                       </>
                     )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleDeleteSession(summary.session.id)}
+                    className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3 text-xs font-black text-danger transition-all hover:bg-danger/15 active:scale-95"
+                  >
+                    <Trash2 aria-hidden="true" size={14} />
+                    <span>{locale === 'ko' ? '운동 기록 삭제' : 'Delete record'}</span>
+                  </button>
                 </div>
               );
             })}
@@ -561,7 +587,7 @@ export function CalendarPage({
             type="button"
             onClick={handleRecordSelectedDate}
             disabled={recordActionDisabled}
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-black text-slate-100 transition-all hover:bg-slate-700 active:scale-95 disabled:text-slate-500 disabled:hover:bg-slate-850"
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-success bg-success px-3 text-xs font-black text-white shadow-md shadow-success/20 transition-all hover:bg-emerald-500 active:scale-95 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500 disabled:shadow-none disabled:hover:bg-slate-850"
           >
             <Play aria-hidden="true" size={15} />
             <span>{recordActionLabel}</span>

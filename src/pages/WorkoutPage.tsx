@@ -199,7 +199,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
             setTimeout(() => {
               const el = document.getElementById(`exercise-card-${nextUncompletedLog.workoutExercise.id}`);
               if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }
             }, 100);
           }
@@ -351,7 +351,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     window.setTimeout(() => {
       document.getElementById(`exercise-card-${addedWorkoutExerciseId}`)?.scrollIntoView({
         behavior: 'smooth',
-        block: 'center',
+        block: 'start',
       });
     }, 100);
   }
@@ -544,7 +544,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       window.setTimeout(() => {
         document.getElementById(`exercise-card-${nextLog.workoutExercise.id}`)?.scrollIntoView({
           behavior: 'smooth',
-          block: 'center',
+          block: 'start',
         });
       }, 100);
       return;
@@ -754,7 +754,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                   setTimeout(() => {
                     const el = document.getElementById(`exercise-card-${log.workoutExercise.id}`);
                     if (el) {
-                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                   }, 100);
                 }}
@@ -883,7 +883,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               <section
                 key={log.workoutExercise.id}
                 id={`exercise-card-${log.workoutExercise.id}`}
-                className="overflow-hidden rounded-2xl border border-slate-650 bg-slate-750/75 shadow-md transition-all duration-300"
+                className="scroll-mt-3 overflow-hidden rounded-2xl border border-slate-650 bg-slate-750/75 shadow-md transition-all duration-300"
               >
                 {/* 아코디언 헤더 */}
                 <button
@@ -1489,7 +1489,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                   setIsRestTimerActive(false);
                   setRestRemaining(0);
                 }}
-                className="flex h-8 items-center justify-center rounded-lg bg-red-500/20 px-2.5 text-xs font-bold text-red-200 border border-red-500/30 hover:bg-red-500/40 active:scale-95 transition-all"
+                className="flex h-8 items-center justify-center rounded-lg border border-danger/45 bg-danger/15 px-2.5 text-xs font-black text-danger transition-all hover:bg-danger/25 active:scale-95"
               >
                 {t(locale, 'skip')}
               </button>
