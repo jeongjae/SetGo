@@ -629,7 +629,7 @@ function MiniSparkBars({ history }: { history: ExercisePerformance['oneRmHistory
         <div key={`${item.label}_${item.valueKg}`} className="flex flex-1 flex-col items-center gap-1">
           <span className="text-[10px] font-black text-slate-100">{Math.round(item.valueKg)}</span>
           <div
-            className="w-full rounded-t bg-gradient-to-t from-emerald-500/80 to-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.15)]"
+            className="w-full rounded-t bg-gradient-to-t from-emerald-500/80 to-emerald-400 shadow-[0_0_6px_rgba(46,196,182,0.15)]"
             style={{ height: `${Math.max(6, (item.valueKg / maxValue) * 32)}px` }}
             aria-label={`${item.label} ${item.valueKg.toFixed(1)}kg`}
           />

@@ -1,4 +1,4 @@
-import { Dumbbell, Play } from 'lucide-react';
+import { Dumbbell, Play, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { db } from '../db/db';
 import {
@@ -8,14 +8,15 @@ import {
   getRoutineScheduleForDate,
 } from '../db/routines';
 import { seedDefaultExercises } from '../db/seed';
-import { getRecentWorkoutSummaries, getTodayWorkout, type WorkoutSummary } from '../db/workouts';
+import { deleteWorkoutSession, getRecentWorkoutSummaries, getTodayWorkout, getWorkoutSummariesForDate, type WorkoutSummary } from '../db/workouts';
 import { getExerciseName } from '../domain/exercises';
 import { exerciseCountLabel, getStoredLocale, t, workoutStatusLabel } from '../i18n/i18n';
 import type { Routine, RoutineDay, WorkoutSession } from '../types';
+import { formatDateKey } from '../utils/date';
 
 type TodayPageProps = {
   refreshKey: number;
-  onStartWorkout: (routineDayId?: string) => void;
+  onStartWorkout: (routineDayId?: string, sessionId?: string, createNew?: boolean) => void;
 };
 
 function getRoutinePlanPrefix(routine: Routine | undefined, locale: 'ko' | 'en'): string | undefined {
@@ -36,6 +37,8 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const [latestFinishedWorkout, setLatestFinishedWorkout] = useState<WorkoutSummary | undefined>();
   const [isTodayRestDay, setIsTodayRestDay] = useState(false);
   const [isTodayRunningPlan, setIsTodayRunningPlan] = useState(false);
+  const [todayInProgressWorkouts, setTodayInProgressWorkouts] = useState<WorkoutSummary[]>([]);
+  const [reloadKey, setReloadKey] = useState(0);
   const [locale] = useState(() => getStoredLocale());
 
   const todayLabel = useMemo(() => new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
@@ -49,13 +52,14 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
     async function load() {
       try {
         await seedDefaultExercises();
-        const [routine, days, todaySchedule, nextDay, todayWorkout, recentWorkouts] = await Promise.all([
+        const [routine, days, todaySchedule, nextDay, todayWorkout, recentWorkouts, todayWorkouts] = await Promise.all([
           db.routines.filter((routineRecord) => routineRecord.isActive).first(),
           getActiveRoutineDays(),
           getRoutineScheduleForDate(),
           getNextRoutineDayAfterLatestWorkout(),
           getTodayWorkout(),
           getRecentWorkoutSummaries(10),
+          getWorkoutSummariesForDate(formatDateKey(new Date())),
         ]);
 
         setActiveRoutine(routine);
@@ -66,6 +70,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         setLatestFinishedWorkout(recentWorkouts.find((summary) => summary.session.status !== 'in_progress'));
         setIsTodayRestDay(todaySchedule.isRestDay);
         setIsTodayRunningPlan(todaySchedule.kind === 'running');
+        setTodayInProgressWorkouts(todayWorkouts.filter((summary) => summary.session.status === 'in_progress'));
         setSelectedRoutineDayId((current) => {
           const scheduledRoutineDayId = todaySchedule.kind === 'routine' && !todaySchedule.isRestDay ? todaySchedule.routineDay?.id : undefined;
           return todayWorkout?.session.routineDayId
@@ -78,7 +83,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
     }
 
     void load();
-  }, [refreshKey]);
+  }, [refreshKey, reloadKey]);
 
   useEffect(() => {
     async function loadPlannedExercises() {
@@ -111,6 +116,39 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
       ? t(locale, 'restDay')
       : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
   const workoutRecordLabel = locale === 'ko' ? '운동 기록' : 'Log workout';
+  const matchingInProgressWorkout = todayInProgressWorkouts.find(
+    (summary) => summary.session.routineDayId === selectedRoutineDayId,
+  );
+
+  function handleStartSelectedWorkout() {
+    if (matchingInProgressWorkout) {
+      onStartWorkout(selectedRoutineDayId, matchingInProgressWorkout.session.id);
+      return;
+    }
+
+    if (todayInProgressWorkouts.length > 0) {
+      const shouldCreate = window.confirm(
+        locale === 'ko'
+          ? '오늘 진행 중인 운동 기록이 있습니다. 선택한 루틴으로 추가 운동 기록을 새로 만들까요?'
+          : 'There is already an in-progress workout today. Start an additional workout for the selected routine?',
+      );
+      if (!shouldCreate) return;
+    }
+
+    onStartWorkout(selectedRoutineDayId, undefined, todayInProgressWorkouts.length > 0);
+  }
+
+  async function handleDeleteTodayWorkout(sessionId: string) {
+    const shouldDelete = window.confirm(
+      locale === 'ko'
+        ? '이 운동 기록을 삭제할까요? 입력한 세트와 러닝 기록도 함께 삭제됩니다.'
+        : 'Delete this workout record? Its sets and running records will also be removed.',
+    );
+    if (!shouldDelete) return;
+
+    await deleteWorkoutSession(sessionId);
+    setReloadKey((current) => current + 1);
+  }
 
   return (
     <section className="viewport-locked mx-auto max-w-md gap-3 bg-background p-3.5 [@media(max-height:820px)]:gap-2 [@media(max-height:820px)]:p-3">
@@ -161,7 +199,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
               onClick={() => setSelectedRoutineDayId(nextRoutineDay.id)}
               className={`min-h-11 w-full rounded-xl border px-3 text-left text-sm font-bold transition-all active:scale-95 ${
                 selectedRoutineDayId === nextRoutineDay.id
-                  ? 'border-accent-dark bg-accent-dark text-white shadow-accent'
+                  ? 'border-accent-dark bg-accent-dark text-white'
                   : 'border-slate-650 bg-white text-primary hover:bg-accent-soft'
               }`}
             >
@@ -178,7 +216,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
                   onClick={() => setSelectedRoutineDayId(routineDay.id)}
                   className={`min-h-11 rounded-2xl border px-4 text-sm font-bold transition-all active:scale-95 ${
                     selectedRoutineDayId === routineDay.id
-                      ? 'border-accent-dark bg-accent-dark text-white shadow-accent'
+                      ? 'border-accent-dark bg-accent-dark text-white'
                       : 'border-slate-650 bg-white text-primary hover:bg-accent-soft'
                   }`}
                 >
@@ -224,13 +262,45 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
               : locale === 'ko' ? '운동을 완료하면 기록이 쌓입니다.' : 'Complete a session to build your local history.'}
           </p>
         </section>
+
+        {todayInProgressWorkouts.length > 0 ? (
+          <section className="space-y-2 rounded-[1.5rem] border border-accent/20 bg-accent-soft/45 p-4 shadow-card [@media(max-height:820px)]:p-3">
+            <p className="text-sm font-black text-primary">
+              {locale === 'ko' ? '오늘 진행 중인 운동' : 'In-progress workouts today'}
+            </p>
+            {todayInProgressWorkouts.map((summary) => (
+              <div key={summary.session.id} className="flex items-center gap-2 rounded-xl border border-slate-650 bg-white px-3 py-2">
+                <button
+                  type="button"
+                  onClick={() => onStartWorkout(summary.session.routineDayId, summary.session.id)}
+                  className="min-w-0 flex-1 text-left"
+                >
+                  <span className="block truncate text-sm font-black text-primary">
+                    {getRoutineDayDisplayName(summary.routineDay, locale) ?? summary.routineName ?? t(locale, 'freeWorkout')}
+                  </span>
+                  <span className="mt-0.5 block text-xs font-bold text-text-secondary">
+                    {locale === 'ko' ? '이어 기록하기' : 'Continue logging'}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleDeleteTodayWorkout(summary.session.id)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-danger/30 bg-danger/10 text-danger transition-all active:scale-95"
+                  aria-label={locale === 'ko' ? '운동 기록 삭제' : 'Delete workout record'}
+                >
+                  <Trash2 aria-hidden="true" size={16} />
+                </button>
+              </div>
+            ))}
+          </section>
+        ) : null}
       </div>
 
       <footer className="shrink-0 pt-1">
         <button
           type="button"
-          onClick={() => onStartWorkout(selectedRoutineDayId)}
-          className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-hover px-4 text-lg font-black text-white shadow-lg shadow-primary/15 transition-all active:scale-95"
+          onClick={handleStartSelectedWorkout}
+          className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-success to-emerald-500 px-4 text-lg font-black text-white shadow-lg shadow-success/20 transition-all active:scale-95"
         >
           <Play aria-hidden="true" size={20} />
           <span>{workoutRecordLabel}</span>

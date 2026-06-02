@@ -136,7 +136,10 @@ export function App() {
             ? <MorePage onNavigate={handleNavigate} onLocaleChanged={() => setLocaleRefreshKey((current) => current + 1)} />
           : view === 'workout'
             ? <WorkoutPage mode={workoutMode} sessionId={activeWorkoutSessionId} onBack={handleWorkoutBack} onCompleted={handleWorkoutCompleted} onSkipped={handleWorkoutSkipped} />
-            : <TodayPage refreshKey={refreshKey} onStartWorkout={(routineDayId) => void handleStartWorkout(routineDayId)} />;
+            : <TodayPage
+              refreshKey={refreshKey}
+              onStartWorkout={(routineDayId, sessionId, createNew) => void handleStartWorkout(routineDayId, undefined, sessionId, createNew)}
+            />;
 
   return (
     <main className="app-shell bg-background text-slate-100">
