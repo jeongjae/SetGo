@@ -266,4 +266,64 @@ describe('stats builder', () => {
     expect(todayTrend?.strengthSets).toBe(1);
     expect(todayTrend?.cardioDistanceKm).toBe(2.4);
   });
+
+  it('does not warn about short muscle gaps from records outside the current week', () => {
+    const today = new Date();
+    const oldDate = new Date(today);
+    oldDate.setDate(today.getDate() - 14);
+    const oldDateKey = formatDateKey(oldDate);
+    const oldNextDate = new Date(oldDate);
+    oldNextDate.setDate(oldDate.getDate() + 1);
+    const oldNextDateKey = formatDateKey(oldNextDate);
+    const sessions: WorkoutSession[] = [
+      {
+        id: 'old_session_1',
+        date: oldDateKey,
+        startedAt: `${oldDateKey}T12:00:00.000`,
+        timeBand: 'afternoon',
+        status: 'completed',
+        totalStrengthVolumeKg: 0,
+        createdAt: `${oldDateKey}T12:00:00.000`,
+        updatedAt: `${oldDateKey}T12:00:00.000`,
+      },
+      {
+        id: 'old_session_2',
+        date: oldNextDateKey,
+        startedAt: `${oldNextDateKey}T12:00:00.000`,
+        timeBand: 'afternoon',
+        status: 'completed',
+        totalStrengthVolumeKg: 0,
+        createdAt: `${oldNextDateKey}T12:00:00.000`,
+        updatedAt: `${oldNextDateKey}T12:00:00.000`,
+      },
+    ];
+    const workoutExercises: WorkoutExercise[] = sessions.map((session, index) => ({
+      id: `${session.id}_bench`,
+      sessionId: session.id,
+      exerciseId: 'bench_press',
+      order: 1,
+      status: 'completed',
+      totalVolumeKg: 500,
+    }));
+    const sets: WorkoutSet[] = workoutExercises.map((workoutExercise, index) => ({
+      id: `old_set_${index}`,
+      workoutExerciseId: workoutExercise.id,
+      setNo: 1,
+      weightKg: 50,
+      reps: 10,
+      rir: 2,
+      isCompleted: true,
+      isWarmup: false,
+    }));
+
+    const stats = buildStats(
+      sessions,
+      workoutExercises,
+      sets,
+      [exercise('bench_press', 'main', ['main'], 'chest')],
+      'en',
+    );
+
+    expect(stats.warnings.some((warning) => warning.includes('Chest was repeated within 48 hours'))).toBe(false);
+  });
 });
