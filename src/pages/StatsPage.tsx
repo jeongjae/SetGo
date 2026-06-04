@@ -4,7 +4,7 @@ import { db } from '../db/db';
 import { getExerciseCategories, getExerciseName, isWarmupOnlyExercise } from '../domain/exercises';
 import { getStoredLocale, t, tf } from '../i18n/i18n';
 import { formatDateKey } from '../utils/date';
-import type { ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
+import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 
 type Locale = 'ko' | 'en';
 type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulder' | 'biceps' | 'triceps' | 'core';
@@ -46,6 +46,23 @@ type ExercisePerformance = {
   oneRmHistory: Array<{ label: string; valueKg: number }>;
 };
 
+type DailyTrendItem = {
+  key: string;
+  label: string;
+  volumeKg: number;
+  sets: number;
+  distanceKm: number;
+};
+
+type DailyTrendStat = {
+  date: string;
+  label: string;
+  strengthVolumeKg: number;
+  strengthSets: number;
+  cardioDistanceKm: number;
+  items: DailyTrendItem[];
+};
+
 type StatsView = {
   workoutDays: number;
   totalVolumeKg: number;
@@ -54,6 +71,7 @@ type StatsView = {
   weekOverWeekPct?: number;
   hardSetRatio: number;
   weeks: WeekStat[];
+  dailyTrend: DailyTrendStat[];
   muscleStats: MuscleStat[];
   performances: ExercisePerformance[];
   warnings: string[];
@@ -262,6 +280,7 @@ export function buildEmptyStats(locale: Locale): StatsView {
     weekOverWeekPct: undefined,
     hardSetRatio: 0,
     weeks: [],
+    dailyTrend: [],
     muscleStats: trackedMuscles.map((group) => ({
       group,
       volumeKg: 0,
@@ -286,6 +305,7 @@ export function buildStats(
   workoutSets: WorkoutSet[],
   exercises: ExerciseMaster[],
   locale: Locale,
+  cardioRecords: CardioRecord[] = [],
 ): StatsView {
   const today = new Date();
   const thisWeekStart = startOfWeek(today);
@@ -458,6 +478,70 @@ export function buildStats(
     };
   }).sort((a, b) => b.recentVolumeKg - a.recentVolumeKg).slice(0, 12);
 
+  const twoWeekStart = addDays(today, -13);
+  const cardioBySessionId = cardioRecords.reduce<Map<string, CardioRecord[]>>((map, record) => {
+    const list = map.get(record.sessionId) ?? [];
+    list.push(record);
+    map.set(record.sessionId, list);
+    return map;
+  }, new Map());
+  const dailyTrend = Array.from({ length: 14 }, (_, index): DailyTrendStat => {
+    const date = addDays(twoWeekStart, index);
+    const dateKey = formatDateKey(date);
+    const daySessions = completedSessions.filter((session) => session.date === dateKey);
+    const daySessionIds = new Set(daySessions.map((session) => session.id));
+    const dayWorkoutExercises = workoutExercises.filter((item) => daySessionIds.has(item.sessionId));
+    const itemMap = new Map<string, DailyTrendItem>();
+
+    dayWorkoutExercises.forEach((workoutExercise) => {
+      const exercise = exerciseById.get(workoutExercise.exerciseId);
+      if (!exercise) return;
+
+      const sets = (setsByWorkoutExercise.get(workoutExercise.id) ?? []).filter((set) => set.isCompleted);
+      const trainingSets = sets.filter((set) => !isWarmupSetForStats(set));
+      const volumeKg = sets.reduce((sum, set) => sum + setVolume(set), 0);
+      if (volumeKg <= 0 && trainingSets.length === 0) return;
+
+      const label = getExerciseName(exercise, locale);
+      const current = itemMap.get(workoutExercise.exerciseId) ?? {
+        key: workoutExercise.exerciseId,
+        label,
+        volumeKg: 0,
+        sets: 0,
+        distanceKm: 0,
+      };
+      current.volumeKg += volumeKg;
+      current.sets += trainingSets.length;
+      itemMap.set(workoutExercise.exerciseId, current);
+    });
+
+    const cardioDistanceKm = daySessions.reduce((sum, session) => (
+      sum + (cardioBySessionId.get(session.id) ?? [])
+        .filter((record) => record.isDraft !== true)
+        .reduce((cardioSum, record) => cardioSum + (record.distanceKm ?? 0), 0)
+    ), 0);
+    if (cardioDistanceKm > 0) {
+      itemMap.set('cardio', {
+        key: 'cardio',
+        label: locale === 'ko' ? '러닝' : 'Running',
+        volumeKg: 0,
+        sets: 0,
+        distanceKm: cardioDistanceKm,
+      });
+    }
+
+    const items = Array.from(itemMap.values()).sort((a, b) => (b.volumeKg + b.distanceKm * 1000) - (a.volumeKg + a.distanceKm * 1000));
+
+    return {
+      date: dateKey,
+      label: `${date.getMonth() + 1}/${date.getDate()}`,
+      strengthVolumeKg: items.reduce((sum, item) => sum + item.volumeKg, 0),
+      strengthSets: items.reduce((sum, item) => sum + item.sets, 0),
+      cardioDistanceKm,
+      items,
+    };
+  });
+
   const warnings: string[] = [];
   const completedDates = Array.from(new Set(completedSessions.map((session) => session.date))).sort();
   let streak = 0;
@@ -528,6 +612,7 @@ export function buildStats(
     weekOverWeekPct: weekChange,
     hardSetRatio,
     weeks: weekStats,
+    dailyTrend,
     muscleStats,
     performances,
     warnings,
@@ -618,6 +703,65 @@ function MiniLineChart({ weeks, locale, peakLabel }: { weeks: WeekStat[]; locale
   );
 }
 
+function DailyTrendChart({ days, locale }: { days: DailyTrendStat[]; locale: Locale }) {
+  const maxStrength = Math.max(1, ...days.map((day) => day.strengthVolumeKg));
+  const maxCardio = Math.max(1, ...days.map((day) => day.cardioDistanceKm));
+  const activeDays = days.filter((day) => day.strengthVolumeKg > 0 || day.cardioDistanceKm > 0);
+
+  return (
+    <div className="mt-3 space-y-3">
+      <div className="flex h-32 items-end gap-1 rounded-xl border border-slate-650 bg-slate-850/85 px-2 pb-2 pt-3">
+        {days.map((day) => {
+          const strengthHeight = day.strengthVolumeKg > 0 ? Math.max(6, (day.strengthVolumeKg / maxStrength) * 76) : 0;
+          const cardioHeight = day.cardioDistanceKm > 0 ? Math.max(6, (day.cardioDistanceKm / maxCardio) * 44) : 0;
+
+          return (
+            <div key={day.date} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+              <div className="flex h-24 w-full flex-col justify-end gap-0.5">
+                {cardioHeight > 0 ? (
+                  <div
+                    className="w-full rounded-t bg-sky-400"
+                    style={{ height: `${cardioHeight}px` }}
+                    aria-label={`${day.label} ${day.cardioDistanceKm.toFixed(1)}km`}
+                  />
+                ) : null}
+                {strengthHeight > 0 ? (
+                  <div
+                    className="w-full rounded-t bg-emerald-400"
+                    style={{ height: `${strengthHeight}px` }}
+                    aria-label={`${day.label} ${Math.round(day.strengthVolumeKg)}kg`}
+                  />
+                ) : null}
+              </div>
+              <span className="text-[9px] font-black text-slate-300">{day.label}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center gap-3 px-1 text-[11px] font-black uppercase text-slate-300">
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-400" />{locale === 'ko' ? '근력 kg' : 'Strength kg'}</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-sky-400" />{locale === 'ko' ? '러닝 km' : 'Running km'}</span>
+      </div>
+      <div className="grid gap-1.5">
+        {activeDays.length === 0 ? (
+          <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2 text-xs font-bold text-slate-300">
+            {locale === 'ko' ? '최근 2주간 기록된 운동이 없습니다.' : 'No workouts logged in the last two weeks.'}
+          </p>
+        ) : activeDays.slice(-7).map((day) => (
+          <p key={day.date} className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2 text-xs font-bold leading-relaxed text-slate-200">
+            <span className="font-black text-slate-100">{day.label}</span>{' '}
+            {day.items.map((item) => (
+              item.distanceKm > 0
+                ? `${item.label} ${item.distanceKm.toFixed(1)}km`
+                : `${item.label} ${Math.round(item.volumeKg).toLocaleString()}kg/${item.sets}${locale === 'ko' ? '세트' : ' sets'}`
+            )).join(' · ')}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MiniSparkBars({ history }: { history: ExercisePerformance['oneRmHistory'] }) {
   const maxValue = Math.max(1, ...history.map((item) => item.valueKg));
 
@@ -676,6 +820,7 @@ export function StatsPage() {
     totalSets: t(locale, 'statsTotalSets'),
     weekOverWeek: t(locale, 'statsWeekOverWeek'),
     recentTrend: t(locale, 'statsRecentTrend'),
+    dailyTrend: t(locale, 'statsDailyTrend'),
     muscleAnalysis: t(locale, 'statsMuscleAnalysis'),
     performance: t(locale, 'statsPerformance'),
     recoveryWarnings: t(locale, 'statsRecoveryWarnings'),
@@ -716,14 +861,15 @@ export function StatsPage() {
 
   useEffect(() => {
     async function loadStats() {
-      const [sessions, workoutExercises, workoutSets, exercises] = await Promise.all([
+      const [sessions, workoutExercises, workoutSets, exercises, cardioRecords] = await Promise.all([
         db.workoutSessions.toArray(),
         db.workoutExercises.toArray(),
         db.workoutSets.toArray(),
         db.exercises.toArray(),
+        db.cardioRecords.toArray(),
       ]);
 
-      setStats(buildStats(sessions, workoutExercises, workoutSets, exercises, locale));
+      setStats(buildStats(sessions, workoutExercises, workoutSets, exercises, locale, cardioRecords));
     }
 
     void loadStats();
@@ -732,6 +878,7 @@ export function StatsPage() {
   const hasData = stats.totalSets > 0
     || stats.workoutDays > 0
     || stats.performances.length > 0
+    || stats.dailyTrend.some((day) => day.strengthVolumeKg > 0 || day.cardioDistanceKm > 0)
     || stats.weeks.some((week) => week.volumeKg > 0 || week.sets > 0 || week.workoutDays > 0);
   const latestWeek = stats.weeks[stats.weeks.length - 1];
   const previousWeek = stats.weeks[stats.weeks.length - 2];
@@ -816,6 +963,14 @@ export function StatsPage() {
                 })}
               </p>
             ) : null}
+          </section>
+
+          <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-black text-slate-100">{c.dailyTrend}</h2>
+              <span className="text-xs font-bold text-slate-300">{locale === 'ko' ? '최근 2주' : 'Last 2 weeks'}</span>
+            </div>
+            <DailyTrendChart days={stats.dailyTrend} locale={locale} />
           </section>
 
           <section className="rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">

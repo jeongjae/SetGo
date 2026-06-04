@@ -7,6 +7,7 @@ import {
   formatCountdownSeconds,
   getElapsedMs,
   getLiveSessionElapsedMs,
+  parseOptionalDecimalInput,
   shouldConfirmCardioDelete,
   shouldConfirmWorkoutExerciseDelete,
   shouldConfirmWorkoutSetDelete,
@@ -139,5 +140,14 @@ describe('cardio deletion safety', () => {
       location: '',
       memo: '',
     })).toBe(false);
+  });
+});
+
+describe('cardio distance input parsing', () => {
+  it('keeps decimal kilometer values valid for running logs', () => {
+    expect(parseOptionalDecimalInput('2.4')).toBe(2.4);
+    expect(parseOptionalDecimalInput('10.25')).toBe(10.25);
+    expect(parseOptionalDecimalInput('')).toBeUndefined();
+    expect(parseOptionalDecimalInput('bad')).toBeUndefined();
   });
 });

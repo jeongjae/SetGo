@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PwaStatus } from './PwaStatus';
 import { AppBottomNav } from './AppBottomNav';
+import { ActualsPage } from '../pages/ActualsPage';
 import { CalendarPage } from '../pages/CalendarPage';
 import { ExportPage } from '../pages/ExportPage';
 import { MorePage } from '../pages/MorePage';
@@ -12,8 +13,8 @@ import { getOrCreateTodayWorkout, getOrCreateWorkoutForDate } from '../db/workou
 import { formatDateKey } from '../utils/date';
 import { requestPersistentStorage } from '../db/db';
 
-export type AppView = 'today' | 'calendar' | 'stats' | 'more' | 'routines' | 'exercises' | 'weeklyPlan' | 'export' | 'workout';
-type WorkoutReturnView = 'today' | 'calendar';
+export type AppView = 'today' | 'calendar' | 'actuals' | 'stats' | 'more' | 'routines' | 'exercises' | 'weeklyPlan' | 'export' | 'workout';
+type WorkoutReturnView = 'today' | 'calendar' | 'actuals';
 type WorkoutMode = 'active' | 'history-edit';
 
 function describeStartupError(error: unknown) {
@@ -48,20 +49,20 @@ export function App() {
 
   function handleWorkoutCompleted() {
     setRefreshKey((current) => current + 1);
-    setView(workoutReturnView === 'calendar' ? 'calendar' : 'today');
+    setView(workoutReturnView);
   }
 
   function handleWorkoutSkipped() {
     setRefreshKey((current) => current + 1);
-    setView('calendar');
+    setView(workoutReturnView);
   }
 
   function handleWorkoutBack() {
-    setView(workoutReturnView === 'calendar' ? 'calendar' : 'today');
+    setView(workoutReturnView);
   }
 
   function handleNavigate(nextView: AppView) {
-    if (nextView === 'calendar') {
+    if (nextView === 'calendar' || nextView === 'actuals') {
       setCalendarSelectedDateKey(formatDateKey(new Date()));
       setCalendarReviewingWeeklyPlan(false);
     }
@@ -98,10 +99,25 @@ export function App() {
 
   function handleEditHistoricalWorkout(sessionId: string, dateKey: string) {
     setCalendarSelectedDateKey(dateKey);
-    setWorkoutReturnView('calendar');
+    setWorkoutReturnView('actuals');
     setWorkoutMode('history-edit');
     setActiveWorkoutSessionId(sessionId);
     setView('workout');
+  }
+
+  async function handleAddHistoricalWorkout(dateKey: string) {
+    setCalendarSelectedDateKey(dateKey);
+    setWorkoutReturnView('actuals');
+    setWorkoutMode('history-edit');
+
+    try {
+      const workout = await getOrCreateWorkoutForDate(dateKey, undefined, { createNew: true });
+      setActiveWorkoutSessionId(workout.session.id);
+      setRefreshKey((current) => current + 1);
+      setView('workout');
+    } catch (error) {
+      console.error('Failed to add historical workout', describeStartupError(error));
+    }
   }
 
   const content = view === 'routines' || view === 'exercises' || view === 'weeklyPlan'
@@ -122,12 +138,20 @@ export function App() {
         <CalendarPage
           initialSelectedDateKey={calendarSelectedDateKey}
           onSelectedDateChange={setCalendarSelectedDateKey}
-          onStartWorkout={(routineDayId, dateKey, sessionId, createNew) => void handleStartWorkout(routineDayId, dateKey, sessionId, createNew)}
-          onEditHistoricalWorkout={handleEditHistoricalWorkout}
           reviewingWeeklyPlan={calendarReviewingWeeklyPlan}
           onReturnToWeeklyPlan={() => setView('weeklyPlan')}
         />
       )
+      : view === 'actuals'
+        ? (
+          <ActualsPage
+            initialSelectedDateKey={calendarSelectedDateKey}
+            onSelectedDateChange={setCalendarSelectedDateKey}
+            onAddHistoricalWorkout={(dateKey) => void handleAddHistoricalWorkout(dateKey)}
+            onEditHistoricalWorkout={handleEditHistoricalWorkout}
+            onOpenStats={() => setView('stats')}
+          />
+        )
       : view === 'export'
         ? <ExportPage onBack={() => setView('more')} />
         : view === 'stats'
