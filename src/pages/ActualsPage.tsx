@@ -44,13 +44,8 @@ function summarizeCardioDistance(records: CardioRecord[]): number {
 
 export function actualsDayCellLabel(
   summaries: WorkoutSummary[],
-  volumeKg: number,
-  distanceKm: number,
   locale: 'ko' | 'en',
 ): string | undefined {
-  if (volumeKg > 0) return `${Math.round(volumeKg).toLocaleString()}kg`;
-  if (distanceKm > 0) return `${distanceKm.toFixed(1)}km`;
-
   const firstSummary = summaries[0];
   if (!firstSummary) return undefined;
   if (firstSummary.cardioCount > 0 && firstSummary.exerciseCount === 0) {
@@ -60,6 +55,12 @@ export function actualsDayCellLabel(
   return getRoutineDayDisplayName(firstSummary.routineDay, locale)
     ?? firstSummary.routineName
     ?? (locale === 'ko' ? '운동' : 'Workout');
+}
+
+export function actualsDayCellMetric(volumeKg: number, distanceKm: number): string | undefined {
+  if (volumeKg > 0) return `${Math.round(volumeKg).toLocaleString()}kg`;
+  if (distanceKm > 0) return `${distanceKm.toFixed(1)}km`;
+  return undefined;
 }
 
 export function actualsStatusLabel(locale: 'ko' | 'en', status: WorkoutStatus, dateKey: string, todayKey: string): string {
@@ -215,7 +216,8 @@ export function ActualsPage({
               const hasSkipped = daySummaries.some((summary) => summary.session.status === 'skipped');
               const dayVolume = daySummaries.reduce((sum, summary) => sum + summary.session.totalStrengthVolumeKg, 0);
               const dayDistance = daySummaries.reduce((sum, summary) => sum + summarizeCardioDistance(cardioBySessionId[summary.session.id] ?? []), 0);
-              const dayLabel = actualsDayCellLabel(daySummaries, dayVolume, dayDistance, locale);
+              const dayLabel = actualsDayCellLabel(daySummaries, locale);
+              const dayMetric = actualsDayCellMetric(dayVolume, dayDistance);
               const isSelected = selectedDateKey === day.key;
               const isFuture = day.key > todayKey;
               let cellStyle = 'bg-slate-850/75 border-slate-650 text-slate-100 hover:bg-slate-700';
@@ -241,10 +243,13 @@ export function ActualsPage({
                 >
                   <div className="flex w-full items-center justify-between">
                     <span className="text-xs font-black">{day.date.getDate()}</span>
-                    {dayDistance > 0 ? <Footprints aria-hidden="true" size={13} /> : dayVolume > 0 ? <Dumbbell aria-hidden="true" size={13} /> : null}
+                    {dayDistance > 0 ? <Footprints aria-hidden="true" size={12} /> : daySummaries.length > 0 ? <Dumbbell aria-hidden="true" size={12} /> : null}
                   </div>
                   {dayLabel ? (
-                    <span className="mt-0.5 w-full truncate text-[10px] font-black">{dayLabel}</span>
+                    <span className="mt-0.5 w-full truncate text-[10px] font-black leading-none">{dayLabel}</span>
+                  ) : null}
+                  {dayMetric ? (
+                    <span className="mt-0.5 w-full truncate text-[9px] font-extrabold leading-none opacity-85">{dayMetric}</span>
                   ) : null}
                 </button>
               );
