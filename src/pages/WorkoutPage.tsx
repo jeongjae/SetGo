@@ -133,6 +133,14 @@ export function shouldConfirmCardioDelete(
     || Boolean(cardioRecord.memo?.trim());
 }
 
+export function parseOptionalDecimalInput(value: string): number | undefined {
+  const trimmed = value.trim();
+  if (trimmed === '') return undefined;
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
 export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
   const [workout, setWorkout] = useState<ActiveWorkout | undefined>();
   const [logs, setLogs] = useState<WorkoutExerciseLog[]>([]);
@@ -282,6 +290,9 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       historyRoutineId || undefined,
       historyRoutineId ? historyRoutineDayId || undefined : undefined,
     );
+    if (workout.session.status === 'in_progress' && canCompleteWorkout) {
+      await completeWorkoutSession(workout.session.id);
+    }
     onBack();
   }
 
@@ -1229,11 +1240,10 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                             type="text"
                             inputMode="decimal"
                             enterKeyHint="done"
-                            value={cardioRecord.distanceKm || ''}
-                            onChange={(event) => {
-                              const val = event.target.value === '' ? undefined : Number(event.target.value) || 0;
-                              void handleUpdateCardio(cardioRecord, { distanceKm: val });
-                            }}
+                            defaultValue={cardioRecord.distanceKm ?? ''}
+                            onBlur={(event) => void handleUpdateCardio(cardioRecord, {
+                              distanceKm: parseOptionalDecimalInput(event.target.value),
+                            })}
                             placeholder="0.0"
                             className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-slate-100 outline-none"
                           />

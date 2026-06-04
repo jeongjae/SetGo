@@ -16,3 +16,30 @@ export function formatDateKey(date: Date): string {
 
   return `${year}-${month}-${day}`;
 }
+
+export function dateFromKey(dateKey: string): Date {
+  return new Date(`${dateKey}T12:00:00`);
+}
+
+export function addDays(date: Date, days: number): Date {
+  const copyDate = new Date(date);
+  copyDate.setDate(copyDate.getDate() + days);
+  return copyDate;
+}
+
+export function startOfWeek(date: Date): Date {
+  const copyDate = new Date(date);
+  copyDate.setHours(0, 0, 0, 0);
+  const day = copyDate.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  copyDate.setDate(copyDate.getDate() + mondayOffset);
+  return copyDate;
+}
+
+export function buildDateRange(start: Date, days: number): Date[] {
+  return Array.from({ length: days }, (_, index) => addDays(start, index));
+}
+
+export function buildRecentWeeksRange(referenceDate: Date, weekCount: number): Date[] {
+  return buildDateRange(addDays(startOfWeek(referenceDate), -(weekCount - 1) * 7), weekCount * 7);
+}

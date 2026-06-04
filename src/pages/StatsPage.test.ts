@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildStats, buildEmptyStats, buildAiPrompt } from './StatsPage';
 import { formatDateKey } from '../utils/date';
-import type { ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
+import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 
 function exercise(
   id: string,
@@ -209,5 +209,61 @@ describe('stats builder', () => {
     expect(stats.hardSets).toBe(3);
     expect(stats.hardSetRatio).toBe(100);
     expect(stats.muscleStats.find((item) => item.group === 'back')?.sets).toBe(3);
+  });
+
+  it('builds a 14-day daily trend with strength volume and running distance', () => {
+    const date = formatDateKey(new Date());
+    const session: WorkoutSession = {
+      id: 'session_daily',
+      date,
+      startedAt: `${date}T12:00:00.000`,
+      timeBand: 'afternoon',
+      status: 'completed',
+      totalStrengthVolumeKg: 0,
+      createdAt: `${date}T12:00:00.000`,
+      updatedAt: `${date}T12:00:00.000`,
+    };
+    const workoutExercises: WorkoutExercise[] = [{
+      id: 'session_daily_bench',
+      sessionId: session.id,
+      exerciseId: 'bench_press',
+      order: 1,
+      status: 'completed',
+      totalVolumeKg: 500,
+    }];
+    const sets: WorkoutSet[] = [{
+      id: 'daily_set_1',
+      workoutExerciseId: 'session_daily_bench',
+      setNo: 1,
+      weightKg: 50,
+      reps: 10,
+      rir: 2,
+      isCompleted: true,
+      isWarmup: false,
+    }];
+    const cardioRecords: CardioRecord[] = [{
+      id: 'daily_cardio',
+      sessionId: session.id,
+      isDraft: false,
+      environment: 'outdoor',
+      startedAt: `${date}T12:30:00.000`,
+      endedAt: `${date}T13:00:00.000`,
+      distanceKm: 2.4,
+    }];
+
+    const stats = buildStats(
+      [session],
+      workoutExercises,
+      sets,
+      [exercise('bench_press', 'main', ['main'], 'chest')],
+      'en',
+      cardioRecords,
+    );
+    const todayTrend = stats.dailyTrend.find((item) => item.date === date);
+
+    expect(stats.dailyTrend).toHaveLength(14);
+    expect(todayTrend?.strengthVolumeKg).toBe(500);
+    expect(todayTrend?.strengthSets).toBe(1);
+    expect(todayTrend?.cardioDistanceKm).toBe(2.4);
   });
 });

@@ -1,4 +1,4 @@
-﻿import { Bed, ChevronLeft, ChevronRight, Dumbbell, Footprints, Play, Trash2 } from 'lucide-react';
+﻿import { Bed, ChevronLeft, ChevronRight, Dumbbell, Footprints } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   clearCalendarPlanOverride,
@@ -11,17 +11,14 @@ import {
   getRoutineDayDisplayName,
   saveCalendarPlanOverride,
 } from '../db/routines';
-import { deleteWorkoutSession, getMonthlyWorkoutSummaries, getOrCreateWorkoutForDate, skipWorkoutSession, unskipWorkoutSession, type WorkoutSummary } from '../db/workouts';
 import { formatDateKey } from '../utils/date';
 import { db } from '../db/db';
-import { exerciseCountLabel, getStoredLocale, t, workoutStatusLabel } from '../i18n/i18n';
-import type { CalendarPlanOverride, RoutineDay, WorkoutPlanKind, WorkoutSession } from '../types';
+import { getStoredLocale, t } from '../i18n/i18n';
+import type { CalendarPlanOverride, RoutineDay, WorkoutPlanKind } from '../types';
 
 type CalendarPageProps = {
   initialSelectedDateKey?: string;
   onSelectedDateChange?: (dateKey: string) => void;
-  onStartWorkout: (routineDayId?: string, dateKey?: string, sessionId?: string, createNew?: boolean) => void;
-  onEditHistoricalWorkout: (sessionId: string, dateKey: string) => void;
   reviewingWeeklyPlan?: boolean;
   onReturnToWeeklyPlan?: () => void;
 };
@@ -37,13 +34,6 @@ type CalendarPlan = {
   routineDay?: RoutineDay;
   kind: WorkoutPlanKind;
 };
-
-type CalendarWorkoutStartArgs = [
-  routineDayId?: string,
-  dateKey?: string,
-  sessionId?: string,
-  createNew?: boolean,
-];
 
 const weekdayLabels = {
   ko: ['일', '월', '화', '수', '목', '금', '토'],
@@ -89,46 +79,6 @@ function getOverrideKind(override: CalendarPlanOverride): WorkoutPlanKind {
   return 'routine';
 }
 
-function hasWorkoutSummaryContent(summary: WorkoutSummary): boolean {
-  return summary.exerciseCount > 0
-    || summary.cardioCount > 0
-    || summary.session.totalStrengthVolumeKg > 0;
-}
-
-function isRunningOnlySummary(summary: WorkoutSummary): boolean {
-  return summary.cardioCount > 0
-    && summary.exerciseCount === 0
-    && summary.session.totalStrengthVolumeKg === 0;
-}
-
-function getSummaryPlanValue(summary: WorkoutSummary): string | undefined {
-  if (isRunningOnlySummary(summary)) return 'running';
-  if (summary.exerciseCount > 0 || summary.session.totalStrengthVolumeKg > 0) {
-    return summary.session.routineDayId ? `routine:${summary.session.routineDayId}` : 'free';
-  }
-  return undefined;
-}
-
-function shouldShowWorkoutSummaryCard(summary: WorkoutSummary): boolean {
-  return summary.session.status === 'in_progress'
-    || summary.session.status === 'skipped'
-    || hasWorkoutSummaryContent(summary);
-}
-
-export function getCalendarNewWorkoutStartArgs(
-  selectedDateKey: string,
-  routineDayId?: string,
-): CalendarWorkoutStartArgs {
-  return [routineDayId, selectedDateKey, undefined, true];
-}
-
-export function getCalendarExistingWorkoutStartArgs(
-  selectedDateKey: string,
-  session: Pick<WorkoutSession, 'id' | 'routineDayId'>,
-): CalendarWorkoutStartArgs {
-  return [session.routineDayId, selectedDateKey, session.id];
-}
-
 export function shouldShowCalendarPlanIndicator(
   isCurrentMonth: boolean,
   hasPlan: boolean,
@@ -141,8 +91,6 @@ export function shouldShowCalendarPlanIndicator(
 export function CalendarPage({
   initialSelectedDateKey,
   onSelectedDateChange,
-  onStartWorkout,
-  onEditHistoricalWorkout,
   reviewingWeeklyPlan = false,
   onReturnToWeeklyPlan,
 }: CalendarPageProps) {
@@ -151,7 +99,6 @@ export function CalendarPage({
   const [visibleMonth, setVisibleMonth] = useState(() => (
     monthFromDate(initialSelectedDateKey ? dateFromKey(initialSelectedDateKey) : today)
   ));
-  const [summaries, setSummaries] = useState<WorkoutSummary[]>([]);
   const [plans, setPlans] = useState<CalendarPlan[]>([]);
   const [routineDays, setRoutineDays] = useState<RoutineDay[]>([]);
   const [overridesByDate, setOverridesByDate] = useState<Record<string, CalendarPlanOverride>>({});
@@ -168,13 +115,6 @@ export function CalendarPage({
     [visibleMonth],
   );
 
-  const summariesByDate = useMemo(() => {
-    return summaries.reduce<Record<string, WorkoutSummary[]>>((byDate, summary) => {
-      byDate[summary.session.date] = [...(byDate[summary.session.date] ?? []), summary];
-      return byDate;
-    }, {});
-  }, [summaries]);
-
   const plansByDate = useMemo(() => {
     return plans.reduce<Record<string, CalendarPlan>>((byDate, plan) => {
       byDate[plan.date] = plan;
@@ -185,8 +125,7 @@ export function CalendarPage({
   useEffect(() => {
     async function loadMonth() {
       const activeRoutine = await getActiveRoutine();
-      const [monthlySummaries, schedule, cycleItems, loadedRoutineDays, overrides] = await Promise.all([
-        getMonthlyWorkoutSummaries(visibleMonth.getFullYear(), visibleMonth.getMonth()),
+      const [schedule, cycleItems, loadedRoutineDays, overrides] = await Promise.all([
         getActiveWeeklySchedule(),
         activeRoutine ? getRoutineCyclePlan(activeRoutine.id) : [],
         getActiveRoutineDays(),
@@ -234,7 +173,6 @@ export function CalendarPage({
           } satisfies CalendarPlan];
         });
 
-      setSummaries(monthlySummaries);
       setRoutineDays(loadedRoutineDays);
       setOverridesByDate(overridesByDateMap);
       setPlans(plannedDays);
@@ -269,34 +207,6 @@ export function CalendarPage({
     setReloadKey((current) => current + 1);
   }
 
-  async function handleSkipNewSession() {
-    const activeWorkout = await getOrCreateWorkoutForDate(selectedDateKey, startWorkoutRoutineDayId, { createNew: true });
-    await skipWorkoutSession(activeWorkout.session.id);
-    setReloadKey((current) => current + 1);
-  }
-
-  async function handleSkipSession(sessionId: string) {
-    await skipWorkoutSession(sessionId);
-    setReloadKey((current) => current + 1);
-  }
-
-  async function handleUnskipSession(sessionId: string) {
-    await unskipWorkoutSession(sessionId);
-    setReloadKey((current) => current + 1);
-  }
-
-  async function handleDeleteSession(sessionId: string) {
-    const shouldDelete = window.confirm(
-      locale === 'ko'
-        ? '이 운동 기록을 삭제할까요? 입력한 세트와 러닝 기록도 함께 삭제됩니다.'
-        : 'Delete this workout record? Its sets and running records will also be removed.',
-    );
-    if (!shouldDelete) return;
-
-    await deleteWorkoutSession(sessionId);
-    setReloadKey((current) => current + 1);
-  }
-
   useEffect(() => {
     if (!initialSelectedDateKey) return;
 
@@ -306,54 +216,24 @@ export function CalendarPage({
   }, [initialSelectedDateKey]);
 
   const selectedOverride = overridesByDate[selectedDateKey];
-  const selectedSummaries = summariesByDate[selectedDateKey] ?? [];
-  const visibleSelectedSummaries = selectedSummaries.filter(shouldShowWorkoutSummaryCard);
   const selectedPlan = plansByDate[selectedDateKey];
-  const selectedRecordPlanValue = selectedSummaries
-    .map(getSummaryPlanValue)
-    .find((value): value is string => value !== undefined);
   const selectedCyclePlanValue = selectedPlan
     ? selectedPlan.kind === 'routine'
       ? `routine:${selectedPlan.routineDay?.id ?? ''}`
       : selectedPlan.kind
     : '__none';
   const selectedPlanValue = selectedOverride
-    ? selectedRecordPlanValue ?? (
-      getOverrideKind(selectedOverride) === 'routine'
+    ? getOverrideKind(selectedOverride) === 'routine'
         ? `routine:${selectedOverride.routineDayId ?? ''}`
         : getOverrideKind(selectedOverride)
-    )
-    : selectedRecordPlanValue ?? selectedCyclePlanValue;
-  const selectedInProgressSession = selectedSummaries.find((summary) => summary.session.status === 'in_progress');
-  const selectedOverrideRoutineDayId = selectedPlanValue.startsWith('routine:') ? selectedPlanValue.replace(/^routine:/, '') : undefined;
-  const startWorkoutRoutineDayId = selectedOverrideRoutineDayId ?? (selectedPlan?.kind === 'routine' ? selectedPlan.routineDay?.id : undefined);
-  const selectedPlanKind: WorkoutPlanKind = selectedPlanValue.startsWith('routine:')
-    ? 'routine'
-    : selectedPlanValue === '__cycle' || selectedPlanValue === '__none'
-      ? selectedPlan?.kind ?? 'rest'
-      : (selectedPlanValue as WorkoutPlanKind);
-  const shouldContinueSelectedSession = selectedInProgressSession !== undefined;
-  const recordActionLabel = shouldContinueSelectedSession
-    ? selectedDateKey === todayKey ? t(locale, 'continueTodayWorkout') : t(locale, 'continueWorkout')
-    : locale === 'ko' ? '운동 기록 하기' : 'Log workout';
-  const recordActionDisabled = !shouldContinueSelectedSession && selectedPlanKind === 'rest';
-
-  function handleRecordSelectedDate() {
-    if (shouldContinueSelectedSession) {
-      onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, selectedInProgressSession.session));
-      return;
-    }
-
-    if (selectedPlanKind === 'rest') return;
-    onStartWorkout(...getCalendarNewWorkoutStartArgs(selectedDateKey, startWorkoutRoutineDayId));
-  }
+    : selectedCyclePlanValue;
 
   return (
     <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
       <header className="flex shrink-0 items-center gap-2.5">
         <div>
-          <p className="text-xs font-extrabold uppercase text-cyan-300">{t(locale, 'calendar')}</p>
-          <h1 className="text-xl font-black text-slate-100">{t(locale, 'monthlyWorkoutLog')}</h1>
+          <p className="text-xs font-extrabold uppercase text-cyan-300">{t(locale, 'planned')}</p>
+          <h1 className="text-xl font-black text-slate-100">{t(locale, 'planCalendar')}</h1>
         </div>
       </header>
 
@@ -388,30 +268,17 @@ export function CalendarPage({
 
         <div className="mt-2 grid grid-cols-7 gap-1">
           {calendarDays.map((day) => {
-            const daySummaries = summariesByDate[day.key] ?? [];
             const dayPlan = plansByDate[day.key];
-            const hasCompleted = daySummaries.some((s) => s.session.status === 'completed');
-            const hasInProgress = daySummaries.some((s) => s.session.status === 'in_progress');
-            const totalVolume = daySummaries.reduce((sum, summary) => sum + summary.session.totalStrengthVolumeKg, 0);
-            const hasRecord = hasCompleted || hasInProgress;
-            const hasRunningRecord = daySummaries.some((summary) => summary.cardioCount > 0 && summary.exerciseCount === 0);
-            const hasStrengthRecord = daySummaries.some((summary) => summary.exerciseCount > 0 || summary.session.totalStrengthVolumeKg > 0);
-            const displayKind: WorkoutPlanKind | undefined = hasRunningRecord
-              ? 'running'
-              : hasStrengthRecord
-                ? 'routine'
-                : dayPlan?.kind ?? (day.isCurrentMonth ? 'rest' : undefined);
+            const displayKind: WorkoutPlanKind | undefined = dayPlan?.kind ?? (day.isCurrentMonth ? 'rest' : undefined);
             const highlightsFuturePlan = Boolean(displayKind && displayKind !== 'rest');
 
             const isSelected = selectedDateKey === day.key;
             let cellStyle = '';
             if (isSelected) {
               cellStyle = 'bg-emerald-600/90 border-emerald-300 text-slate-100 ring-1 ring-emerald-300/70 shadow-[0_0_14px_-2px_rgba(46,196,182,0.45)]';
-            } else if (hasRecord && day.key <= todayKey) {
-              cellStyle = 'bg-yellow-100/90 border-yellow-300 text-slate-950 hover:bg-yellow-100';
             } else if (day.key === todayKey) {
               cellStyle = 'bg-rose-100/90 border-rose-300 text-slate-950 hover:bg-rose-100';
-            } else if (day.key > todayKey && day.isCurrentMonth && highlightsFuturePlan) {
+            } else if (day.isCurrentMonth && highlightsFuturePlan) {
               cellStyle = 'bg-sky-100/90 border-sky-300 text-slate-950 hover:bg-sky-100';
             } else if (day.isCurrentMonth) {
               cellStyle = 'bg-slate-850/75 border-slate-650 text-slate-100 hover:bg-slate-700';
@@ -436,11 +303,7 @@ export function CalendarPage({
                   {displayKind === 'running' ? <Footprints aria-hidden="true" size={13} /> : null}
                   {displayKind === 'rest' ? <Bed aria-hidden="true" size={13} /> : null}
                 </div>
-                {totalVolume > 0 ? (
-                  <span className="mt-0.5 truncate text-[11px] font-black text-success">
-                    {totalVolume.toLocaleString()}kg
-                  </span>
-                ) : displayKind ? (
+                {displayKind ? (
                   <span className="mt-0.5 truncate text-[11px] font-extrabold text-primary">
                     {displayKind === 'routine' ? getRoutineDayDisplayName(dayPlan?.routineDay, locale) ?? planKindLabel(displayKind, locale) : planKindLabel(displayKind, locale)}
                   </span>
@@ -499,126 +362,11 @@ export function CalendarPage({
           </select>
         </div>
 
-        {visibleSelectedSummaries.length > 0 ? (
-          <div className="grid gap-3">
-            {visibleSelectedSummaries.map((summary) => {
-              const isRunningOnly = isRunningOnlySummary(summary);
-
-              return (
-                <div key={summary.session.id} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-xl">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-sm font-black text-slate-100 tracking-wide">
-                      {isRunningOnly
-                        ? planKindLabel('running', locale)
-                        : getRoutineDayDisplayName(summary.routineDay, locale) ?? summary.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}
-                    </h3>
-                    <span className="rounded-lg border border-slate-650 bg-slate-750 px-2.5 py-1 text-xs font-black text-cyan-200">
-                      {workoutStatusLabel(locale, summary.session.status)}
-                    </span>
-                  </div>
-                  <p className="text-xs font-bold text-slate-300">
-                    {isRunningOnly
-                      ? `${summary.cardioCount}${locale === 'ko' ? '개 러닝 기록' : ' running record'}`
-                      : (
-                        <>
-                          {exerciseCountLabel(locale, summary.exerciseCount)} / <span className="text-emerald-450 font-black">{summary.session.totalStrengthVolumeKg.toLocaleString()} kg</span>
-                        </>
-                      )}
-                  </p>
-                  <div className="flex gap-2 pt-1">
-                    {summary.session.status === 'skipped' ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => void handleUnskipSession(summary.session.id)}
-                          className="flex-1 min-h-10 rounded-xl bg-cyan-400 hover:bg-cyan-300 px-3 text-xs font-black text-slate-950 active:scale-95 transition-all shadow-md shadow-cyan-400/20"
-                        >
-                          {locale === 'ko' ? '건너뛰기 취소' : 'Unskip'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => summary.session.status === 'completed'
-                            ? onEditHistoricalWorkout(summary.session.id, selectedDateKey)
-                            : onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, summary.session))}
-                          className="flex-1 min-h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 px-3 text-xs font-black text-slate-200 active:scale-95 transition-all"
-                        >
-                          {locale === 'ko' ? '기록 보기/수정' : 'View/Edit'}
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => summary.session.status === 'completed'
-                            ? onEditHistoricalWorkout(summary.session.id, selectedDateKey)
-                            : onStartWorkout(...getCalendarExistingWorkoutStartArgs(selectedDateKey, summary.session))}
-                          className="flex-1 min-h-10 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 px-3 text-xs font-black text-cyan-400 active:scale-95 transition-all"
-                        >
-                          {locale === 'ko' ? `${isRunningOnly ? '러닝' : '운동'}기록 수정` : 'Edit record'}
-                        </button>
-                        {false && summary.session.status === 'in_progress' && (
-                          <button
-                            type="button"
-                            onClick={() => void handleSkipSession(summary.session.id)}
-                            className="min-h-10 flex-1 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-black text-slate-100 transition-all hover:bg-slate-700 active:scale-95"
-                          >
-                            {locale === 'ko' ? '건너뛰기' : 'Skip Workout'}
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void handleDeleteSession(summary.session.id)}
-                    className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3 text-xs font-black text-danger transition-all hover:bg-danger/15 active:scale-95"
-                  >
-                    <Trash2 aria-hidden="true" size={14} />
-                    <span>{locale === 'ko' ? '운동 기록 삭제' : 'Delete record'}</span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-
-        <div className="grid grid-cols-1 gap-2 border-t border-slate-750 pt-3">
-          <button
-            type="button"
-            onClick={handleRecordSelectedDate}
-            disabled={recordActionDisabled}
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-success bg-success px-3 text-xs font-black text-white shadow-md shadow-success/20 transition-all hover:bg-emerald-500 active:scale-95 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500 disabled:shadow-none disabled:hover:bg-slate-850"
-          >
-            <Play aria-hidden="true" size={15} />
-            <span>{recordActionLabel}</span>
-          </button>
-        </div>
-
-        {false && !shouldContinueSelectedSession ? (
-          <div className="grid grid-cols-1 gap-2 border-t border-slate-750 pt-3">
-            {startWorkoutRoutineDayId ? (
-              <button
-                type="button"
-                onClick={() => onStartWorkout(...getCalendarNewWorkoutStartArgs(selectedDateKey))}
-                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-black text-slate-100 transition-all hover:bg-slate-700 active:scale-95"
-              >
-                <Play aria-hidden="true" size={15} />
-                <span>{locale === 'ko' ? '자유 운동으로 기록 추가' : 'Add free workout record'}</span>
-              </button>
-            ) : null}
-            {false && (selectedPlan || selectedDateKey < todayKey) && (
-              <button
-                type="button"
-                onClick={() => void handleSkipNewSession()}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-850 px-3 text-xs font-bold text-rose-400 active:scale-95 transition-all"
-              >
-                <span>
-                  {locale === 'ko' ? '운동 건너뛰기' : 'Skip Workout'}
-                </span>
-              </button>
-            )}
-          </div>
-        ) : null}
+        <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2.5 text-xs font-bold leading-relaxed text-slate-200">
+          {locale === 'ko'
+            ? '이 화면에서는 계획만 수정합니다. 누락 기록 추가와 과거 기록 수정/삭제는 실적 메뉴에서 처리합니다.'
+            : 'This screen only edits plans. Use Actuals to add missing records or edit/delete past workouts.'}
+        </p>
       </section>
       </div>
 
@@ -632,19 +380,9 @@ export function CalendarPage({
             {locale === 'ko' ? '운동계획으로 돌아가기' : 'Return to workout plan'}
           </button>
         ) : null}
-        {false && <button
-          type="button"
-          onClick={() => onStartWorkout(...(
-            shouldContinueSelectedSession
-              ? getCalendarExistingWorkoutStartArgs(selectedDateKey, selectedInProgressSession.session)
-              : getCalendarNewWorkoutStartArgs(selectedDateKey, startWorkoutRoutineDayId)
-          ))}
-          className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-455 px-3 text-sm font-black text-slate-955 shadow-lg shadow-cyan-400/20 transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-95"
-        >
-          <Play aria-hidden="true" size={18} />
-          <span>{recordActionLabel}</span>
-        </button>}
       </footer>
     </section>
   );
 }
+
+

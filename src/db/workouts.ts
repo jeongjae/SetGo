@@ -490,6 +490,14 @@ export async function getMonthlyWorkoutSummaries(year: number, monthIndex: numbe
   return Promise.all(sessions.map(getWorkoutSummary));
 }
 
+export async function getWorkoutSummariesForDateRange(startDate: string, endDate: string): Promise<WorkoutSummary[]> {
+  const sessions = (await db.workoutSessions.toArray())
+    .filter((session) => session.date >= startDate && session.date <= endDate)
+    .sort((a, b) => (a.startedAt ?? a.createdAt).localeCompare(b.startedAt ?? b.createdAt));
+
+  return Promise.all(sessions.map(getWorkoutSummary));
+}
+
 export async function getLatestWorkoutSummary(): Promise<WorkoutSummary | undefined> {
   const session = (await db.workoutSessions.toArray())
     .sort((a, b) => (b.startedAt ?? b.createdAt).localeCompare(a.startedAt ?? a.createdAt))[0];
