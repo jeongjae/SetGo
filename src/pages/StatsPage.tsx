@@ -948,6 +948,14 @@ export function StatsPage() {
 
           <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
             <div className="flex items-center justify-between">
+              <h2 className="text-base font-black text-slate-100">{c.dailyTrend}</h2>
+              <span className="text-xs font-bold text-slate-300">{locale === 'ko' ? '최근 2주' : 'Last 2 weeks'}</span>
+            </div>
+            <DailyTrendChart days={stats.dailyTrend} locale={locale} />
+          </section>
+
+          <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+            <div className="flex items-center justify-between">
               <h2 className="text-base font-black text-slate-100">{c.recentTrend}</h2>
               <span className="text-xs font-bold text-slate-300">{locale === 'ko' ? '볼륨' : 'Volume'}</span>
             </div>
@@ -963,14 +971,6 @@ export function StatsPage() {
                 })}
               </p>
             ) : null}
-          </section>
-
-          <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-black text-slate-100">{c.dailyTrend}</h2>
-              <span className="text-xs font-bold text-slate-300">{locale === 'ko' ? '최근 2주' : 'Last 2 weeks'}</span>
-            </div>
-            <DailyTrendChart days={stats.dailyTrend} locale={locale} />
           </section>
 
           <section className="rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
