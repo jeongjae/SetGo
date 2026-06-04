@@ -557,7 +557,7 @@ export function buildStats(
   completedWorkoutExercises.forEach((workoutExercise) => {
     const session = sessionById.get(workoutExercise.sessionId);
     const exercise = exerciseById.get(workoutExercise.exerciseId);
-    if (!session || !exercise) return;
+    if (!session || !exercise || !currentWeekSessionIds.has(session.id)) return;
     const timestamp = new Date(session.startedAt ?? `${session.date}T12:00:00`);
     toMuscleGroups(exercise).forEach((group) => muscleHistory.push({ group, date: timestamp }));
   });
