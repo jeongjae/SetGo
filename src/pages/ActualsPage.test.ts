@@ -2,19 +2,20 @@ import { describe, expect, it } from 'vitest';
 import {
   actualsDayCellClass,
   actualsDayCellLabel,
-  actualsDayCellMetric,
+  actualsDayCellTextClass,
+  actualsSelectedWeekIndexForDate,
   actualsStatusLabel,
   buildActualsCalendarDays,
 } from './ActualsPage';
 import type { WorkoutSummary } from '../db/workouts';
 
 describe('actuals calendar range', () => {
-  it('builds the current week plus the previous four weeks without cutting by month', () => {
+  it('builds the current Sunday-start week plus the previous four weeks', () => {
     const days = buildActualsCalendarDays(new Date('2026-06-04T12:00:00'));
 
     expect(days).toHaveLength(35);
-    expect(days[0].key).toBe('2026-05-04');
-    expect(days[34].key).toBe('2026-06-07');
+    expect(days[0].key).toBe('2026-05-03');
+    expect(days[34].key).toBe('2026-06-06');
     expect(days[0].weekIndex).toBe(0);
     expect(days[34].weekIndex).toBe(4);
   });
@@ -55,27 +56,65 @@ describe('actuals day cell label', () => {
   });
 });
 
-describe('actuals day cell metric', () => {
-  it('formats volume and distance separately from the workout label', () => {
-    expect(actualsDayCellMetric(2400, 0)).toBe('2,400kg');
-    expect(actualsDayCellMetric(0, 2.4)).toBe('2.4km');
-    expect(actualsDayCellMetric(0, 0)).toBeUndefined();
-  });
-});
-
 describe('actuals day cell style', () => {
-  it('keeps completed styling when the day is selected', () => {
+  it('uses the plan calendar selected styling when selected', () => {
     const className = actualsDayCellClass({
       hasCompleted: true,
       hasInProgress: false,
       hasSkipped: false,
       isFuture: false,
       isSelected: true,
+      isToday: false,
     });
 
-    expect(className).toContain('bg-amber-300');
-    expect(className).toContain('text-slate-950');
-    expect(className).toContain('ring-cyan-400');
-    expect(className).not.toContain('bg-emerald');
+    expect(className).toContain('bg-emerald-600/90');
+    expect(className).toContain('border-emerald-300');
+    expect(className).toContain('ring-emerald-300/70');
+    expect(className).not.toContain('bg-amber-300');
+  });
+
+  it('uses dark text for days with workout records', () => {
+    expect(actualsDayCellTextClass(true)).toBe('text-black');
+    expect(actualsDayCellTextClass(false)).toBe('text-current');
+  });
+
+  it('keeps in-progress days from looking selected', () => {
+    const className = actualsDayCellClass({
+      hasCompleted: false,
+      hasInProgress: true,
+      hasSkipped: false,
+      isFuture: false,
+      isSelected: false,
+      isToday: false,
+    });
+
+    expect(className).toContain('bg-blue-100');
+    expect(className).not.toContain('bg-cyan-200');
+    expect(className).not.toContain('bg-emerald-600/90');
+  });
+
+  it('marks today like the plan calendar', () => {
+    const className = actualsDayCellClass({
+      hasCompleted: false,
+      hasInProgress: false,
+      hasSkipped: false,
+      isFuture: false,
+      isSelected: false,
+      isToday: true,
+    });
+
+    expect(className).toContain('bg-rose-100/90');
+    expect(className).toContain('border-rose-400');
+    expect(className).toContain('ring-rose-300');
+    expect(className).toContain('text-black');
+  });
+});
+
+describe('actuals selected week index', () => {
+  it('moves the selected week when another calendar day is selected', () => {
+    const days = buildActualsCalendarDays(new Date('2026-06-04T12:00:00'));
+
+    expect(actualsSelectedWeekIndexForDate(days, '2026-05-11', 4)).toBe(1);
+    expect(actualsSelectedWeekIndexForDate(days, '2026-06-02', 4)).toBe(4);
   });
 });

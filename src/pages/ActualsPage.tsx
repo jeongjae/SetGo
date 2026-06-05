@@ -5,7 +5,7 @@ import { deleteWorkoutSession, getWorkoutSummariesForDateRange, type WorkoutSumm
 import { getExerciseCategories } from '../domain/exercises';
 import { getRoutineDayDisplayName } from '../db/routines';
 import { getStoredLocale, t, workoutStatusLabel } from '../i18n/i18n';
-import { buildRecentWeeksRange, formatDateKey } from '../utils/date';
+import { addDays, buildDateRange, formatDateKey } from '../utils/date';
 import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSet, WorkoutStatus } from '../types';
 
 type ActualsPageProps = {
@@ -22,8 +22,15 @@ export type ActualsCalendarDay = {
   weekIndex: number;
 };
 
+function startOfSundayWeek(date: Date): Date {
+  const copyDate = new Date(date);
+  copyDate.setHours(0, 0, 0, 0);
+  copyDate.setDate(copyDate.getDate() - copyDate.getDay());
+  return copyDate;
+}
+
 export function buildActualsCalendarDays(referenceDate: Date): ActualsCalendarDay[] {
-  return buildRecentWeeksRange(referenceDate, 5).map((date, index) => ({
+  return buildDateRange(addDays(startOfSundayWeek(referenceDate), -28), 35).map((date, index) => ({
     date,
     key: formatDateKey(date),
     weekIndex: Math.floor(index / 7),
@@ -57,10 +64,8 @@ export function actualsDayCellLabel(
     ?? (locale === 'ko' ? '운동' : 'Workout');
 }
 
-export function actualsDayCellMetric(volumeKg: number, distanceKm: number): string | undefined {
-  if (volumeKg > 0) return `${Math.round(volumeKg).toLocaleString()}kg`;
-  if (distanceKm > 0) return `${distanceKm.toFixed(1)}km`;
-  return undefined;
+export function actualsDayCellTextClass(hasWorkoutSummaries: boolean): string {
+  return hasWorkoutSummaries ? 'text-black' : 'text-current';
 }
 
 export function actualsStatusLabel(locale: 'ko' | 'en', status: WorkoutStatus, dateKey: string, todayKey: string): string {
@@ -77,27 +82,39 @@ export function actualsDayCellClass({
   hasSkipped,
   isFuture,
   isSelected,
+  isToday,
 }: {
   hasCompleted: boolean;
   hasInProgress: boolean;
   hasSkipped: boolean;
   isFuture: boolean;
   isSelected: boolean;
+  isToday: boolean;
 }): string {
   let cellStyle = 'bg-slate-850/75 border-slate-650 text-slate-100 hover:bg-slate-700';
-  if (hasCompleted) {
-    cellStyle = 'bg-amber-300 border-amber-500 text-slate-950 shadow-[0_0_0_1px_rgba(245,158,11,0.18)] hover:bg-amber-200';
+  if (isSelected) {
+    cellStyle = 'bg-emerald-600/90 border-emerald-300 text-slate-100 ring-1 ring-emerald-300/70 shadow-[0_0_14px_-2px_rgba(46,196,182,0.45)]';
+  } else if (hasCompleted) {
+    cellStyle = 'bg-amber-300 border-amber-500 text-black shadow-[0_0_0_1px_rgba(245,158,11,0.18)] hover:bg-amber-200';
   } else if (hasInProgress) {
-    cellStyle = 'bg-cyan-200 border-cyan-500 text-slate-950 shadow-[0_0_0_1px_rgba(8,145,178,0.16)] hover:bg-cyan-100';
+    cellStyle = 'bg-blue-100 border-blue-300 text-black shadow-[0_0_0_1px_rgba(37,99,235,0.16)] hover:bg-blue-50';
   } else if (hasSkipped) {
-    cellStyle = 'bg-rose-200 border-rose-500 text-slate-950 hover:bg-rose-100';
+    cellStyle = 'bg-rose-200 border-rose-500 text-black hover:bg-rose-100';
+  } else if (isToday) {
+    cellStyle = 'bg-rose-100/90 border-rose-300 text-black hover:bg-rose-100';
   } else if (isFuture) {
     cellStyle = 'bg-slate-900/40 border-transparent text-slate-500';
   }
 
-  return isSelected
-    ? `${cellStyle} ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900`
-    : cellStyle;
+  return isToday ? `${cellStyle} ring-2 ring-rose-300 border-rose-400` : cellStyle;
+}
+
+export function actualsSelectedWeekIndexForDate(
+  actualDays: ActualsCalendarDay[],
+  dateKey: string,
+  fallbackWeekIndex: number,
+): number {
+  return actualDays.find((day) => day.key === dateKey)?.weekIndex ?? fallbackWeekIndex;
 }
 
 export function ActualsPage({
@@ -109,8 +126,11 @@ export function ActualsPage({
 }: ActualsPageProps) {
   const [locale] = useState(() => getStoredLocale());
   const todayKey = formatDateKey(new Date());
+  const actualDays = useMemo(() => buildActualsCalendarDays(new Date()), []);
   const [selectedDateKey, setSelectedDateKey] = useState(initialSelectedDateKey ?? todayKey);
-  const [selectedWeekIndex, setSelectedWeekIndex] = useState(4);
+  const [selectedWeekIndex, setSelectedWeekIndex] = useState(() => (
+    actualsSelectedWeekIndexForDate(actualDays, initialSelectedDateKey ?? todayKey, 4)
+  ));
   const [summaries, setSummaries] = useState<WorkoutSummary[]>([]);
   const [workoutExercises, setWorkoutExercises] = useState<WorkoutExercise[]>([]);
   const [workoutSets, setWorkoutSets] = useState<WorkoutSet[]>([]);
@@ -118,7 +138,6 @@ export function ActualsPage({
   const [exercises, setExercises] = useState<ExerciseMaster[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const actualDays = useMemo(() => buildActualsCalendarDays(new Date()), []);
   const startKey = actualDays[0]?.key ?? todayKey;
   const endKey = actualDays[actualDays.length - 1]?.key ?? todayKey;
 
@@ -142,14 +161,6 @@ export function ActualsPage({
 
     void loadActuals();
   }, [endKey, reloadKey, startKey]);
-
-  useEffect(() => {
-    if (!initialSelectedDateKey) return;
-
-    setSelectedDateKey(initialSelectedDateKey);
-    const matchingDay = actualDays.find((day) => day.key === initialSelectedDateKey);
-    if (matchingDay) setSelectedWeekIndex(matchingDay.weekIndex);
-  }, [actualDays, initialSelectedDateKey]);
 
   const summariesByDate = useMemo(() => {
     return summaries.reduce<Record<string, WorkoutSummary[]>>((byDate, summary) => {
@@ -196,7 +207,7 @@ export function ActualsPage({
 
   function selectDate(day: ActualsCalendarDay) {
     setSelectedDateKey(day.key);
-    setSelectedWeekIndex(day.weekIndex);
+    setSelectedWeekIndex(actualsSelectedWeekIndexForDate(actualDays, day.key, day.weekIndex));
     onSelectedDateChange?.(day.key);
   }
 
@@ -232,7 +243,7 @@ export function ActualsPage({
           </div>
 
           <div className="mt-3 grid grid-cols-7 gap-1 text-center text-xs font-black uppercase text-slate-200">
-            {(locale === 'ko' ? ['월', '화', '수', '목', '금', '토', '일'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']).map((weekday) => (
+            {(locale === 'ko' ? ['일', '월', '화', '수', '목', '금', '토'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']).map((weekday) => (
               <div key={weekday}>{weekday}</div>
             ))}
           </div>
@@ -243,11 +254,11 @@ export function ActualsPage({
               const hasCompleted = daySummaries.some((summary) => summary.session.status === 'completed');
               const hasInProgress = daySummaries.some((summary) => summary.session.status === 'in_progress');
               const hasSkipped = daySummaries.some((summary) => summary.session.status === 'skipped');
-              const dayVolume = daySummaries.reduce((sum, summary) => sum + summary.session.totalStrengthVolumeKg, 0);
               const dayDistance = daySummaries.reduce((sum, summary) => sum + summarizeCardioDistance(cardioBySessionId[summary.session.id] ?? []), 0);
               const dayLabel = actualsDayCellLabel(daySummaries, locale);
-              const dayMetric = actualsDayCellMetric(dayVolume, dayDistance);
+              const dayTextClass = actualsDayCellTextClass(daySummaries.length > 0);
               const isSelected = selectedDateKey === day.key;
+              const isToday = day.key === todayKey;
               const isFuture = day.key > todayKey;
               const cellStyle = actualsDayCellClass({
                 hasCompleted,
@@ -255,6 +266,7 @@ export function ActualsPage({
                 hasSkipped,
                 isFuture,
                 isSelected,
+                isToday,
               });
 
               return (
@@ -270,10 +282,7 @@ export function ActualsPage({
                     {dayDistance > 0 ? <Footprints aria-hidden="true" size={12} /> : daySummaries.length > 0 ? <Dumbbell aria-hidden="true" size={12} /> : null}
                   </div>
                   {dayLabel ? (
-                    <span className="mt-0.5 w-full truncate text-[11px] font-black leading-tight text-current">{dayLabel}</span>
-                  ) : null}
-                  {dayMetric ? (
-                    <span className="w-full truncate text-[10px] font-black leading-tight text-current">{dayMetric}</span>
+                    <span className={`mt-0.5 w-full truncate text-[11px] font-black leading-tight ${dayTextClass}`}>{dayLabel}</span>
                   ) : null}
                 </button>
               );
