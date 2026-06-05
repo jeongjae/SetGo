@@ -85,9 +85,17 @@ export function canCompleteWorkoutLog(completedStrengthSetCount: number, cardioR
 
 export function shouldCompleteHistoricalSetOnSave(
   set: Pick<WorkoutSet, 'isCompleted' | 'weightKg' | 'reps' | 'rir'>,
+  originalSet?: Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir'>,
 ): boolean {
+  const hasLoggedValue = set.weightKg > 0 || set.reps > 0 || set.rir !== undefined;
+  const hasChangedFromOriginal = !originalSet
+    || set.weightKg !== originalSet.weightKg
+    || set.reps !== originalSet.reps
+    || set.rir !== originalSet.rir;
+
   return !set.isCompleted
-    && (set.weightKg > 0 || set.reps > 0 || set.rir !== undefined);
+    && hasLoggedValue
+    && hasChangedFromOriginal;
 }
 
 export function countLoggedCardioRecords(cardioRecords: Array<Pick<CardioRecord, 'isDraft'>>): number {
@@ -298,8 +306,11 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       historyRoutineId ? historyRoutineDayId || undefined : undefined,
     );
 
+    const originalSetById = new Map(
+      historyEditSnapshot.current?.workoutSets.map((set) => [set.id, set]) ?? [],
+    );
     const setsToComplete = logs.flatMap((log) => (
-      log.sets.filter(shouldCompleteHistoricalSetOnSave)
+      log.sets.filter((set) => shouldCompleteHistoricalSetOnSave(set, originalSetById.get(set.id)))
     ));
     await Promise.all(setsToComplete.map((set) => updateWorkoutSet(set.id, { isCompleted: true })));
 
@@ -589,6 +600,14 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   }
 
   async function handleSaveCardioAndContinue(cardioRecord: CardioRecord) {
+    if (workout?.session.entryKind === 'running') {
+      if (cardioRecord.isDraft) {
+        await handleUpdateCardio(cardioRecord, { isDraft: false });
+        setSaveMessage(locale === 'ko' ? '러닝을 저장했습니다' : 'Running saved');
+      }
+      return;
+    }
+
     if (cardioRecord.isDraft) {
       await handleUpdateCardio(cardioRecord, { isDraft: false });
       setSaveMessage(locale === 'ko' ? '러닝을 기록했습니다' : 'Running logged');
@@ -661,10 +680,13 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   const workoutRoutineDayName = getRoutineDayDisplayName(workout?.routineDay, locale);
   const completedExerciseCount = countFullyCompletedExercises(logs);
   const loggedCardioCount = countLoggedCardioRecords(cardioRecords);
-  const isRunningOnlyWorkout = logs.length === 0 && cardioRecords.length > 0;
+  const isIndependentRunningWorkout = workout?.session.entryKind === 'running';
+  const isRunningOnlyWorkout = isIndependentRunningWorkout || (logs.length === 0 && cardioRecords.length > 0);
   const workoutTitle = isRunningOnlyWorkout
     ? (locale === 'ko' ? '러닝' : 'Running')
-    : routineNameLabel(locale, workout?.routineName) ?? t(locale, 'freeWorkout');
+    : workout?.session.entryKind === 'free'
+      ? t(locale, 'freeWorkout')
+      : routineNameLabel(locale, workout?.routineName) ?? t(locale, 'freeWorkout');
 
   const liveSessionElapsed = workout
     ? getLiveSessionElapsedMs(workout.session, timerNow)
@@ -835,7 +857,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           </section>
         ) : null}
 
-        {isHistoricalEditMode && workout && !isRunningOnlyWorkout ? (
+        {isHistoricalEditMode && workout && !isIndependentRunningWorkout ? (
           <section className="shrink-0 space-y-2.5 rounded-2xl border border-slate-650 bg-slate-750/90 p-3 shadow-md">
             <div>
               <p className="text-xs font-black uppercase text-slate-200">{locale === 'ko' ? '운동 유형' : 'Workout type'}</p>
@@ -1379,8 +1401,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     <Check aria-hidden="true" size={15} />
                     <span>
                       {cardioRecord.isDraft
-                        ? locale === 'ko' ? '기록하고 운동 계속' : 'Log cardio and continue'
-                        : locale === 'ko' ? '운동 기록 계속' : 'Continue workout log'}
+                        ? isIndependentRunningWorkout
+                          ? locale === 'ko' ? '러닝 저장' : 'Save running'
+                          : locale === 'ko' ? '기록하고 운동 계속' : 'Log cardio and continue'
+                        : isIndependentRunningWorkout
+                          ? locale === 'ko' ? '러닝 저장됨' : 'Running saved'
+                          : locale === 'ko' ? '운동 기록 계속' : 'Continue workout log'}
                     </span>
                   </button>
 

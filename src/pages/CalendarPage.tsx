@@ -104,15 +104,19 @@ function summarizeCardioDistance(records: CardioRecord[]): number {
 }
 
 function isRunningOnlySummary(summary: WorkoutSummary): boolean {
-  return summary.cardioCount > 0
-    && summary.exerciseCount === 0
-    && summary.session.totalStrengthVolumeKg === 0;
+  return summary.session.entryKind === 'running'
+    || (
+      summary.cardioCount > 0
+      && summary.exerciseCount === 0
+      && summary.session.totalStrengthVolumeKg === 0
+    );
 }
 
 function actualSummaryLabel(summaries: WorkoutSummary[], locale: 'ko' | 'en'): string | undefined {
   const firstSummary = summaries[0];
   if (!firstSummary) return undefined;
   if (isRunningOnlySummary(firstSummary)) return locale === 'ko' ? '러닝' : 'Run';
+  if (firstSummary.session.entryKind === 'free') return locale === 'ko' ? '자유운동' : 'Free';
 
   return getRoutineDayDisplayName(firstSummary.routineDay, locale)
     ?? firstSummary.routineName

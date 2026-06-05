@@ -54,6 +54,14 @@ describe('workout session reuse', () => {
     expect(reusable).toBeUndefined();
   });
 
+  it('does not reuse a routine workout when starting a running-only workout', () => {
+    const reusable = selectReusableInProgressSession([
+      session('existing', 'in_progress', '2026-05-20T09:00:00.000Z', 'push'),
+    ], undefined, { kind: 'running' });
+
+    expect(reusable).toBeUndefined();
+  });
+
   it('keeps the existing in-progress session when the start flow can resume it', () => {
     const existingSession = session('existing', 'in_progress', '2026-05-20T09:00:00.000Z', 'push');
     const selection = selectWorkoutStartSession(
@@ -139,6 +147,21 @@ describe('workout date binding and session creation safety (Scenario C)', () => 
 
     expect(extraSession.id).toBe(`workout_2026-05-20_${now.getTime()}`);
     expect(extraSession.startedAt).toBe(now.toISOString());
+  });
+
+  it('marks explicit running and free workout sessions without assigning a routine', () => {
+    const now = new Date('2026-05-21T09:30:00.000Z');
+
+    expect(createWorkoutSessionForDate('2026-05-21', now, 0, undefined, undefined, 'running')).toMatchObject({
+      routineId: undefined,
+      routineDayId: undefined,
+      entryKind: 'running',
+    });
+    expect(createWorkoutSessionForDate('2026-05-21', now, 0, undefined, undefined, 'free')).toMatchObject({
+      routineId: undefined,
+      routineDayId: undefined,
+      entryKind: 'free',
+    });
   });
 
   it('does not reuse the id of a deleted first session when the same date is started again', () => {

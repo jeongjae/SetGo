@@ -25,6 +25,7 @@ export type WorkoutStatus = 'planned' | 'in_progress' | 'completed' | 'skipped';
 export type WorkoutExerciseStatus = 'planned' | 'completed' | 'skipped';
 
 export type WorkoutPlanKind = 'routine' | 'rest' | 'running' | 'free';
+export type WorkoutSessionKind = 'planned' | 'running' | 'free';
 
 export type TimeBand = 'early' | 'morning' | 'afternoon' | 'evening';
 
@@ -112,6 +113,7 @@ export type WorkoutSession = {
   timeBand: TimeBand;
   routineId?: string;
   routineDayId?: string;
+  entryKind?: WorkoutSessionKind;
   status: WorkoutStatus;
   totalStrengthVolumeKg: number;
   memo?: string;

@@ -108,6 +108,29 @@ describe('workout completion eligibility', () => {
     })).toBe(false);
   });
 
+  it('does not auto-complete untouched planned routine sets in historical edits', () => {
+    const plannedSet = {
+      isCompleted: false,
+      weightKg: 82.5,
+      reps: 8,
+      rir: 2,
+    };
+
+    expect(shouldCompleteHistoricalSetOnSave(plannedSet, {
+      weightKg: 82.5,
+      reps: 8,
+      rir: 2,
+    })).toBe(false);
+    expect(shouldCompleteHistoricalSetOnSave({
+      ...plannedSet,
+      reps: 10,
+    }, {
+      weightKg: 82.5,
+      reps: 8,
+      rir: 2,
+    })).toBe(true);
+  });
+
   it('does not treat a new cardio draft as a logged cardio record', () => {
     expect(countLoggedCardioRecords([
       { isDraft: true },
