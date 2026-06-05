@@ -1,8 +1,14 @@
-const CACHE_NAME = 'setgo-shell-v7';
+const CACHE_NAME = 'setgo-shell-v8';
 const BASE_PATH = new URL(self.registration.scope).pathname;
 const APP_SHELL = [BASE_PATH, `${BASE_PATH}index.html`, `${BASE_PATH}manifest.webmanifest`, `${BASE_PATH}icon.svg`];
+const IS_LOCAL_DEV = ['localhost', '127.0.0.1', '::1'].includes(self.location.hostname);
 
 self.addEventListener('install', (event) => {
+  if (IS_LOCAL_DEV) {
+    self.skipWaiting();
+    return;
+  }
+
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)),
   );
@@ -19,7 +25,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => (
       Promise.all(
         cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .filter((cacheName) => IS_LOCAL_DEV || cacheName !== CACHE_NAME)
           .map((cacheName) => caches.delete(cacheName)),
       )
     )),
@@ -29,6 +35,11 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  if (IS_LOCAL_DEV) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   if (event.request.mode === 'navigate') {
     event.respondWith(
