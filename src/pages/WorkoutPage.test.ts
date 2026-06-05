@@ -9,6 +9,7 @@ import {
   getLiveSessionElapsedMs,
   parseOptionalDecimalInput,
   shouldConfirmCardioDelete,
+  shouldCompleteHistoricalSetOnSave,
   shouldConfirmWorkoutExerciseDelete,
   shouldConfirmWorkoutSetDelete,
 } from './WorkoutPage';
@@ -47,6 +48,16 @@ describe('workout elapsed time', () => {
       status: 'completed',
     }, nowMs)).toBeUndefined();
   });
+
+  it("keeps today's in-progress workout live until the user completes it", () => {
+    const nowMs = new Date('2026-05-21T12:15:00').getTime();
+
+    expect(getLiveSessionElapsedMs({
+      date: '2026-05-21',
+      startedAt: '2026-05-21T12:00:00',
+      status: 'in_progress',
+    }, nowMs)).toBeDefined();
+  });
 });
 
 describe('rest countdown formatting', () => {
@@ -62,6 +73,39 @@ describe('workout completion eligibility', () => {
     expect(canCompleteWorkoutLog(1, 0)).toBe(true);
     expect(canCompleteWorkoutLog(0, 1)).toBe(true);
     expect(canCompleteWorkoutLog(0, 0)).toBe(false);
+  });
+
+  it('auto-completes historical sets with entered values on save', () => {
+    expect(shouldCompleteHistoricalSetOnSave({
+      isCompleted: false,
+      weightKg: 80,
+      reps: 0,
+      rir: undefined,
+    })).toBe(true);
+    expect(shouldCompleteHistoricalSetOnSave({
+      isCompleted: false,
+      weightKg: 0,
+      reps: 10,
+      rir: undefined,
+    })).toBe(true);
+    expect(shouldCompleteHistoricalSetOnSave({
+      isCompleted: false,
+      weightKg: 0,
+      reps: 0,
+      rir: 2,
+    })).toBe(true);
+    expect(shouldCompleteHistoricalSetOnSave({
+      isCompleted: true,
+      weightKg: 0,
+      reps: 0,
+      rir: undefined,
+    })).toBe(false);
+    expect(shouldCompleteHistoricalSetOnSave({
+      isCompleted: false,
+      weightKg: 0,
+      reps: 0,
+      rir: undefined,
+    })).toBe(false);
   });
 
   it('does not treat a new cardio draft as a logged cardio record', () => {

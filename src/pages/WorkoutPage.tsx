@@ -83,6 +83,13 @@ export function canCompleteWorkoutLog(completedStrengthSetCount: number, cardioR
   return completedStrengthSetCount > 0 || cardioRecordCount > 0;
 }
 
+export function shouldCompleteHistoricalSetOnSave(
+  set: Pick<WorkoutSet, 'isCompleted' | 'weightKg' | 'reps' | 'rir'>,
+): boolean {
+  return !set.isCompleted
+    && (set.weightKg > 0 || set.reps > 0 || set.rir !== undefined);
+}
+
 export function countLoggedCardioRecords(cardioRecords: Array<Pick<CardioRecord, 'isDraft'>>): number {
   return cardioRecords.filter((cardioRecord) => cardioRecord.isDraft !== true).length;
 }
@@ -290,7 +297,17 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       historyRoutineId || undefined,
       historyRoutineId ? historyRoutineDayId || undefined : undefined,
     );
-    if (workout.session.status === 'in_progress' && canCompleteWorkout) {
+
+    const setsToComplete = logs.flatMap((log) => (
+      log.sets.filter(shouldCompleteHistoricalSetOnSave)
+    ));
+    await Promise.all(setsToComplete.map((set) => updateWorkoutSet(set.id, { isCompleted: true })));
+
+    const completedSetCountAfterSave = completedSetCount + setsToComplete.length;
+    if (
+      workout.session.status === 'in_progress'
+      && canCompleteWorkoutLog(completedSetCountAfterSave, loggedCardioCount)
+    ) {
       await completeWorkoutSession(workout.session.id);
     }
     onBack();
@@ -1461,15 +1478,15 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
       {/* 5. 플로팅 휴식 타이머 오버레이 (휴식 타이머 활성화 및 카운트 다운 중일 때) */}
       {isRestTimerActive && restRemaining > 0 && (
-        <div className="fixed bottom-[4.5rem] left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-slate-650 bg-slate-750/95 px-3.5 py-3 shadow-2xl backdrop-blur-md transition-all duration-300 animate-fade-in">
+        <div className="fixed bottom-[4.5rem] left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-300 bg-blue-100/95 px-3.5 py-3 shadow-2xl backdrop-blur-md transition-all duration-300 animate-fade-in">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 animate-pulse">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-200 text-blue-700 animate-pulse">
                 <Clock3 size={16} />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-100">{t(locale, 'resting')}</p>
-                <p className="text-lg font-black text-slate-100 tracking-wider font-mono">
+                <p className="text-xs font-bold text-primary">{t(locale, 'resting')}</p>
+                <p className="text-lg font-black text-primary tracking-wider font-mono">
                   {formatCountdownSeconds(restRemaining)}
                 </p>
               </div>
@@ -1480,7 +1497,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 onClick={() => {
                   setRestDuration((prev) => prev + 30);
                 }}
-                className="flex h-8 items-center justify-center rounded-lg border border-cyan-400/25 bg-slate-850 px-2.5 text-xs font-bold text-cyan-200 transition-all active:scale-95 active:bg-cyan-500/20"
+                className="flex h-8 items-center justify-center rounded-lg border border-blue-300 bg-blue-50 px-2.5 text-xs font-bold text-blue-700 transition-all active:scale-95 active:bg-blue-200"
               >
                 +30s
               </button>
@@ -1489,7 +1506,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 onClick={() => {
                   setRestDuration((prev) => Math.max(1, prev - 30));
                 }}
-                className="flex h-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-850 px-2.5 text-xs font-bold text-slate-100 transition-all active:scale-95 active:bg-slate-650"
+                className="flex h-8 items-center justify-center rounded-lg border border-blue-300 bg-blue-50 px-2.5 text-xs font-bold text-primary transition-all active:scale-95 active:bg-blue-200"
               >
                 -30s
               </button>
@@ -1505,9 +1522,9 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               </button>
             </div>
           </div>
-          <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-slate-850">
+          <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-blue-200">
             <div
-              className="h-full bg-cyan-400 transition-all duration-500 ease-out"
+              className="h-full bg-blue-500 transition-all duration-500 ease-out"
               style={{ width: `${(restRemaining / restDuration) * 100}%` }}
             />
           </div>

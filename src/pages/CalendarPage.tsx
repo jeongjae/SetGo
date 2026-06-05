@@ -11,10 +11,11 @@ import {
   getRoutineDayDisplayName,
   saveCalendarPlanOverride,
 } from '../db/routines';
+import { getWorkoutSummariesForDateRange, type WorkoutSummary } from '../db/workouts';
 import { formatDateKey } from '../utils/date';
 import { db } from '../db/db';
 import { getStoredLocale, t } from '../i18n/i18n';
-import type { CalendarPlanOverride, RoutineDay, WorkoutPlanKind } from '../types';
+import type { CalendarPlanOverride, CardioRecord, RoutineDay, WorkoutPlanKind } from '../types';
 
 type CalendarPageProps = {
   initialSelectedDateKey?: string;
@@ -88,6 +89,36 @@ export function shouldShowCalendarPlanIndicator(
   return isCurrentMonth && hasPlan && (reviewingWeeklyPlan || !hasWorkoutSummaries);
 }
 
+export function shouldUseActualsInPlanCalendar(dateKey: string, todayKey: string): boolean {
+  return dateKey < todayKey;
+}
+
+export function canEditCalendarPlan(dateKey: string, todayKey: string): boolean {
+  return dateKey >= todayKey;
+}
+
+function summarizeCardioDistance(records: CardioRecord[]): number {
+  return records
+    .filter((record) => record.isDraft !== true)
+    .reduce((sum, record) => sum + (record.distanceKm ?? 0), 0);
+}
+
+function isRunningOnlySummary(summary: WorkoutSummary): boolean {
+  return summary.cardioCount > 0
+    && summary.exerciseCount === 0
+    && summary.session.totalStrengthVolumeKg === 0;
+}
+
+function actualSummaryLabel(summaries: WorkoutSummary[], locale: 'ko' | 'en'): string | undefined {
+  const firstSummary = summaries[0];
+  if (!firstSummary) return undefined;
+  if (isRunningOnlySummary(firstSummary)) return locale === 'ko' ? '러닝' : 'Run';
+
+  return getRoutineDayDisplayName(firstSummary.routineDay, locale)
+    ?? firstSummary.routineName
+    ?? (locale === 'ko' ? '운동' : 'Workout');
+}
+
 export function CalendarPage({
   initialSelectedDateKey,
   onSelectedDateChange,
@@ -100,6 +131,8 @@ export function CalendarPage({
     monthFromDate(initialSelectedDateKey ? dateFromKey(initialSelectedDateKey) : today)
   ));
   const [plans, setPlans] = useState<CalendarPlan[]>([]);
+  const [workoutSummaries, setWorkoutSummaries] = useState<WorkoutSummary[]>([]);
+  const [cardioRecords, setCardioRecords] = useState<CardioRecord[]>([]);
   const [routineDays, setRoutineDays] = useState<RoutineDay[]>([]);
   const [overridesByDate, setOverridesByDate] = useState<Record<string, CalendarPlanOverride>>({});
   const [selectedDateKey, setSelectedDateKey] = useState(initialSelectedDateKey ?? todayKey);
@@ -122,15 +155,35 @@ export function CalendarPage({
     }, {});
   }, [plans]);
 
+  const workoutSummariesByDate = useMemo(() => {
+    return workoutSummaries.reduce<Record<string, WorkoutSummary[]>>((byDate, summary) => {
+      byDate[summary.session.date] = [...(byDate[summary.session.date] ?? []), summary];
+      return byDate;
+    }, {});
+  }, [workoutSummaries]);
+
+  const cardioBySessionId = useMemo(() => {
+    return cardioRecords.reduce<Record<string, CardioRecord[]>>((bySession, record) => {
+      bySession[record.sessionId] = [...(bySession[record.sessionId] ?? []), record];
+      return bySession;
+    }, {});
+  }, [cardioRecords]);
+
   useEffect(() => {
     async function loadMonth() {
       const activeRoutine = await getActiveRoutine();
-      const [schedule, cycleItems, loadedRoutineDays, overrides] = await Promise.all([
+      const startKey = calendarDays[0]?.key ?? formatDateKey(visibleMonth);
+      const endKey = calendarDays[calendarDays.length - 1]?.key ?? formatDateKey(visibleMonth);
+      const [schedule, cycleItems, loadedRoutineDays, overrides, loadedWorkoutSummaries] = await Promise.all([
         getActiveWeeklySchedule(),
         activeRoutine ? getRoutineCyclePlan(activeRoutine.id) : [],
         getActiveRoutineDays(),
         activeRoutine ? db.calendarPlanOverrides.where('routineId').equals(activeRoutine.id).toArray() : [],
+        getWorkoutSummariesForDateRange(startKey, endKey),
       ]);
+      const sessionIds = new Set(loadedWorkoutSummaries.map((summary) => summary.session.id));
+      const loadedCardioRecords = (await db.cardioRecords.toArray())
+        .filter((record) => sessionIds.has(record.sessionId));
 
       const routineDayById = new Map(loadedRoutineDays.map((routineDay) => [routineDay.id, routineDay]));
       const overridesByDateMap = overrides.reduce<Record<string, CalendarPlanOverride>>((byDate, override) => {
@@ -176,10 +229,12 @@ export function CalendarPage({
       setRoutineDays(loadedRoutineDays);
       setOverridesByDate(overridesByDateMap);
       setPlans(plannedDays);
+      setWorkoutSummaries(loadedWorkoutSummaries);
+      setCardioRecords(loadedCardioRecords);
     }
 
     void loadMonth();
-  }, [reloadKey, todayKey, visibleMonth]);
+  }, [calendarDays, reloadKey, todayKey, visibleMonth]);
 
   function changeMonth(direction: -1 | 1) {
     setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + direction, 1));
@@ -196,6 +251,8 @@ export function CalendarPage({
   }
 
   async function handlePlanChange(value: string) {
+    if (!canEditCalendarPlan(selectedDateKey, todayKey)) return;
+
     if (value === '__cycle') {
       await clearCalendarPlanOverride(selectedDateKey);
     } else if (value === 'rest' || value === 'running' || value === 'free') {
@@ -217,6 +274,7 @@ export function CalendarPage({
 
   const selectedOverride = overridesByDate[selectedDateKey];
   const selectedPlan = plansByDate[selectedDateKey];
+  const canEditSelectedPlan = canEditCalendarPlan(selectedDateKey, todayKey);
   const selectedCyclePlanValue = selectedPlan
     ? selectedPlan.kind === 'routine'
       ? `routine:${selectedPlan.routineDay?.id ?? ''}`
@@ -269,8 +327,19 @@ export function CalendarPage({
         <div className="mt-2 grid grid-cols-7 gap-1">
           {calendarDays.map((day) => {
             const dayPlan = plansByDate[day.key];
-            const displayKind: WorkoutPlanKind | undefined = dayPlan?.kind ?? (day.isCurrentMonth ? 'rest' : undefined);
+            const dayWorkoutSummaries = workoutSummariesByDate[day.key] ?? [];
+            const useActuals = shouldUseActualsInPlanCalendar(day.key, todayKey);
+            const displayKind: WorkoutPlanKind | undefined = useActuals
+              ? undefined
+              : dayPlan?.kind ?? (day.isCurrentMonth ? 'rest' : undefined);
             const highlightsFuturePlan = Boolean(displayKind && displayKind !== 'rest');
+            const hasCompleted = dayWorkoutSummaries.some((summary) => summary.session.status === 'completed');
+            const hasInProgress = dayWorkoutSummaries.some((summary) => summary.session.status === 'in_progress');
+            const hasSkipped = dayWorkoutSummaries.some((summary) => summary.session.status === 'skipped');
+            const dayDistance = dayWorkoutSummaries.reduce((sum, summary) => (
+              sum + summarizeCardioDistance(cardioBySessionId[summary.session.id] ?? [])
+            ), 0);
+            const actualLabel = useActuals ? actualSummaryLabel(dayWorkoutSummaries, locale) : undefined;
 
             const isSelected = selectedDateKey === day.key;
             let cellStyle = '';
@@ -278,6 +347,12 @@ export function CalendarPage({
               cellStyle = 'bg-emerald-600/90 border-emerald-300 text-slate-100 ring-1 ring-emerald-300/70 shadow-[0_0_14px_-2px_rgba(46,196,182,0.45)]';
             } else if (day.key === todayKey) {
               cellStyle = 'bg-rose-100/90 border-rose-300 text-slate-950 hover:bg-rose-100';
+            } else if (useActuals && hasCompleted) {
+              cellStyle = 'bg-amber-300 border-amber-500 text-black hover:bg-amber-200';
+            } else if (useActuals && hasInProgress) {
+              cellStyle = 'bg-blue-100 border-blue-300 text-black hover:bg-blue-50';
+            } else if (useActuals && hasSkipped) {
+              cellStyle = 'bg-rose-200 border-rose-500 text-black hover:bg-rose-100';
             } else if (day.isCurrentMonth && highlightsFuturePlan) {
               cellStyle = 'bg-sky-100/90 border-sky-300 text-slate-950 hover:bg-sky-100';
             } else if (day.isCurrentMonth) {
@@ -294,15 +369,22 @@ export function CalendarPage({
                 type="button"
                 key={day.key}
                 onClick={() => selectDate(day.key)}
-                aria-label={`${day.key} ${displayKind ? planKindLabel(displayKind, locale) : ''}`.trim()}
+                aria-label={`${day.key} ${actualLabel ?? (displayKind ? planKindLabel(displayKind, locale) : '')}`.trim()}
                 className={`flex aspect-square min-h-12 flex-col rounded-xl p-1.5 border transition-all duration-200 active:scale-95 ${cellStyle}${todayOutline}`}
               >
                 <div className="flex w-full items-center justify-between text-primary">
                   <span className="text-xs font-black text-primary">{day.date.getDate()}</span>
-                  {displayKind === 'routine' || displayKind === 'free' ? <Dumbbell aria-hidden="true" size={13} /> : null}
-                  {displayKind === 'running' ? <Footprints aria-hidden="true" size={13} /> : null}
-                  {displayKind === 'rest' ? <Bed aria-hidden="true" size={13} /> : null}
+                  {useActuals && dayDistance > 0 ? <Footprints aria-hidden="true" size={13} /> : null}
+                  {useActuals && dayDistance <= 0 && dayWorkoutSummaries.length > 0 ? <Dumbbell aria-hidden="true" size={13} /> : null}
+                  {!useActuals && (displayKind === 'routine' || displayKind === 'free') ? <Dumbbell aria-hidden="true" size={13} /> : null}
+                  {!useActuals && displayKind === 'running' ? <Footprints aria-hidden="true" size={13} /> : null}
+                  {!useActuals && displayKind === 'rest' ? <Bed aria-hidden="true" size={13} /> : null}
                 </div>
+                {actualLabel ? (
+                  <span className="mt-0.5 truncate text-[11px] font-extrabold text-black">
+                    {actualLabel}
+                  </span>
+                ) : null}
                 {displayKind ? (
                   <span className="mt-0.5 truncate text-[11px] font-extrabold text-primary">
                     {displayKind === 'routine' ? getRoutineDayDisplayName(dayPlan?.routineDay, locale) ?? planKindLabel(displayKind, locale) : planKindLabel(displayKind, locale)}
@@ -338,29 +420,37 @@ export function CalendarPage({
           ) : null}
         </div>
         
-        <div className="space-y-1">
-          <label htmlFor="calendar-workout-plan-select" className="block text-xs font-extrabold text-slate-100">
-            {locale === 'ko' ? '이 날짜의 운동계획 수정' : 'Modify plan for this date'}
-          </label>
-          <select
-            id="calendar-workout-plan-select"
-            aria-label="Selected date workout plan"
-            value={selectedPlanValue}
-            onChange={(event) => void handlePlanChange(event.target.value)}
-            className="min-h-10 w-full cursor-pointer rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-semibold text-slate-100 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
-          >
-            <option value="__none" disabled className="bg-slate-900 text-slate-200">{locale === 'ko' ? '없음' : 'None'}</option>
-            <option value="__cycle" className="bg-slate-900 text-slate-200">{locale === 'ko' ? '운동사이클 따르기' : 'Follow workout cycle'}</option>
-            <option value="rest" className="bg-slate-900 text-slate-200">{t(locale, 'rest')}</option>
-            <option value="running" className="bg-slate-900 text-slate-200">{locale === 'ko' ? '러닝' : 'Running'}</option>
-            <option value="free" className="bg-slate-900 text-slate-200">{locale === 'ko' ? '자유운동' : 'Free workout'}</option>
-            {routineDays.map((routineDay) => (
-              <option key={routineDay.id} value={`routine:${routineDay.id}`} className="bg-slate-900 text-slate-200">
-                {getRoutineDayDisplayName(routineDay, locale)}
-              </option>
-            ))}
-          </select>
-        </div>
+        {canEditSelectedPlan ? (
+          <div className="space-y-1">
+            <label htmlFor="calendar-workout-plan-select" className="block text-xs font-extrabold text-slate-100">
+              {locale === 'ko' ? '이 날짜의 운동계획 수정' : 'Modify plan for this date'}
+            </label>
+            <select
+              id="calendar-workout-plan-select"
+              aria-label="Selected date workout plan"
+              value={selectedPlanValue}
+              onChange={(event) => void handlePlanChange(event.target.value)}
+              className="min-h-10 w-full cursor-pointer rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-semibold text-slate-100 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
+            >
+              <option value="__none" disabled className="bg-slate-900 text-slate-200">{locale === 'ko' ? '없음' : 'None'}</option>
+              <option value="__cycle" className="bg-slate-900 text-slate-200">{locale === 'ko' ? '운동사이클 따르기' : 'Follow workout cycle'}</option>
+              <option value="rest" className="bg-slate-900 text-slate-200">{t(locale, 'rest')}</option>
+              <option value="running" className="bg-slate-900 text-slate-200">{locale === 'ko' ? '러닝' : 'Running'}</option>
+              <option value="free" className="bg-slate-900 text-slate-200">{locale === 'ko' ? '자유운동' : 'Free workout'}</option>
+              {routineDays.map((routineDay) => (
+                <option key={routineDay.id} value={`routine:${routineDay.id}`} className="bg-slate-900 text-slate-200">
+                  {getRoutineDayDisplayName(routineDay, locale)}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2.5 text-xs font-bold leading-relaxed text-slate-200">
+            {locale === 'ko'
+              ? '오늘 이전 날짜는 계획이 아니라 실적을 표시합니다. 과거 운동 기록 수정은 실적 메뉴에서 처리합니다.'
+              : 'Past dates show actual records, not plans. Use Actuals to edit historical workout records.'}
+          </p>
+        )}
 
         <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2.5 text-xs font-bold leading-relaxed text-slate-200">
           {locale === 'ko'
