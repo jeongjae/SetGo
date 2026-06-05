@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { actualsDayCellLabel, actualsDayCellMetric, actualsStatusLabel, buildActualsCalendarDays } from './ActualsPage';
+import {
+  actualsDayCellClass,
+  actualsDayCellLabel,
+  actualsDayCellMetric,
+  actualsStatusLabel,
+  buildActualsCalendarDays,
+} from './ActualsPage';
 import type { WorkoutSummary } from '../db/workouts';
 
 describe('actuals calendar range', () => {
@@ -54,5 +60,22 @@ describe('actuals day cell metric', () => {
     expect(actualsDayCellMetric(2400, 0)).toBe('2,400kg');
     expect(actualsDayCellMetric(0, 2.4)).toBe('2.4km');
     expect(actualsDayCellMetric(0, 0)).toBeUndefined();
+  });
+});
+
+describe('actuals day cell style', () => {
+  it('keeps completed styling when the day is selected', () => {
+    const className = actualsDayCellClass({
+      hasCompleted: true,
+      hasInProgress: false,
+      hasSkipped: false,
+      isFuture: false,
+      isSelected: true,
+    });
+
+    expect(className).toContain('bg-amber-300');
+    expect(className).toContain('text-slate-950');
+    expect(className).toContain('ring-cyan-400');
+    expect(className).not.toContain('bg-emerald');
   });
 });

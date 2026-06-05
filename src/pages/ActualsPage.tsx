@@ -71,6 +71,35 @@ export function actualsStatusLabel(locale: 'ko' | 'en', status: WorkoutStatus, d
   return workoutStatusLabel(locale, status);
 }
 
+export function actualsDayCellClass({
+  hasCompleted,
+  hasInProgress,
+  hasSkipped,
+  isFuture,
+  isSelected,
+}: {
+  hasCompleted: boolean;
+  hasInProgress: boolean;
+  hasSkipped: boolean;
+  isFuture: boolean;
+  isSelected: boolean;
+}): string {
+  let cellStyle = 'bg-slate-850/75 border-slate-650 text-slate-100 hover:bg-slate-700';
+  if (hasCompleted) {
+    cellStyle = 'bg-amber-300 border-amber-500 text-slate-950 shadow-[0_0_0_1px_rgba(245,158,11,0.18)] hover:bg-amber-200';
+  } else if (hasInProgress) {
+    cellStyle = 'bg-cyan-200 border-cyan-500 text-slate-950 shadow-[0_0_0_1px_rgba(8,145,178,0.16)] hover:bg-cyan-100';
+  } else if (hasSkipped) {
+    cellStyle = 'bg-rose-200 border-rose-500 text-slate-950 hover:bg-rose-100';
+  } else if (isFuture) {
+    cellStyle = 'bg-slate-900/40 border-transparent text-slate-500';
+  }
+
+  return isSelected
+    ? `${cellStyle} ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900`
+    : cellStyle;
+}
+
 export function ActualsPage({
   initialSelectedDateKey,
   onSelectedDateChange,
@@ -220,18 +249,13 @@ export function ActualsPage({
               const dayMetric = actualsDayCellMetric(dayVolume, dayDistance);
               const isSelected = selectedDateKey === day.key;
               const isFuture = day.key > todayKey;
-              let cellStyle = 'bg-slate-850/75 border-slate-650 text-slate-100 hover:bg-slate-700';
-              if (isSelected) {
-                cellStyle = 'bg-emerald-600/90 border-emerald-300 text-white ring-1 ring-emerald-300/70';
-              } else if (hasCompleted) {
-                cellStyle = 'bg-yellow-100/90 border-yellow-300 text-slate-950 hover:bg-yellow-100';
-              } else if (hasInProgress) {
-                cellStyle = 'bg-cyan-100/90 border-cyan-300 text-slate-950 hover:bg-cyan-100';
-              } else if (hasSkipped) {
-                cellStyle = 'bg-rose-100/90 border-rose-300 text-slate-950 hover:bg-rose-100';
-              } else if (isFuture) {
-                cellStyle = 'bg-slate-900/40 border-transparent text-slate-500';
-              }
+              const cellStyle = actualsDayCellClass({
+                hasCompleted,
+                hasInProgress,
+                hasSkipped,
+                isFuture,
+                isSelected,
+              });
 
               return (
                 <button
@@ -246,10 +270,10 @@ export function ActualsPage({
                     {dayDistance > 0 ? <Footprints aria-hidden="true" size={12} /> : daySummaries.length > 0 ? <Dumbbell aria-hidden="true" size={12} /> : null}
                   </div>
                   {dayLabel ? (
-                    <span className="mt-0.5 w-full truncate text-[10px] font-black leading-none">{dayLabel}</span>
+                    <span className="mt-0.5 w-full truncate text-[11px] font-black leading-tight text-current">{dayLabel}</span>
                   ) : null}
                   {dayMetric ? (
-                    <span className="mt-0.5 w-full truncate text-[9px] font-extrabold leading-none opacity-85">{dayMetric}</span>
+                    <span className="w-full truncate text-[10px] font-black leading-tight text-current">{dayMetric}</span>
                   ) : null}
                 </button>
               );
