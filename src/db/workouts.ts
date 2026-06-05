@@ -1,6 +1,6 @@
 import { db } from './db';
 import { getActiveRoutine, getRoutineScheduleForDate } from './routines';
-import type { CardioRecord, ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
+import type { CardioRecord, ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutExercise, WorkoutSession, WorkoutSessionKind, WorkoutSet } from '../types';
 import { formatDateKey, getTimeBand } from '../utils/date';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg, calculateSessionStrengthVolumeKg } from '../domain/volume';
 import { isWarmupOnlyExercise } from '../domain/exercises';
@@ -24,6 +24,13 @@ export type WorkoutExerciseLog = {
   previousSets: WorkoutSet[];
 };
 
+export type WorkoutStartKind = WorkoutSessionKind;
+
+export type WorkoutStartOptions = {
+  createNew?: boolean;
+  kind?: WorkoutStartKind;
+};
+
 async function getWorkoutSessionsForDate(date: string): Promise<WorkoutSession[]> {
   try {
     return await db.workoutSessions
@@ -39,9 +46,10 @@ async function getWorkoutSessionsForDate(date: string): Promise<WorkoutSession[]
 export function selectReusableInProgressSession(
   sessions: WorkoutSession[],
   selectedRoutineDayId?: string,
-  options: { createNew?: boolean } = {},
+  options: WorkoutStartOptions = {},
 ): WorkoutSession | undefined {
   if (options.createNew) return undefined;
+  if (options.kind && options.kind !== 'planned') return undefined;
 
   const inProgressSessions = sessions
     .filter((session) => session.status === 'in_progress')
@@ -58,6 +66,7 @@ export function createWorkoutSessionForDate(
   _existingSessionCount: number,
   routineId?: string,
   routineDayId?: string,
+  entryKind: WorkoutStartKind = 'planned',
 ): WorkoutSession {
   const timestamp = now.toISOString();
   const isFirstBackdatedSession = _existingSessionCount === 0 && date !== formatDateKey(now);
@@ -69,6 +78,7 @@ export function createWorkoutSessionForDate(
     timeBand: getTimeBand(new Date(`${date}T12:00:00`)),
     routineId,
     routineDayId,
+    entryKind: entryKind === 'planned' ? undefined : entryKind,
     status: 'in_progress',
     totalStrengthVolumeKg: 0,
     createdAt: timestamp,
@@ -85,7 +95,7 @@ export function selectWorkoutStartSession(
   now: Date,
   existingSessions: WorkoutSession[],
   selectedRoutineDayId?: string,
-  options: { createNew?: boolean } = {},
+  options: WorkoutStartOptions = {},
   routineId?: string,
   routineDayId?: string,
 ): WorkoutStartSessionSelection {
@@ -102,6 +112,7 @@ export function selectWorkoutStartSession(
       existingSessions.length,
       routineId,
       routineDayId,
+      options.kind ?? 'planned',
     ),
   };
 }
@@ -109,10 +120,11 @@ export function selectWorkoutStartSession(
 export async function getOrCreateWorkoutForDate(
   date: string,
   selectedRoutineDayId?: string,
-  options: { createNew?: boolean } = {},
+  options: WorkoutStartOptions = {},
 ): Promise<ActiveWorkout> {
   const now = new Date();
   const sessionDate = new Date(`${date}T12:00:00`);
+  const startKind = options.kind ?? 'planned';
   const activeRoutine = await getActiveRoutine().catch((error) => {
     console.warn('Failed to load active routine while starting workout', error);
     return undefined;
@@ -123,16 +135,18 @@ export async function getOrCreateWorkoutForDate(
       return [] as RoutineDay[];
     })
     : [];
-  const scheduledPlan = selectedRoutineDayId
+  const shouldUsePlannedRoutine = startKind === 'planned';
+  const scheduledPlan = selectedRoutineDayId || !shouldUsePlannedRoutine
     ? undefined
     : await getRoutineScheduleForDate(sessionDate).catch((error) => {
       console.warn('Failed to load scheduled plan while starting workout', error);
       return undefined;
     });
   const scheduledRoutineDay = scheduledPlan?.kind === 'routine' ? scheduledPlan.routineDay : undefined;
-  const shouldSeedRunning = !selectedRoutineDayId && scheduledPlan?.kind === 'running';
-  const routineDay = routineDays.find((day) => day.id === selectedRoutineDayId)
-    ?? scheduledRoutineDay;
+  const shouldSeedRunning = startKind === 'running' || (!selectedRoutineDayId && scheduledPlan?.kind === 'running');
+  const routineDay = shouldUsePlannedRoutine
+    ? routineDays.find((day) => day.id === selectedRoutineDayId) ?? scheduledRoutineDay
+    : undefined;
 
   const existingSessions = await getWorkoutSessionsForDate(date);
   const sessionSelection = selectWorkoutStartSession(
@@ -141,7 +155,7 @@ export async function getOrCreateWorkoutForDate(
     existingSessions,
     selectedRoutineDayId,
     options,
-    activeRoutine?.id,
+    routineDay ? activeRoutine?.id : undefined,
     routineDay?.id,
   );
 
@@ -162,7 +176,7 @@ export async function getOrCreateWorkoutForDate(
 
     return {
       session: existingSession,
-      routineName: activeRoutine?.name,
+      routineName: existingRoutineDay ? activeRoutine?.name : undefined,
       routineDay: existingRoutineDay,
     };
   }
@@ -178,13 +192,16 @@ export async function getOrCreateWorkoutForDate(
 
   return {
     session,
-    routineName: activeRoutine?.name,
+    routineName: routineDay ? activeRoutine?.name : undefined,
     routineDay,
   };
 }
 
-export async function getOrCreateTodayWorkout(selectedRoutineDayId?: string): Promise<ActiveWorkout> {
-  return getOrCreateWorkoutForDate(formatDateKey(new Date()), selectedRoutineDayId);
+export async function getOrCreateTodayWorkout(
+  selectedRoutineDayId?: string,
+  options: WorkoutStartOptions = {},
+): Promise<ActiveWorkout> {
+  return getOrCreateWorkoutForDate(formatDateKey(new Date()), selectedRoutineDayId, options);
 }
 
 export async function getWorkoutBySessionId(sessionId: string): Promise<ActiveWorkout | undefined> {

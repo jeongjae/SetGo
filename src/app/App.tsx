@@ -9,7 +9,7 @@ import { RoutineSetupPage } from '../pages/RoutineSetupPage';
 import { StatsPage } from '../pages/StatsPage';
 import { TodayPage } from '../pages/TodayPage';
 import { WorkoutPage } from '../pages/WorkoutPage';
-import { getOrCreateTodayWorkout, getOrCreateWorkoutForDate } from '../db/workouts';
+import { getOrCreateTodayWorkout, getOrCreateWorkoutForDate, type WorkoutStartKind } from '../db/workouts';
 import { formatDateKey } from '../utils/date';
 import { requestPersistentStorage } from '../db/db';
 
@@ -70,7 +70,13 @@ export function App() {
     setView(nextView);
   }
 
-  async function handleStartWorkout(routineDayId?: string, dateKey?: string, sessionId?: string, createNew = false) {
+  async function handleStartWorkout(
+    routineDayId?: string,
+    dateKey?: string,
+    sessionId?: string,
+    createNew = false,
+    kind: WorkoutStartKind = 'planned',
+  ) {
     setWorkoutMode('active');
     if (dateKey) {
       setCalendarSelectedDateKey(dateKey);
@@ -87,8 +93,8 @@ export function App() {
 
     try {
       const workout = dateKey
-        ? await getOrCreateWorkoutForDate(dateKey, routineDayId, { createNew })
-        : await getOrCreateTodayWorkout(routineDayId);
+        ? await getOrCreateWorkoutForDate(dateKey, routineDayId, { createNew, kind })
+        : await getOrCreateTodayWorkout(routineDayId, { createNew, kind });
       setActiveWorkoutSessionId(workout.session.id);
       setRefreshKey((current) => current + 1);
       setView('workout');
@@ -105,13 +111,17 @@ export function App() {
     setView('workout');
   }
 
-  async function handleAddHistoricalWorkout(dateKey: string) {
+  async function handleAddHistoricalWorkout(dateKey: string, kind: WorkoutStartKind, routineDayId?: string) {
     setCalendarSelectedDateKey(dateKey);
+    const todayKey = formatDateKey(new Date());
     setWorkoutReturnView('actuals');
-    setWorkoutMode('history-edit');
+    setWorkoutMode(dateKey === todayKey ? 'active' : 'history-edit');
 
     try {
-      const workout = await getOrCreateWorkoutForDate(dateKey, undefined, { createNew: true });
+      const workout = await getOrCreateWorkoutForDate(dateKey, routineDayId, {
+        createNew: true,
+        kind,
+      });
       setActiveWorkoutSessionId(workout.session.id);
       setRefreshKey((current) => current + 1);
       setView('workout');
@@ -147,7 +157,7 @@ export function App() {
           <ActualsPage
             initialSelectedDateKey={calendarSelectedDateKey}
             onSelectedDateChange={setCalendarSelectedDateKey}
-            onAddHistoricalWorkout={(dateKey) => void handleAddHistoricalWorkout(dateKey)}
+            onAddHistoricalWorkout={(dateKey, kind, routineDayId) => void handleAddHistoricalWorkout(dateKey, kind, routineDayId)}
             onEditHistoricalWorkout={handleEditHistoricalWorkout}
             onOpenStats={() => setView('stats')}
           />
@@ -162,7 +172,7 @@ export function App() {
             ? <WorkoutPage mode={workoutMode} sessionId={activeWorkoutSessionId} onBack={handleWorkoutBack} onCompleted={handleWorkoutCompleted} onSkipped={handleWorkoutSkipped} />
             : <TodayPage
               refreshKey={refreshKey}
-              onStartWorkout={(routineDayId, sessionId, createNew) => void handleStartWorkout(routineDayId, undefined, sessionId, createNew)}
+              onStartWorkout={(routineDayId, sessionId, createNew, kind) => void handleStartWorkout(routineDayId, undefined, sessionId, createNew, kind)}
             />;
 
   return (

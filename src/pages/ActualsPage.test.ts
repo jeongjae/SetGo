@@ -4,8 +4,10 @@ import {
   actualsDayCellLabel,
   actualsDayCellTextClass,
   actualsSelectedWeekIndexForDate,
+  actualsSessionDetailLabel,
   actualsStatusLabel,
   buildActualsCalendarDays,
+  countActualLoggedExercisesForSession,
 } from './ActualsPage';
 import type { WorkoutSummary } from '../db/workouts';
 
@@ -53,6 +55,66 @@ describe('actuals day cell label', () => {
     } as WorkoutSummary;
 
     expect(actualsDayCellLabel([summary], 'en')).toBe('Upper A');
+  });
+
+  it('does not use the routine name as the calendar cell label', () => {
+    const summary = {
+      session: {
+        id: 'session_1',
+        date: '2026-05-16',
+        status: 'completed',
+        totalStrengthVolumeKg: 1000,
+        timeBand: 'afternoon',
+        createdAt: '2026-05-16T12:00:00.000',
+        updatedAt: '2026-05-16T12:00:00.000',
+      },
+      routineName: '4-Day Routine',
+      exerciseCount: 7,
+      cardioCount: 0,
+    } as WorkoutSummary;
+
+    expect(actualsDayCellLabel([summary], 'en')).toBe('Workout');
+  });
+});
+
+describe('actuals logged exercise count', () => {
+  it('counts only exercises with completed sets, not every seeded routine exercise', () => {
+    const workoutExercises = Array.from({ length: 6 }, (_, index) => ({
+      id: `workout_exercise_${index + 1}`,
+      sessionId: 'session_1',
+    }));
+    const workoutSets = [
+      { workoutExerciseId: 'workout_exercise_1', isCompleted: true },
+      { workoutExerciseId: 'workout_exercise_2', isCompleted: false },
+      { workoutExerciseId: 'workout_exercise_3', isCompleted: false },
+      { workoutExerciseId: 'workout_exercise_4', isCompleted: false },
+      { workoutExerciseId: 'workout_exercise_5', isCompleted: false },
+      { workoutExerciseId: 'workout_exercise_6', isCompleted: false },
+    ];
+
+    expect(countActualLoggedExercisesForSession('session_1', workoutExercises, workoutSets)).toBe(1);
+  });
+});
+
+describe('actuals session detail label', () => {
+  it('combines completed strength work and running detail', () => {
+    expect(actualsSessionDetailLabel({
+      actualExerciseCount: 3,
+      totalStrengthVolumeKg: 5000,
+      cardioDistanceKm: 3,
+      cardioMinutes: 20,
+      locale: 'ko',
+    })).toBe('3개 운동 / 5,000kg, 러닝 / 20분, 3.00km');
+  });
+
+  it('keeps running-only records visible without hiding strength logic', () => {
+    expect(actualsSessionDetailLabel({
+      actualExerciseCount: 0,
+      totalStrengthVolumeKg: 0,
+      cardioDistanceKm: 3,
+      cardioMinutes: 20,
+      locale: 'ko',
+    })).toBe('러닝 / 20분, 3.00km');
   });
 });
 

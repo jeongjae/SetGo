@@ -1,4 +1,4 @@
-import { Dumbbell, Play, Trash2 } from 'lucide-react';
+import { Dumbbell, Footprints, Play, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { db } from '../db/db';
 import {
@@ -8,15 +8,15 @@ import {
   getRoutineScheduleForDate,
 } from '../db/routines';
 import { seedDefaultExercises } from '../db/seed';
-import { deleteWorkoutSession, getRecentWorkoutSummaries, getTodayWorkout, getWorkoutSummariesForDate, type WorkoutSummary } from '../db/workouts';
+import { deleteWorkoutSession, getRecentWorkoutSummaries, getTodayWorkout, getWorkoutCardioRecords, getWorkoutSummariesForDate, type WorkoutSummary } from '../db/workouts';
 import { getExerciseName } from '../domain/exercises';
 import { exerciseCountLabel, getStoredLocale, t, workoutStatusLabel } from '../i18n/i18n';
-import type { Routine, RoutineDay, WorkoutSession } from '../types';
+import type { CardioRecord, Routine, RoutineDay, WorkoutSession, WorkoutSessionKind } from '../types';
 import { formatDateKey } from '../utils/date';
 
 type TodayPageProps = {
   refreshKey: number;
-  onStartWorkout: (routineDayId?: string, sessionId?: string, createNew?: boolean) => void;
+  onStartWorkout: (routineDayId?: string, sessionId?: string, createNew?: boolean, kind?: WorkoutSessionKind) => void;
 };
 
 function getRoutinePlanPrefix(routine: Routine | undefined, locale: 'ko' | 'en'): string | undefined {
@@ -24,6 +24,41 @@ function getRoutinePlanPrefix(routine: Routine | undefined, locale: 'ko' | 'en')
   const splitNumber = routine.name.match(/(\d+)[-\s]?Day/i)?.[1] ?? routine.name.match(/(\d+)분할/)?.[1];
   if (splitNumber) return locale === 'ko' ? `${splitNumber}분할 루틴` : `${splitNumber}-Day Routine`;
   return routine.name;
+}
+
+export function todayWorkoutSummaryLabel(
+  summary: Pick<WorkoutSummary, 'routineDay' | 'routineName'> & {
+    session: Pick<WorkoutSession, 'entryKind'>;
+  },
+  locale: 'ko' | 'en',
+): string {
+  if (summary.session.entryKind === 'running') return locale === 'ko' ? '러닝' : 'Running';
+  if (summary.session.entryKind === 'free') return t(locale, 'freeWorkout');
+  return getRoutineDayDisplayName(summary.routineDay, locale) ?? summary.routineName ?? t(locale, 'freeWorkout');
+}
+
+export function summarizeRunningRecordsForTodayCard(
+  records: Array<Pick<CardioRecord, 'distanceKm' | 'startedAt' | 'endedAt' | 'isDraft'>>,
+  locale: 'ko' | 'en',
+): string | undefined {
+  const loggedRecords = records.filter((record) => record.isDraft !== true);
+  if (loggedRecords.length === 0) return undefined;
+
+  const distanceKm = loggedRecords.reduce((sum, record) => sum + (record.distanceKm ?? 0), 0);
+  const minutes = loggedRecords.reduce((sum, record) => {
+    const startedAt = new Date(record.startedAt).getTime();
+    const endedAt = new Date(record.endedAt).getTime();
+    if (Number.isNaN(startedAt) || Number.isNaN(endedAt)) return sum;
+    return sum + Math.max(1, Math.round((endedAt - startedAt) / 60000));
+  }, 0);
+
+  const minuteLabel = locale === 'ko' ? '분' : 'min';
+  return `${distanceKm.toFixed(1)} km / ${minutes} ${minuteLabel}`;
+}
+
+function isRunningWorkoutSummary(summary: WorkoutSummary): boolean {
+  return summary.session.entryKind === 'running'
+    || (summary.cardioCount > 0 && summary.exerciseCount === 0);
 }
 
 export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
@@ -35,9 +70,11 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const [nextRoutineDay, setNextRoutineDay] = useState<RoutineDay | undefined>();
   const [plannedExerciseNames, setPlannedExerciseNames] = useState<string[]>([]);
   const [latestFinishedWorkout, setLatestFinishedWorkout] = useState<WorkoutSummary | undefined>();
+  const [latestFinishedCardioRecords, setLatestFinishedCardioRecords] = useState<CardioRecord[]>([]);
   const [isTodayRestDay, setIsTodayRestDay] = useState(false);
   const [isTodayRunningPlan, setIsTodayRunningPlan] = useState(false);
   const [todayInProgressWorkouts, setTodayInProgressWorkouts] = useState<WorkoutSummary[]>([]);
+  const [selectedWorkoutKind, setSelectedWorkoutKind] = useState<WorkoutSessionKind>('planned');
   const [reloadKey, setReloadKey] = useState(0);
   const [locale] = useState(() => getStoredLocale());
 
@@ -67,7 +104,13 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         setInProgressSession(todayWorkout?.session);
         setTodayRoutineDay(todaySchedule.routineDay);
         setNextRoutineDay(nextDay);
-        setLatestFinishedWorkout(recentWorkouts.find((summary) => summary.session.status === 'completed'));
+        const latestCompletedWorkout = recentWorkouts.find((summary) => summary.session.status === 'completed');
+        const latestCardioRecords = latestCompletedWorkout
+          ? await getWorkoutCardioRecords(latestCompletedWorkout.session.id)
+          : [];
+
+        setLatestFinishedWorkout(latestCompletedWorkout);
+        setLatestFinishedCardioRecords(latestCardioRecords);
         setIsTodayRestDay(todaySchedule.isRestDay);
         setIsTodayRunningPlan(todaySchedule.kind === 'running');
         setTodayInProgressWorkouts(todayWorkouts.filter((summary) => summary.session.status === 'in_progress'));
@@ -87,7 +130,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
 
   useEffect(() => {
     async function loadPlannedExercises() {
-      if (!selectedRoutineDayId) {
+      if (selectedWorkoutKind !== 'planned' || !selectedRoutineDayId) {
         setPlannedExerciseNames([]);
         return;
       }
@@ -102,12 +145,19 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
     }
 
     void loadPlannedExercises();
-  }, [locale, selectedRoutineDayId]);
+  }, [locale, selectedRoutineDayId, selectedWorkoutKind]);
 
   const selectedRoutineDay = routineDays.find((routineDay) => routineDay.id === selectedRoutineDayId);
+  const selectedKindLabel = selectedWorkoutKind === 'running'
+    ? locale === 'ko' ? '러닝' : 'Running'
+    : selectedWorkoutKind === 'free'
+      ? t(locale, 'freeWorkout')
+      : undefined;
   const activeRoutineName = activeRoutine?.name;
   const routinePlanPrefix = getRoutinePlanPrefix(activeRoutine, locale);
-  const selectedRoutineDayLabel = getRoutineDayDisplayName(selectedRoutineDay ?? todayRoutineDay, locale) ?? t(locale, 'freeWorkout');
+  const selectedRoutineDayLabel = selectedKindLabel
+    ?? getRoutineDayDisplayName(selectedRoutineDay ?? todayRoutineDay, locale)
+    ?? t(locale, 'freeWorkout');
   const planLabel = inProgressSession
     ? `${routinePlanPrefix ?? t(locale, 'routine')}: ${selectedRoutineDayLabel}`
     : isTodayRunningPlan
@@ -116,13 +166,18 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
       ? t(locale, 'restDay')
       : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
   const workoutRecordLabel = locale === 'ko' ? '운동 기록' : 'Log workout';
-  const matchingInProgressWorkout = todayInProgressWorkouts.find(
-    (summary) => summary.session.routineDayId === selectedRoutineDayId,
-  );
+  const matchingInProgressWorkout = todayInProgressWorkouts.find((summary) => {
+    if (selectedWorkoutKind === 'running') return summary.session.entryKind === 'running';
+    if (selectedWorkoutKind === 'free') return summary.session.entryKind === 'free';
+    return summary.session.routineDayId === selectedRoutineDayId;
+  });
+  const latestWorkoutDetail = latestFinishedWorkout && isRunningWorkoutSummary(latestFinishedWorkout)
+    ? summarizeRunningRecordsForTodayCard(latestFinishedCardioRecords, locale)
+    : undefined;
 
   function handleStartSelectedWorkout() {
     if (matchingInProgressWorkout) {
-      onStartWorkout(selectedRoutineDayId, matchingInProgressWorkout.session.id);
+      onStartWorkout(matchingInProgressWorkout.session.routineDayId, matchingInProgressWorkout.session.id);
       return;
     }
 
@@ -135,7 +190,13 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
       if (!shouldCreate) return;
     }
 
-    onStartWorkout(selectedRoutineDayId, undefined, todayInProgressWorkouts.length > 0);
+    const routineDayId = selectedWorkoutKind === 'planned' ? selectedRoutineDayId : undefined;
+    onStartWorkout(
+      routineDayId,
+      undefined,
+      todayInProgressWorkouts.length > 0 || selectedWorkoutKind !== 'planned',
+      selectedWorkoutKind,
+    );
   }
 
   async function handleDeleteTodayWorkout(sessionId: string) {
@@ -196,7 +257,10 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
           {isTodayRestDay && !inProgressSession && nextRoutineDay ? (
             <button
               type="button"
-              onClick={() => setSelectedRoutineDayId(nextRoutineDay.id)}
+              onClick={() => {
+                setSelectedWorkoutKind('planned');
+                setSelectedRoutineDayId(nextRoutineDay.id);
+              }}
               className={`min-h-11 w-full rounded-xl border px-3 text-left text-sm font-bold transition-all active:scale-95 ${
                 selectedRoutineDayId === nextRoutineDay.id
                   ? 'border-accent-dark bg-accent-dark text-white'
@@ -207,15 +271,57 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             </button>
           ) : null}
 
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedWorkoutKind('planned')}
+              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs font-black transition-all active:scale-95 ${
+                selectedWorkoutKind === 'planned'
+                  ? 'border-accent-dark bg-accent-dark text-white'
+                  : 'border-slate-650 bg-white text-primary hover:bg-accent-soft'
+              }`}
+            >
+              <Dumbbell aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? '루틴' : 'Routine'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedWorkoutKind('running')}
+              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs font-black transition-all active:scale-95 ${
+                selectedWorkoutKind === 'running'
+                  ? 'border-sky-500 bg-sky-500 text-white'
+                  : 'border-slate-650 bg-white text-primary hover:bg-sky-50'
+              }`}
+            >
+              <Footprints aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? '러닝' : 'Running'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedWorkoutKind('free')}
+              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs font-black transition-all active:scale-95 ${
+                selectedWorkoutKind === 'free'
+                  ? 'border-cyan-500 bg-cyan-500 text-white'
+                  : 'border-slate-650 bg-white text-primary hover:bg-cyan-50'
+              }`}
+            >
+              <Plus aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? '자유' : 'Free'}</span>
+            </button>
+          </div>
+
           {routineDays.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {routineDays.map((routineDay) => (
                 <button
                   key={routineDay.id}
                   type="button"
-                  onClick={() => setSelectedRoutineDayId(routineDay.id)}
+                  onClick={() => {
+                    setSelectedWorkoutKind('planned');
+                    setSelectedRoutineDayId(routineDay.id);
+                  }}
                   className={`min-h-11 rounded-2xl border px-4 text-sm font-bold transition-all active:scale-95 ${
-                    selectedRoutineDayId === routineDay.id
+                    selectedWorkoutKind === 'planned' && selectedRoutineDayId === routineDay.id
                       ? 'border-accent-dark bg-accent-dark text-white'
                       : 'border-slate-650 bg-white text-primary hover:bg-accent-soft'
                   }`}
@@ -249,7 +355,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
                 <span>{latestFinishedWorkout.session.date}</span>
                 <span className="text-slate-400">/</span>
                 <span className="font-black text-success">
-                  {getRoutineDayDisplayName(latestFinishedWorkout.routineDay, locale) ?? latestFinishedWorkout.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}
+                  {todayWorkoutSummaryLabel(latestFinishedWorkout, locale)}
                 </span>
               </>
             ) : (
@@ -258,7 +364,9 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
           </h2>
           <p className="mt-1.5 text-sm font-semibold leading-5 text-text-secondary">
             {latestFinishedWorkout
-              ? `${workoutStatusLabel(locale, latestFinishedWorkout.session.status)} · ${exerciseCountLabel(locale, latestFinishedWorkout.exerciseCount)} · ${latestFinishedWorkout.session.totalStrengthVolumeKg.toLocaleString()} kg`
+              ? latestWorkoutDetail
+                ? `${workoutStatusLabel(locale, latestFinishedWorkout.session.status)} · ${latestWorkoutDetail}`
+                : `${workoutStatusLabel(locale, latestFinishedWorkout.session.status)} · ${exerciseCountLabel(locale, latestFinishedWorkout.exerciseCount)} · ${latestFinishedWorkout.session.totalStrengthVolumeKg.toLocaleString()} kg`
               : locale === 'ko' ? '운동을 완료하면 기록이 쌓입니다.' : 'Complete a session to build your local history.'}
           </p>
         </section>
@@ -276,7 +384,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
                   className="min-w-0 flex-1 text-left"
                 >
                   <span className="block truncate text-sm font-black text-primary">
-                    {getRoutineDayDisplayName(summary.routineDay, locale) ?? summary.routineName ?? t(locale, 'freeWorkout')}
+                    {todayWorkoutSummaryLabel(summary, locale)}
                   </span>
                   <span className="mt-0.5 block text-xs font-bold text-text-secondary">
                     {locale === 'ko' ? '이어 기록하기' : 'Continue logging'}

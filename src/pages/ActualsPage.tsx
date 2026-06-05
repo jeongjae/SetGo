@@ -1,17 +1,17 @@
 import { BarChart3, CalendarRange, Dumbbell, Footprints, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { db } from '../db/db';
-import { deleteWorkoutSession, getWorkoutSummariesForDateRange, type WorkoutSummary } from '../db/workouts';
+import { deleteWorkoutSession, getWorkoutSummariesForDateRange, type WorkoutStartKind, type WorkoutSummary } from '../db/workouts';
 import { getExerciseCategories } from '../domain/exercises';
-import { getRoutineDayDisplayName } from '../db/routines';
+import { getActiveRoutineDays, getRoutineDayDisplayName } from '../db/routines';
 import { getStoredLocale, t, workoutStatusLabel } from '../i18n/i18n';
 import { addDays, buildDateRange, formatDateKey } from '../utils/date';
-import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSet, WorkoutStatus } from '../types';
+import type { CardioRecord, ExerciseMaster, RoutineDay, WorkoutExercise, WorkoutSet, WorkoutStatus } from '../types';
 
 type ActualsPageProps = {
   initialSelectedDateKey?: string;
   onSelectedDateChange?: (dateKey: string) => void;
-  onAddHistoricalWorkout: (dateKey: string) => void;
+  onAddHistoricalWorkout: (dateKey: string, kind: WorkoutStartKind, routineDayId?: string) => void;
   onEditHistoricalWorkout: (sessionId: string, dateKey: string) => void;
   onOpenStats: () => void;
 };
@@ -38,9 +38,12 @@ export function buildActualsCalendarDays(referenceDate: Date): ActualsCalendarDa
 }
 
 function isRunningOnlySummary(summary: WorkoutSummary): boolean {
-  return summary.cardioCount > 0
-    && summary.exerciseCount === 0
-    && summary.session.totalStrengthVolumeKg === 0;
+  return summary.session.entryKind === 'running'
+    || (
+      summary.cardioCount > 0
+      && summary.exerciseCount === 0
+      && summary.session.totalStrengthVolumeKg === 0
+    );
 }
 
 function summarizeCardioDistance(records: CardioRecord[]): number {
@@ -49,23 +52,73 @@ function summarizeCardioDistance(records: CardioRecord[]): number {
     .reduce((sum, record) => sum + (record.distanceKm ?? 0), 0);
 }
 
+function summarizeCardioMinutes(records: CardioRecord[]): number {
+  return records
+    .filter((record) => record.isDraft !== true)
+    .reduce((sum, record) => {
+      const startedAt = new Date(record.startedAt).getTime();
+      const endedAt = new Date(record.endedAt).getTime();
+      if (Number.isNaN(startedAt) || Number.isNaN(endedAt)) return sum;
+      return sum + Math.max(1, Math.round((endedAt - startedAt) / 60000));
+    }, 0);
+}
+
 export function actualsDayCellLabel(
   summaries: WorkoutSummary[],
   locale: 'ko' | 'en',
 ): string | undefined {
   const firstSummary = summaries[0];
   if (!firstSummary) return undefined;
-  if (firstSummary.cardioCount > 0 && firstSummary.exerciseCount === 0) {
-    return locale === 'ko' ? '러닝' : 'Run';
-  }
+  if (isRunningOnlySummary(firstSummary)) return locale === 'ko' ? '러닝' : 'Run';
+  if (firstSummary.session.entryKind === 'free') return locale === 'ko' ? '자유운동' : 'Free';
 
   return getRoutineDayDisplayName(firstSummary.routineDay, locale)
-    ?? firstSummary.routineName
     ?? (locale === 'ko' ? '운동' : 'Workout');
 }
 
 export function actualsDayCellTextClass(hasWorkoutSummaries: boolean): string {
   return hasWorkoutSummaries ? 'text-black' : 'text-current';
+}
+
+export function countActualLoggedExercisesForSession(
+  sessionId: string,
+  workoutExercises: Array<Pick<WorkoutExercise, 'id' | 'sessionId'>>,
+  workoutSets: Array<Pick<WorkoutSet, 'workoutExerciseId' | 'isCompleted'>>,
+): number {
+  const completedWorkoutExerciseIds = new Set(
+    workoutSets
+      .filter((set) => set.isCompleted)
+      .map((set) => set.workoutExerciseId),
+  );
+
+  return workoutExercises.filter((exercise) => (
+    exercise.sessionId === sessionId && completedWorkoutExerciseIds.has(exercise.id)
+  )).length;
+}
+
+export function actualsSessionDetailLabel({
+  actualExerciseCount,
+  totalStrengthVolumeKg,
+  cardioDistanceKm,
+  cardioMinutes,
+  locale,
+}: {
+  actualExerciseCount: number;
+  totalStrengthVolumeKg: number;
+  cardioDistanceKm: number;
+  cardioMinutes: number;
+  locale: 'ko' | 'en';
+}): string {
+  const parts: string[] = [];
+  if (actualExerciseCount > 0 || totalStrengthVolumeKg > 0) {
+    parts.push(`${actualExerciseCount}${locale === 'ko' ? '개 운동' : ' exercises'} / ${totalStrengthVolumeKg.toLocaleString()}kg`);
+  }
+  if (cardioDistanceKm > 0 || cardioMinutes > 0) {
+    const minuteLabel = locale === 'ko' ? '분' : 'min';
+    parts.push(`${locale === 'ko' ? '러닝' : 'Running'} / ${cardioMinutes}${minuteLabel}, ${cardioDistanceKm.toFixed(2)}km`);
+  }
+
+  return parts.join(', ') || (locale === 'ko' ? '기록 없음' : 'No logged detail');
 }
 
 export function actualsStatusLabel(locale: 'ko' | 'en', status: WorkoutStatus, dateKey: string, todayKey: string): string {
@@ -136,7 +189,10 @@ export function ActualsPage({
   const [workoutSets, setWorkoutSets] = useState<WorkoutSet[]>([]);
   const [cardioRecords, setCardioRecords] = useState<CardioRecord[]>([]);
   const [exercises, setExercises] = useState<ExerciseMaster[]>([]);
+  const [routineDays, setRoutineDays] = useState<RoutineDay[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [addMenuMode, setAddMenuMode] = useState<'kind' | 'routine'>('kind');
 
   const startKey = actualDays[0]?.key ?? todayKey;
   const endKey = actualDays[actualDays.length - 1]?.key ?? todayKey;
@@ -161,6 +217,15 @@ export function ActualsPage({
 
     void loadActuals();
   }, [endKey, reloadKey, startKey]);
+
+  useEffect(() => {
+    async function loadRoutineDays() {
+      const days = await getActiveRoutineDays();
+      setRoutineDays(days);
+    }
+
+    void loadRoutineDays();
+  }, []);
 
   const summariesByDate = useMemo(() => {
     return summaries.reduce<Record<string, WorkoutSummary[]>>((byDate, summary) => {
@@ -207,6 +272,8 @@ export function ActualsPage({
 
   function selectDate(day: ActualsCalendarDay) {
     setSelectedDateKey(day.key);
+    setIsAddMenuOpen(false);
+    setAddMenuMode('kind');
     setSelectedWeekIndex(actualsSelectedWeekIndexForDate(actualDays, day.key, day.weekIndex));
     onSelectedDateChange?.(day.key);
   }
@@ -332,14 +399,90 @@ export function ActualsPage({
             </div>
             <button
               type="button"
-              onClick={() => onAddHistoricalWorkout(selectedDateKey)}
+              onClick={() => {
+                setIsAddMenuOpen((current) => !current);
+                setAddMenuMode('kind');
+              }}
               disabled={!canEditSelectedDate}
               className="flex min-h-9 items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-2.5 text-xs font-black text-emerald-300 active:scale-95 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500"
             >
               <Plus aria-hidden="true" size={14} />
-              <span>{locale === 'ko' ? '누락 추가' : 'Add missing'}</span>
+              <span>{locale === 'ko' ? '운동 추가' : 'Add workout'}</span>
             </button>
           </div>
+
+          {isAddMenuOpen ? (
+            <div className="space-y-2 rounded-xl border border-slate-650 bg-slate-850/80 p-2">
+              {addMenuMode === 'kind' ? (
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAddMenuMode('routine')}
+                    className="min-h-11 rounded-xl border border-slate-650 bg-slate-750 px-2 text-sm font-black text-slate-100 active:scale-95"
+                  >
+                    {locale === 'ko' ? '루틴' : 'Routine'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddMenuOpen(false);
+                      setAddMenuMode('kind');
+                      onAddHistoricalWorkout(selectedDateKey, 'free');
+                    }}
+                    className="min-h-11 rounded-xl border border-cyan-400/40 bg-cyan-400/15 px-2 text-sm font-black text-cyan-200 active:scale-95"
+                  >
+                    {locale === 'ko' ? '자유운동' : 'Free'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddMenuOpen(false);
+                      setAddMenuMode('kind');
+                      onAddHistoricalWorkout(selectedDateKey, 'running');
+                    }}
+                    className="min-h-11 rounded-xl border border-sky-400/40 bg-sky-400/15 px-2 text-sm font-black text-sky-200 active:scale-95"
+                  >
+                    {locale === 'ko' ? '러닝' : 'Running'}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-black uppercase text-slate-300">{locale === 'ko' ? '루틴운동 선택' : 'Select routine day'}</p>
+                    <button
+                      type="button"
+                      onClick={() => setAddMenuMode('kind')}
+                      className="min-h-8 rounded-lg border border-slate-650 bg-slate-750 px-2.5 text-xs font-black text-slate-100 active:scale-95"
+                    >
+                      {locale === 'ko' ? '뒤로' : 'Back'}
+                    </button>
+                  </div>
+                  {routineDays.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {routineDays.map((routineDay) => (
+                        <button
+                          key={routineDay.id}
+                          type="button"
+                          onClick={() => {
+                            setIsAddMenuOpen(false);
+                            setAddMenuMode('kind');
+                            onAddHistoricalWorkout(selectedDateKey, 'planned', routineDay.id);
+                          }}
+                          className="min-h-10 rounded-xl border border-emerald-500/35 bg-emerald-500/15 px-3 text-sm font-black text-emerald-200 active:scale-95"
+                        >
+                          {getRoutineDayDisplayName(routineDay, locale) ?? routineDay.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="rounded-xl border border-slate-650 bg-slate-750 px-3 py-2 text-xs font-bold text-slate-300">
+                      {locale === 'ko' ? '사용 가능한 루틴운동이 없습니다.' : 'No routine days available.'}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : null}
 
           {selectedSummaries.length === 0 ? (
             <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-3 text-xs font-bold text-slate-300">
@@ -349,7 +492,14 @@ export function ActualsPage({
             <div className="grid gap-2.5">
               {selectedSummaries.map((summary) => {
                 const isRunningOnly = isRunningOnlySummary(summary);
-                const distance = summarizeCardioDistance(cardioBySessionId[summary.session.id] ?? []);
+                const sessionCardioRecords = cardioBySessionId[summary.session.id] ?? [];
+                const distance = summarizeCardioDistance(sessionCardioRecords);
+                const cardioMinutes = summarizeCardioMinutes(sessionCardioRecords);
+                const actualExerciseCount = countActualLoggedExercisesForSession(
+                  summary.session.id,
+                  workoutExercises,
+                  workoutSets,
+                );
 
                 return (
                   <div key={summary.session.id} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5">
@@ -358,12 +508,18 @@ export function ActualsPage({
                         <h3 className="text-sm font-black text-slate-100">
                           {isRunningOnly
                             ? (locale === 'ko' ? '러닝' : 'Running')
-                            : getRoutineDayDisplayName(summary.routineDay, locale) ?? summary.routineName ?? (locale === 'ko' ? '운동' : 'Workout')}
+                            : summary.session.entryKind === 'free'
+                              ? (locale === 'ko' ? '자유운동' : 'Free workout')
+                              : getRoutineDayDisplayName(summary.routineDay, locale) ?? (locale === 'ko' ? '운동' : 'Workout')}
                         </h3>
                         <p className="mt-1 text-xs font-bold text-slate-300">
-                          {distance > 0
-                            ? `${distance.toFixed(2)}km`
-                            : `${summary.exerciseCount}${locale === 'ko' ? '개 운동' : ' exercises'} / ${summary.session.totalStrengthVolumeKg.toLocaleString()}kg`}
+                          {actualsSessionDetailLabel({
+                            actualExerciseCount,
+                            totalStrengthVolumeKg: summary.session.totalStrengthVolumeKg,
+                            cardioDistanceKm: distance,
+                            cardioMinutes,
+                            locale,
+                          })}
                         </p>
                       </div>
                       <span className="rounded-lg border border-slate-650 bg-slate-750 px-2.5 py-1 text-xs font-black text-cyan-200">
