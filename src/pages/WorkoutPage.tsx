@@ -1142,10 +1142,10 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                               key={previousSet.id}
                               type="button"
                               onClick={() => void handleCopyPreviousSet(log.sets[previousSetIndex] ?? log.sets[0], previousSet)}
-                              className="shrink-0 rounded-lg border border-emerald-500/30 bg-emerald-50 px-2.5 py-1 text-left font-mono text-xs font-black text-emerald-700 shadow-sm transition-all hover:border-emerald-500/55 hover:bg-emerald-100 active:scale-95"
+                              className="shrink-0 rounded-lg border border-emerald-500/30 bg-emerald-50 px-2.5 py-1 text-left font-mono text-xs font-black text-primary shadow-sm transition-all hover:border-emerald-500/55 hover:bg-emerald-100 active:scale-95"
                               aria-label={`Copy previous set ${previousSetIndex + 1}`}
                             >
-                              <span className="mr-1 font-sans text-[10px] uppercase text-emerald-600">
+                              <span className="mr-1 font-sans text-[10px] uppercase text-primary">
                                 {locale === 'ko' ? `${previousSetIndex + 1}세트` : `Set ${previousSetIndex + 1}`}
                               </span>
                               {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
