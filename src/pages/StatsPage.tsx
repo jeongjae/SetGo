@@ -76,6 +76,7 @@ type StatsView = {
   performances: ExercisePerformance[];
   warnings: string[];
   analysisComment: string;
+  nextWeekSuggestions: string[];
 };
 
 const muscleLabels: Record<Locale, Record<MuscleGroup, string>> = {
@@ -296,6 +297,7 @@ export function buildEmptyStats(locale: Locale): StatsView {
     performances: [],
     warnings: [],
     analysisComment: t(locale, 'statsEmptyAnalysis'),
+    nextWeekSuggestions: [t(locale, 'statsNextWeekHoldVolume')],
   };
 }
 
@@ -603,6 +605,11 @@ export function buildStats(
       : t(locale, 'statsAnalysisNoOverload'),
     warnings.length > 0 ? t(locale, 'statsAnalysisReduceWarnings') : t(locale, 'statsAnalysisAddSets'),
   ].join(' ');
+  const nextWeekSuggestions = [
+    warnings.length > 0 ? t(locale, 'statsNextWeekRecovery') : t(locale, 'statsNextWeekHoldVolume'),
+    lowMuscles.length > 0 ? t(locale, 'statsNextWeekAddLagging') : undefined,
+    highMuscles.length > 0 ? t(locale, 'statsNextWeekReduceHigh') : undefined,
+  ].filter((item): item is string => Boolean(item));
 
   return {
     workoutDays: currentWeekSessions.length,
@@ -617,6 +624,7 @@ export function buildStats(
     performances,
     warnings,
     analysisComment,
+    nextWeekSuggestions,
   };
 }
 
@@ -1000,6 +1008,17 @@ export function StatsPage() {
                 </div>
               </details>
             ) : null}
+          </section>
+
+          <section className="space-y-2.5 rounded-2xl border border-emerald-500/25 bg-emerald-950/20 p-3.5 shadow-xl">
+            <h2 className="text-sm font-black text-emerald-200">{t(locale, 'statsNextWeekPlan')}</h2>
+            <div className="grid gap-2">
+              {stats.nextWeekSuggestions.map((suggestion) => (
+                <p key={suggestion} className="rounded-xl border border-emerald-500/20 bg-slate-900/60 px-3 py-2 text-xs font-bold leading-relaxed text-emerald-100">
+                  {suggestion}
+                </p>
+              ))}
+            </div>
           </section>
 
           <p className="px-1 pt-1 text-xs font-black uppercase tracking-wider text-slate-300">

@@ -88,6 +88,19 @@ function savedMessage(locale: 'ko' | 'en', filename: string, mode: 'picked' | 'd
     : `${filename} download started. The save location follows your browser or Safari download settings.`;
 }
 
+function formatBackupDate(value: string | null, locale: 'ko' | 'en'): string | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  return new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
 export function ExportPage({ onBack }: ExportPageProps) {
   const [summaries, setSummaries] = useState<WorkoutSummary[]>([]);
   const [summary, setSummary] = useState<WorkoutSummary | undefined>();
@@ -102,6 +115,9 @@ export function ExportPage({ onBack }: ExportPageProps) {
   const [settingsBackupStatus, setSettingsBackupStatus] = useState<string | undefined>();
   const [isPersisted, setIsPersisted] = useState(false);
   const [showPersistenceInfo, setShowPersistenceInfo] = useState(false);
+  const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => (
+    typeof localStorage === 'undefined' ? null : localStorage.getItem('setgo-last-full-backup-at')
+  ));
 
   async function loadSummaries(selectedSessionId?: string) {
     const recentSummaries = await getRecentWorkoutSummaries(20);
@@ -171,6 +187,8 @@ export function ExportPage({ onBack }: ExportPageProps) {
         ? `${backup.data.workoutSessions.length}개 세션, ${backup.data.exercises.length}개 운동, ${backup.data.routineExercisePlans.length}개 루틴 계획을 내보냈습니다. ${savedMessage(locale, filename, saveMode)}`
         : `${backup.data.workoutSessions.length} sessions, ${backup.data.exercises.length} exercises, ${backup.data.routineExercisePlans.length} routine plans exported. ${savedMessage(locale, filename, saveMode)}`,
     );
+    localStorage.setItem('setgo-last-full-backup-at', backup.exportedAt);
+    setLastBackupAt(backup.exportedAt);
     setBackupStatus('downloaded');
     window.setTimeout(() => setBackupStatus('idle'), 1200);
   }
@@ -414,6 +432,15 @@ export function ExportPage({ onBack }: ExportPageProps) {
                 ? '전체 JSON 백업에는 운동 기록, 루틴, 운동 라이브러리, 주간계획, 날짜별 계획이 모두 포함됩니다.'
                 : t(locale, 'localDataNote')
             )}
+          </p>
+          <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2.5 text-xs font-bold leading-relaxed text-slate-200">
+            {lastBackupAt
+              ? locale === 'ko'
+                ? `최근 전체 백업: ${formatBackupDate(lastBackupAt, locale)}`
+                : `Last full backup: ${formatBackupDate(lastBackupAt, locale)}`
+              : locale === 'ko'
+                ? '아직 이 기기에서 전체 백업을 만든 기록이 없습니다. 중요한 운동 기록은 JSON 백업으로 보관하세요.'
+                : 'No full backup has been created on this device yet. Keep important workout logs in a JSON backup.'}
           </p>
           {showPersistenceInfo && (
             <p className="rounded-xl border border-amber-800 bg-amber-950/25 px-3 py-2.5 text-xs font-bold leading-relaxed text-amber-100">
