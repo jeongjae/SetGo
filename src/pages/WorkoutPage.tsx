@@ -2038,7 +2038,7 @@ function WorkoutSetRow({
           className={`col-span-2 min-h-9 rounded-xl text-sm font-black transition-all duration-300 active:scale-95 ${
             set.isCompleted
               ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30'
-              : 'bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 hover:bg-emerald-300'
+              : 'border border-accent/35 bg-accent-soft text-primary shadow-sm hover:bg-accent-soft/80'
           }`}
         >
           {set.isCompleted ? (locale === 'ko' ? '완료됨' : 'Done') : (locale === 'ko' ? '완료' : 'Complete')}
