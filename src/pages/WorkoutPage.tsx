@@ -1602,16 +1602,16 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           </div>
         ) : (
           <div className="space-y-1.5">
-            <div className={`rounded-xl border px-3 py-2 ${
+            <div className={`rounded-xl border px-3 py-2 shadow-sm ${
               canCompleteWorkout
-                ? 'border-emerald-500/20 bg-emerald-950/25'
-                : 'border-amber-500/25 bg-amber-950/25'
+                ? 'border-emerald-500/35 bg-white'
+                : 'border-amber-500/45 bg-white'
             }`}>
-              <p className={`text-[11px] font-black uppercase ${canCompleteWorkout ? 'text-emerald-300' : 'text-amber-300'}`}>
+              <p className={`text-[11px] font-black uppercase ${canCompleteWorkout ? 'text-emerald-700' : 'text-primary'}`}>
                 {locale === 'ko' ? '완료 전 요약' : 'Finish summary'}
               </p>
-              <p className="mt-0.5 text-xs font-bold leading-snug text-slate-100">{finishSummary}</p>
-              <p className={`mt-1 text-[11px] font-bold leading-snug ${canCompleteWorkout ? 'text-slate-300' : 'text-amber-300'}`}>
+              <p className="mt-0.5 text-xs font-black leading-snug text-primary">{finishSummary}</p>
+              <p className={`mt-1 text-[11px] font-bold leading-snug ${canCompleteWorkout ? 'text-muted' : 'text-danger'}`}>
                 {completeHint}
               </p>
             </div>
