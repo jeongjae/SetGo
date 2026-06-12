@@ -699,6 +699,18 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   const isHistoricalEditMode = mode === 'history-edit';
   const isCompletedEditMode = isHistoricalEditMode || workout?.session.status === 'completed' || workout?.session.status === 'skipped';
   const canCompleteWorkout = canCompleteWorkoutLog(completedSetCount, loggedCardioCount);
+  const incompleteSetCount = Math.max(0, totalSetCount - completedSetCount);
+  const completeHint = locale === 'ko'
+    ? completedSetCount === 0 && loggedCardioCount === 0
+      ? '완료한 세트나 러닝 기록이 있어야 운동을 완료할 수 있습니다.'
+      : incompleteSetCount > 0
+        ? `${incompleteSetCount}개 세트가 아직 미완료입니다. 완료해도 기록은 저장됩니다.`
+        : '모든 세트가 완료되었습니다.'
+    : completedSetCount === 0 && loggedCardioCount === 0
+      ? 'Complete at least one set or running record before finishing.'
+      : incompleteSetCount > 0
+        ? `${incompleteSetCount} sets are still open. You can finish anyway.`
+        : 'All sets are complete.';
 
   return (
     <section className="viewport-locked mx-auto flex max-w-md select-none flex-col overflow-hidden bg-background px-3.5 py-3 text-slate-100">
@@ -916,6 +928,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               state={exerciseFinderState}
               onChange={updateExerciseFinderState}
               onSelect={(exercise) => void handleAddExercise(exercise.id)}
+              limit={24}
               title={t(locale, 'exerciseFinder')}
             />
           </section>
@@ -1088,6 +1101,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           state={exerciseFinderState}
                           onChange={updateExerciseFinderState}
                           onSelect={(exercise) => void handleReplaceExercise(log.workoutExercise.id, exercise.id)}
+                          limit={24}
                           title={locale === 'ko' ? '교체 운동 찾기' : 'Find replacement'}
                         />
                       </div>
@@ -1463,41 +1477,46 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
             {locale === 'ko' ? '편집 완료' : 'Done Editing'}
           </button>
         ) : (
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setIsAdding((current) => !current);
-                resetExerciseFinderState();
-              }}
-              className={`flex h-12 px-3.5 items-center justify-center gap-1.5 rounded-xl text-xs font-extrabold transition-all active:scale-95 shrink-0 border ${
-                isAdding
-                  ? 'border-slate-650 bg-slate-650 text-slate-100'
-                  : 'border-slate-650 bg-slate-750 text-slate-100 hover:bg-slate-650'
-              }`}
-            >
-              <Plus size={16} className={`transition-transform duration-300 ${isAdding ? 'rotate-45' : ''}`} />
-              <span>{locale === 'ko' ? '운동 추가' : 'Add'}</span>
-            </button>
+          <div className="space-y-1.5">
+            <p className={`px-1 text-[11px] font-bold leading-snug ${canCompleteWorkout ? 'text-slate-300' : 'text-amber-300'}`}>
+              {completeHint}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAdding((current) => !current);
+                  resetExerciseFinderState();
+                }}
+                className={`flex h-12 px-3.5 items-center justify-center gap-1.5 rounded-xl text-xs font-extrabold transition-all active:scale-95 shrink-0 border ${
+                  isAdding
+                    ? 'border-slate-650 bg-slate-650 text-slate-100'
+                    : 'border-slate-650 bg-slate-750 text-slate-100 hover:bg-slate-650'
+                }`}
+              >
+                <Plus size={16} className={`transition-transform duration-300 ${isAdding ? 'rotate-45' : ''}`} />
+                <span>{locale === 'ko' ? '운동 추가' : 'Add'}</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => void handleCompleteWorkout()}
-              disabled={!workout || !canCompleteWorkout}
-              className="flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-4 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/10 transition-all disabled:bg-slate-750 disabled:text-slate-400 active:scale-95"
-            >
-              <Check aria-hidden="true" size={16} />
-              <span>{locale === 'ko' ? '운동 완료' : 'Complete'}</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => void handleCompleteWorkout()}
+                disabled={!workout || !canCompleteWorkout}
+                className="flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-4 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/10 transition-all disabled:bg-slate-750 disabled:text-slate-400 active:scale-95"
+              >
+                <Check aria-hidden="true" size={16} />
+                <span>{locale === 'ko' ? '운동 완료' : 'Complete'}</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => void handleSkipWorkout()}
-              disabled={!workout}
-              className="flex h-12 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 px-3 text-sm font-extrabold text-slate-100 transition-all hover:bg-slate-650 disabled:text-slate-500 active:scale-95"
-            >
-              {locale === 'ko' ? '패스' : 'Skip'}
-            </button>
+              <button
+                type="button"
+                onClick={() => void handleSkipWorkout()}
+                disabled={!workout}
+                className="flex h-12 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 px-3 text-sm font-extrabold text-slate-100 transition-all hover:bg-slate-650 disabled:text-slate-500 active:scale-95"
+              >
+                {locale === 'ko' ? '패스' : 'Skip'}
+              </button>
+            </div>
           </div>
         )}
       </footer>
@@ -1591,6 +1610,7 @@ function WorkoutSetRow({
   const [weight, setWeight] = useState(set.weightKg ? String(set.weightKg) : '');
   const [reps, setReps] = useState(set.reps ? String(set.reps) : '');
   const [rir, setRir] = useState(set.rir !== undefined ? String(set.rir) : '');
+  const [weightStep, setWeightStep] = useState(2.5);
 
   useEffect(() => {
     setWeight(set.weightKg ? String(set.weightKg) : '');
@@ -1686,6 +1706,21 @@ function WorkoutSetRow({
           </span>
         </button>
         <div className="flex items-center gap-1">
+          <div className="flex overflow-hidden rounded-lg border border-slate-650 bg-slate-900">
+            {[1, 2.5].map((step) => (
+              <button
+                key={step}
+                type="button"
+                onClick={() => setWeightStep(step)}
+                className={`px-2 py-1 text-[11px] font-black ${
+                  weightStep === step ? 'bg-cyan-400 text-slate-950' : 'text-slate-300'
+                }`}
+                aria-label={`Set weight step to ${step}kg`}
+              >
+                {step}kg
+              </button>
+            ))}
+          </div>
           {!set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3 ? (
             <span className="rounded-md border border-rose-500/20 bg-rose-500/10 px-2 py-0.5 text-[11px] font-black text-rose-300 shadow-[0_0_8px_rgba(244,63,94,0.1)]">
               Hard
@@ -1700,7 +1735,8 @@ function WorkoutSetRow({
           <div className="mt-1 grid grid-cols-[1.75rem_1fr_1.75rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 shadow-inner transition-all focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400">
             <button
               type="button"
-              onClick={() => void handleQuickAdjustSet(set, 'weightKg', -2.5)}
+              onClick={() => void handleQuickAdjustSet(set, 'weightKg', -weightStep)}
+              aria-label={`Decrease weight by ${weightStep}kg`}
               className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-slate-100 active:scale-90 active:bg-slate-650"
             >
               -
@@ -1725,7 +1761,8 @@ function WorkoutSetRow({
             />
             <button
               type="button"
-              onClick={() => void handleQuickAdjustSet(set, 'weightKg', 2.5)}
+              onClick={() => void handleQuickAdjustSet(set, 'weightKg', weightStep)}
+              aria-label={`Increase weight by ${weightStep}kg`}
               className="min-h-10 text-base font-bold text-cyan-200 transition-all hover:text-cyan-100 active:scale-90 active:bg-slate-650"
             >
               +

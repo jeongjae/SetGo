@@ -167,7 +167,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
   }
 
   async function handleCreateCustomRoutine() {
-    const routine = await createCustomRoutine(locale === 'ko' ? '?섏쓽 猷⑦떞' : 'My Routine');
+    const routine = await createCustomRoutine(locale === 'ko' ? '나의 루틴' : 'My Routine');
     setActiveRoutine(routine);
     setSelectedDayId(undefined);
     setShowRoutineCreator(false);
@@ -562,7 +562,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
 
       {/* 2. 以묒븰 蹂몃Ц ?ㅽ겕濡??곸뿭 (flex-1 overflow-y-auto overscroll-contain) */}
       <div className="inner-scroll -mx-2 flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-2 py-2.5 scrollbar-none">
-        {/* ?? 猷⑦떞 ?ㅼ젙 */}
+        {/* 루틴 설정 */}
         {setupTab === 'routine' && (
           <div className="flex flex-col gap-2.5">
             <section className="shrink-0 space-y-2.5 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-md">
@@ -1043,7 +1043,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
           </section>
         )}
 
-        {/* ?붿씪蹂?怨꾪쉷 紐⑸줉 & ?대룞 ?몃? 怨꾪쉷 ?몄쭛 (猷⑦떞 ?ㅼ젙 ???대?) */}
+        {/* 날짜별 계획 목록과 루틴 운동 계획 편집 */}
         {dayPlans.length > 0 && setupTab === 'routine' && (
           <section className="shrink-0 space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-md">
             <div className="flex items-center justify-between gap-3 border-b border-slate-650 pb-2.5">
@@ -1092,7 +1092,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
 
             {selectedDay && (
               <div className="space-y-3.5">
-                {/* 猷⑦떞 ?붿씪 ?대쫫 ?섏젙 ?명뭼 */}
+                {/* 루틴 날짜 이름 수정 입력 */}
                 <div className="flex items-center justify-between gap-2.5">
                   <input
                     key={selectedDay.routineDay.id}
@@ -1127,12 +1127,13 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                       state={routineAddFinderState}
                       onChange={updateRoutineAddFinderState}
                       onSelect={(exercise) => void handleAddExercise(selectedDay.routineDay.id, exercise.id)}
+                      limit={24}
                       title={t(locale, 'exerciseFinder')}
                     />
                   </div>
                 )}
 
-                {/* 猷⑦떞 怨꾪쉷 ?대룞 紐⑸줉 */}
+                {/* 루틴 계획 운동 목록 */}
                 <div className="space-y-3 max-h-[30rem] overflow-y-auto pr-1 scrollbar-thin">
                   {selectedDay.plans.length === 0 ? (
                     <p className="rounded-2xl border border-slate-650 bg-slate-850/70 px-4 py-5 text-center text-sm font-semibold leading-relaxed text-slate-100">
