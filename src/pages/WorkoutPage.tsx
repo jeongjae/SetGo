@@ -1604,8 +1604,8 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           <div className="space-y-1.5">
             <div className={`rounded-xl border px-3 py-2 shadow-sm ${
               canCompleteWorkout
-                ? 'border-emerald-500/35 bg-white'
-                : 'border-amber-500/45 bg-white'
+                ? 'border-emerald-500/35 bg-accent-soft/70'
+                : 'border-accent/35 bg-accent-soft/80'
             }`}>
               <p className={`text-[11px] font-black uppercase ${canCompleteWorkout ? 'text-emerald-700' : 'text-primary'}`}>
                 {locale === 'ko' ? '완료 전 요약' : 'Finish summary'}
