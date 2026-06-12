@@ -601,6 +601,7 @@ export async function activateRoutineTemplate(template: RoutineTemplate): Promis
           plannedSets: 3,
           plannedReps: exerciseId === 'joint_mobility' ? 12 : 10,
           plannedRir: 2,
+          plannedRestSeconds: 90,
         }))
       ));
 
@@ -640,6 +641,66 @@ export async function createCustomRoutine(name: string): Promise<Routine> {
   return routine;
 }
 
+export async function createRoutineFromWorkoutSession(sessionId: string, name?: string): Promise<Routine | undefined> {
+  const session = await db.workoutSessions.get(sessionId);
+  if (!session) return undefined;
+
+  const workoutExercises = await db.workoutExercises.where('sessionId').equals(sessionId).sortBy('order');
+  if (workoutExercises.length === 0) return undefined;
+
+  const now = new Date().toISOString();
+  const routineId = `routine_from_workout_${Date.now()}`;
+  const routineDayId = `${routineId}_day_1`;
+  const routine: Routine = {
+    id: routineId,
+    name: name?.trim() || `Workout ${session.date}`,
+    splitType: 'custom',
+    startDate: formatDateKey(new Date()),
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const routineDay: RoutineDay = {
+    id: routineDayId,
+    routineId,
+    code: 'day_1',
+    name: session.date,
+    sequence: 1,
+  };
+
+  const plans = await Promise.all(workoutExercises.map(async (workoutExercise, index): Promise<RoutineExercisePlan> => {
+    const sets = await db.workoutSets.where('workoutExerciseId').equals(workoutExercise.id).sortBy('setNo');
+    const completedSets = sets.filter((set) => set.isCompleted);
+    const sourceSets = completedSets.length > 0 ? completedSets : sets;
+    const bestSet = sourceSets
+      .slice()
+      .sort((a, b) => (b.weightKg * b.reps) - (a.weightKg * a.reps))[0];
+
+    return {
+      id: `${routineDayId}_${workoutExercise.exerciseId}_${index + 1}`,
+      routineDayId,
+      exerciseId: workoutExercise.exerciseId,
+      order: index + 1,
+      plannedSets: Math.max(1, sourceSets.length || 3),
+      plannedWeightKg: bestSet?.weightKg,
+      plannedReps: bestSet?.reps || 10,
+      plannedRir: bestSet?.rir,
+      plannedRestSeconds: workoutExercise.restSeconds ?? 90,
+      note: workoutExercise.memo,
+    };
+  }));
+
+  await db.transaction('rw', db.routines, db.routineDays, db.routineExercisePlans, async () => {
+    const routines = await db.routines.toArray();
+    await db.routines.bulkPut(routines.map((item) => ({ ...item, isActive: false, updatedAt: now })));
+    await db.routines.put(routine);
+    await db.routineDays.put(routineDay);
+    await db.routineExercisePlans.bulkPut(plans);
+  });
+
+  return routine;
+}
+
 export async function resetActiveRoutinePlansToTemplate(): Promise<void> {
   const [routine, days] = await Promise.all([getActiveRoutine(), getActiveRoutineDays()]);
   if (!routine || days.length === 0) return;
@@ -659,6 +720,7 @@ export async function resetActiveRoutinePlansToTemplate(): Promise<void> {
           plannedSets: 3,
           plannedReps: exerciseId === 'joint_mobility' ? 12 : 10,
           plannedRir: 2,
+          plannedRestSeconds: 90,
         })),
       );
     }
@@ -698,6 +760,7 @@ export async function addExerciseToRoutineDay(routineDayId: string, exerciseId: 
     plannedSets: 3,
     plannedReps: 10,
     plannedRir: 2,
+    plannedRestSeconds: 90,
   });
 }
 
@@ -753,7 +816,7 @@ export async function deleteRoutineExercisePlan(planId: string): Promise<void> {
 
 export async function updateRoutineExercisePlan(
   planId: string,
-  values: Partial<Pick<RoutineExercisePlan, 'plannedSets' | 'plannedWeightKg' | 'plannedReps' | 'plannedRir'>>,
+  values: Partial<Pick<RoutineExercisePlan, 'plannedSets' | 'plannedWeightKg' | 'plannedReps' | 'plannedRir' | 'plannedRestSeconds'>>,
 ): Promise<void> {
   await db.routineExercisePlans.update(planId, values);
 }

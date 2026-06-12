@@ -198,7 +198,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
 
   async function handleUpdatePlan(
     planId: string,
-    values: Partial<Pick<RoutineExercisePlan, 'plannedSets' | 'plannedWeightKg' | 'plannedReps' | 'plannedRir'>>,
+    values: Partial<Pick<RoutineExercisePlan, 'plannedSets' | 'plannedWeightKg' | 'plannedReps' | 'plannedRir' | 'plannedRestSeconds'>>,
   ) {
     await updateRoutineExercisePlan(planId, values);
     await loadSetup();
@@ -1185,7 +1185,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                         </div>
 
                         {/* 怨꾪쉷 ?명듃 諛??잛닔 ?ㅼ젙 怨꾧린??*/}
-                        <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-900">
+                        <div className="grid grid-cols-5 gap-1.5 pt-2 border-t border-slate-900">
                           <label className="block text-center">
                             <span className="mb-1 block text-xs font-bold uppercase text-slate-200">Sets</span>
                             <input
@@ -1238,6 +1238,19 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                                   plannedRir: value === '' ? undefined : Math.max(0, Number(value) || 0),
                                 });
                               }}
+                              className="w-full rounded-xl border border-slate-650 bg-slate-750 py-2 text-center text-sm font-black text-slate-100 outline-none transition-all focus:ring-1 focus:ring-cyan-400"
+                            />
+                          </label>
+                          <label className="block text-center">
+                            <span className="mb-1 block text-xs font-bold uppercase text-slate-200">Rest</span>
+                            <input
+                              aria-label={`${getExerciseName(exercise, locale)} planned rest seconds`}
+                              type="text"
+                              inputMode="numeric"
+                              defaultValue={plan.plannedRestSeconds ?? 90}
+                              onBlur={(event) => void handleUpdatePlan(plan.id, {
+                                plannedRestSeconds: Math.max(15, Number(event.target.value) || 90),
+                              })}
                               className="w-full rounded-xl border border-slate-650 bg-slate-750 py-2 text-center text-sm font-black text-slate-100 outline-none transition-all focus:ring-1 focus:ring-cyan-400"
                             />
                           </label>
