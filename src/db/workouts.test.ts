@@ -208,6 +208,7 @@ describe('routine plan seeding', () => {
       plannedWeightKg: 82.5,
       plannedReps: 8,
       plannedRir: 1,
+      plannedRestSeconds: 120,
     };
 
     const seed = createWorkoutExerciseSeed(
@@ -223,6 +224,7 @@ describe('routine plan seeding', () => {
       order: 1,
       status: 'planned',
       totalVolumeKg: 0,
+      restSeconds: 120,
     }]);
     expect(seed.workoutSets).toHaveLength(4);
     expect(seed.workoutSets[0]).toMatchObject({

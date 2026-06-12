@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp, Check, ChevronLeft, ClipboardList, Clock3, Copy, Pl
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { db } from '../db/db';
-import { getAllRoutines, getRoutineDayDisplayName, getRoutineDays } from '../db/routines';
+import { createRoutineFromWorkoutSession, getAllRoutines, getRoutineDayDisplayName, getRoutineDays } from '../db/routines';
 import { getExerciseIcon } from '../utils/exerciseIcon';
 import { formatDateKey } from '../utils/date';
 import {
@@ -27,6 +27,7 @@ import {
   skipWorkoutSession,
   updateCardioRecord,
   updateWorkoutExerciseMemo,
+  updateWorkoutExerciseRestSeconds,
   updateWorkoutSessionRoutine,
   updateWorkoutSessionMemo,
   updateWorkoutSet,
@@ -137,6 +138,34 @@ export function shouldConfirmWorkoutSetDelete(
     || set.weightKg > 0
     || set.reps > 0
     || set.rir !== undefined;
+}
+
+function getNextIncompleteSetInputId(logs: WorkoutExerciseLog[], completedSetId: string): string | undefined {
+  const orderedSets = logs.flatMap((log) => log.sets);
+  const completedIndex = orderedSets.findIndex((set) => set.id === completedSetId);
+  const nextSet = orderedSets
+    .slice(Math.max(0, completedIndex + 1))
+    .find((set) => !set.isCompleted);
+
+  return nextSet ? `weight_input_${nextSet.id}` : undefined;
+}
+
+function getWorkoutFinishSummary(
+  logs: WorkoutExerciseLog[],
+  cardioRecords: Array<Pick<CardioRecord, 'isDraft'>>,
+  totalVolumeKg: number,
+  locale: 'ko' | 'en',
+): string {
+  const completedSets = logs.flatMap((log) => log.sets).filter((set) => set.isCompleted);
+  const hardSets = completedSets.filter((set) => !set.isWarmup && set.rir !== undefined && set.rir <= 3).length;
+  const completedExercises = countFullyCompletedExercises(logs);
+  const cardioCount = countLoggedCardioRecords(cardioRecords);
+
+  if (locale === 'ko') {
+    return `${completedExercises}개 운동 / ${completedSets.length}세트 / Hard ${hardSets}세트 / ${totalVolumeKg.toLocaleString()}kg${cardioCount ? ` / 유산소 ${cardioCount}건` : ''}`;
+  }
+
+  return `${completedExercises} exercises / ${completedSets.length} sets / ${hardSets} hard / ${totalVolumeKg.toLocaleString()}kg${cardioCount ? ` / ${cardioCount} cardio` : ''}`;
 }
 
 export function shouldConfirmCardioDelete(
@@ -401,21 +430,32 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   ) {
     setSaveMessage(locale === 'ko' ? '저장 중...' : 'Saving...');
     await updateWorkoutSet(set.id, values);
-    
+
     const wasCompleted = set.isCompleted;
     const isNowCompleted = values.isCompleted === true;
 
     if (isNowCompleted && !wasCompleted) {
       const now = Date.now();
+      const logForSet = logs.find((log) => log.workoutExercise.id === set.workoutExerciseId);
+      const nextRestDuration = logForSet?.workoutExercise.restSeconds ?? restDuration;
+      setRestDuration(nextRestDuration);
       setRestTimerStartedAt(now);
-      setRestRemaining(restDuration);
+      setRestRemaining(nextRestDuration);
       setIsRestTimerActive(true);
     }
-    
+
     await loadWorkout();
     setSaveMessage(`${locale === 'ko' ? '저장됨' : 'Saved'} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
 
     if (isNowCompleted && !wasCompleted) {
+      const nextInputId = getNextIncompleteSetInputId(logs, set.id);
+      if (nextInputId) {
+        window.setTimeout(() => {
+          const inputEl = document.getElementById(nextInputId) as HTMLInputElement | null;
+          inputEl?.focus();
+          inputEl?.select();
+        }, 150);
+      }
       autoTransitionAccordion(set.workoutExerciseId);
     }
   }
@@ -487,6 +527,22 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
     await completeWorkoutSession(workout.session.id);
     onCompleted();
+  }
+
+  async function handleCreateRoutineFromWorkout() {
+    if (!workout) return;
+
+    const baseName = workoutRoutineDayName ?? workout.routineName ?? workout.session.date;
+    const routine = await createRoutineFromWorkoutSession(
+      workout.session.id,
+      locale === 'ko' ? `${baseName}에서 만든 루틴` : `${baseName} routine`,
+    );
+    setSaveMessage(
+      routine
+        ? (locale === 'ko' ? '이 기록을 새 활성 루틴으로 저장했습니다' : 'Saved this workout as the active routine')
+        : (locale === 'ko' ? '루틴으로 저장할 운동 기록이 없습니다' : 'No workout exercises to save as a routine'),
+    );
+    await loadWorkout();
   }
 
   async function handleSkipWorkout() {
@@ -630,6 +686,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     setSaveMessage(locale === 'ko' ? '운동 메모를 저장했습니다' : 'Exercise memo saved');
   }
 
+  async function handleUpdateExerciseRestSeconds(workoutExerciseId: string, restSeconds: number) {
+    await updateWorkoutExerciseRestSeconds(workoutExerciseId, restSeconds);
+    await loadWorkout();
+    setSaveMessage(locale === 'ko' ? '운동별 휴식 시간을 저장했습니다' : 'Exercise rest time saved');
+  }
+
   async function handleDeleteCardio(cardioRecord: CardioRecord) {
     if (shouldConfirmCardioDelete(cardioRecord)) {
       const shouldDelete = window.confirm(
@@ -700,6 +762,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   const isCompletedEditMode = isHistoricalEditMode || workout?.session.status === 'completed' || workout?.session.status === 'skipped';
   const canCompleteWorkout = canCompleteWorkoutLog(completedSetCount, loggedCardioCount);
   const incompleteSetCount = Math.max(0, totalSetCount - completedSetCount);
+  const finishSummary = getWorkoutFinishSummary(
+    logs,
+    cardioRecords,
+    workout?.session.totalStrengthVolumeKg ?? 0,
+    locale,
+  );
   const completeHint = locale === 'ko'
     ? completedSetCount === 0 && loggedCardioCount === 0
       ? '완료한 세트나 러닝 기록이 있어야 운동을 완료할 수 있습니다.'
@@ -1069,13 +1137,49 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                       </div>
                       {log.previousSets.length > 0 ? (
                         <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                          {log.previousSets.slice(0, 6).map((previousSet) => (
-                            <span key={previousSet.id} className="shrink-0 rounded-lg border border-slate-650 bg-slate-750 px-2.5 py-1 font-mono text-xs font-bold text-slate-100 shadow-sm">
+                          {log.previousSets.slice(0, 6).map((previousSet, previousSetIndex) => (
+                            <button
+                              key={previousSet.id}
+                              type="button"
+                              onClick={() => void handleCopyPreviousSet(log.sets[previousSetIndex] ?? log.sets[0], previousSet)}
+                              className="shrink-0 rounded-lg border border-cyan-500/25 bg-cyan-950/40 px-2.5 py-1 text-left font-mono text-xs font-bold text-cyan-100 shadow-sm transition-all hover:border-cyan-300/50 hover:bg-cyan-900/55 active:scale-95"
+                              aria-label={`Copy previous set ${previousSetIndex + 1}`}
+                            >
+                              <span className="mr-1 font-sans text-[10px] uppercase text-cyan-300">
+                                {locale === 'ko' ? `${previousSetIndex + 1}세트` : `Set ${previousSetIndex + 1}`}
+                              </span>
                               {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
-                            </span>
+                            </button>
                           ))}
                         </div>
                       ) : null}
+                    </div>
+
+                    <div className="mt-2.5 rounded-xl border border-slate-650 bg-slate-850 px-3 py-2.5 shadow-inner">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-extrabold uppercase text-slate-200">{locale === 'ko' ? '운동별 휴식' : 'Rest per exercise'}</p>
+                          <p className="mt-0.5 text-xs font-semibold text-slate-300">
+                            {locale === 'ko' ? '세트 완료 시 이 시간으로 자동 타이머가 시작됩니다.' : 'Completing a set starts this timer automatically.'}
+                          </p>
+                        </div>
+                        <div className="flex overflow-hidden rounded-lg border border-slate-650 bg-slate-900">
+                          {[60, 90, 120, 180].map((seconds) => (
+                            <button
+                              key={seconds}
+                              type="button"
+                              onClick={() => void handleUpdateExerciseRestSeconds(log.workoutExercise.id, seconds)}
+                              className={`min-h-8 px-2.5 text-xs font-black transition-all ${
+                                (log.workoutExercise.restSeconds ?? 90) === seconds
+                                  ? 'bg-cyan-400 text-slate-950'
+                                  : 'text-slate-200 hover:bg-slate-750'
+                              }`}
+                            >
+                              {seconds < 60 ? `${seconds}s` : `${seconds / 60}m`}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
                     {/* 운동 개별 메모 */}
@@ -1444,17 +1548,27 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       <footer className="mt-auto flex shrink-0 flex-col gap-2 border-t border-slate-650 bg-background pb-1 pt-2.5">
         {isHistoricalEditMode ? (
           <>
-            <button
-              type="button"
-              onClick={() => {
-                setIsAdding((current) => !current);
-                resetExerciseFinderState();
-              }}
-              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-650 bg-slate-750 text-sm font-bold text-slate-100"
-            >
-              <Plus aria-hidden="true" size={16} />
-              {locale === 'ko' ? '개별 운동 추가' : 'Add individual exercise'}
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAdding((current) => !current);
+                  resetExerciseFinderState();
+                }}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-650 bg-slate-750 px-2 text-xs font-bold text-slate-100"
+              >
+                <Plus aria-hidden="true" size={16} />
+                {locale === 'ko' ? '운동 추가' : 'Add exercise'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleCreateRoutineFromWorkout()}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-950/35 px-2 text-xs font-black text-cyan-100"
+              >
+                <ClipboardList aria-hidden="true" size={15} />
+                {locale === 'ko' ? '루틴 저장' : 'Save routine'}
+              </button>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -1473,14 +1587,34 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
             </div>
           </>
         ) : isCompletedEditMode ? (
-          <button type="button" onClick={onBack} className="flex min-h-12 w-full items-center justify-center rounded-xl bg-cyan-400 px-4 text-sm font-bold text-slate-950 hover:bg-cyan-300 active:scale-95 transition-all shadow-md">
-            {locale === 'ko' ? '편집 완료' : 'Done Editing'}
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => void handleCreateRoutineFromWorkout()}
+              className="flex min-h-12 items-center justify-center gap-1.5 rounded-xl border border-slate-650 bg-slate-750 px-3 text-xs font-black text-slate-100 transition-all hover:bg-slate-650 active:scale-95"
+            >
+              <ClipboardList aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? '루틴 저장' : 'Save routine'}</span>
+            </button>
+            <button type="button" onClick={onBack} className="flex min-h-12 items-center justify-center rounded-xl bg-cyan-400 px-4 text-sm font-bold text-slate-950 hover:bg-cyan-300 active:scale-95 transition-all shadow-md">
+              {locale === 'ko' ? '편집 완료' : 'Done Editing'}
+            </button>
+          </div>
         ) : (
           <div className="space-y-1.5">
-            <p className={`px-1 text-[11px] font-bold leading-snug ${canCompleteWorkout ? 'text-slate-300' : 'text-amber-300'}`}>
-              {completeHint}
-            </p>
+            <div className={`rounded-xl border px-3 py-2 ${
+              canCompleteWorkout
+                ? 'border-emerald-500/20 bg-emerald-950/25'
+                : 'border-amber-500/25 bg-amber-950/25'
+            }`}>
+              <p className={`text-[11px] font-black uppercase ${canCompleteWorkout ? 'text-emerald-300' : 'text-amber-300'}`}>
+                {locale === 'ko' ? '완료 전 요약' : 'Finish summary'}
+              </p>
+              <p className="mt-0.5 text-xs font-bold leading-snug text-slate-100">{finishSummary}</p>
+              <p className={`mt-1 text-[11px] font-bold leading-snug ${canCompleteWorkout ? 'text-slate-300' : 'text-amber-300'}`}>
+                {completeHint}
+              </p>
+            </div>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -1729,6 +1863,19 @@ function WorkoutSetRow({
         </div>
       </div>
 
+      {previousSet ? (
+        <button
+          type="button"
+          onClick={() => void handleCopyPreviousSet(set, previousSet)}
+          className="mt-2 flex min-h-9 w-full items-center justify-between rounded-xl border border-cyan-500/25 bg-cyan-950/35 px-3 text-left text-xs font-bold text-cyan-100 transition-all hover:border-cyan-300/50 hover:bg-cyan-900/55 active:scale-[0.99]"
+        >
+          <span className="font-black uppercase text-cyan-300">{locale === 'ko' ? '이전값 적용' : 'Use previous'}</span>
+          <span className="font-mono">
+            {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
+          </span>
+        </button>
+      ) : null}
+
       <div className="mt-2.5 grid grid-cols-3 gap-1.5">
         <label className="text-xs font-extrabold uppercase text-slate-200">
           kg
@@ -1862,7 +2009,7 @@ function WorkoutSetRow({
         </label>
       </div>
 
-      <div className="mt-2.5 grid grid-cols-5 gap-1.5">
+      <div className="mt-2.5 grid grid-cols-6 gap-1.5">
         <button
           type="button"
           onClick={() => void handleToggleWarmup(set)}
@@ -1888,10 +2035,10 @@ function WorkoutSetRow({
         <button
           type="button"
           onClick={() => void handleSetChange(set, { isCompleted: !set.isCompleted })}
-          className={`min-h-9 rounded-xl text-sm font-black transition-all duration-300 active:scale-95 ${
+          className={`col-span-2 min-h-9 rounded-xl text-sm font-black transition-all duration-300 active:scale-95 ${
             set.isCompleted
               ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30'
-              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-slate-100'
+              : 'bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 hover:bg-emerald-300'
           }`}
         >
           {set.isCompleted ? (locale === 'ko' ? '완료됨' : 'Done') : (locale === 'ko' ? '완료' : 'Complete')}
@@ -1919,3 +2066,4 @@ function WorkoutSetRow({
     </div>
   );
 }
+

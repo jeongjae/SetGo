@@ -283,6 +283,7 @@ export function createWorkoutExerciseSeed(
       order: index + 1,
       status: 'planned',
       totalVolumeKg: 0,
+      restSeconds: plan.plannedRestSeconds ?? 90,
     });
     workoutSets.push(...Array.from({ length: plannedSets }, (_, setIndex) => ({
       id: `${workoutExerciseId}_set_${setIndex + 1}`,
@@ -543,6 +544,7 @@ export async function addExerciseToWorkout(sessionId: string, exerciseId: string
     order,
     status: 'planned',
     totalVolumeKg: 0,
+    restSeconds: 90,
   };
 
   const sets: WorkoutSet[] = [1, 2, 3].map((setNo) => ({
@@ -737,6 +739,12 @@ export async function updateWorkoutSessionRoutine(
 export async function updateWorkoutExerciseMemo(workoutExerciseId: string, memo: string): Promise<void> {
   await db.workoutExercises.update(workoutExerciseId, {
     memo: memo.trim() || undefined,
+  });
+}
+
+export async function updateWorkoutExerciseRestSeconds(workoutExerciseId: string, restSeconds: number): Promise<void> {
+  await db.workoutExercises.update(workoutExerciseId, {
+    restSeconds: Math.max(15, Math.min(600, Math.round(restSeconds))),
   });
 }
 

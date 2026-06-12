@@ -102,6 +102,7 @@ export type RoutineExercisePlan = {
   plannedReps?: number;
   plannedSets?: number;
   plannedRir?: number;
+  plannedRestSeconds?: number;
   note?: string;
 };
 
@@ -129,6 +130,7 @@ export type WorkoutExercise = {
   status: WorkoutExerciseStatus;
   totalVolumeKg: number;
   previousWorkoutExerciseId?: string;
+  restSeconds?: number;
   memo?: string;
 };
 
