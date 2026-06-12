@@ -1010,11 +1010,11 @@ export function StatsPage() {
             ) : null}
           </section>
 
-          <section className="space-y-2.5 rounded-2xl border border-emerald-500/25 bg-emerald-950/20 p-3.5 shadow-xl">
-            <h2 className="text-sm font-black text-emerald-200">{t(locale, 'statsNextWeekPlan')}</h2>
+          <section className="space-y-2.5 rounded-2xl border border-accent/20 bg-white p-3.5 shadow-xl">
+            <h2 className="text-sm font-black text-primary">{t(locale, 'statsNextWeekPlan')}</h2>
             <div className="grid gap-2">
               {stats.nextWeekSuggestions.map((suggestion) => (
-                <p key={suggestion} className="rounded-xl border border-emerald-500/20 bg-slate-900/60 px-3 py-2 text-xs font-bold leading-relaxed text-emerald-100">
+                <p key={suggestion} className="rounded-xl border border-accent/20 bg-accent-soft/55 px-3 py-2 text-xs font-bold leading-relaxed text-primary">
                   {suggestion}
                 </p>
               ))}
