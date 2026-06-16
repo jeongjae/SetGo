@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3 } from 'lucide-react';
+import { AlertTriangle, BarChart3, CalendarRange } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { db } from '../db/db';
 import { getExerciseCategories, getExerciseName, isWarmupOnlyExercise } from '../domain/exercises';
@@ -815,7 +815,12 @@ function DetailSection({
   );
 }
 
-export function StatsPage() {
+type StatsPageProps = {
+  onOpenActuals?: () => void;
+  recordModeControl?: ReactNode;
+};
+
+export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) {
   const [locale] = useState<Locale>(() => getStoredLocale());
   const [stats, setStats] = useState<StatsView>(() => buildEmptyStats(locale));
   
@@ -900,11 +905,24 @@ export function StatsPage() {
 
   return (
     <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
-      <header className="flex shrink-0 items-center gap-2.5">
-        <div>
-          <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'stats')}</p>
-          <h1 className="text-xl font-black text-slate-100">{c.title}</h1>
+      <header className="flex shrink-0 flex-col gap-2.5">
+        <div className="flex items-center justify-between gap-2.5">
+          <div>
+            <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'records')}</p>
+            <h1 className="text-xl font-black text-slate-100">{c.title}</h1>
+          </div>
+          {!recordModeControl && onOpenActuals ? (
+            <button
+              type="button"
+              onClick={onOpenActuals}
+              className="flex min-h-10 items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-slate-850 px-2.5 text-xs font-black text-cyan-300 active:scale-95"
+            >
+              <CalendarRange aria-hidden="true" size={15} />
+              <span>{t(locale, 'actualsCalendar')}</span>
+            </button>
+          ) : null}
         </div>
+        {recordModeControl}
       </header>
 
       {!hasData ? (
