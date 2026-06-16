@@ -1,5 +1,5 @@
 import { BarChart3, CalendarRange, Dumbbell, Footprints, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { db } from '../db/db';
 import { deleteWorkoutSession, getWorkoutSummariesForDateRange, type WorkoutStartKind, type WorkoutSummary } from '../db/workouts';
 import { getExerciseCategories } from '../domain/exercises';
@@ -14,6 +14,7 @@ type ActualsPageProps = {
   onAddHistoricalWorkout: (dateKey: string, kind: WorkoutStartKind, routineDayId?: string) => void;
   onEditHistoricalWorkout: (sessionId: string, dateKey: string) => void;
   onOpenStats: () => void;
+  recordModeControl?: ReactNode;
 };
 
 export type ActualsCalendarDay = {
@@ -176,6 +177,7 @@ export function ActualsPage({
   onAddHistoricalWorkout,
   onEditHistoricalWorkout,
   onOpenStats,
+  recordModeControl,
 }: ActualsPageProps) {
   const [locale] = useState(() => getStoredLocale());
   const todayKey = formatDateKey(new Date());
@@ -292,11 +294,14 @@ export function ActualsPage({
 
   return (
     <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
-      <header className="flex shrink-0 items-center gap-2.5">
-        <div>
-          <p className="text-xs font-extrabold uppercase text-cyan-300">{t(locale, 'actuals')}</p>
-          <h1 className="text-xl font-black text-slate-100">{t(locale, 'actualsCalendar')}</h1>
+      <header className="flex shrink-0 flex-col gap-2.5">
+        <div className="flex items-center justify-between gap-2.5">
+          <div>
+            <p className="text-xs font-extrabold uppercase text-cyan-300">{t(locale, 'records')}</p>
+            <h1 className="text-xl font-black text-slate-100">{t(locale, 'actualsCalendar')}</h1>
+          </div>
         </div>
+        {recordModeControl}
       </header>
 
       <div className="inner-scroll min-h-0 space-y-2.5 pr-0.5">
@@ -371,7 +376,7 @@ export function ActualsPage({
               className="flex min-h-9 items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-slate-850 px-2.5 text-xs font-black text-cyan-300 active:scale-95"
             >
               <BarChart3 aria-hidden="true" size={14} />
-              <span>{locale === 'ko' ? '통계' : 'Stats'}</span>
+              <span>{t(locale, 'viewAnalysis')}</span>
             </button>
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2">

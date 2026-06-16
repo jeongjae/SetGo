@@ -334,12 +334,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
           type="button"
           onClick={onBack}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 shadow-md transition-all hover:bg-slate-650 active:scale-95"
-          aria-label={locale === 'ko' ? '설정으로 돌아가기' : 'Back to Settings'}
+          aria-label={locale === 'ko' ? '더보기로 돌아가기' : 'Back to More'}
         >
           <ChevronLeft aria-hidden="true" size={20} />
         </button>
         <div>
-          <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'settings')}</p>
+          <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'more')}</p>
           <h1 className="text-xl font-black text-slate-100">{t(locale, 'export')}</h1>
         </div>
       </header>

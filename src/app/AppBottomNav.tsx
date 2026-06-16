@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, ClipboardCheck, Home, Settings } from 'lucide-react';
+import { CalendarDays, ClipboardList, Home, MoreHorizontal } from 'lucide-react';
 import type { AppView } from './App';
 import { getStoredLocale, t } from '../i18n/i18n';
 
@@ -7,17 +7,18 @@ type AppBottomNavProps = {
   onNavigate: (view: AppView) => void;
 };
 
-type BrowseView = 'today' | 'calendar' | 'actuals' | 'stats' | 'more';
+type BrowseView = 'today' | 'calendar' | 'records' | 'more';
 
 const navigationItems = [
   { view: 'today', icon: Home, labelKey: 'today' },
   { view: 'calendar', icon: CalendarDays, labelKey: 'planned' },
-  { view: 'actuals', icon: ClipboardCheck, labelKey: 'actuals' },
-  { view: 'stats', icon: BarChart3, labelKey: 'stats' },
-  { view: 'more', icon: Settings, labelKey: 'settings' },
+  { view: 'records', icon: ClipboardList, labelKey: 'records' },
+  { view: 'more', icon: MoreHorizontal, labelKey: 'more' },
 ] as const;
 
-function browseActiveView(view: AppView): BrowseView {
+export const primaryNavigationViews = navigationItems.map((item) => item.view);
+
+export function browseActiveView(view: AppView): BrowseView {
   return view === 'routines' || view === 'exercises' || view === 'weeklyPlan' || view === 'export' ? 'more' : view as BrowseView;
 }
 
@@ -26,7 +27,7 @@ export function AppBottomNav({ activeView, onNavigate }: AppBottomNavProps) {
   const selectedView = browseActiveView(activeView);
 
   return (
-    <nav aria-label="Primary navigation" className="app-bottom-nav mx-auto grid w-full max-w-md shrink-0 grid-cols-5 border-t border-slate-650 bg-white/95 px-1.5 pt-2 text-slate-100 shadow-[0_-8px_24px_rgba(11,31,51,0.04)] backdrop-blur-md">
+    <nav aria-label="Primary navigation" className="app-bottom-nav mx-auto grid w-full max-w-md shrink-0 grid-cols-4 border-t border-slate-650 bg-white/95 px-1.5 pt-2 text-slate-100 shadow-[0_-8px_24px_rgba(11,31,51,0.04)] backdrop-blur-md">
       {navigationItems.map(({ view, icon: Icon, labelKey }) => {
         const active = selectedView === view;
 

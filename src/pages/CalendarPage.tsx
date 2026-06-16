@@ -456,8 +456,8 @@ export function CalendarPage({
         ) : (
           <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2.5 text-xs font-bold leading-relaxed text-slate-200">
             {locale === 'ko'
-              ? '오늘 이전 날짜는 계획이 아니라 실적을 표시합니다. 과거 운동 기록 수정은 실적 메뉴에서 처리합니다.'
-              : 'Past dates show actual records, not plans. Use Actuals to edit historical workout records.'}
+              ? '오늘 이전 날짜는 계획이 아니라 기록을 표시합니다. 과거 운동 기록 수정은 기록 탭에서 처리합니다.'
+              : 'Past dates show records, not plans. Use Records to edit historical workout records.'}
           </p>
         )}
 
@@ -506,8 +506,8 @@ export function CalendarPage({
         ) : null}
         <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2.5 text-xs font-bold leading-relaxed text-slate-200">
           {locale === 'ko'
-            ? '이 화면에서는 계획만 수정합니다. 누락 기록 추가와 과거 기록 수정/삭제는 실적 메뉴에서 처리합니다.'
-            : 'This screen only edits plans. Use Actuals to add missing records or edit/delete past workouts.'}
+            ? '이 화면에서는 계획만 수정합니다. 누락 기록 추가와 과거 기록 수정/삭제는 기록 탭에서 처리합니다.'
+            : 'This screen only edits plans. Use Records to add missing records or edit/delete past workouts.'}
         </p>
       </section>
       </div>

@@ -35,9 +35,9 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
     <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3 pt-3 text-slate-100">
       <header className="flex shrink-0 items-center justify-between gap-2.5">
         <div>
-          <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'settings')}</p>
+          <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'more')}</p>
           <h1 className="text-xl font-black text-slate-100">
-            {locale === 'ko' ? '설정 및 데이터' : 'Settings and Data'}
+            {locale === 'ko' ? '관리 및 데이터' : 'Management and Data'}
           </h1>
         </div>
         <button
