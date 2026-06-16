@@ -149,7 +149,8 @@ export function App() {
           onSelectedDateChange={setCalendarSelectedDateKey}
           reviewingWeeklyPlan={calendarReviewingWeeklyPlan}
           onReturnToWeeklyPlan={() => setView('weeklyPlan')}
-          onAddWorkoutForDate={(dateKey, kind, routineDayId) => void handleAddHistoricalWorkout(dateKey, kind, routineDayId)}
+          onNavigateToRecords={() => setView('records')}
+          onNavigateToRoutines={() => setView('routines')}
         />
       )
       : view === 'records'
