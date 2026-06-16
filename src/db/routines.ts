@@ -302,6 +302,43 @@ export async function duplicateStoredRoutine(routineId: string, name?: string): 
   return nextRoutine;
 }
 
+export async function deleteStoredRoutine(routineId: string): Promise<void> {
+  const routineToDelete = await db.routines.get(routineId);
+  if (!routineToDelete) return;
+
+  const days = await db.routineDays.where('routineId').equals(routineId).toArray();
+  const dayIds = days.map((day) => day.id);
+
+  await db.transaction('rw', [
+    db.routines,
+    db.routineDays,
+    db.routineExercisePlans,
+    db.routineCyclePlanItems,
+    db.weeklySchedules,
+    db.calendarPlanOverrides,
+  ], async () => {
+    if (dayIds.length > 0) {
+      await db.routineExercisePlans.where('routineDayId').anyOf(dayIds).delete();
+    }
+    await db.routineDays.where('routineId').equals(routineId).delete();
+    await db.routineCyclePlanItems.where('routineId').equals(routineId).delete();
+    await db.weeklySchedules.where('routineId').equals(routineId).delete();
+    await db.calendarPlanOverrides.where('routineId').equals(routineId).delete();
+    await db.routines.delete(routineId);
+
+    if (routineToDelete.isActive) {
+      const remainingRoutines = await db.routines.toArray();
+      const anotherRoutine = remainingRoutines.find((r) => r.id !== routineId);
+      if (anotherRoutine) {
+        await db.routines.update(anotherRoutine.id, {
+          isActive: true,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    }
+  });
+}
+
 export async function activateStoredRoutine(routineId: string): Promise<void> {
   const now = new Date().toISOString();
   const routines = await db.routines.toArray();

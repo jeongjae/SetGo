@@ -21,6 +21,7 @@ import {
   addExerciseToRoutineDay,
   createCustomRoutine,
   deleteRoutineExercisePlan,
+  deleteStoredRoutine,
   duplicateStoredRoutine,
   getActiveRoutineCyclePlan,
   getActiveRoutine,
@@ -193,10 +194,57 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
       locale === 'ko' ? `${activeRoutine.name} 복사본` : `${activeRoutine.name} Copy`,
     );
     setSelectedDayId(undefined);
+    setShowRoutineRename(true); // Automatically show rename input for copied routine
+    onRoutineSaved();
+    await loadSetup(true);
+  }
+
+  async function handleDeleteActiveRoutine() {
+    if (!activeRoutine) return;
+    const confirmMsg = locale === 'ko'
+      ? `"${activeRoutine.name}" 루틴을 정말 삭제하시겠습니까? 연결된 모든 세부 계획과 일정이 완전히 삭제됩니다.`
+      : `Are you sure you want to delete "${activeRoutine.name}"? All associated detailed plans and schedules will be completely removed.`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    await deleteStoredRoutine(activeRoutine.id);
+    setSelectedDayId(undefined);
     setShowRoutineRename(false);
     onRoutineSaved();
     await loadSetup(true);
   }
+
+  const getRoutineSummaryInfo = () => {
+    if (!activeRoutine) return null;
+    const dayCount = dayPlans.length;
+    const totalExercises = dayPlans.reduce((sum, d) => sum + d.plans.length, 0);
+
+    let scheduleSummary = '';
+    if (cyclePlan && cyclePlan.length > 0) {
+      scheduleSummary = locale === 'ko'
+        ? `${cyclePlan.length}일 주기 사이클`
+        : `${cyclePlan.length}-day rotation cycle`;
+    } else if (weeklySchedule && weeklySchedule.length > 0) {
+      const activeDays = weeklySchedule
+        .filter((w) => !w.isRestDay)
+        .map((w) => weekdayLabels[locale as 'ko' | 'en'][w.weekday]);
+      if (activeDays.length > 0) {
+        scheduleSummary = locale === 'ko'
+          ? `주 ${activeDays.length}회 (${activeDays.join(', ')})`
+          : `${activeDays.length}x / week (${activeDays.join(', ')})`;
+      } else {
+        scheduleSummary = locale === 'ko' ? '설정된 운동 일정 없음' : 'No workout schedule set';
+      }
+    } else {
+      scheduleSummary = locale === 'ko' ? '설정된 운동 일정 없음' : 'No workout schedule set';
+    }
+
+    return {
+      dayCount,
+      totalExercises,
+      scheduleSummary,
+    };
+  };
 
   async function handleAddExercise(routineDayId: string, exerciseId: string) {
     await addExerciseToRoutineDay(routineDayId, exerciseId);
@@ -593,11 +641,11 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                       <option key={routine.id} value={routine.id}>{routine.name}</option>
                     ))}
                   </select>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-3 gap-1.5">
                     <button
                       type="button"
                       onClick={() => setShowRoutineRename((current) => !current)}
-                      className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-2 text-xs font-bold text-cyan-300"
+                      className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-1 text-[11px] font-bold text-cyan-300"
                     >
                       {locale === 'ko' ? '이름' : 'Rename'}
                     </button>
@@ -605,10 +653,19 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                       type="button"
                       onClick={() => void handleDuplicateActiveRoutine()}
                       disabled={!activeRoutine}
-                      className="flex min-h-10 items-center justify-center gap-1 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-2 text-xs font-black text-emerald-300 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500"
+                      className="flex min-h-10 items-center justify-center gap-0.5 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-1 text-[11px] font-black text-emerald-300 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500"
                     >
-                      <Copy aria-hidden="true" size={13} />
+                      <Copy aria-hidden="true" size={11} />
                       <span>{locale === 'ko' ? '복제' : 'Copy'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteActiveRoutine()}
+                      disabled={!activeRoutine}
+                      className="flex min-h-10 items-center justify-center gap-0.5 rounded-xl border border-rose-500/35 bg-rose-500/10 px-1 text-[11px] font-black text-rose-300 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500"
+                    >
+                      <Trash2 aria-hidden="true" size={11} />
+                      <span>{locale === 'ko' ? '삭제' : 'Delete'}</span>
                     </button>
                   </div>
                 </div>
@@ -624,10 +681,58 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     type="text"
                     defaultValue={activeRoutineName}
                     onBlur={(event) => void handleUpdateRoutineName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        void handleUpdateRoutineName(event.currentTarget.value);
+                      }
+                    }}
                     className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 text-base font-bold text-slate-100 outline-none transition-all focus:ring-1 focus:ring-cyan-400"
                   />
+                  <span className="mt-1 block text-[10px] text-slate-400 font-medium">
+                    {locale === 'ko' ? '💡 엔터를 누르거나 포커스를 해제하면 저장됩니다.' : '💡 Press Enter or focus away to save.'}
+                  </span>
                 </label>
               ) : null}
+              {/* Copied Routine Warning Banner */}
+              {activeRoutine && (activeRoutine.name.endsWith('Copy') || activeRoutine.name.endsWith('복사본') || activeRoutine.name.includes('Copy') || activeRoutine.name.includes('복사본')) && (
+                <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[11px] font-bold text-amber-300">
+                  ⚠️ {locale === 'ko'
+                    ? '복사된 루틴을 편집 중입니다. 루틴 이름을 지정해 주세요.'
+                    : 'You are editing a copied routine. Please set a name for this routine.'}
+                </div>
+              )}
+              {/* Routine Summary */}
+              {activeRoutine && (
+                <div className="rounded-xl border border-slate-650 bg-slate-850/60 p-3 text-xs space-y-1 text-slate-300">
+                  <p className="font-extrabold text-cyan-300 uppercase tracking-wider text-[10px]">
+                    {locale === 'ko' ? '루틴 요약' : 'Routine Summary'}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 pt-1 text-center font-bold">
+                    <div className="border-r border-slate-700">
+                      <span className="block text-slate-400 text-[10px] uppercase font-bold">
+                        {locale === 'ko' ? '분할 수' : 'Days'}
+                      </span>
+                      <span className="text-slate-100 text-sm font-black">{dayPlans.length}</span>
+                    </div>
+                    <div className="border-r border-slate-700">
+                      <span className="block text-slate-400 text-[10px] uppercase font-bold">
+                        {locale === 'ko' ? '총 운동 수' : 'Exercises'}
+                      </span>
+                      <span className="text-slate-100 text-sm font-black">
+                        {dayPlans.reduce((sum, d) => sum + d.plans.length, 0)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-slate-400 text-[10px] uppercase font-bold">
+                        {locale === 'ko' ? '일정' : 'Schedule'}
+                      </span>
+                      <span className="text-slate-100 text-xs truncate block mt-0.5" title={getRoutineSummaryInfo()?.scheduleSummary ?? ''}>
+                        {getRoutineSummaryInfo()?.scheduleSummary}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
               <button
                 type="button"
                 aria-expanded={showRoutineCreator}
