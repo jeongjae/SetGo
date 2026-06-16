@@ -71,6 +71,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const [plannedExerciseNames, setPlannedExerciseNames] = useState<string[]>([]);
   const [latestFinishedWorkout, setLatestFinishedWorkout] = useState<WorkoutSummary | undefined>();
   const [latestFinishedCardioRecords, setLatestFinishedCardioRecords] = useState<CardioRecord[]>([]);
+  const [recentRoutineWorkouts, setRecentRoutineWorkouts] = useState<WorkoutSummary[]>([]);
   const [isTodayRestDay, setIsTodayRestDay] = useState(false);
   const [isTodayRunningPlan, setIsTodayRunningPlan] = useState(false);
   const [todayInProgressWorkouts, setTodayInProgressWorkouts] = useState<WorkoutSummary[]>([]);
@@ -105,12 +106,28 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         setTodayRoutineDay(todaySchedule.routineDay);
         setNextRoutineDay(nextDay);
         const latestCompletedWorkout = recentWorkouts.find((summary) => summary.session.status === 'completed');
+        const seenRoutineDayIds = new Set<string>();
+        const recentCompletedRoutineWorkouts = recentWorkouts
+          .filter((summary) => (
+            summary.session.status === 'completed'
+            && summary.session.entryKind !== 'running'
+            && summary.session.entryKind !== 'free'
+            && Boolean(summary.session.routineDayId)
+          ))
+          .filter((summary) => {
+            const routineDayId = summary.session.routineDayId;
+            if (!routineDayId || seenRoutineDayIds.has(routineDayId)) return false;
+            seenRoutineDayIds.add(routineDayId);
+            return true;
+          })
+          .slice(0, 3);
         const latestCardioRecords = latestCompletedWorkout
           ? await getWorkoutCardioRecords(latestCompletedWorkout.session.id)
           : [];
 
         setLatestFinishedWorkout(latestCompletedWorkout);
         setLatestFinishedCardioRecords(latestCardioRecords);
+        setRecentRoutineWorkouts(recentCompletedRoutineWorkouts);
         setIsTodayRestDay(todaySchedule.isRestDay);
         setIsTodayRunningPlan(todaySchedule.kind === 'running');
         setTodayInProgressWorkouts(todayWorkouts.filter((summary) => summary.session.status === 'in_progress'));
@@ -340,6 +357,32 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
                   <span key={exerciseName} className="rounded-xl border border-accent-dark/65 bg-white px-2.5 py-1.5 text-xs font-bold text-primary">
                     {exerciseName}
                   </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {recentRoutineWorkouts.length > 0 ? (
+            <div className="rounded-2xl border border-accent/20 bg-accent-soft/55 px-3 py-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-black text-primary">{locale === 'ko' ? '최근 루틴 빠른 시작' : 'Recent routine starts'}</p>
+                <span className="text-[11px] font-bold text-text-secondary">{locale === 'ko' ? 'Hevy식 바로 기록' : 'Tap to log'}</span>
+              </div>
+              <div className="mt-2 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {recentRoutineWorkouts.map((summary) => (
+                  <button
+                    key={summary.session.id}
+                    type="button"
+                    onClick={() => onStartWorkout(summary.session.routineDayId)}
+                    className="min-h-11 shrink-0 rounded-xl border border-accent/25 bg-white px-3 text-left shadow-sm active:scale-95"
+                  >
+                    <span className="block text-sm font-black text-primary">
+                      {todayWorkoutSummaryLabel(summary, locale)}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] font-bold text-text-secondary">
+                      {summary.session.date} / {summary.session.totalStrengthVolumeKg.toLocaleString()}kg
+                    </span>
+                  </button>
                 ))}
               </div>
             </div>

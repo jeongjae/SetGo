@@ -1,4 +1,4 @@
-﻿import { Bed, ChevronLeft, ChevronRight, Dumbbell, Footprints } from 'lucide-react';
+import { Bed, ChevronLeft, ChevronRight, Dumbbell, Footprints, Play, Plus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   clearCalendarPlanOverride,
@@ -15,13 +15,14 @@ import { getWorkoutSummariesForDateRange, type WorkoutSummary } from '../db/work
 import { formatDateKey } from '../utils/date';
 import { db } from '../db/db';
 import { getStoredLocale, t } from '../i18n/i18n';
-import type { CalendarPlanOverride, CardioRecord, RoutineDay, WorkoutPlanKind } from '../types';
+import type { CalendarPlanOverride, CardioRecord, RoutineDay, WorkoutPlanKind, WorkoutSessionKind } from '../types';
 
 type CalendarPageProps = {
   initialSelectedDateKey?: string;
   onSelectedDateChange?: (dateKey: string) => void;
   reviewingWeeklyPlan?: boolean;
   onReturnToWeeklyPlan?: () => void;
+  onAddWorkoutForDate?: (dateKey: string, kind: WorkoutSessionKind, routineDayId?: string) => void;
 };
 
 type CalendarDay = {
@@ -128,6 +129,7 @@ export function CalendarPage({
   onSelectedDateChange,
   reviewingWeeklyPlan = false,
   onReturnToWeeklyPlan,
+  onAddWorkoutForDate,
 }: CalendarPageProps) {
   const today = new Date();
   const todayKey = formatDateKey(today);
@@ -279,6 +281,9 @@ export function CalendarPage({
   const selectedOverride = overridesByDate[selectedDateKey];
   const selectedPlan = plansByDate[selectedDateKey];
   const canEditSelectedPlan = canEditCalendarPlan(selectedDateKey, todayKey);
+  const canAddSelectedDateWorkout = selectedDateKey <= todayKey;
+  const selectedWorkoutSummaries = workoutSummariesByDate[selectedDateKey] ?? [];
+  const selectedRoutineDayForStart = selectedPlan?.kind === 'routine' ? selectedPlan.routineDay : undefined;
   const selectedCyclePlanValue = selectedPlan
     ? selectedPlan.kind === 'routine'
       ? `routine:${selectedPlan.routineDay?.id ?? ''}`
@@ -456,6 +461,49 @@ export function CalendarPage({
           </p>
         )}
 
+        {canAddSelectedDateWorkout && onAddWorkoutForDate ? (
+          <div className="rounded-xl border border-accent/25 bg-accent-soft/60 px-3 py-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-black uppercase text-primary">
+                {locale === 'ko' ? '선택 날짜 기록' : 'Log selected date'}
+              </p>
+              <span className="text-[11px] font-bold text-text-secondary">
+                {selectedWorkoutSummaries.length > 0
+                  ? (locale === 'ko' ? `${selectedWorkoutSummaries.length}개 기록 있음` : `${selectedWorkoutSummaries.length} records`)
+                  : (locale === 'ko' ? '아직 기록 없음' : 'No records yet')}
+              </span>
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => onAddWorkoutForDate(selectedDateKey, 'free')}
+                className="flex min-h-10 items-center justify-center gap-1 rounded-xl border border-slate-650 bg-white px-2 text-xs font-black text-primary active:scale-95"
+              >
+                <Plus aria-hidden="true" size={14} />
+                <span>{locale === 'ko' ? '자유' : 'Free'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onAddWorkoutForDate(selectedDateKey, 'running')}
+                className="flex min-h-10 items-center justify-center gap-1 rounded-xl border border-sky-400/40 bg-white px-2 text-xs font-black text-primary active:scale-95"
+              >
+                <Footprints aria-hidden="true" size={14} />
+                <span>{locale === 'ko' ? '러닝' : 'Run'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => selectedRoutineDayForStart
+                  ? onAddWorkoutForDate(selectedDateKey, 'planned', selectedRoutineDayForStart.id)
+                  : undefined}
+                disabled={!selectedRoutineDayForStart}
+                className="flex min-h-10 items-center justify-center gap-1 rounded-xl border border-emerald-500/35 bg-white px-2 text-xs font-black text-primary active:scale-95 disabled:border-slate-650 disabled:bg-slate-100 disabled:text-slate-400"
+              >
+                <Play aria-hidden="true" size={14} />
+                <span>{locale === 'ko' ? '루틴' : 'Routine'}</span>
+              </button>
+            </div>
+          </div>
+        ) : null}
         <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2.5 text-xs font-bold leading-relaxed text-slate-200">
           {locale === 'ko'
             ? '이 화면에서는 계획만 수정합니다. 누락 기록 추가와 과거 기록 수정/삭제는 실적 메뉴에서 처리합니다.'
