@@ -1867,9 +1867,9 @@ function WorkoutSetRow({
         <button
           type="button"
           onClick={() => void handleCopyPreviousSet(set, previousSet)}
-          className="mt-2 flex min-h-9 w-full items-center justify-between rounded-xl border border-cyan-500/25 bg-cyan-950/35 px-3 text-left text-xs font-bold text-cyan-100 transition-all hover:border-cyan-300/50 hover:bg-cyan-900/55 active:scale-[0.99]"
+          className="mt-2 flex min-h-9 w-full items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-50 px-3 text-left text-xs font-black text-primary shadow-sm transition-all hover:border-emerald-500/55 hover:bg-emerald-100 active:scale-[0.99]"
         >
-          <span className="font-black uppercase text-cyan-300">{locale === 'ko' ? '이전값 적용' : 'Use previous'}</span>
+          <span className="font-black uppercase text-emerald-700">{locale === 'ko' ? '이전값 적용' : 'Use previous'}</span>
           <span className="font-mono font-black text-primary">
             {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
           </span>
