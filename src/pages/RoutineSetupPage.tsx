@@ -1,4 +1,4 @@
-﻿import { ArrowDown, ArrowUp, CalendarDays, Check, ChevronLeft, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, Check, ChevronLeft, Copy, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { db } from '../db/db';
@@ -21,6 +21,7 @@ import {
   addExerciseToRoutineDay,
   createCustomRoutine,
   deleteRoutineExercisePlan,
+  duplicateStoredRoutine,
   getActiveRoutineCyclePlan,
   getActiveRoutine,
   getActiveRoutineDayPlans,
@@ -178,6 +179,19 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
 
   async function handleSelectStoredRoutine(routineId: string) {
     await activateStoredRoutine(routineId);
+    setSelectedDayId(undefined);
+    setShowRoutineRename(false);
+    onRoutineSaved();
+    await loadSetup(true);
+  }
+
+  async function handleDuplicateActiveRoutine() {
+    if (!activeRoutine) return;
+
+    await duplicateStoredRoutine(
+      activeRoutine.id,
+      locale === 'ko' ? `${activeRoutine.name} 복사본` : `${activeRoutine.name} Copy`,
+    );
     setSelectedDayId(undefined);
     setShowRoutineRename(false);
     onRoutineSaved();
@@ -579,13 +593,24 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                       <option key={routine.id} value={routine.id}>{routine.name}</option>
                     ))}
                   </select>
-                  <button
-                    type="button"
-                    onClick={() => setShowRoutineRename((current) => !current)}
-                    className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-bold text-cyan-300"
-                  >
-                    {locale === 'ko' ? '이름 변경' : 'Rename'}
-                  </button>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowRoutineRename((current) => !current)}
+                      className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-2 text-xs font-bold text-cyan-300"
+                    >
+                      {locale === 'ko' ? '이름' : 'Rename'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDuplicateActiveRoutine()}
+                      disabled={!activeRoutine}
+                      className="flex min-h-10 items-center justify-center gap-1 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-2 text-xs font-black text-emerald-300 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500"
+                    >
+                      <Copy aria-hidden="true" size={13} />
+                      <span>{locale === 'ko' ? '복제' : 'Copy'}</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <h2 className="text-sm font-bold text-slate-200">{t(locale, 'noActiveRoutine')}</h2>

@@ -238,6 +238,70 @@ export async function getRoutineDays(routineId: string): Promise<RoutineDay[]> {
   return db.routineDays.where('routineId').equals(routineId).sortBy('sequence');
 }
 
+export async function duplicateStoredRoutine(routineId: string, name?: string): Promise<Routine | undefined> {
+  const sourceRoutine = await db.routines.get(routineId);
+  if (!sourceRoutine) return undefined;
+
+  const [sourceDays, sourceCycleItems, sourceWeeklySchedules] = await Promise.all([
+    db.routineDays.where('routineId').equals(routineId).sortBy('sequence'),
+    db.routineCyclePlanItems.where('routineId').equals(routineId).sortBy('order'),
+    db.weeklySchedules.where('routineId').equals(routineId).toArray(),
+  ]);
+  const sourcePlans = sourceDays.length > 0
+    ? await db.routineExercisePlans.where('routineDayId').anyOf(sourceDays.map((day) => day.id)).toArray()
+    : [];
+
+  const now = new Date().toISOString();
+  const nextRoutineId = `routine_copy_${Date.now()}`;
+  const dayIdBySourceId = new Map<string, string>();
+  const nextRoutine: Routine = {
+    ...sourceRoutine,
+    id: nextRoutineId,
+    name: name?.trim() || `${sourceRoutine.name} Copy`,
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const nextDays: RoutineDay[] = sourceDays.map((day) => {
+    const nextDayId = `${nextRoutineId}_${day.code || `day_${day.sequence}`}`;
+    dayIdBySourceId.set(day.id, nextDayId);
+    return {
+      ...day,
+      id: nextDayId,
+      routineId: nextRoutineId,
+    };
+  });
+  const nextPlans: RoutineExercisePlan[] = sourcePlans.map((plan) => ({
+    ...plan,
+    id: `${dayIdBySourceId.get(plan.routineDayId) ?? nextRoutineId}_${plan.exerciseId}_${plan.order}`,
+    routineDayId: dayIdBySourceId.get(plan.routineDayId) ?? plan.routineDayId,
+  }));
+  const nextCycleItems: RoutineCyclePlanItem[] = sourceCycleItems.map((item) => ({
+    ...item,
+    id: `${nextRoutineId}_cycle_${item.order}`,
+    routineId: nextRoutineId,
+    routineDayId: item.routineDayId ? dayIdBySourceId.get(item.routineDayId) : undefined,
+  }));
+  const nextWeeklySchedules: WeeklySchedule[] = sourceWeeklySchedules.map((schedule) => ({
+    ...schedule,
+    id: `${nextRoutineId}_weekday_${schedule.weekday}`,
+    routineId: nextRoutineId,
+    routineDayId: schedule.routineDayId ? dayIdBySourceId.get(schedule.routineDayId) : undefined,
+  }));
+
+  await db.transaction('rw', [db.routines, db.routineDays, db.routineExercisePlans, db.routineCyclePlanItems, db.weeklySchedules], async () => {
+    const routines = await db.routines.toArray();
+    await db.routines.bulkPut(routines.map((routine) => ({ ...routine, isActive: false, updatedAt: now })));
+    await db.routines.put(nextRoutine);
+    if (nextDays.length > 0) await db.routineDays.bulkPut(nextDays);
+    if (nextPlans.length > 0) await db.routineExercisePlans.bulkPut(nextPlans);
+    if (nextCycleItems.length > 0) await db.routineCyclePlanItems.bulkPut(nextCycleItems);
+    if (nextWeeklySchedules.length > 0) await db.weeklySchedules.bulkPut(nextWeeklySchedules);
+  });
+
+  return nextRoutine;
+}
+
 export async function activateStoredRoutine(routineId: string): Promise<void> {
   const now = new Date().toISOString();
   const routines = await db.routines.toArray();
