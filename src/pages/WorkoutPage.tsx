@@ -573,22 +573,19 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   }
 
   async function handleAddSet(workoutExerciseId: string) {
-    const log = logs.find((l) => l.workoutExercise.id === workoutExerciseId);
-    const nextSetNo = log ? log.sets.length + 1 : 1;
-
     await addSetToWorkoutExercise(workoutExerciseId);
     await loadWorkout();
     setSaveMessage(locale === 'ko' ? '세트를 추가했습니다' : 'Set added');
 
     setTimeout(() => {
-      const targetId = `weight_input_${workoutExerciseId}_set_${nextSetNo}`;
-      const inputEl = document.getElementById(targetId) as HTMLInputElement | null;
-      if (inputEl) {
-        inputEl.focus();
-        inputEl.select();
-        inputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const inputs = document.querySelectorAll(`input[data-we-id="${workoutExerciseId}"]`) as NodeListOf<HTMLInputElement>;
+      if (inputs.length >= 3) {
+        const weightInput = inputs[inputs.length - 3];
+        weightInput.focus();
+        weightInput.select();
+        weightInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
-    }, 100);
+    }, 150);
   }
 
   async function handleDeleteSet(set: WorkoutSet) {
@@ -1874,17 +1871,17 @@ function WorkoutSetRow({
     warmup: {
       labelKo: '준비',
       labelEn: 'Warmup',
-      className: 'bg-amber-500/10 text-amber-300 border-amber-500/20 shadow-[0_0_8px_rgba(251,191,36,0.05)] hover:bg-amber-500/20'
+      className: 'bg-amber-100/50 text-amber-700 border-amber-200/60 shadow-[0_0_8px_rgba(251,191,36,0.03)] hover:bg-amber-100'
     },
     drop: {
       labelKo: '드롭',
       labelEn: 'Drop',
-      className: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20 shadow-[0_0_8px_rgba(34,211,238,0.05)] hover:bg-cyan-500/20'
+      className: 'bg-cyan-850 text-cyan-500 border-cyan-200 hover:bg-cyan-850/80'
     },
     failure: {
       labelKo: '실패',
       labelEn: 'Failure',
-      className: 'bg-rose-500/10 text-rose-300 border-rose-500/20 shadow-[0_0_8px_rgba(244,63,94,0.05)] hover:bg-rose-500/20'
+      className: 'bg-rose-50 text-rose-455 border-rose-200 hover:bg-rose-100'
     }
   };
 
@@ -1919,12 +1916,12 @@ function WorkoutSetRow({
             ))}
           </div>
           {!set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3 ? (
-            <span className="rounded-md border border-rose-500/20 bg-rose-500/10 px-2 py-0.5 text-[11px] font-black text-rose-300 shadow-[0_0_8px_rgba(244,63,94,0.1)]">
+            <span className="rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-black text-rose-455 shadow-[0_0_8px_rgba(244,63,94,0.05)]">
               Hard
             </span>
           ) : null}
           {progressBadges.length > 0 ? (
-            <span className="flex items-center gap-1 rounded-md border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[11px] font-black text-amber-200">
+            <span className="flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-black text-amber-700">
               <Trophy aria-hidden="true" size={11} />
               {progressBadges.includes('weight-pr') && progressBadges.includes('volume-pr')
                 ? 'PR'
@@ -1963,6 +1960,7 @@ function WorkoutSetRow({
             </button>
             <input
               id={`weight_input_${set.id}`}
+              data-we-id={log.workoutExercise.id}
               aria-label={`${log.exercise.nameKo} set ${set.setNo} weight`}
               type="text"
               inputMode="decimal"
@@ -1970,6 +1968,20 @@ function WorkoutSetRow({
               tabIndex={setIndex * 3 + 1}
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const currentTabIndex = Number(e.currentTarget.getAttribute('tabindex'));
+                  const nextInput = document.querySelector(`[tabindex="${currentTabIndex + 1}"]`) as HTMLInputElement | null;
+                  if (nextInput) {
+                    nextInput.focus();
+                    nextInput.select();
+                  } else {
+                    e.currentTarget.blur();
+                  }
+                }
+              }}
               onBlur={() => {
                 const num = Number(weight) || 0;
                 if (num !== set.weightKg) {
@@ -2007,6 +2019,7 @@ function WorkoutSetRow({
             </button>
             <input
               id={`reps_input_${set.id}`}
+              data-we-id={log.workoutExercise.id}
               aria-label={`${log.exercise.nameKo} set ${set.setNo} reps`}
               type="text"
               inputMode="numeric"
@@ -2014,6 +2027,20 @@ function WorkoutSetRow({
               tabIndex={setIndex * 3 + 2}
               value={reps}
               onChange={(e) => setReps(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const currentTabIndex = Number(e.currentTarget.getAttribute('tabindex'));
+                  const nextInput = document.querySelector(`[tabindex="${currentTabIndex + 1}"]`) as HTMLInputElement | null;
+                  if (nextInput) {
+                    nextInput.focus();
+                    nextInput.select();
+                  } else {
+                    e.currentTarget.blur();
+                  }
+                }
+              }}
               onBlur={() => {
                 const num = Math.round(Number(reps)) || 0;
                 if (num !== set.reps) {
@@ -2050,6 +2077,7 @@ function WorkoutSetRow({
             </button>
             <input
               id={`rir_input_${set.id}`}
+              data-we-id={log.workoutExercise.id}
               aria-label={`${log.exercise.nameKo} set ${set.setNo} RIR`}
               type="text"
               inputMode="numeric"
@@ -2057,6 +2085,20 @@ function WorkoutSetRow({
               tabIndex={setIndex * 3 + 3}
               value={rir}
               onChange={(e) => setRir(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const currentTabIndex = Number(e.currentTarget.getAttribute('tabindex'));
+                  const nextInput = document.querySelector(`[tabindex="${currentTabIndex + 1}"]`) as HTMLInputElement | null;
+                  if (nextInput) {
+                    nextInput.focus();
+                    nextInput.select();
+                  } else {
+                    e.currentTarget.blur();
+                  }
+                }
+              }}
               onBlur={() => {
                 const val = rir === '' ? undefined : Number(rir) || 0;
                 if (val !== set.rir) {
@@ -2088,8 +2130,8 @@ function WorkoutSetRow({
           onClick={() => void handleToggleWarmup(set)}
           className={`min-h-9 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
             set.isWarmup
-              ? 'bg-amber-400 text-slate-950 font-extrabold shadow-md shadow-amber-400/20'
-              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-slate-100'
+              ? 'bg-amber-400 text-slate-100 font-extrabold shadow-md shadow-amber-400/20'
+              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650'
           }`}
         >
           {locale === 'ko' ? '준비' : 'Warm'}
@@ -2099,8 +2141,8 @@ function WorkoutSetRow({
           onClick={() => void handleToggleHardSet(set)}
           className={`min-h-9 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
             !set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3
-              ? 'bg-rose-500 text-slate-100 font-extrabold shadow-md shadow-rose-500/20'
-              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650 hover:text-slate-100'
+              ? 'bg-rose-500 text-slate-750 font-extrabold shadow-md shadow-rose-500/20'
+              : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650'
           }`}
         >
           Hard
@@ -2110,7 +2152,7 @@ function WorkoutSetRow({
           onClick={() => void handleSetChange(set, { isCompleted: !set.isCompleted })}
           className={`col-span-2 min-h-9 rounded-xl text-sm font-black transition-all duration-300 active:scale-95 ${
             set.isCompleted
-              ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30'
+              ? 'bg-emerald-500 text-slate-750 shadow-lg shadow-emerald-500/30'
               : 'border border-accent/35 bg-accent-soft text-primary shadow-sm hover:bg-accent-soft/80'
           }`}
         >
@@ -2120,7 +2162,7 @@ function WorkoutSetRow({
           type="button"
           onClick={() => void handleCopyPreviousSet(set, previousSet)}
           disabled={!previousSet}
-          className="flex min-h-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 hover:text-slate-100 disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
+          className="flex min-h-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
           aria-label="Copy previous values"
           title="Copy previous workout set"
         >
