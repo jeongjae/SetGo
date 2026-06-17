@@ -490,7 +490,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       isWarmup: previousSet.isWarmup ?? false,
     });
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '이전 운동 세트를 복사했습니다' : 'Previous workout set copied');
+    setSaveMessage(locale === 'ko' ? '최근 운동 세트를 복사했습니다' : 'Recent workout set copied');
   }
 
   async function handleCopyPreviousExercise(log: WorkoutExerciseLog) {
@@ -507,7 +507,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       isWarmup: previousSet.isWarmup ?? false,
     })));
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '이전 운동 세트를 모두 복사했습니다' : 'All previous sets copied');
+    setSaveMessage(locale === 'ko' ? '최근 운동 세트를 모두 복사했습니다' : 'All recent sets copied');
   }
 
   async function handleQuickAdjustSet(
@@ -1155,97 +1155,96 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                       </div>
                     </div>
 
-                    {/* 지난 운동 기록 복사 영역 */}
-                    <div className="mt-2.5 rounded-xl border border-slate-650 bg-slate-850 px-3 py-2.5 shadow-inner">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-extrabold uppercase text-slate-200">{locale === 'ko' ? '지난 기록' : 'Previous Log'}</p>
-                          <p className="mt-1 text-sm font-semibold leading-5 text-slate-100">
-                            {log.previousSummary ?? (locale === 'ko' ? '이전 완료 기록이 없습니다' : 'No previous completed record yet')}
-                          </p>
-                          {(log.pastBestWeight ?? 0) > 0 || (log.pastBestVolume ?? 0) > 0 ? (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              {(log.pastBestWeight ?? 0) > 0 ? (
-                                <span className="rounded-lg border border-amber-400/25 bg-amber-400/10 px-2 py-1 text-[11px] font-black text-amber-200">
-                                  {locale === 'ko' ? '최고 중량' : 'Best weight'} {log.pastBestWeight?.toLocaleString()}kg
-                                </span>
-                              ) : null}
-                              {(log.pastBestVolume ?? 0) > 0 ? (
-                                <span className="rounded-lg border border-emerald-400/25 bg-emerald-400/10 px-2 py-1 text-[11px] font-black text-emerald-200">
-                                  {locale === 'ko' ? '최고 세트 볼륨' : 'Best set volume'} {log.pastBestVolume?.toLocaleString()}kg
-                                </span>
-                              ) : null}
-                            </div>
-                          ) : null}
-                        </div>
+                    <div className="mt-2 rounded-lg border border-slate-650 bg-slate-850 px-2 py-2 shadow-inner">
+                      <div className="flex items-center gap-1.5">
+                        <span className="shrink-0 rounded-md border border-blue-200 bg-blue-100 px-2 py-1 text-[11px] font-black text-blue-950">
+                          {locale === 'ko' ? '최근' : 'Recent'}
+                        </span>
+                        <p className="min-w-0 flex-1 truncate text-xs font-bold text-slate-100">
+                          {log.previousSummary ?? (locale === 'ko' ? '최근 완료 기록 없음' : 'No recent completed record')}
+                        </p>
                         <button
                           type="button"
                           onClick={() => void handleCopyPreviousExercise(log)}
                           disabled={log.previousSets.length === 0}
-                          className="min-h-8 shrink-0 rounded-lg border border-slate-650 bg-slate-750 px-3 text-xs font-bold text-cyan-200 transition-all hover:bg-slate-650 disabled:border-transparent disabled:bg-slate-950/30 disabled:text-slate-500 active:scale-95"
+                          className="min-h-7 shrink-0 rounded-md border border-emerald-300 bg-emerald-100 px-2 text-[11px] font-black text-emerald-950 transition-all hover:bg-emerald-200 disabled:border-transparent disabled:bg-slate-800 disabled:text-slate-500 active:scale-95"
                         >
-                          {locale === 'ko' ? '전체 복사' : 'Copy all'}
+                          {locale === 'ko' ? '전체복사' : 'Copy all'}
                         </button>
                       </div>
+
+                      {(log.pastBestWeight ?? 0) > 0 || (log.pastBestVolume ?? 0) > 0 ? (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {(log.pastBestWeight ?? 0) > 0 ? (
+                            <span className="rounded-md border border-amber-300 bg-amber-100 px-1.5 py-0.5 text-[10px] font-black text-amber-950">
+                              {locale === 'ko' ? '최고중량' : 'Best'} {log.pastBestWeight?.toLocaleString()}kg
+                            </span>
+                          ) : null}
+                          {(log.pastBestVolume ?? 0) > 0 ? (
+                            <span className="rounded-md border border-lime-300 bg-lime-100 px-1.5 py-0.5 text-[10px] font-black text-lime-950">
+                              {locale === 'ko' ? '최고볼륨' : 'Best vol'} {log.pastBestVolume?.toLocaleString()}kg
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+
                       {log.previousSets.length > 0 ? (
-                        <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                        <div className="mt-1.5 flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
                           {log.previousSets.slice(0, 6).map((previousSet, previousSetIndex) => (
                             <button
                               key={previousSet.id}
                               type="button"
                               onClick={() => void handleCopyPreviousSet(log.sets[previousSetIndex] ?? log.sets[0], previousSet)}
-                              className="shrink-0 rounded-lg border border-emerald-500/30 bg-emerald-50 px-2.5 py-1 text-left font-mono text-xs font-black text-primary shadow-sm transition-all hover:border-emerald-500/55 hover:bg-emerald-100 active:scale-95"
-                              aria-label={`Copy previous set ${previousSetIndex + 1}`}
+                              className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-left font-mono text-[11px] font-black text-emerald-950 shadow-sm transition-all hover:bg-emerald-100 active:scale-95"
+                              aria-label={`Copy recent set ${previousSetIndex + 1}`}
                             >
-                              <span className="mr-1 font-sans text-[10px] uppercase text-primary">
-                                {locale === 'ko' ? `${previousSetIndex + 1}세트` : `Set ${previousSetIndex + 1}`}
+                              <span className="mr-1 font-sans text-[10px] uppercase text-emerald-900">
+                                {locale === 'ko' ? `${previousSetIndex + 1}세트` : `S${previousSetIndex + 1}`}
                               </span>
                               {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
                             </button>
                           ))}
                         </div>
                       ) : null}
-                    </div>
 
-                    <div className="mt-2.5 rounded-xl border border-slate-650 bg-slate-850 px-3 py-2.5 shadow-inner">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-extrabold uppercase text-slate-200">{locale === 'ko' ? '운동별 휴식' : 'Rest per exercise'}</p>
-                          <p className="mt-0.5 text-xs font-semibold text-slate-300">
-                            {locale === 'ko' ? '세트 완료 시 이 시간으로 자동 타이머가 시작됩니다.' : 'Completing a set starts this timer automatically.'}
-                          </p>
+                      <div className="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-[auto_minmax(0,1fr)]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="shrink-0 rounded-md border border-cyan-200 bg-cyan-100 px-2 py-1 text-[11px] font-black text-cyan-950">
+                            {locale === 'ko' ? '휴식' : 'Rest'}
+                          </span>
+                          <div className="flex flex-1 overflow-hidden rounded-md border border-slate-600 bg-slate-900">
+                            {[60, 90, 120, 180].map((seconds) => (
+                              <button
+                                key={seconds}
+                                type="button"
+                                onClick={() => void handleUpdateExerciseRestSeconds(log.workoutExercise.id, seconds)}
+                                className={`min-h-7 flex-1 px-2 text-[11px] font-black transition-all ${
+                                  (log.workoutExercise.restSeconds ?? 90) === seconds
+                                    ? 'bg-cyan-300 text-slate-950'
+                                    : 'bg-slate-100 text-slate-950 hover:bg-slate-200'
+                                }`}
+                              >
+                                {seconds < 60 ? `${seconds}s` : `${seconds / 60}m`}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex overflow-hidden rounded-lg border border-slate-650 bg-slate-900">
-                          {[60, 90, 120, 180].map((seconds) => (
-                            <button
-                              key={seconds}
-                              type="button"
-                              onClick={() => void handleUpdateExerciseRestSeconds(log.workoutExercise.id, seconds)}
-                              className={`min-h-8 px-2.5 text-xs font-black transition-all ${
-                                (log.workoutExercise.restSeconds ?? 90) === seconds
-                                  ? 'bg-cyan-400 text-slate-950'
-                                  : 'text-slate-200 hover:bg-slate-750'
-                              }`}
-                            >
-                              {seconds < 60 ? `${seconds}s` : `${seconds / 60}m`}
-                            </button>
-                          ))}
-                        </div>
+
+                        <label className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-1.5 text-[11px] font-black uppercase text-slate-100">
+                          <span className="rounded-md border border-violet-200 bg-violet-100 px-2 py-1 text-violet-950">
+                            {locale === 'ko' ? '메모' : 'Memo'}
+                          </span>
+                          <input
+                            aria-label={`${log.exercise.nameKo} memo`}
+                            type="text"
+                            defaultValue={log.workoutExercise.memo ?? ''}
+                            onBlur={(event) => void handleUpdateExerciseMemo(log.workoutExercise.id, event.target.value)}
+                            className="h-8 min-w-0 rounded-md border border-slate-500 bg-slate-50 px-2 text-sm font-bold text-slate-950 outline-none transition-all placeholder:text-slate-500 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-300"
+                            placeholder={locale === 'ko' ? '그립, 자세, 세팅' : 'Grip, setup, cues'}
+                          />
+                        </label>
                       </div>
                     </div>
-
-                    {/* 운동 개별 메모 */}
-                    <label className="mt-2.5 block text-xs font-bold uppercase text-slate-200">
-                      {locale === 'ko' ? '운동 개별 메모' : 'Exercise Notes'}
-                      <input
-                        aria-label={`${log.exercise.nameKo} memo`}
-                        type="text"
-                        defaultValue={log.workoutExercise.memo ?? ''}
-                        onBlur={(event) => void handleUpdateExerciseMemo(log.workoutExercise.id, event.target.value)}
-                        className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 py-2 text-sm font-medium text-slate-100 outline-none transition-all placeholder:text-slate-350 focus:border-cyan-400/85 focus:ring-1 focus:ring-cyan-400/50"
-                        placeholder={locale === 'ko' ? '그립, 자세, 기구 세팅 메모' : 'Grip type, machine setup, or form cues'}
-                      />
-                    </label>
 
                     {/* 운동교체 찾기 영역 (교체 활성화 시 노출) */}
                     {replacingWorkoutExerciseId === log.workoutExercise.id && (
@@ -1264,7 +1263,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     )}
 
                     {/* 세트 리스트 */}
-                    <div className="mt-3 flex flex-col gap-2">
+                    <div className="mt-2 flex flex-col gap-1.5">
                       {log.sets.map((set, setIndex) => (
                         <WorkoutSetRow
                           key={set.id}
@@ -1285,7 +1284,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     <button
                       type="button"
                       onClick={() => void handleAddSet(log.workoutExercise.id)}
-                      className="mt-2.5 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100 transition-all duration-200 hover:bg-slate-750 active:scale-95"
+                      className="mt-2 flex min-h-9 w-full items-center justify-center gap-2 rounded-lg border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100 transition-all duration-200 hover:bg-slate-750 active:scale-95"
                     >
                       <Plus aria-hidden="true" size={15} />
                       <span>{locale === 'ko' ? '세트 추가' : 'Add Set'}</span>
@@ -1886,12 +1885,12 @@ function WorkoutSetRow({
   };
 
   return (
-    <div className="rounded-xl border border-slate-650 bg-slate-850/85 px-3 py-2.5 shadow-inner">
+    <div className="rounded-lg border border-slate-650 bg-slate-850/85 px-2 py-1.5 shadow-inner">
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={() => void handleToggleSetType()}
-          className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-black transition-all hover:brightness-110 active:scale-95 ${typeBadges[currentType].className}`}
+          className={`flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-black transition-all hover:brightness-110 active:scale-95 ${typeBadges[currentType].className}`}
           aria-label={`Toggle type for Set ${set.setNo}, current: ${currentType}`}
         >
           <span>{locale === 'ko' ? '세트' : 'Set'} {set.setNo}</span>
@@ -1900,13 +1899,13 @@ function WorkoutSetRow({
           </span>
         </button>
         <div className="flex items-center gap-1">
-          <div className="flex overflow-hidden rounded-lg border border-slate-650 bg-slate-900">
+          <div className="flex overflow-hidden rounded-md border border-slate-650 bg-slate-900">
             {[1, 2.5].map((step) => (
               <button
                 key={step}
                 type="button"
                 onClick={() => setWeightStep(step)}
-                className={`px-2 py-1 text-[11px] font-black ${
+                className={`px-1.5 py-0.5 text-[11px] font-black ${
                   weightStep === step ? 'bg-cyan-400 text-slate-950' : 'text-slate-300'
                 }`}
                 aria-label={`Set weight step to ${step}kg`}
@@ -1937,24 +1936,24 @@ function WorkoutSetRow({
         <button
           type="button"
           onClick={() => void handleCopyPreviousSet(set, previousSet)}
-          className="mt-2 flex min-h-9 w-full items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-50 px-3 text-left text-xs font-black text-primary shadow-sm transition-all hover:border-emerald-500/55 hover:bg-emerald-100 active:scale-[0.99]"
+          className="mt-1.5 flex min-h-7 w-full items-center justify-between rounded-lg border border-emerald-300 bg-emerald-50 px-2 text-left text-[11px] font-black text-emerald-950 shadow-sm transition-all hover:border-emerald-500 hover:bg-emerald-100 active:scale-[0.99]"
         >
-          <span className="font-black uppercase text-emerald-700">{locale === 'ko' ? '이전값 적용' : 'Use previous'}</span>
-          <span className="font-mono font-black text-primary">
+          <span className="font-black uppercase text-emerald-900">{locale === 'ko' ? '최근 적용' : 'Use recent'}</span>
+          <span className="font-mono font-black text-emerald-950">
             {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
           </span>
         </button>
       ) : null}
 
-      <div className="mt-2.5 grid grid-cols-3 gap-1.5">
-        <label className="text-xs font-extrabold uppercase text-slate-200">
+      <div className="mt-1.5 grid grid-cols-3 gap-1">
+        <label className="text-[11px] font-extrabold uppercase leading-none text-slate-200">
           kg
-          <div className="mt-1 grid grid-cols-[1.75rem_1fr_1.75rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 shadow-inner transition-all focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400">
+          <div className="mt-0.5 grid grid-cols-[1.35rem_1fr_1.35rem] overflow-hidden rounded-lg border border-slate-650 bg-slate-750 shadow-inner transition-all focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400">
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'weightKg', -weightStep)}
               aria-label={`Decrease weight by ${weightStep}kg`}
-              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-slate-100 active:scale-90 active:bg-slate-650"
+              className="h-8 text-sm font-bold text-slate-100 transition-all hover:text-slate-100 active:scale-90 active:bg-slate-650"
             >
               -
             </button>
@@ -1989,31 +1988,31 @@ function WorkoutSetRow({
                 }
               }}
               placeholder="kg"
-              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-slate-100 outline-none"
+              className="min-w-0 bg-transparent px-0.5 py-0 text-center text-base font-black leading-none text-slate-100 outline-none"
             />
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'weightKg', weightStep)}
               aria-label={`Increase weight by ${weightStep}kg`}
-              className="min-h-10 text-base font-bold text-cyan-200 transition-all hover:text-cyan-100 active:scale-90 active:bg-slate-650"
+              className="h-8 text-sm font-bold text-cyan-200 transition-all hover:text-cyan-100 active:scale-90 active:bg-slate-650"
             >
               +
             </button>
           </div>
           {previousSet && previousSet.weightKg > 0 && (
-            <span className="mt-1 block truncate text-[11px] font-bold normal-case leading-none text-slate-300">
-              {locale === 'ko' ? `지난: ${previousSet.weightKg}kg` : `Prev: ${previousSet.weightKg}kg`}
+            <span className="hidden truncate text-[11px] font-bold normal-case leading-none text-slate-300">
+              {locale === 'ko' ? `최근: ${previousSet.weightKg}kg` : `Recent: ${previousSet.weightKg}kg`}
             </span>
           )}
         </label>
 
-        <label className="text-xs font-extrabold uppercase text-slate-200">
+        <label className="text-[11px] font-extrabold uppercase leading-none text-slate-200">
           reps
-          <div className="mt-1 grid grid-cols-[1.75rem_1fr_1.75rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 shadow-inner transition-all focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400">
+          <div className="mt-0.5 grid grid-cols-[1.35rem_1fr_1.35rem] overflow-hidden rounded-lg border border-slate-650 bg-slate-750 shadow-inner transition-all focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400">
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'reps', -1)}
-              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-slate-100 active:scale-90 active:bg-slate-650"
+              className="h-8 text-sm font-bold text-slate-100 transition-all hover:text-slate-100 active:scale-90 active:bg-slate-650"
             >
               -
             </button>
@@ -2048,30 +2047,30 @@ function WorkoutSetRow({
                 }
               }}
               placeholder="reps"
-              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-slate-100 outline-none"
+              className="min-w-0 bg-transparent px-0.5 py-0 text-center text-base font-black leading-none text-slate-100 outline-none"
             />
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'reps', 1)}
-              className="min-h-10 text-base font-bold text-cyan-200 transition-all hover:text-cyan-100 active:scale-90 active:bg-slate-650"
+              className="h-8 text-sm font-bold text-cyan-200 transition-all hover:text-cyan-100 active:scale-90 active:bg-slate-650"
             >
               +
             </button>
           </div>
           {previousSet && previousSet.reps > 0 && (
-            <span className="mt-1 block truncate text-[11px] font-bold normal-case leading-none text-slate-300">
-              {locale === 'ko' ? `지난: ${previousSet.reps}회` : `Prev: ${previousSet.reps} reps`}
+            <span className="hidden truncate text-[11px] font-bold normal-case leading-none text-slate-300">
+              {locale === 'ko' ? `최근: ${previousSet.reps}회` : `Recent: ${previousSet.reps} reps`}
             </span>
           )}
         </label>
 
-        <label className="text-xs font-extrabold uppercase text-slate-200">
+        <label className="text-[11px] font-extrabold uppercase leading-none text-slate-200">
           RIR
-          <div className="mt-1 grid grid-cols-[1.75rem_1fr_1.75rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 shadow-inner transition-all focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400">
+          <div className="mt-0.5 grid grid-cols-[1.35rem_1fr_1.35rem] overflow-hidden rounded-lg border border-slate-650 bg-slate-750 shadow-inner transition-all focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400">
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'rir', -1)}
-              className="min-h-10 text-base font-bold text-slate-100 transition-all hover:text-slate-100 active:scale-90 active:bg-slate-650"
+              className="h-8 text-sm font-bold text-slate-100 transition-all hover:text-slate-100 active:scale-90 active:bg-slate-650"
             >
               -
             </button>
@@ -2106,29 +2105,29 @@ function WorkoutSetRow({
                 }
               }}
               placeholder="RIR"
-              className="min-w-0 bg-transparent px-1 py-1.5 text-center text-base font-black text-slate-100 outline-none"
+              className="min-w-0 bg-transparent px-0.5 py-0 text-center text-base font-black leading-none text-slate-100 outline-none"
             />
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'rir', 1)}
-              className="min-h-10 text-base font-bold text-cyan-200 transition-all hover:text-cyan-100 active:scale-90 active:bg-slate-650"
+              className="h-8 text-sm font-bold text-cyan-200 transition-all hover:text-cyan-100 active:scale-90 active:bg-slate-650"
             >
               +
             </button>
           </div>
           {previousSet && previousSet.rir !== undefined && (
-            <span className="mt-1 block truncate text-[11px] font-bold normal-case leading-none text-slate-300">
-              {locale === 'ko' ? `지난: RIR ${previousSet.rir}` : `Prev: RIR ${previousSet.rir}`}
+            <span className="hidden truncate text-[11px] font-bold normal-case leading-none text-slate-300">
+              {locale === 'ko' ? `최근: RIR ${previousSet.rir}` : `Recent: RIR ${previousSet.rir}`}
             </span>
           )}
         </label>
       </div>
 
-      <div className="mt-2.5 grid grid-cols-6 gap-1.5">
+      <div className="mt-1.5 grid grid-cols-6 gap-1">
         <button
           type="button"
           onClick={() => void handleToggleWarmup(set)}
-          className={`min-h-9 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
+          className={`min-h-8 rounded-lg text-xs font-bold transition-all duration-200 active:scale-95 ${
             set.isWarmup
               ? 'bg-amber-400 text-slate-100 font-extrabold shadow-md shadow-amber-400/20'
               : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650'
@@ -2139,7 +2138,7 @@ function WorkoutSetRow({
         <button
           type="button"
           onClick={() => void handleToggleHardSet(set)}
-          className={`min-h-9 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
+          className={`min-h-8 rounded-lg text-xs font-bold transition-all duration-200 active:scale-95 ${
             !set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3
               ? 'bg-rose-500 text-slate-750 font-extrabold shadow-md shadow-rose-500/20'
               : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650'
@@ -2150,7 +2149,7 @@ function WorkoutSetRow({
         <button
           type="button"
           onClick={() => void handleSetChange(set, { isCompleted: !set.isCompleted })}
-          className={`col-span-2 min-h-9 rounded-xl text-sm font-black transition-all duration-300 active:scale-95 ${
+          className={`col-span-2 min-h-8 rounded-lg text-xs font-black transition-all duration-300 active:scale-95 ${
             set.isCompleted
               ? 'bg-emerald-500 text-slate-750 shadow-lg shadow-emerald-500/30'
               : 'border border-accent/35 bg-accent-soft text-primary shadow-sm hover:bg-accent-soft/80'
@@ -2162,7 +2161,7 @@ function WorkoutSetRow({
           type="button"
           onClick={() => void handleCopyPreviousSet(set, previousSet)}
           disabled={!previousSet}
-          className="flex min-h-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
+          className="flex min-h-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
           aria-label="Copy previous values"
           title="Copy previous workout set"
         >
@@ -2172,7 +2171,7 @@ function WorkoutSetRow({
           type="button"
           onClick={() => void handleDeleteSet(set)}
           disabled={log.sets.length === 1}
-          className="flex min-h-9 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-rose-300 transition-all hover:bg-rose-500/10 disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
+          className="flex min-h-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-rose-300 transition-all hover:bg-rose-500/10 disabled:border-transparent disabled:bg-slate-950/20 disabled:text-slate-700 active:scale-95"
           aria-label="Delete set"
         >
           <Trash2 aria-hidden="true" size={13} />
@@ -2181,4 +2180,3 @@ function WorkoutSetRow({
     </div>
   );
 }
-
