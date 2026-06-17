@@ -907,7 +907,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 }}
                 className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold transition-all active:scale-95 ${
                   isCurrentExpanded
-                    ? 'bg-cyan-400 text-slate-950 ring-4 ring-cyan-400/20 shadow-lg'
+                    ? 'bg-sky-200 text-black ring-4 ring-sky-400/20 shadow-lg'
                     : allCompleted
                       ? 'bg-emerald-950/65 text-emerald-300 border border-emerald-800/60'
                       : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650'

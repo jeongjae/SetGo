@@ -115,7 +115,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                 onClick={() => handleLocaleChange(item)}
                 className={`min-h-8 rounded-md px-2.5 text-xs font-extrabold transition-all active:scale-95 ${
                   locale === item
-                    ? 'bg-cyan-400 text-slate-950 font-black shadow-sm'
+                    ? 'bg-sky-200 text-black font-black shadow-sm'
                     : 'text-slate-100 hover:bg-slate-750 hover:text-slate-100'
                 }`}
               >

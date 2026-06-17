@@ -409,7 +409,7 @@ export function ActualsPage({
                 setAddMenuMode('kind');
               }}
               disabled={!canEditSelectedDate}
-              className="flex min-h-9 items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-2.5 text-xs font-black text-emerald-300 active:scale-95 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500"
+              className="flex min-h-9 items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-2.5 text-xs font-black text-black active:scale-95 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500"
             >
               <Plus aria-hidden="true" size={14} />
               <span>{locale === 'ko' ? '운동 추가' : 'Add workout'}</span>
@@ -434,7 +434,7 @@ export function ActualsPage({
                       setAddMenuMode('kind');
                       onAddHistoricalWorkout(selectedDateKey, 'free');
                     }}
-                    className="min-h-11 rounded-xl border border-cyan-400/40 bg-cyan-400/15 px-2 text-sm font-black text-cyan-200 active:scale-95"
+                    className="min-h-11 rounded-xl border border-cyan-400/40 bg-cyan-400/15 px-2 text-sm font-black text-black active:scale-95"
                   >
                     {locale === 'ko' ? '자유운동' : 'Free'}
                   </button>
@@ -445,7 +445,7 @@ export function ActualsPage({
                       setAddMenuMode('kind');
                       onAddHistoricalWorkout(selectedDateKey, 'running');
                     }}
-                    className="min-h-11 rounded-xl border border-sky-400/40 bg-sky-400/15 px-2 text-sm font-black text-sky-200 active:scale-95"
+                    className="min-h-11 rounded-xl border border-sky-400/40 bg-sky-400/15 px-2 text-sm font-black text-black active:scale-95"
                   >
                     {locale === 'ko' ? '러닝' : 'Running'}
                   </button>
@@ -473,7 +473,7 @@ export function ActualsPage({
                             setAddMenuMode('kind');
                             onAddHistoricalWorkout(selectedDateKey, 'planned', routineDay.id);
                           }}
-                          className="min-h-10 rounded-xl border border-emerald-500/35 bg-emerald-500/15 px-3 text-sm font-black text-emerald-200 active:scale-95"
+                          className="min-h-10 rounded-xl border border-emerald-500/35 bg-emerald-500/15 px-3 text-sm font-black text-black active:scale-95"
                         >
                           {getRoutineDayDisplayName(routineDay, locale) ?? routineDay.name}
                         </button>

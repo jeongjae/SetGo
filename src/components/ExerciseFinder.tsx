@@ -123,7 +123,7 @@ export function ExerciseFinder({
             onClick={() => updateState({ category: category.value })}
             className={`min-h-9 shrink-0 snap-start flex items-center gap-1.5 rounded-full px-3.5 text-sm font-bold transition-all active:scale-95 ${
               state.category === category.value
-                ? 'bg-cyan-400 text-slate-950 shadow-lg shadow-cyan-400/20'
+                ? 'bg-sky-200 text-black shadow-lg shadow-sky-400/20'
                 : 'border border-slate-650 bg-slate-850 text-slate-100 hover:bg-slate-700'
             }`}
           >
@@ -144,7 +144,7 @@ export function ExerciseFinder({
             onClick={() => updateState({ stage: stage.value })}
             className={`min-h-9 shrink-0 snap-start flex items-center gap-1.5 rounded-full px-3.5 text-sm font-bold transition-all active:scale-95 ${
               state.stage === stage.value
-                ? 'bg-cyan-400 text-slate-950 shadow-lg shadow-cyan-400/20'
+                ? 'bg-sky-200 text-black shadow-lg shadow-sky-400/20'
                 : 'border border-slate-650 bg-slate-850 text-slate-100 hover:bg-slate-700'
             }`}
           >

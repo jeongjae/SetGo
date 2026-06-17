@@ -918,7 +918,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   key={value}
                   type="button"
                   onClick={() => void handleExerciseLibraryModeChange(value)}
-                  className={`min-h-9 rounded-lg text-sm font-bold ${exerciseLibraryMode === value ? 'bg-cyan-400 text-slate-950' : 'text-slate-100'}`}
+                  className={`min-h-9 rounded-lg text-sm font-bold ${exerciseLibraryMode === value ? 'bg-sky-200 text-black' : 'text-slate-100'}`}
                 >
                   {label}
                 </button>
@@ -972,7 +972,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   onClick={() => handleSelectExercise(exercise)}
                   className={`flex h-full items-center rounded-xl p-2 text-left border transition-all active:scale-95 ${
                     editingExercise?.id === exercise.id
-                      ? 'bg-cyan-400 border-cyan-400 text-slate-950 font-bold shadow-sm'
+                      ? 'bg-sky-200 border-sky-400 text-black font-bold shadow-sm'
                       : 'border-slate-650 bg-slate-850 text-slate-100 hover:border-cyan-400/50 hover:bg-slate-700'
                   }`}
                 >
@@ -1080,7 +1080,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                             })}
                             className={`min-h-8 rounded-lg px-2.5 text-xs font-bold transition-all active:scale-95 ${
                               selected
-                                ? 'bg-cyan-400 text-slate-950 font-black shadow-sm'
+                                ? 'bg-sky-200 text-black font-black shadow-sm'
                                 : 'border border-slate-650 bg-slate-750 text-slate-100 hover:bg-slate-650'
                             }`}
                           >
@@ -1105,7 +1105,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                             })}
                             className={`min-h-8 rounded-lg px-2.5 text-xs font-bold transition-all active:scale-95 ${
                               selected
-                                ? 'bg-cyan-400 text-slate-950 font-black shadow-sm'
+                                ? 'bg-sky-200 text-black font-black shadow-sm'
                                 : 'border border-slate-650 bg-slate-750 text-slate-100 hover:bg-slate-650'
                             }`}
                           >
@@ -1211,7 +1211,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   onClick={() => setSelectedDayId(dayPlan.routineDay.id)}
                   className={`min-h-8 shrink-0 rounded-full px-3.5 text-xs font-black transition-all active:scale-95 border ${
                     selectedDay?.routineDay.id === dayPlan.routineDay.id
-                      ? 'bg-cyan-400 border-cyan-400 text-slate-950 shadow-sm'
+                      ? 'bg-sky-200 border-sky-400 text-black shadow-sm'
                       : 'border-slate-650 bg-slate-850 text-slate-100 hover:bg-slate-700 hover:text-slate-100'
                   }`}
                 >
