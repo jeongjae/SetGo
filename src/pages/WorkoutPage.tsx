@@ -1,6 +1,7 @@
-import { ArrowDown, ArrowUp, Check, ChevronLeft, ClipboardList, Clock3, Copy, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, BarChart3, Check, ChevronLeft, ClipboardList, Clock3, Copy, History, Plus, RefreshCw, Trash2, Trophy } from 'lucide-react';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
+import { ExerciseHistoryModal } from '../components/ExerciseHistoryModal';
 import { db } from '../db/db';
 import { createRoutineFromWorkoutSession, getAllRoutines, getRoutineDayDisplayName, getRoutineDays } from '../db/routines';
 import { getExerciseIcon } from '../utils/exerciseIcon';
@@ -109,6 +110,24 @@ export function countFullyCompletedExercises(
   return logs.filter((log) => log.sets.length > 0 && log.sets.every((set) => set.isCompleted)).length;
 }
 
+export function getWorkoutSetProgressBadges(
+  set: Pick<WorkoutSet, 'isCompleted' | 'weightKg' | 'reps'>,
+  pastBestWeight?: number,
+  pastBestVolume?: number,
+): Array<'weight-pr' | 'volume-pr'> {
+  if (!set.isCompleted) return [];
+
+  const badges: Array<'weight-pr' | 'volume-pr'> = [];
+  if (pastBestWeight !== undefined && pastBestWeight > 0 && set.weightKg >= pastBestWeight) {
+    badges.push('weight-pr');
+  }
+  if (pastBestVolume !== undefined && pastBestVolume > 0 && (set.weightKg * set.reps) >= pastBestVolume) {
+    badges.push('volume-pr');
+  }
+
+  return badges;
+}
+
 export function expandWorkoutExercise(
   expandedExercises: Record<string, boolean>,
   workoutExerciseId: string,
@@ -207,6 +226,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   const [historyRoutineId, setHistoryRoutineId] = useState('');
   const [historyRoutineDayId, setHistoryRoutineDayId] = useState('');
   const [historyRoutineDays, setHistoryRoutineDays] = useState<RoutineDay[]>([]);
+  const [selectedHistoryExerciseId, setSelectedHistoryExerciseId] = useState<string | undefined>();
   const historyEditSnapshot = useRef<HistoryEditSnapshot | undefined>(undefined);
 
   const loggedCardioRecords = useMemo(() => {
@@ -1036,6 +1056,17 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                         <h2 className="text-base font-extrabold leading-tight text-slate-100">
                           {getExerciseName(log.exercise, locale)}
                         </h2>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedHistoryExerciseId(log.exercise.id);
+                          }}
+                          className="flex h-5.5 w-5.5 items-center justify-center rounded-md bg-slate-800 text-cyan-300 border border-slate-700/50 hover:bg-slate-750 hover:text-cyan-200 active:scale-90 transition-all shrink-0"
+                          aria-label={locale === 'ko' ? '운동 히스토리 보기' : 'View exercise history'}
+                        >
+                          <History aria-hidden="true" size={11} />
+                        </button>
                         {allCompleted && (
                           <span className="shrink-0 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-black text-emerald-300">
                             {locale === 'ko' ? '완료' : 'Done'}
@@ -1098,23 +1129,33 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           <Trash2 aria-hidden="true" size={15} />
                         </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setReplacingWorkoutExerciseId((current) => (
-                            current === log.workoutExercise.id ? undefined : log.workoutExercise.id
-                          ));
-                          resetExerciseFinderState();
-                        }}
-                        className={`flex min-h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-all active:scale-95 duration-200 ${
-                          replacingWorkoutExerciseId === log.workoutExercise.id
-                            ? 'bg-slate-800 border-slate-700 text-slate-300'
-                            : 'border-slate-650 bg-slate-750 text-slate-100 hover:bg-slate-650'
-                        }`}
-                      >
-                        <RefreshCw aria-hidden="true" size={12} className={replacingWorkoutExerciseId === log.workoutExercise.id ? 'animate-spin' : ''} />
-                        <span>{locale === 'ko' ? '교체' : 'Replace'}</span>
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplacingWorkoutExerciseId((current) => (
+                              current === log.workoutExercise.id ? undefined : log.workoutExercise.id
+                            ));
+                            resetExerciseFinderState();
+                          }}
+                          className={`flex min-h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-all active:scale-95 duration-200 ${
+                            replacingWorkoutExerciseId === log.workoutExercise.id
+                              ? 'bg-slate-800 border-slate-700 text-slate-300'
+                              : 'border-slate-650 bg-slate-750 text-slate-100 hover:bg-slate-650'
+                          }`}
+                        >
+                          <RefreshCw aria-hidden="true" size={12} className={replacingWorkoutExerciseId === log.workoutExercise.id ? 'animate-spin' : ''} />
+                          <span>{locale === 'ko' ? '교체' : 'Replace'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedHistoryExerciseId(log.exercise.id)}
+                          className="flex min-h-9 items-center gap-1.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 text-xs font-bold text-cyan-200 transition-all hover:border-cyan-400/60 hover:bg-cyan-500/15 active:scale-95"
+                        >
+                          <BarChart3 aria-hidden="true" size={13} />
+                          <span>{locale === 'ko' ? '기록' : 'History'}</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* 지난 운동 기록 복사 영역 */}
@@ -1125,6 +1166,20 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           <p className="mt-1 text-sm font-semibold leading-5 text-slate-100">
                             {log.previousSummary ?? (locale === 'ko' ? '이전 완료 기록이 없습니다' : 'No previous completed record yet')}
                           </p>
+                          {(log.pastBestWeight ?? 0) > 0 || (log.pastBestVolume ?? 0) > 0 ? (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {(log.pastBestWeight ?? 0) > 0 ? (
+                                <span className="rounded-lg border border-amber-400/25 bg-amber-400/10 px-2 py-1 text-[11px] font-black text-amber-200">
+                                  {locale === 'ko' ? '최고 중량' : 'Best weight'} {log.pastBestWeight?.toLocaleString()}kg
+                                </span>
+                              ) : null}
+                              {(log.pastBestVolume ?? 0) > 0 ? (
+                                <span className="rounded-lg border border-emerald-400/25 bg-emerald-400/10 px-2 py-1 text-[11px] font-black text-emerald-200">
+                                  {locale === 'ko' ? '최고 세트 볼륨' : 'Best set volume'} {log.pastBestVolume?.toLocaleString()}kg
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </div>
                         <button
                           type="button"
@@ -1709,6 +1764,13 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           </div>
         </div>
       )}
+      {selectedHistoryExerciseId ? (
+        <ExerciseHistoryModal
+          exerciseId={selectedHistoryExerciseId}
+          locale={locale}
+          onClose={() => setSelectedHistoryExerciseId(undefined)}
+        />
+      ) : null}
     </section>
   );
 }
@@ -1745,6 +1807,7 @@ function WorkoutSetRow({
   const [reps, setReps] = useState(set.reps ? String(set.reps) : '');
   const [rir, setRir] = useState(set.rir !== undefined ? String(set.rir) : '');
   const [weightStep, setWeightStep] = useState(2.5);
+  const progressBadges = getWorkoutSetProgressBadges(set, log.pastBestWeight, log.pastBestVolume);
 
   useEffect(() => {
     setWeight(set.weightKg ? String(set.weightKg) : '');
@@ -1858,6 +1921,16 @@ function WorkoutSetRow({
           {!set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3 ? (
             <span className="rounded-md border border-rose-500/20 bg-rose-500/10 px-2 py-0.5 text-[11px] font-black text-rose-300 shadow-[0_0_8px_rgba(244,63,94,0.1)]">
               Hard
+            </span>
+          ) : null}
+          {progressBadges.length > 0 ? (
+            <span className="flex items-center gap-1 rounded-md border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[11px] font-black text-amber-200">
+              <Trophy aria-hidden="true" size={11} />
+              {progressBadges.includes('weight-pr') && progressBadges.includes('volume-pr')
+                ? 'PR'
+                : progressBadges.includes('weight-pr')
+                  ? (locale === 'ko' ? '중량 PR' : 'Weight PR')
+                  : (locale === 'ko' ? '볼륨 PR' : 'Volume PR')}
             </span>
           ) : null}
         </div>

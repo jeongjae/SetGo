@@ -22,6 +22,8 @@ export type WorkoutExerciseLog = {
   sets: WorkoutSet[];
   previousSummary?: string;
   previousSets: WorkoutSet[];
+  pastBestWeight?: number;
+  pastBestVolume?: number;
 };
 
 export type WorkoutStartKind = WorkoutSessionKind;
@@ -362,11 +364,16 @@ export async function getWorkoutExerciseLogs(sessionId: string): Promise<Workout
         throw new Error(`Exercise not found: ${workoutExercise.exerciseId}`);
       }
 
+      const prevRecord = await getPreviousExerciseRecord(workoutExercise.sessionId, workoutExercise.exerciseId);
+      const pastBests = await getExercisePastBests(workoutExercise.sessionId, workoutExercise.exerciseId);
+
       return {
         workoutExercise,
         exercise,
         sets,
-        ...(await getPreviousExerciseRecord(workoutExercise.sessionId, workoutExercise.exerciseId)),
+        ...prevRecord,
+        pastBestWeight: pastBests.bestWeight,
+        pastBestVolume: pastBests.bestVolume,
       };
     }),
   );
@@ -770,4 +777,126 @@ export async function unskipWorkoutSession(sessionId: string): Promise<void> {
     endedAt: undefined,
     updatedAt: new Date().toISOString(),
   });
+}
+
+export type ExerciseHistoryEntry = {
+  date: string;
+  sessionId: string;
+  routineName?: string;
+  totalVolumeKg: number;
+  sets: WorkoutSet[];
+};
+
+export type ExerciseHistoryDetails = {
+  history: ExerciseHistoryEntry[];
+  bestWeight: number;
+  bestVolume: number;
+  bestSessionVolume: number;
+  bestEstimated1RM: number;
+};
+
+export async function getExerciseHistory(exerciseId: string): Promise<ExerciseHistoryDetails> {
+  const workoutExercises = await db.workoutExercises
+    .where('exerciseId')
+    .equals(exerciseId)
+    .toArray();
+
+  const historyEntries: ExerciseHistoryEntry[] = [];
+  let bestWeight = 0;
+  let bestVolume = 0;
+  let bestSessionVolume = 0;
+  let bestEstimated1RM = 0;
+
+  for (const we of workoutExercises) {
+    const session = await db.workoutSessions.get(we.sessionId);
+    if (!session || session.status !== 'completed') continue;
+
+    const sets = await db.workoutSets
+      .where('workoutExerciseId')
+      .equals(we.id)
+      .sortBy('setNo');
+
+    const completedSets = sets.filter((s) => s.isCompleted);
+    if (completedSets.length === 0) continue;
+
+    let routineName: string | undefined;
+    if (session.routineId) {
+      const routine = await db.routines.get(session.routineId);
+      routineName = routine?.name;
+    }
+
+    const totalVolumeKg = completedSets.reduce((sum, s) => sum + (s.weightKg * s.reps), 0);
+
+    for (const s of completedSets) {
+      if (s.weightKg > bestWeight) bestWeight = s.weightKg;
+      const setVol = s.weightKg * s.reps;
+      if (setVol > bestVolume) bestVolume = setVol;
+
+      const est1RM = s.reps > 0 ? s.weightKg / (1.0278 - 0.0278 * s.reps) : 0;
+      if (est1RM > bestEstimated1RM) bestEstimated1RM = est1RM;
+    }
+
+    if (totalVolumeKg > bestSessionVolume) bestSessionVolume = totalVolumeKg;
+
+    historyEntries.push({
+      date: session.date,
+      sessionId: session.id,
+      routineName,
+      totalVolumeKg,
+      sets,
+    });
+  }
+
+  historyEntries.sort((a, b) => b.date.localeCompare(a.date) || b.sessionId.localeCompare(a.sessionId));
+
+  return {
+    history: historyEntries,
+    bestWeight,
+    bestVolume,
+    bestSessionVolume,
+    bestEstimated1RM: Math.round(bestEstimated1RM * 10) / 10,
+  };
+}
+
+export type ExercisePastBests = {
+  bestWeight: number;
+  bestVolume: number;
+};
+
+export async function getExercisePastBests(
+  currentSessionId: string,
+  exerciseId: string,
+): Promise<ExercisePastBests> {
+  const currentSession = await db.workoutSessions.get(currentSessionId);
+  const workoutExercises = await db.workoutExercises
+    .where('exerciseId')
+    .equals(exerciseId)
+    .filter((item) => item.sessionId !== currentSessionId)
+    .toArray();
+
+  let bestWeight = 0;
+  let bestVolume = 0;
+
+  for (const we of workoutExercises) {
+    const session = await db.workoutSessions.get(we.sessionId);
+    if (!session || session.status !== 'completed') continue;
+    if (currentSession && (session.startedAt ?? session.createdAt) >= (currentSession.startedAt ?? currentSession.createdAt)) continue;
+
+    const sets = await db.workoutSets
+      .where('workoutExerciseId')
+      .equals(we.id)
+      .toArray();
+
+    const completedSets = sets.filter((s) => s.isCompleted);
+    for (const s of completedSets) {
+      if (s.weightKg > bestWeight) bestWeight = s.weightKg;
+      const setVol = s.weightKg * s.reps;
+      if (setVol > bestVolume) bestVolume = setVol;
+    }
+  }
+
+  return {
+    bestWeight,
+    bestVolume,
+  };
 }
