@@ -5,11 +5,13 @@
 - Project path: `C:\Users\NB-24021500\Projects\SetGo\setgo-starter`
 - App: Vite React TypeScript PWA, local-first, Dexie/IndexedDB only.
 - GitHub repo: `https://github.com/jeongjae/SetGo.git`
-- Current branch: `main`
-- Latest pushed commit before this handoff update: `3fe9b8d Improve previous value contrast`
-- Latest deploy verification: GitHub Actions run `27587634861` completed with `success`.
+- Current branch: `main` (synced with `origin/main`)
+- Latest pushed commit: `295b78f Complete Phase 9: Polish workout logging colors, input focus behavior, and stabilize scroll/focus on set add`
+- Phases 4 through 9 are complete and pushed (see Recently Completed Work).
+- Deploy verification: pushing `295b78f` triggers the GitHub Pages workflow. Confirm the run status on the repo Actions page (the `gh` CLI is not available in the current shell).
 - Local development URL used in the last UAT: `http://127.0.0.1:5173/`
 - Deployment target: GitHub Pages.
+- Health at handoff: `npm run build` passes; `npm run test -- --run` = 85 tests passed (13 files).
 
 ## Hard Rules
 
@@ -52,7 +54,21 @@ If a future Codex update downloads a new `cua_node` runtime folder, the same per
 
 ## Recently Completed Work
 
-The recent Hevy-benchmarking work has delivered the first major round of improvements:
+### Phases 4-9 (4-tab IA rework through workout logging polish) — DONE and pushed
+
+The 4-tab information-architecture rework and the follow-on phases are all committed and pushed:
+
+- `a4d50c1` Phase 4/5: rework bottom navigation to the 4-tab model (`오늘 / 계획 / 기록 / 더보기`) and integrate records/stats pages
+- `eb12fc7` Phase 6: routine deletion, copy renaming UX, warning banner, routine summaries
+- `ac09485` Phase 7: plan calendar UX (past/today/future distinction, simplified chip assignment, records/routines navigation)
+- `dd8ac38` Phase 8: exercise history lookup, PR badges, 5-session volume trend
+- `295b78f` Phase 9: workout logging colors, input focus behavior, scroll/focus stability on set add
+
+This supersedes the earlier "start with Phase 4" guidance below — Phase 4 is no longer the next step.
+
+### Earlier Hevy-benchmarking round
+
+The earlier Hevy-benchmarking work delivered the first major round of improvements:
 
 - Fast workout logging
   - Previous set chips
@@ -83,24 +99,20 @@ The recent Hevy-benchmarking work has delivered the first major round of improve
 
 ## Current Product Assessment
 
-Approximate goal completion: 70%.
+Approximate goal completion: ~85%.
 
-SetGo now has a usable MVP-level workout logging and routine flow. The remaining work is not just more features; it is mostly information architecture, management UX, and commercial-app polish.
+The 4-tab IA (`오늘 / 계획 / 기록 / 더보기`) is now in place and the workout-logging / routine / records flows are built out through Phase 9. The remaining work is mostly QA hardening, release-loop safety, and commercial-app polish rather than net-new features.
 
-The next strategic direction is to move from 5 bottom tabs to 4:
+The bottom navigation is the now-shipped 4-tab model:
 
 ```text
 오늘 / 계획 / 기록 / 더보기
 ```
 
-Rationale:
-
 - `오늘`: daily action hub.
 - `계획`: future schedule and routine planning.
 - `기록`: past performance, actuals, stats, and history.
 - `더보기`: management tools such as routines, exercise library, backup/export, language.
-
-This replaces the current scattered feeling of `오늘 / 계획 / 실적 / 통계 / 설정`.
 
 ## Next Development Plan
 
@@ -261,18 +273,16 @@ npm.cmd run dev
 
 Use `http://127.0.0.1:5173/` if available. If the port is occupied, inspect the current server before starting a second one.
 
-3. Start with Phase 4, not Phase 6.
+3. Start with Phase 10 (QA and Release Loop). Phases 4-9 are already done and pushed.
 
-The 4-tab structure is the foundation. Do not spend the next session improving old `실적 / 통계 / 설정` navigation before the information architecture is changed.
+The information architecture and feature build-out are in place. The next priority is making future changes safe to ship.
 
-4. Suggested first implementation slice:
+4. Suggested next focus:
 
-- Update navigation model/types in `src/app/App.tsx`.
-- Rename the Settings-facing screen to More at the navigation level.
-- Add a new `Records` view that initially wraps or reuses existing Actuals/Stats content.
-- Keep old page components if that reduces risk; first change the user-facing structure.
-- Run tests/build.
-- Verify bottom nav in the in-app browser.
+- Phase 10: add tests for 4-tab routing/navigation, routine duplicate/delete, calendar add flows, and records/stats integration.
+- Bundle size: `index-*.js` is ~576 kB (gzip ~163 kB), over Vite's 500 kB warning. Consider `import()` code-splitting for the heavier screens (records/stats, exercise history).
+- Keep the browser UAT checklist current and decide how to treat the local backup/settings JSON artifacts.
+- Run tests/build and verify in the in-app browser after each slice.
 
 ## Useful Commands
 
@@ -289,8 +299,8 @@ git log --oneline --decorate -5
 
 Continue SetGo development from `C:\Users\NB-24021500\Projects\SetGo\setgo-starter`.
 Read `AGENTS.md`, `README.md`, and `NEXT_SESSION.md` first.
-Latest source work completed the Hevy-style quick logging/routine quick-start improvements and deployed `3fe9b8d`.
-The next goal is Phase 4: convert bottom navigation to `오늘 / 계획 / 기록 / 더보기`.
+Latest source work completed Phases 4-9 (4-tab IA, routine management, plan calendar UX, exercise history/PR, workout logging polish) and pushed `295b78f`.
+The next goal is Phase 10: QA and release-loop hardening (navigation/routine/calendar tests), plus bundle code-splitting.
 Keep Tailwind v3, no backend/auth, local-first Dexie only.
 Do not commit or delete local backup/settings JSON artifacts.
-Start by changing the app information architecture, then run tests/build and verify in the in-app browser.
+Run tests/build and verify in the in-app browser after each slice.
