@@ -439,7 +439,7 @@ export function CalendarPage({
             } else {
               if (day.isCurrentMonth) {
                 if (highlightsFuturePlan) {
-                  cellStyle = 'bg-sky-950/70 border-sky-500/60 text-sky-300 hover:bg-sky-900/70';
+                  cellStyle = 'bg-sky-200 border-sky-400 text-black hover:bg-sky-300';
                 } else {
                   cellStyle = 'bg-slate-850/80 border-slate-750 text-slate-300 hover:bg-slate-800';
                 }
@@ -554,7 +554,7 @@ export function CalendarPage({
                       onClick={() => void handlePlanChange(opt.value)}
                       className={`min-h-10 px-3.5 py-1.5 rounded-xl border text-xs font-black transition-all active:scale-95 ${
                         active
-                          ? 'bg-cyan-400 border-cyan-400 text-slate-950 shadow-sm'
+                          ? 'bg-sky-200 border-sky-400 text-black shadow-sm'
                           : `${opt.colorClass}`
                       }`}
                     >

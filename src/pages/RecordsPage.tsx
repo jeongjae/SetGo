@@ -39,7 +39,7 @@ export function RecordsPage({
             aria-pressed={active}
             className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-black transition-all active:scale-95 ${
               active
-                ? 'bg-cyan-400 text-slate-950 shadow-sm'
+                ? 'bg-sky-200 text-black shadow-sm'
                 : 'text-slate-200 hover:bg-slate-750 hover:text-slate-100'
             }`}
           >
