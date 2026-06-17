@@ -7,6 +7,7 @@ import {
   formatCountdownSeconds,
   getElapsedMs,
   getLiveSessionElapsedMs,
+  getWorkoutSetProgressBadges,
   parseOptionalDecimalInput,
   shouldConfirmCardioDelete,
   shouldCompleteHistoricalSetOnSave,
@@ -147,6 +148,29 @@ describe('workout progress counters', () => {
       { sets: [{ isCompleted: true }] },
       { sets: [] },
     ])).toBe(1);
+  });
+});
+
+describe('workout set progress badges', () => {
+  it('marks completed sets that match or beat past bests', () => {
+    expect(getWorkoutSetProgressBadges({
+      isCompleted: true,
+      weightKg: 100,
+      reps: 5,
+    }, 100, 480)).toEqual(['weight-pr', 'volume-pr']);
+  });
+
+  it('does not mark incomplete sets or empty past bests', () => {
+    expect(getWorkoutSetProgressBadges({
+      isCompleted: false,
+      weightKg: 120,
+      reps: 5,
+    }, 100, 500)).toEqual([]);
+    expect(getWorkoutSetProgressBadges({
+      isCompleted: true,
+      weightKg: 120,
+      reps: 5,
+    })).toEqual([]);
   });
 });
 
