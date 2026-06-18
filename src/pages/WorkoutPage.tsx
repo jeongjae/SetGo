@@ -1008,17 +1008,25 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                         <h2 className="text-base font-extrabold leading-tight text-[#1C1C1E]">
                           {getExerciseName(log.exercise, locale)}
                         </h2>
-                        <button
-                          type="button"
+                        <div
+                          role="button"
+                          tabIndex={0}
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedHistoryExerciseId(log.exercise.id);
                           }}
-                          className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-md bg-[#F2F2F7] text-accent-dark active:scale-90 transition-all"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setSelectedHistoryExerciseId(log.exercise.id);
+                            }
+                          }}
+                          className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-md bg-[#F2F2F7] text-accent-dark active:scale-90 transition-all cursor-pointer"
                           aria-label={locale === 'ko' ? '운동 히스토리 보기' : 'View exercise history'}
                         >
                           <History aria-hidden="true" size={11} />
-                        </button>
+                        </div>
                         {allCompleted && (
                             <span className="shrink-0 rounded-full bg-[#E8F3F3] px-2 py-0.5 text-[11px] font-black text-accent-dark">
                             {locale === 'ko' ? '완료' : 'Done'}
