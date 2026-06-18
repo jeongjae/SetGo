@@ -1080,7 +1080,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 {isExpanded && (
                   <div className={`border-t border-[#E5E5EA] bg-white px-3 ${isKeyboardOpen ? 'pb-2 pt-1.5' : 'pb-3 pt-2'}`}>
                     {/* Exercise actions */}
-                    <div className="flex items-center justify-between gap-3">
+                    <div className={`flex items-center justify-between gap-3 transition-all ${isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0' : 'max-h-10 opacity-100'}`}>
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
@@ -1188,7 +1188,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     )}
 
                     {/* Set rows */}
-                    <div className={`mt-2 flex flex-col ${isKeyboardOpen ? 'gap-1' : 'gap-1.5'}`}>
+                    <div className={`${isKeyboardOpen ? 'mt-1' : 'mt-2'} flex flex-col ${isKeyboardOpen ? 'gap-1' : 'gap-1.5'}`}>
                       {log.sets.map((set, setIndex) => (
                         <WorkoutSetRow
                           key={set.id}
