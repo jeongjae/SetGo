@@ -25,7 +25,7 @@ export function RecordsPage({
   const [locale] = useState(() => getStoredLocale());
   const [subView, setSubView] = useState<RecordsSubView>('actuals');
   const recordModeControl = (
-    <div className="grid grid-cols-2 gap-1 rounded-xl border border-slate-650 bg-slate-850 p-1">
+    <div className="grid grid-cols-2 gap-0.5 rounded-lg bg-[#767680]/12 p-0.5">
       {recordsSubViews.map((view) => {
         const active = subView === view;
         const Icon = view === 'actuals' ? CalendarRange : BarChart3;
@@ -37,13 +37,13 @@ export function RecordsPage({
             type="button"
             onClick={() => setSubView(view)}
             aria-pressed={active}
-            className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-black transition-all active:scale-95 ${
+            className={`flex min-h-8 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-all active:scale-95 ${
               active
-                ? 'bg-sky-200 text-black shadow-sm'
-                : 'text-slate-200 hover:bg-slate-750 hover:text-slate-100'
+                ? 'bg-white text-[#1C1C1E] shadow-[0_1px_3px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.04)]'
+                : 'text-[#6E6E73] hover:text-[#1C1C1E]'
             }`}
           >
-            <Icon aria-hidden="true" size={15} />
+            <Icon aria-hidden="true" size={14} />
             <span>{label}</span>
           </button>
         );

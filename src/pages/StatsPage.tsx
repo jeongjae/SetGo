@@ -634,12 +634,12 @@ function Badge({ status, locale }: { status: LoadStatus; locale: Locale }) {
     en: { low: 'Low', normal: 'Good', high: 'High', caution: 'Caution' },
   };
   const className = status === 'normal'
-    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+    ? 'bg-emerald-500/15 text-[#159A91] border border-emerald-500/20'
     : status === 'high'
-    ? 'bg-rose-500/15 text-rose-450 border border-rose-500/20'
-    : 'bg-amber-500/15 text-amber-400 border border-amber-500/20';
+    ? 'bg-rose-500/15 text-rose-600 border border-rose-500/20'
+    : 'bg-amber-500/15 text-amber-600 border border-amber-500/20';
 
-  return <span className={`rounded-lg px-2 py-0.5 text-[11px] font-black uppercase ${className}`}>{labels[locale][status]}</span>;
+  return <span className={`rounded-lg px-2 py-0.5 text-[11px] font-bold uppercase ${className}`}>{labels[locale][status]}</span>;
 }
 
 function MiniBarChart({ weeks, metric }: { weeks: WeekStat[]; metric: 'sets' | 'workoutDays' }) {
@@ -648,13 +648,13 @@ function MiniBarChart({ weeks, metric }: { weeks: WeekStat[]; metric: 'sets' | '
     <div className="mt-3 flex h-28 items-end gap-1.5 px-1">
       {weeks.map((week) => (
         <div key={week.key} className="flex flex-1 flex-col items-center gap-2">
-          <span className="text-[11px] font-black text-slate-100">{week[metric]}</span>
+          <span className="text-[11px] font-bold text-[#1C1C1E]">{week[metric]}</span>
           <div
-            className="w-full rounded-t-lg bg-gradient-to-t from-cyan-500/80 to-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.3)]"
+            className="w-full rounded-t-lg bg-[#2EC4B6]"
             style={{ height: `${Math.max(8, (week[metric] / maxValue) * 72)}px` }}
             aria-label={`${week.label} ${week[metric]}`}
           />
-          <span className="text-[10px] font-black text-slate-200">{week.label}</span>
+          <span className="text-[10px] font-semibold text-[#8E8E93]">{week.label}</span>
         </div>
       ))}
     </div>
@@ -676,19 +676,19 @@ function MiniLineChart({ weeks, locale, peakLabel }: { weeks: WeekStat[]; locale
 
   return (
     <div className="mt-3">
-      <div className="mb-2 flex items-center justify-between text-xs font-black uppercase text-slate-100">
+      <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase text-[#1C1C1E]">
         <span>{latest ? `${latest.label}: ${Math.round(latest.volumeKg).toLocaleString()}kg` : '0kg'}</span>
-        <span className="text-cyan-400 font-bold">{peak ? `${peakLabel} ${peak.label}: ${Math.round(peak.volumeKg).toLocaleString()}kg` : ''}</span>
+        <span className="text-[#159A91] font-bold">{peak ? `${peakLabel} ${peak.label}: ${Math.round(peak.volumeKg).toLocaleString()}kg` : ''}</span>
       </div>
-      <div className="relative rounded-xl border border-slate-650 bg-slate-850/85 p-1">
+      <div className="relative rounded-xl border border-black/5 bg-[#F2F2F7] p-2">
         <svg viewBox="0 0 100 100" className="h-32 w-full overflow-visible">
           <defs>
             <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.0" />
+              <stop offset="0%" stopColor="#2EC4B6" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#2EC4B6" stopOpacity="0.0" />
             </linearGradient>
           </defs>
-          <line x1="0" y1="95" x2="100" y2="95" stroke="#334155" strokeWidth="1" />
+          <line x1="0" y1="95" x2="100" y2="95" stroke="#E5E5EA" strokeWidth="1" />
           
           {/* Area fill under curve */}
           {plottedPoints.length > 0 && (
@@ -698,13 +698,13 @@ function MiniLineChart({ weeks, locale, peakLabel }: { weeks: WeekStat[]; locale
             />
           )}
           
-          <polyline points={points} fill="none" stroke="#22d3ee" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points={points} fill="none" stroke="#2EC4B6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           {plottedPoints.map((point) => (
-            <circle key={point.label} cx={point.x} cy={point.y} r="2.5" fill="#22d3ee" stroke="#0f172a" strokeWidth="1" />
+            <circle key={point.label} cx={point.x} cy={point.y} r="2.5" fill="#2EC4B6" stroke="#FFFFFF" strokeWidth="1" />
           ))}
         </svg>
       </div>
-      <div className="mt-2 grid grid-cols-8 text-center text-[10px] font-black text-slate-200">
+      <div className="mt-2 grid grid-cols-8 text-center text-[10px] font-semibold text-[#8E8E93]">
         {weeks.map((week) => <span key={week.key}>{week.label}</span>)}
       </div>
     </div>
@@ -718,7 +718,7 @@ function DailyTrendChart({ days, locale }: { days: DailyTrendStat[]; locale: Loc
 
   return (
     <div className="mt-3 space-y-3">
-      <div className="flex h-32 items-end gap-1 rounded-xl border border-slate-650 bg-slate-850/85 px-2 pb-2 pt-3">
+      <div className="flex h-32 items-end gap-1 rounded-xl border border-black/5 bg-[#F2F2F7] px-2 pb-2 pt-3">
         {days.map((day) => {
           const strengthHeight = day.strengthVolumeKg > 0 ? Math.max(6, (day.strengthVolumeKg / maxStrength) * 76) : 0;
           const cardioHeight = day.cardioDistanceKm > 0 ? Math.max(6, (day.cardioDistanceKm / maxCardio) * 44) : 0;
@@ -728,36 +728,36 @@ function DailyTrendChart({ days, locale }: { days: DailyTrendStat[]; locale: Loc
               <div className="flex h-24 w-full flex-col justify-end gap-0.5">
                 {cardioHeight > 0 ? (
                   <div
-                    className="w-full rounded-t bg-sky-400"
+                    className="w-full rounded-t bg-[#007AFF]"
                     style={{ height: `${cardioHeight}px` }}
                     aria-label={`${day.label} ${day.cardioDistanceKm.toFixed(1)}km`}
                   />
                 ) : null}
                 {strengthHeight > 0 ? (
                   <div
-                    className="w-full rounded-t bg-emerald-400"
+                    className="w-full rounded-t bg-[#34C759]"
                     style={{ height: `${strengthHeight}px` }}
                     aria-label={`${day.label} ${Math.round(day.strengthVolumeKg)}kg`}
                   />
                 ) : null}
               </div>
-              <span className="text-[9px] font-black text-slate-300">{day.label}</span>
+              <span className="text-[9px] font-bold text-[#8E8E93]">{day.label}</span>
             </div>
           );
         })}
       </div>
-      <div className="flex items-center gap-3 px-1 text-[11px] font-black uppercase text-slate-300">
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-400" />{locale === 'ko' ? '근력 kg' : 'Strength kg'}</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-sky-400" />{locale === 'ko' ? '러닝 km' : 'Running km'}</span>
+      <div className="flex items-center gap-3 px-1 text-[11px] font-bold uppercase text-[#8E8E93]">
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#34C759]" />{locale === 'ko' ? '근력 kg' : 'Strength kg'}</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#007AFF]" />{locale === 'ko' ? '러닝 km' : 'Running km'}</span>
       </div>
       <div className="grid gap-1.5">
         {activeDays.length === 0 ? (
-          <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2 text-xs font-bold text-slate-300">
+          <p className="rounded-xl border border-black/5 bg-[#F2F2F7] px-3 py-2 text-xs font-semibold text-[#8E8E93]">
             {locale === 'ko' ? '최근 2주간 기록된 운동이 없습니다.' : 'No workouts logged in the last two weeks.'}
           </p>
         ) : activeDays.slice(-7).map((day) => (
-          <p key={day.date} className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2 text-xs font-bold leading-relaxed text-slate-200">
-            <span className="font-black text-slate-100">{day.label}</span>{' '}
+          <p key={day.date} className="rounded-xl border border-black/5 bg-[#F2F2F7] px-3 py-2 text-xs font-semibold leading-relaxed text-[#6E6E73]">
+            <span className="font-bold text-[#1C1C1E]">{day.label}</span>{' '}
             {day.items.map((item) => (
               item.distanceKm > 0
                 ? `${item.label} ${item.distanceKm.toFixed(1)}km`
@@ -779,13 +779,13 @@ function MiniSparkBars({ history }: { history: ExercisePerformance['oneRmHistory
     <div className="mt-3 flex h-16 items-end gap-1.5 px-0.5">
       {history.map((item) => (
         <div key={`${item.label}_${item.valueKg}`} className="flex flex-1 flex-col items-center gap-1">
-          <span className="text-[10px] font-black text-slate-100">{Math.round(item.valueKg)}</span>
+          <span className="text-[10px] font-bold text-[#1C1C1E]">{Math.round(item.valueKg)}</span>
           <div
-            className="w-full rounded-t bg-gradient-to-t from-emerald-500/80 to-emerald-400 shadow-[0_0_6px_rgba(46,196,182,0.15)]"
+            className="w-full rounded-t bg-gradient-to-t from-[#2EC4B6] to-[#159A91]"
             style={{ height: `${Math.max(6, (item.valueKg / maxValue) * 32)}px` }}
             aria-label={`${item.label} ${item.valueKg.toFixed(1)}kg`}
           />
-          <span className="text-[10px] font-black text-slate-200">{item.label}</span>
+          <span className="text-[10px] font-semibold text-[#8E8E93]">{item.label}</span>
         </div>
       ))}
     </div>
@@ -802,15 +802,15 @@ function DetailSection({
   children: ReactNode;
 }) {
   return (
-    <details className="group rounded-2xl border border-slate-650 bg-slate-750/90 shadow-xl">
+    <details className="group ios-card">
       <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-3">
         <div>
-          <h2 className="text-sm font-black text-slate-100">{title}</h2>
-          <p className="mt-0.5 text-xs font-semibold text-slate-300">{summary}</p>
+          <h2 className="text-sm font-black text-[#1C1C1E]">{title}</h2>
+          <p className="mt-0.5 text-xs font-semibold text-[#6E6E73]">{summary}</p>
         </div>
-        <span className="shrink-0 text-lg font-black text-cyan-300 group-open:rotate-45">+</span>
+        <span className="shrink-0 text-lg font-black text-[#159A91] group-open:rotate-45">+</span>
       </summary>
-      <div className="border-t border-slate-650 p-3.5 pt-3">{children}</div>
+      <div className="border-t border-[#E5E5EA] p-3.5 pt-3">{children}</div>
     </details>
   );
 }
@@ -904,20 +904,20 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
     : c.noWarnings;
 
   return (
-    <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
-      <header className="flex shrink-0 flex-col gap-2.5">
-        <div className="flex items-center justify-between gap-2.5">
+    <section className="viewport-locked ios-screen mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3">
+      <header className="shrink-0 px-1 pb-1 pt-1">
+        <div className="flex items-center justify-between gap-2.5 pb-2.5">
           <div>
-            <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'records')}</p>
-            <h1 className="text-xl font-black text-slate-100">{c.title}</h1>
+            <p className="text-sm font-bold text-[#159A91]">{t(locale, 'records')}</p>
+            <h1 className="text-[2rem] font-black leading-none text-[#1C1C1E]">{c.title}</h1>
           </div>
           {!recordModeControl && onOpenActuals ? (
             <button
               type="button"
               onClick={onOpenActuals}
-              className="flex min-h-10 items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-slate-850 px-2.5 text-xs font-black text-cyan-300 active:scale-95"
+              className="ios-button-secondary flex min-h-9 items-center gap-1.5 px-2.5 text-xs"
             >
-              <CalendarRange aria-hidden="true" size={15} />
+              <CalendarRange aria-hidden="true" size={14} />
               <span>{t(locale, 'actualsCalendar')}</span>
             </button>
           ) : null}
@@ -927,35 +927,31 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
 
       {!hasData ? (
         <div className="inner-scroll min-h-0 w-full flex flex-col items-center justify-center p-2">
-          <section className="flex w-full flex-col items-center space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-5 text-center shadow-2xl">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 border border-slate-700 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.15)]">
+          <section className="flex w-full flex-col items-center space-y-3 ios-card p-5 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F3F3] text-accent-dark">
               <BarChart3 aria-hidden="true" size={24} />
             </div>
             <div className="space-y-2">
-              <h2 className="text-base font-black text-slate-100 tracking-wide">{c.emptyTitle}</h2>
-              <p className="text-xs leading-relaxed text-slate-300 font-semibold max-w-xs">{c.emptyBody}</p>
+              <h2 className="text-base font-black text-[#1C1C1E] tracking-wide">{c.emptyTitle}</h2>
+              <p className="text-xs leading-relaxed text-[#6E6E73] font-semibold max-w-xs">{c.emptyBody}</p>
             </div>
           </section>
         </div>
       ) : (
         <div className="inner-scroll min-h-0 space-y-2.5 pr-0.5">
-          <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+          <section className="ios-card p-3.5 space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-black uppercase text-cyan-300">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
                   {locale === 'ko' ? '이번 주 요약' : 'This Week'}
                 </p>
-                <h2 className="mt-0.5 text-base font-black text-slate-100">
+                <h2 className="mt-0.5 text-base font-black text-[#1C1C1E]">
                   {tf(locale, 'statsWorkoutDaysValue', { days: stats.workoutDays })} / {Math.round(stats.totalVolumeKg).toLocaleString()}kg
                 </h2>
               </div>
-              <div className={`rounded-xl px-3 py-2 text-right ${
-                stats.weekOverWeekPct !== undefined && stats.weekOverWeekPct >= 25
-                  ? 'bg-rose-950/45 text-rose-300'
-                  : 'bg-cyan-950/45 text-cyan-200'
-              }`}>
-                <p className="text-[11px] font-black uppercase">{c.weekOverWeek}</p>
-                <p className="text-sm font-black">{formatPct(stats.weekOverWeekPct)}</p>
+              <div className="rounded-xl px-3 py-2 text-right bg-[#F2F2F7] border border-black/5">
+                <p className="text-[11px] font-bold text-[#6E6E73] uppercase">{c.weekOverWeek}</p>
+                <p className="text-sm font-black text-[#1C1C1E]">{formatPct(stats.weekOverWeekPct)}</p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -964,30 +960,30 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
                 [c.hardSets, `${stats.hardSets}`],
                 [c.hardSetRatio, `${stats.hardSetRatio.toFixed(0)}%`],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-xl border border-slate-650 bg-slate-850/80 px-2 py-2 text-center">
-                  <p className="text-[11px] font-black uppercase text-slate-300">{label}</p>
-                  <p className="mt-1 text-base font-black text-slate-100">{value}</p>
+                <div key={label} className="rounded-xl border border-black/5 bg-[#F2F2F7] px-2 py-2 text-center">
+                  <p className="text-[11px] font-bold text-[#6E6E73] uppercase">{label}</p>
+                  <p className="mt-1 text-base font-black text-[#1C1C1E]">{value}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+          <section className="ios-card p-3.5 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-black text-slate-100">{c.dailyTrend}</h2>
-              <span className="text-xs font-bold text-slate-300">{locale === 'ko' ? '최근 2주' : 'Last 2 weeks'}</span>
+              <h2 className="text-base font-black text-[#1C1C1E]">{c.dailyTrend}</h2>
+              <span className="text-xs font-semibold text-[#8E8E93]">{locale === 'ko' ? '최근 2주' : 'Last 2 weeks'}</span>
             </div>
             <DailyTrendChart days={stats.dailyTrend} locale={locale} />
           </section>
 
-          <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+          <section className="ios-card p-3.5 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-black text-slate-100">{c.recentTrend}</h2>
-              <span className="text-xs font-bold text-slate-300">{locale === 'ko' ? '볼륨' : 'Volume'}</span>
+              <h2 className="text-base font-black text-[#1C1C1E]">{c.recentTrend}</h2>
+              <span className="text-xs font-semibold text-[#8E8E93]">{locale === 'ko' ? '볼륨' : 'Volume'}</span>
             </div>
             <MiniLineChart weeks={stats.weeks} locale={locale} peakLabel={c.peak} />
             {latestWeek ? (
-              <p className="rounded-xl border border-slate-650 bg-slate-850/85 px-3 py-2.5 text-xs font-semibold leading-relaxed text-slate-200">
+              <p className="rounded-xl bg-[#F2F2F7] px-3.5 py-3 text-xs font-medium leading-relaxed text-[#6E6E73]">
                 {tf(locale, 'statsTrendSummaryText', {
                   week: latestWeek.label,
                   days: latestWeek.workoutDays,
@@ -999,47 +995,47 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
             ) : null}
           </section>
 
-          <section className="rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
+          <section className="ios-card p-3.5 space-y-3">
             <div className="flex items-center gap-2.5">
-              <AlertTriangle aria-hidden="true" size={17} className={stats.warnings.length > 0 ? 'text-danger' : 'text-emerald-400'} />
+              <AlertTriangle aria-hidden="true" size={17} className={stats.warnings.length > 0 ? 'text-danger' : 'text-[#34C759]'} />
               <div>
-                <h2 className="text-sm font-black text-slate-100">{c.recoveryWarnings}</h2>
-                <p className={`mt-0.5 text-xs font-bold ${stats.warnings.length > 0 ? 'text-danger' : 'text-emerald-300'}`}>
+                <h2 className="text-sm font-black text-[#1C1C1E]">{c.recoveryWarnings}</h2>
+                <p className={`mt-0.5 text-xs font-bold ${stats.warnings.length > 0 ? 'text-danger' : 'text-[#34C759]'}`}>
                   {warningSummary}
                 </p>
               </div>
             </div>
             {stats.warnings.length > 0 ? (
-              <p className="mt-3 rounded-xl border border-danger/35 bg-danger/10 px-3 py-2.5 text-xs font-bold leading-relaxed text-danger">
+              <p className="mt-1 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2.5 text-xs font-bold leading-relaxed text-rose-600">
                 {stats.warnings[0]}
               </p>
             ) : null}
             {stats.warnings.length > 1 ? (
-              <details className="mt-2 rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2">
-                <summary className="cursor-pointer text-xs font-bold text-cyan-300">
+              <details className="mt-2 rounded-xl border border-black/5 bg-[#F2F2F7] px-3 py-2">
+                <summary className="cursor-pointer text-xs font-bold text-[#159A91]">
                   {locale === 'ko' ? '전체 경고 보기' : 'View all warnings'}
                 </summary>
                 <div className="mt-2 grid gap-2">
                   {stats.warnings.slice(1).map((warning) => (
-                    <p key={warning} className="text-xs font-bold leading-relaxed text-danger">{warning}</p>
+                    <p key={warning} className="text-xs font-bold leading-relaxed text-rose-600">{warning}</p>
                   ))}
                 </div>
               </details>
             ) : null}
           </section>
 
-          <section className="space-y-2.5 rounded-2xl border border-accent/20 bg-white p-3.5 shadow-xl">
-            <h2 className="text-sm font-black text-primary">{t(locale, 'statsNextWeekPlan')}</h2>
+          <section className="ios-card p-3.5 space-y-2.5">
+            <h2 className="text-sm font-black text-[#1C1C1E]">{t(locale, 'statsNextWeekPlan')}</h2>
             <div className="grid gap-2">
               {stats.nextWeekSuggestions.map((suggestion) => (
-                <p key={suggestion} className="rounded-xl border border-accent/20 bg-accent-soft/55 px-3 py-2 text-xs font-bold leading-relaxed text-primary">
+                <p key={suggestion} className="rounded-xl border border-[#2EC4B6]/20 bg-[#2EC4B6]/5 px-3 py-2 text-xs font-bold leading-relaxed text-accent-dark">
                   {suggestion}
                 </p>
               ))}
             </div>
           </section>
 
-          <p className="px-1 pt-1 text-xs font-black uppercase tracking-wider text-slate-300">
+          <p className="px-1 pt-1 text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
             {locale === 'ko' ? '세부 분석' : 'Details'}
           </p>
 
@@ -1049,11 +1045,11 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
           >
             <div className="space-y-4">
               <div>
-                <p className="text-xs font-black uppercase text-slate-100">{c.totalSets}</p>
+                <p className="text-xs font-bold uppercase text-[#1C1C1E]">{c.totalSets}</p>
                 <MiniBarChart weeks={stats.weeks} metric="sets" />
               </div>
-              <div className="border-t border-slate-750 pt-4">
-                <p className="text-xs font-black uppercase text-slate-100">{c.workoutDays}</p>
+              <div className="border-t border-[#E5E5EA] pt-4">
+                <p className="text-xs font-bold uppercase text-[#1C1C1E]">{c.workoutDays}</p>
                 <MiniBarChart weeks={stats.weeks} metric="workoutDays" />
               </div>
             </div>
@@ -1065,39 +1061,39 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
           >
             <div className="grid gap-2.5">
               {stats.muscleStats.map((muscle) => (
-                <div key={muscle.group} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-lg">
+                <div key={muscle.group} className="space-y-2.5 rounded-2xl border border-black/5 bg-[#F2F2F7] p-3.5 shadow-sm">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-black text-slate-100 tracking-wide">{muscleLabels[locale][muscle.group]}</p>
+                    <p className="text-sm font-black text-[#1C1C1E] tracking-wide">{muscleLabels[locale][muscle.group]}</p>
                     <Badge status={muscle.status} locale={locale} />
                   </div>
-                  <div className="grid grid-cols-3 gap-2 rounded-xl border border-slate-650 bg-slate-750/80 py-1.5 text-center">
+                  <div className="grid grid-cols-3 gap-2 rounded-xl border border-black/5 bg-white py-1.5 text-center">
                     <div>
-                      <p className="text-[11px] font-bold uppercase text-slate-200">{c.volume}</p>
-                      <p className="mt-0.5 text-xs font-black text-slate-100">{Math.round(muscle.volumeKg).toLocaleString()}kg</p>
+                      <p className="text-[11px] font-bold text-[#6E6E73] uppercase">{c.volume}</p>
+                      <p className="mt-0.5 text-xs font-black text-[#1C1C1E]">{Math.round(muscle.volumeKg).toLocaleString()}kg</p>
                     </div>
-                    <div className="border-x border-slate-650">
-                      <p className="text-[11px] font-bold uppercase text-slate-200">{c.sets}</p>
-                      <p className="mt-0.5 text-xs font-black text-slate-100">{muscle.sets}</p>
+                    <div className="border-x border-[#E5E5EA]">
+                      <p className="text-[11px] font-bold text-[#6E6E73] uppercase">{c.sets}</p>
+                      <p className="mt-0.5 text-xs font-black text-[#1C1C1E]">{muscle.sets}</p>
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold uppercase text-slate-200">{c.hardSets}</p>
-                      <p className="mt-0.5 text-xs font-black text-slate-100">{muscle.hardSets}</p>
+                      <p className="text-[11px] font-bold text-[#6E6E73] uppercase">{c.hardSets}</p>
+                      <p className="mt-0.5 text-xs font-black text-[#1C1C1E]">{muscle.hardSets}</p>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-100">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#6E6E73]">
                       <span>{c.weeklyTarget}</span>
-                      <span className="font-black text-slate-200">{muscle.sets} / {muscle.recommendedMax} {c.perWeek}</span>
+                      <span className="font-black text-[#1C1C1E]">{muscle.sets} / {muscle.recommendedMax} {c.perWeek}</span>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-750">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-[#E5E5EA]">
                       <div
                         className={`h-full rounded-full ${
-                          muscle.status === 'high' ? 'bg-rose-450' : muscle.status === 'normal' ? 'bg-emerald-450' : 'bg-amber-450'
+                          muscle.status === 'high' ? 'bg-[#FF3B30]' : muscle.status === 'normal' ? 'bg-[#34C759]' : 'bg-[#FF9500]'
                         }`}
                         style={{ width: `${muscle.targetPct}%` }}
                       />
                     </div>
-                    <p className="text-xs font-bold text-slate-100">
+                    <p className="text-xs font-bold text-[#6E6E73]">
                       {muscle.deficitSets > 0
                         ? tf(locale, 'statsBelowMinimum', { sets: muscle.deficitSets })
                         : muscle.excessSets > 0
@@ -1116,23 +1112,23 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
           >
             <div className="grid gap-2.5">
               {stats.performances.length === 0 ? (
-                <p className="py-4 text-center text-xs font-bold text-slate-300">{c.noPerformance}</p>
+                <p className="py-4 text-center text-xs font-bold text-[#8E8E93]">{c.noPerformance}</p>
               ) : stats.performances.map((performance) => (
-                <div key={performance.id} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-lg">
+                <div key={performance.id} className="space-y-2.5 rounded-2xl border border-black/5 bg-[#F2F2F7] p-3.5 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-sm font-black text-slate-100 tracking-wide">{performance.name}</h3>
-                    <span className="rounded-lg border border-cyan-800 bg-cyan-950 px-2 py-0.5 text-xs font-black text-cyan-200">{formatPct(performance.fourWeekChangePct)}</span>
+                    <h3 className="text-sm font-black text-[#1C1C1E] tracking-wide">{performance.name}</h3>
+                    <span className="rounded-lg border border-black/5 bg-white px-2 py-0.5 text-xs font-bold text-[#159A91]">{formatPct(performance.fourWeekChangePct)}</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl border border-slate-650 bg-slate-750/80 px-3 py-2.5 text-xs font-semibold text-slate-100">
-                    <p>{c.recentWeight} <span className="font-black text-slate-100">{performance.recentWeightKg.toFixed(1)}kg</span></p>
-                    <p>{c.bestWeight} <span className="font-black text-slate-100">{performance.bestWeightKg.toFixed(1)}kg</span></p>
-                    <p>{c.recentVolume} <span className="font-black text-slate-100">{Math.round(performance.recentVolumeKg).toLocaleString()}kg</span></p>
-                    <p>{c.bestVolume} <span className="font-black text-slate-100">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
-                    <p className="col-span-2 border-t border-slate-800 pt-2 mt-0.5">{c.estimatedOneRm} <span className="font-black text-cyan-300">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl border border-black/5 bg-white px-3 py-2.5 text-xs font-semibold text-[#6E6E73]">
+                    <p>{c.recentWeight} <span className="font-bold text-[#1C1C1E]">{performance.recentWeightKg.toFixed(1)}kg</span></p>
+                    <p>{c.bestWeight} <span className="font-bold text-[#1C1C1E]">{performance.bestWeightKg.toFixed(1)}kg</span></p>
+                    <p>{c.recentVolume} <span className="font-bold text-[#1C1C1E]">{Math.round(performance.recentVolumeKg).toLocaleString()}kg</span></p>
+                    <p>{c.bestVolume} <span className="font-bold text-[#1C1C1E]">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
+                    <p className="col-span-2 border-t border-[#E5E5EA] pt-2 mt-0.5">{c.estimatedOneRm} <span className="font-bold text-[#159A91]">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
                   </div>
                   {performance.oneRmHistory.length > 0 ? (
-                    <div className="border-t border-slate-800 pt-3">
-                      <p className="text-xs font-black uppercase text-slate-200">{c.oneRmHistory}</p>
+                    <div className="border-t border-[#E5E5EA] pt-3">
+                      <p className="text-xs font-bold uppercase text-[#8E8E93]">{c.oneRmHistory}</p>
                       <MiniSparkBars history={performance.oneRmHistory} />
                     </div>
                   ) : null}
@@ -1149,18 +1145,18 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
               <button
                 type="button"
                 onClick={handleCopyPrompt}
-                className={`w-full rounded-xl px-3 py-2.5 text-xs font-black uppercase transition-all ${
+                className={`w-full rounded-xl px-3 py-2.5 text-xs font-bold uppercase transition-all ${
                   copied
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-slate-900 text-slate-200 border border-slate-700'
+                    ? 'bg-[#34C759]/10 text-[#34C759] border border-transparent shadow-sm'
+                    : 'ios-button-secondary text-xs min-h-9'
                 }`}
               >
                 {copied ? t(locale, 'copied') : t(locale, 'statsCopyAiPrompt')}
               </button>
-              <div className="rounded-xl border border-slate-750 bg-slate-900 p-4">
-                <p className="text-xs font-semibold leading-relaxed text-slate-200">{stats.analysisComment}</p>
+              <div className="rounded-xl border border-black/5 bg-[#F2F2F7] p-4">
+                <p className="text-xs font-semibold leading-relaxed text-[#6E6E73]">{stats.analysisComment}</p>
               </div>
-              {copied ? <p className="text-center text-xs font-black text-emerald-300">{t(locale, 'statsAiPromptCopied')}</p> : null}
+              {copied ? <p className="text-center text-xs font-bold text-[#34C759]">{t(locale, 'statsAiPromptCopied')}</p> : null}
             </div>
           </DetailSection>
 

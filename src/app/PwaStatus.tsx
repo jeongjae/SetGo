@@ -75,14 +75,14 @@ export function PwaStatus() {
 
   return (
     <section className="mx-auto max-w-md px-3.5 pt-3">
-      <div className="flex items-center justify-between gap-2.5 rounded-xl border border-slate-650 bg-slate-750/95 px-3 py-2.5 text-sm shadow-lg">
-        <div className="flex min-w-0 items-center gap-2 text-slate-100">
-          {!isOnline ? <WifiOff aria-hidden="true" size={17} className="shrink-0 text-amber-300" /> : null}
-          {updateReady ? <RefreshCw aria-hidden="true" size={17} className="shrink-0 text-cyan-300" /> : null}
+      <div className="flex items-center justify-between gap-2.5 rounded-xl border border-black/5 bg-white/90 backdrop-blur-md px-3 py-2.5 text-sm shadow-sm">
+        <div className="flex min-w-0 items-center gap-2 text-[#1C1C1E]">
+          {!isOnline ? <WifiOff aria-hidden="true" size={17} className="shrink-0 text-amber-500" /> : null}
+          {updateReady ? <RefreshCw aria-hidden="true" size={17} className="shrink-0 text-[#2EC4B6]" /> : null}
           {isOnline && !updateReady && installPrompt && !installDismissed ? (
-            <Download aria-hidden="true" size={17} className="shrink-0 text-cyan-300" />
+            <Download aria-hidden="true" size={17} className="shrink-0 text-[#2EC4B6]" />
           ) : null}
-          <p className="truncate">
+          <p className="truncate font-semibold">
             {!isOnline
               ? locale === 'ko' ? '오프라인 모드' : 'Offline mode'
               : updateReady
@@ -95,25 +95,25 @@ export function PwaStatus() {
           <button
             type="button"
             onClick={() => void handleUpdate()}
-            className="min-h-9 rounded-lg bg-cyan-400 px-3 text-sm font-bold text-slate-950"
+            className="ios-button-primary min-h-9 px-3 text-xs font-bold"
           >
             {locale === 'ko' ? '새로고침' : 'Reload'}
           </button>
         ) : null}
 
         {isOnline && !updateReady && installPrompt && !installDismissed ? (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => void handleInstall()}
-              className="min-h-9 rounded-lg bg-cyan-400 px-3 text-sm font-bold text-slate-950"
+              className="ios-button-primary min-h-9 px-3 text-xs font-bold"
             >
               {locale === 'ko' ? '설치' : 'Install'}
             </button>
             <button
               type="button"
               onClick={dismissInstall}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-650 bg-slate-850 text-slate-100"
+              className="ios-button-secondary flex h-9 w-9 items-center justify-center"
               aria-label="Dismiss install prompt"
             >
               <X aria-hidden="true" size={15} />

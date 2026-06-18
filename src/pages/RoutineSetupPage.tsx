@@ -601,21 +601,21 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
   const activeRoutineName = activeRoutine?.name;
 
   return (
-    <section className="viewport-locked mx-auto flex max-w-md select-none flex-col gap-0 overflow-hidden bg-background px-3.5 py-3 text-slate-100">
+    <section className="viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col gap-0 overflow-hidden px-3.5 py-3 text-[#1C1C1E]">
       {/* ?ㅼ젙 ?섏쐞 ?붾㈃ ?ㅻ뜑 */}
-      <header className="flex shrink-0 flex-col gap-2.5 border-b border-slate-650 pb-2.5">
+      <header className="flex shrink-0 flex-col gap-2.5 border-b border-[#D1D1D6] pb-2.5">
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={onBack}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 shadow-md transition-all hover:bg-slate-650 active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#1C1C1E] shadow-md transition-all hover:bg-[#F2F2F7] active:scale-95"
             aria-label={locale === 'ko' ? '더보기로 돌아가기' : 'Back to More'}
           >
             <ChevronLeft aria-hidden="true" size={20} />
           </button>
           <div>
-            <p className="text-xs font-black uppercase leading-none text-cyan-300">{t(locale, 'more')}</p>
-            <h1 className="mt-0.5 text-lg font-extrabold text-slate-100">
+            <p className="text-xs font-black uppercase leading-none text-accent-dark">{t(locale, 'more')}</p>
+            <h1 className="mt-0.5 text-lg font-extrabold text-[#1C1C1E]">
               {setupTab === 'routine' ? t(locale, 'routine') : setupTab === 'library' ? t(locale, 'exerciseLibrary') : t(locale, 'weeklyPlan')}
             </h1>
           </div>
@@ -627,15 +627,15 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
         {/* 루틴 설정 */}
         {setupTab === 'routine' && (
           <div className="flex flex-col gap-2.5">
-            <section className="shrink-0 space-y-2.5 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-md">
-              <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'activeRoutine')}</p>
+            <section className="ios-card shrink-0 space-y-3 p-4">
+              <p className="text-xs font-extrabold uppercase text-[#8E8E93]">{t(locale, 'activeRoutine')}</p>
               {savedRoutines.length > 0 ? (
                 <div className="grid grid-cols-[1fr_auto] gap-2">
                   <select
                     aria-label={locale === 'ko' ? '활성 루틴 선택' : 'Select active routine'}
                     value={activeRoutine?.id ?? ''}
                     onChange={(event) => void handleSelectStoredRoutine(event.target.value)}
-                    className="min-h-10 min-w-0 rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100 outline-none focus:ring-1 focus:ring-cyan-400"
+                    className="min-h-10 min-w-0 rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                   >
                     {savedRoutines.map((routine) => (
                       <option key={routine.id} value={routine.id}>{routine.name}</option>
@@ -645,7 +645,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     <button
                       type="button"
                       onClick={() => setShowRoutineRename((current) => !current)}
-                      className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-1 text-[11px] font-bold text-cyan-300"
+                      className="min-h-10 rounded-xl border border-black/5 bg-[#F2F2F7] px-1 text-[11px] font-bold text-[#1C1C1E] transition-all active:scale-95"
                     >
                       {locale === 'ko' ? '이름' : 'Rename'}
                     </button>
@@ -653,7 +653,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                       type="button"
                       onClick={() => void handleDuplicateActiveRoutine()}
                       disabled={!activeRoutine}
-                      className="flex min-h-10 items-center justify-center gap-0.5 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-1 text-[11px] font-black text-emerald-300 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500"
+                      className="flex min-h-10 items-center justify-center gap-0.5 rounded-xl border border-[#2EC4B6]/20 bg-[#2EC4B6]/10 px-1 text-[11px] font-black text-[#159A91] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                     >
                       <Copy aria-hidden="true" size={11} />
                       <span>{locale === 'ko' ? '복제' : 'Copy'}</span>
@@ -662,7 +662,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                       type="button"
                       onClick={() => void handleDeleteActiveRoutine()}
                       disabled={!activeRoutine}
-                      className="flex min-h-10 items-center justify-center gap-0.5 rounded-xl border border-rose-500/35 bg-rose-500/10 px-1 text-[11px] font-black text-rose-300 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500"
+                      className="flex min-h-10 items-center justify-center gap-0.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-1 text-[11px] font-black text-rose-600 transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                     >
                       <Trash2 aria-hidden="true" size={11} />
                       <span>{locale === 'ko' ? '삭제' : 'Delete'}</span>
@@ -670,10 +670,10 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   </div>
                 </div>
               ) : (
-                <h2 className="text-sm font-bold text-slate-200">{t(locale, 'noActiveRoutine')}</h2>
+                <h2 className="text-sm font-bold text-[#8E8E93]">{t(locale, 'noActiveRoutine')}</h2>
               )}
               {activeRoutine && showRoutineRename ? (
-                <label className="block text-xs font-bold text-slate-200">
+                <label className="block text-xs font-bold text-[#6E6E73]">
                   {locale === 'ko' ? '새 이름' : 'New name'}
                   <input
                     key={activeRoutine.id}
@@ -686,16 +686,16 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                         void handleUpdateRoutineName(event.currentTarget.value);
                       }
                     }}
-                    className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 text-base font-bold text-slate-100 outline-none transition-all focus:ring-1 focus:ring-cyan-400"
+                    className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-base font-bold text-[#1C1C1E] outline-none transition-all focus:border-[#2EC4B6]"
                   />
-                  <span className="mt-1 block text-[10px] text-slate-400 font-medium">
+                  <span className="mt-1 block text-[10px] text-[#8E8E93] font-medium">
                     {locale === 'ko' ? '💡 엔터를 누르거나 포커스를 해제하면 저장됩니다.' : '💡 Press Enter or focus away to save.'}
                   </span>
                 </label>
               ) : null}
               {/* Copied Routine Warning Banner */}
               {activeRoutine && (activeRoutine.name.endsWith('Copy') || activeRoutine.name.endsWith('복사본') || activeRoutine.name.includes('Copy') || activeRoutine.name.includes('복사본')) && (
-                <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[11px] font-bold text-amber-300">
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[11px] font-bold text-amber-700">
                   ⚠️ {locale === 'ko'
                     ? '복사된 루틴을 편집 중입니다. 루틴 이름을 지정해 주세요.'
                     : 'You are editing a copied routine. Please set a name for this routine.'}
@@ -703,30 +703,30 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
               )}
               {/* Routine Summary */}
               {activeRoutine && (
-                <div className="rounded-xl border border-slate-650 bg-slate-850/60 p-3 text-xs space-y-1 text-slate-300">
-                  <p className="font-extrabold text-cyan-300 uppercase tracking-wider text-[10px]">
+                <div className="rounded-xl border border-black/5 bg-[#F2F2F7] p-3 text-xs space-y-1 text-[#6E6E73]">
+                  <p className="font-extrabold text-[#159A91] uppercase tracking-wider text-[10px]">
                     {locale === 'ko' ? '루틴 요약' : 'Routine Summary'}
                   </p>
                   <div className="grid grid-cols-3 gap-2 pt-1 text-center font-bold">
-                    <div className="border-r border-slate-700">
-                      <span className="block text-slate-400 text-[10px] uppercase font-bold">
+                    <div className="border-r border-[#E5E5EA]">
+                      <span className="block text-[#8E8E93] text-[10px] uppercase font-bold">
                         {locale === 'ko' ? '분할 수' : 'Days'}
                       </span>
-                      <span className="text-slate-100 text-sm font-black">{dayPlans.length}</span>
+                      <span className="text-[#1C1C1E] text-sm font-black">{dayPlans.length}</span>
                     </div>
-                    <div className="border-r border-slate-700">
-                      <span className="block text-slate-400 text-[10px] uppercase font-bold">
+                    <div className="border-r border-[#E5E5EA]">
+                      <span className="block text-[#8E8E93] text-[10px] uppercase font-bold">
                         {locale === 'ko' ? '총 운동 수' : 'Exercises'}
                       </span>
-                      <span className="text-slate-100 text-sm font-black">
+                      <span className="text-[#1C1C1E] text-sm font-black">
                         {dayPlans.reduce((sum, d) => sum + d.plans.length, 0)}
                       </span>
                     </div>
                     <div>
-                      <span className="block text-slate-400 text-[10px] uppercase font-bold">
+                      <span className="block text-[#8E8E93] text-[10px] uppercase font-bold">
                         {locale === 'ko' ? '일정' : 'Schedule'}
                       </span>
-                      <span className="text-slate-100 text-xs truncate block mt-0.5" title={getRoutineSummaryInfo()?.scheduleSummary ?? ''}>
+                      <span className="text-[#1C1C1E] text-xs truncate block mt-0.5" title={getRoutineSummaryInfo()?.scheduleSummary ?? ''}>
                         {getRoutineSummaryInfo()?.scheduleSummary}
                       </span>
                     </div>
@@ -737,22 +737,22 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                 type="button"
                 aria-expanded={showRoutineCreator}
                 onClick={() => setShowRoutineCreator((current) => !current)}
-                className="flex min-h-10 w-full items-center justify-between rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100"
+                className="flex min-h-10 w-full items-between justify-between rounded-xl border border-black/5 bg-[#F2F2F7] px-3 text-sm font-bold text-[#1C1C1E] transition-all active:scale-[0.98]"
               >
                 <span>{locale === 'ko' ? '새 루틴 만들기' : 'Create new routine'}</span>
-                <span className="text-cyan-300">{showRoutineCreator ? '-' : '+'}</span>
+                <span className="text-[#159A91]">{showRoutineCreator ? '-' : '+'}</span>
               </button>
               {showRoutineCreator ? (
-                <div className="grid gap-2 border-t border-slate-650 pt-2.5">
+                <div className="grid gap-2 border-t border-[#E5E5EA] pt-2.5">
                   <button
                     type="button"
                     onClick={() => void handleCreateCustomRoutine()}
-                    className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-cyan-400 px-3 text-sm font-black text-slate-950"
+                    className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#2EC4B6] px-3 text-sm font-black text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] transition-all active:scale-[0.98]"
                   >
                     <Plus aria-hidden="true" size={15} />
                     <span>{locale === 'ko' ? '직접 만들기' : 'Create from scratch'}</span>
                   </button>
-                  <p className="pt-1 text-xs font-extrabold uppercase text-slate-200">
+                  <p className="pt-1 text-xs font-extrabold uppercase text-[#8E8E93]">
                     {locale === 'ko' ? '템플릿에서 시작' : 'Start from template'}
                   </p>
                   {routineTemplates.map((template) => {
@@ -762,11 +762,11 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                         key={template.splitType}
                         type="button"
                         onClick={() => void handleActivate(template.splitType)}
-                        className="rounded-xl border border-slate-650 bg-slate-850 p-3 text-left transition-all hover:bg-slate-700 active:scale-[0.98]"
+                        className="rounded-xl border border-black/5 bg-white p-3 text-left transition-all hover:bg-[#F2F2F7] active:scale-[0.98]"
                       >
-                        <h2 className="text-sm font-black text-slate-100">{getRoutineTemplateName(template, locale)}</h2>
-                        <p className="mt-1 text-xs font-medium leading-relaxed text-slate-100">{getRoutineTemplateSummary(template, locale)}</p>
-                        <p className="mt-2 text-xs font-black uppercase text-cyan-300">
+                        <h2 className="text-sm font-black text-[#1C1C1E]">{getRoutineTemplateName(template, locale)}</h2>
+                        <p className="mt-1 text-xs font-medium leading-relaxed text-[#6E6E73]">{getRoutineTemplateSummary(template, locale)}</p>
+                        <p className="mt-2 text-xs font-black uppercase text-[#159A91]">
                           {isSaving ? (locale === 'ko' ? '생성 중...' : 'Creating...') : (locale === 'ko' ? '선택' : 'Choose')}
                         </p>
                       </button>
@@ -778,16 +778,16 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
           </div>
         )}
 
-        {/* ?? 二쇨컙 怨꾪쉷 */}
+        {/* 주간 계획 */}
         {setupTab === 'schedule' && (
-          <section className="shrink-0 space-y-2.5 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-md">
-            <p className="text-xs font-bold uppercase text-slate-200">{t(locale, 'weeklyPlan')}</p>
-            <div className="rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2.5">
-              <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'activeRoutine')}</p>
-              <h2 className="mt-0.5 text-sm font-black text-slate-100">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
-              <p className="mt-1 text-xs font-medium leading-normal text-slate-100">{t(locale, 'routinePlanFor')}</p>
+          <section className="ios-card shrink-0 space-y-3.5 p-4">
+            <p className="text-xs font-bold uppercase text-[#8E8E93]">{t(locale, 'weeklyPlan')}</p>
+            <div className="rounded-xl border border-black/5 bg-[#F2F2F7] px-3.5 py-2.5">
+              <p className="text-xs font-extrabold uppercase text-[#8E8E93]">{t(locale, 'activeRoutine')}</p>
+              <h2 className="mt-0.5 text-sm font-black text-[#1C1C1E]">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
+              <p className="mt-1 text-xs font-medium leading-normal text-[#6E6E73]">{t(locale, 'routinePlanFor')}</p>
             </div>
-            <label className="block text-xs font-bold text-slate-100">
+            <label className="block text-xs font-bold text-[#6E6E73]">
               {locale === 'ko' ? '시작일' : 'Start date'}
               <input
                 type="date"
@@ -796,7 +796,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   setScheduleStartDate(event.target.value);
                   setScheduleDirty(true);
                 }}
-                className="mt-1 min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-2 text-sm font-semibold text-slate-100"
+                className="mt-1 min-h-10 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-semibold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
               />
             </label>
             {cyclePlan.length === 0 ? (
@@ -804,7 +804,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                 type="button"
                 onClick={handleStartCyclePlan}
                 disabled={!activeRoutine}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-3 text-sm font-black text-slate-950 disabled:bg-slate-650 disabled:text-slate-400"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2EC4B6] px-3 text-sm font-black text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] transition-all active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
               >
                 <Plus aria-hidden="true" size={16} />
                 <span>{locale === 'ko' ? '운동사이클 정하기' : 'Set workout cycle'}</span>
@@ -812,13 +812,13 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
             ) : (
               <div className="space-y-2">
                 {cyclePlan.map((item, index) => (
-                  <div key={`${item.id ?? 'new'}_${index}`} className="grid grid-cols-[2rem_1fr_auto_auto_auto] items-center gap-1.5 rounded-xl border border-slate-650 bg-slate-850 p-2">
-                    <span className="text-center text-xs font-black text-cyan-300">{index + 1}</span>
+                  <div key={`${item.id ?? 'new'}_${index}`} className="grid grid-cols-[2rem_1fr_auto_auto_auto] items-center gap-1.5 rounded-xl border border-black/5 bg-[#F2F2F7] p-2">
+                    <span className="text-center text-xs font-black text-[#159A91]">{index + 1}</span>
                     <select
                       aria-label={`Cycle item ${index + 1}`}
                       value={item.kind === 'routine' ? `routine:${item.routineDayId ?? ''}` : item.kind}
                       onChange={(event) => handleCycleItemChange(index, event.target.value)}
-                      className="min-h-9 min-w-0 cursor-pointer rounded-lg border border-slate-650 bg-slate-900 px-2 text-sm font-bold text-slate-100 outline-none focus:ring-1 focus:ring-cyan-400"
+                      className="min-h-9 min-w-0 cursor-pointer rounded-lg border border-[#D1D1D6] bg-white px-2 text-sm font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                     >
                       {dayPlans.map((dayPlan) => (
                         <option key={dayPlan.routineDay.id} value={`routine:${dayPlan.routineDay.id}`}>
@@ -832,24 +832,24 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                       type="button"
                       onClick={() => handleMoveCycleItem(index, -1)}
                       disabled={index === 0}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-650 bg-slate-900 text-slate-100 disabled:text-slate-600"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-black/5 bg-white text-[#1C1C1E] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                       aria-label="Move cycle item up"
                     >
-                      <ArrowUp aria-hidden="true" size={14} />
+                      <ArrowUp aria-hidden="true" size={14} className="text-[#1C1C1E]" />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleMoveCycleItem(index, 1)}
                       disabled={index === cyclePlan.length - 1}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-650 bg-slate-900 text-slate-100 disabled:text-slate-600"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-black/5 bg-white text-[#1C1C1E] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                       aria-label="Move cycle item down"
                     >
-                      <ArrowDown aria-hidden="true" size={14} />
+                      <ArrowDown aria-hidden="true" size={14} className="text-[#1C1C1E]" />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteCycleItem(index)}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-rose-500/40 bg-slate-900 text-rose-300"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 transition-all active:scale-95"
                       aria-label="Delete cycle item"
                     >
                       <Trash2 aria-hidden="true" size={14} />
@@ -857,25 +857,25 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   </div>
                 ))}
                 <div className="grid grid-cols-3 gap-2">
-                  <button type="button" onClick={() => handleAddCycleItem('routine')} className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 text-xs font-bold text-slate-100">
+                  <button type="button" onClick={() => handleAddCycleItem('routine')} className="min-h-10 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
                     {locale === 'ko' ? '운동 추가' : 'Workout'}
                   </button>
-                  <button type="button" onClick={() => handleAddCycleItem('running')} className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 text-xs font-bold text-slate-100">
+                  <button type="button" onClick={() => handleAddCycleItem('running')} className="min-h-10 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
                     {locale === 'ko' ? '러닝 추가' : 'Running'}
                   </button>
-                  <button type="button" onClick={() => handleAddCycleItem('rest')} className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 text-xs font-bold text-slate-100">
+                  <button type="button" onClick={() => handleAddCycleItem('rest')} className="min-h-10 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
                     {locale === 'ko' ? '휴식 추가' : 'Rest'}
                   </button>
                 </div>
               </div>
             )}
-            {scheduleStatus ? <p className="rounded-xl bg-cyan-950 px-3 py-2 text-xs font-bold text-cyan-200">{scheduleStatus}</p> : null}
-            <div className="grid grid-cols-3 gap-2 border-t border-slate-650 pt-2.5">
+            {scheduleStatus ? <p className="rounded-xl bg-accent-soft px-3 py-2 text-xs font-bold text-accent-dark border border-[#2EC4B6]/20">{scheduleStatus}</p> : null}
+            <div className="grid grid-cols-3 gap-2 border-t border-[#E5E5EA] pt-2.5">
               <button
                 type="button"
                 onClick={() => void handleReviewCycleCalendar()}
                 disabled={!activeRoutine || !scheduleStartDate || cyclePlan.length === 0}
-                className="flex min-h-11 items-center justify-center gap-1 rounded-xl border border-cyan-500/40 bg-slate-850 px-2 text-xs font-bold text-cyan-300 disabled:border-slate-650 disabled:text-slate-500"
+                className="flex min-h-11 items-center justify-center gap-1 rounded-xl border border-[#2EC4B6]/20 bg-white px-2 text-xs font-bold text-[#159A91] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
               >
                 <CalendarDays aria-hidden="true" size={15} />
                 <span>{locale === 'ko' ? '캘린더 확인' : 'Calendar'}</span>
@@ -883,7 +883,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
               <button
                 type="button"
                 onClick={() => void handleCancelWeeklySchedule()}
-                className="min-h-11 rounded-xl border border-slate-650 bg-slate-850 text-sm font-bold text-slate-100"
+                className="min-h-11 rounded-xl border border-black/5 bg-white text-sm font-bold text-[#1C1C1E] shadow-sm transition-all active:scale-95"
               >
                 {locale === 'ko' ? '취소' : 'Cancel'}
               </button>
@@ -891,7 +891,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                 type="button"
                 onClick={() => void handleSaveWeeklySchedule()}
                 disabled={!activeRoutine || !scheduleDirty || !scheduleStartDate || cyclePlan.length === 0}
-                className="min-h-11 rounded-xl bg-cyan-400 text-sm font-black text-slate-950 disabled:bg-slate-650 disabled:text-slate-400"
+                className="min-h-11 rounded-xl bg-[#2EC4B6] text-sm font-black text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
               >
                 {t(locale, 'save')}
               </button>
@@ -901,15 +901,15 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
 
         {/* ?? ?대룞 ?ㅼ젙 (?쇱씠釉뚮윭由? */}
         {setupTab === 'library' && (
-          <section className="shrink-0 space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-md">
+          <section className="ios-card shrink-0 space-y-3 p-3.5">
             <div>
-              <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'exerciseLibrary')}</p>
-              <h2 className="mt-0.5 text-base font-bold text-slate-100">
+              <p className="text-xs font-extrabold uppercase text-[#6E6E73]">{t(locale, 'exerciseLibrary')}</p>
+              <h2 className="mt-0.5 text-base font-bold text-[#1C1C1E]">
                 {locale === 'ko' ? `${exerciseLibrary.length}개의 등록된 운동` : `${exerciseLibrary.length} Exercises`}
               </h2>
             </div>
 
-            <nav className="grid grid-cols-2 gap-1 rounded-xl border border-slate-650 bg-slate-850 p-1">
+            <nav className="grid grid-cols-2 gap-1 rounded-xl bg-[#F2F2F7] p-1 border border-black/5">
               {([
                 ['browse', locale === 'ko' ? '검색 / 변경' : 'Search / Edit'],
                 ['add', locale === 'ko' ? '운동 추가' : 'Add Exercise'],
@@ -918,7 +918,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   key={value}
                   type="button"
                   onClick={() => void handleExerciseLibraryModeChange(value)}
-                  className={`min-h-9 rounded-lg text-sm font-bold ${exerciseLibraryMode === value ? 'bg-sky-200 text-black' : 'text-slate-100'}`}
+                  className={`min-h-9 rounded-lg text-sm font-bold transition-all ${exerciseLibraryMode === value ? 'bg-white text-[#1C1C1E] shadow-sm' : 'text-[#6E6E73] hover:text-[#1C1C1E]'}`}
                 >
                   {label}
                 </button>
@@ -928,15 +928,15 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
             {/* ?대룞 寃??*/}
             {exerciseLibraryMode === 'browse' ? (
               <div className="grid gap-2">
-                <div className="flex items-center gap-2.5 rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 shadow-inner focus-within:ring-1 focus-within:ring-cyan-400">
-                  <Search aria-hidden="true" size={15} className="shrink-0 text-slate-200" />
+                <div className="flex items-center gap-2.5 rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 focus-within:border-[#2EC4B6]">
+                  <Search aria-hidden="true" size={15} className="shrink-0 text-[#6E6E73]" />
                   <input
                     aria-label="Search exercise library"
                     type="search"
                     value={exerciseSearch}
                     onChange={(event) => setExerciseSearch(event.target.value)}
                     placeholder={t(locale, 'searchExercises')}
-                    className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-100 outline-none placeholder:text-slate-400"
+                    className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[#1C1C1E] outline-none placeholder:text-[#8E8E93]"
                   />
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-2">
@@ -944,7 +944,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     aria-label="Exercise category filter"
                     value={exerciseCategoryFilter}
                     onChange={(event) => setExerciseCategoryFilter(event.target.value as ExerciseCategory | 'all')}
-                    className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100"
+                    className="min-h-10 rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                   >
                     {exerciseCategories.map((category) => (
                       <option key={category.value} value={category.value}>
@@ -955,7 +955,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   <button
                     type="button"
                     onClick={() => setShowHiddenExercises((current) => !current)}
-                    className="min-h-10 rounded-xl border border-slate-650 bg-slate-850 px-3 text-xs font-bold text-slate-100"
+                    className="ios-button-secondary min-h-10 px-3 text-xs font-bold"
                   >
                     {showHiddenExercises ? (locale === 'ko' ? '사용 중' : 'Active') : (locale === 'ko' ? '숨긴 운동' : 'Hidden')}
                   </button>
@@ -964,7 +964,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
             ) : null}
 
             {/* ?대룞 紐⑸줉 ?몃줈 2??洹몃━??*/}
-            {exerciseLibraryMode === 'browse' ? <div className="grid min-h-[24rem] max-h-[calc(100dvh-22rem)] auto-rows-[3.75rem] grid-cols-2 content-start gap-2 overflow-y-auto border-t border-slate-900 pt-3 pr-1 scrollbar-thin">
+            {exerciseLibraryMode === 'browse' ? <div className="grid min-h-[24rem] max-h-[calc(100dvh-22rem)] auto-rows-[3.75rem] grid-cols-2 content-start gap-2 overflow-y-auto border-t border-[#E5E5EA] pt-3 pr-1 scrollbar-thin">
               {filteredExerciseLibrary.map((exercise) => (
                 <button
                   key={exercise.id}
@@ -972,18 +972,18 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   onClick={() => handleSelectExercise(exercise)}
                   className={`flex h-full items-center rounded-xl p-2 text-left border transition-all active:scale-95 ${
                     editingExercise?.id === exercise.id
-                      ? 'bg-sky-200 border-sky-400 text-black font-bold shadow-sm'
-                      : 'border-slate-650 bg-slate-850 text-slate-100 hover:border-cyan-400/50 hover:bg-slate-700'
+                      ? 'bg-[#E8F3F3] border-[#2EC4B6]/30 text-[#159A91] font-bold shadow-sm'
+                      : 'border-black/5 bg-[#F2F2F7] text-[#1C1C1E] hover:bg-[#E5E5EA]'
                   }`}
                 >
                   <div className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-lg text-sm shadow-inner ${
-                    editingExercise?.id === exercise.id ? 'bg-slate-950/20 text-slate-950' : 'border border-slate-650 bg-slate-750'
+                    editingExercise?.id === exercise.id ? 'bg-black/5 text-[#1C1C1E]' : 'border border-[#D1D1D6] bg-white'
                   }`}>
                     {getExerciseIcon(exercise.defaultEmoji)}
                   </div>
                   <div className="min-w-0 flex-1 ml-2">
                     <span className="block truncate text-xs font-black leading-tight">{getExerciseName(exercise, locale)}</span>
-                    <span className={`mt-0.5 block truncate text-[11px] ${editingExercise?.id === exercise.id ? 'font-semibold text-slate-950/80' : 'text-slate-200'}`}>
+                    <span className={`mt-0.5 block truncate text-[11px] ${editingExercise?.id === exercise.id ? 'font-semibold text-[#159A91]' : 'text-[#6E6E73]'}`}>
                       {getExerciseCategories(exercise).map((c) => labelForCategory(c, locale)).join('/')}
                     </span>
                   </div>
@@ -993,13 +993,13 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
 
             {/* ?좏깮 ?대룞 ?곸꽭 議고쉶 諛?紐낆떆???몄쭛 */}
             {editingExercise && (
-              <div key={editingExercise.id} className="space-y-3 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5 shadow-inner">
+              <div key={editingExercise.id} className="space-y-3 rounded-2xl border border-black/5 bg-[#F2F2F7] p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-sm">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-sm">
                       {getExerciseIcon(editingExercise.defaultEmoji)}
                     </div>
-                    <h3 className="text-xs font-bold text-slate-100 leading-tight">
+                    <h3 className="text-xs font-bold text-[#1C1C1E] leading-tight">
                       {editingExercise.nameKo ? getExerciseName(editingExercise, locale) : (locale === 'ko' ? '새 운동' : 'New exercise')}
                     </h3>
                   </div>
@@ -1007,7 +1007,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     <button
                       type="button"
                       onClick={() => handleBeginExerciseEdit(editingExercise)}
-                      className="min-h-8 shrink-0 rounded-lg bg-cyan-400 px-3 text-xs font-black text-slate-950"
+                      className="ios-button-primary min-h-8 px-3 text-xs font-bold"
                     >
                       {locale === 'ko' ? '변경' : 'Edit'}
                     </button>
@@ -1015,7 +1015,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     <button
                       type="button"
                       onClick={() => void handleDeactivateExercise(editingExercise.id)}
-                      className="min-h-8 shrink-0 rounded-lg border border-slate-650 bg-slate-750 px-2.5 text-xs font-bold text-rose-300"
+                      className="min-h-8 shrink-0 rounded-lg border border-rose-500/20 bg-rose-500/10 px-2.5 text-xs font-bold text-rose-600"
                     >
                       {locale === 'ko' ? '목록에서 숨기기' : 'Hide from list'}
                     </button>
@@ -1023,7 +1023,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     <button
                       type="button"
                       onClick={() => void handleRestoreExercise(editingExercise.id)}
-                      className="min-h-8 shrink-0 rounded-lg border border-cyan-500/40 bg-slate-750 px-2.5 text-xs font-bold text-cyan-300"
+                      className="min-h-8 shrink-0 rounded-lg border border-[#2EC4B6]/20 bg-[#E8F3F3] px-2.5 text-xs font-bold text-[#159A91]"
                     >
                       {locale === 'ko' ? '목록에 복원' : 'Restore'}
                     </button>
@@ -1033,41 +1033,41 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                 {exerciseEditorOpen ? (
                   <>
                 <div className="grid gap-2.5">
-                  <label className="text-xs font-bold uppercase text-slate-200">
+                  <label className="text-xs font-bold uppercase text-[#6E6E73]">
                     {t(locale, 'koreanName')}
                     <input
                       aria-label="Edit exercise Korean name"
                       type="text"
                       defaultValue={editingExercise.nameKo}
                       onBlur={(event) => void handleUpdateExercise(editingExercise.id, { nameKo: event.target.value.trim() || editingExercise.nameKo })}
-                      className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-750 px-3 py-2 text-sm font-medium text-slate-100 outline-none focus:ring-1 focus:ring-cyan-400"
+                      className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                     />
                   </label>
-                  <label className="text-xs font-bold uppercase text-slate-200">
+                  <label className="text-xs font-bold uppercase text-[#6E6E73]">
                     {t(locale, 'englishName')}
                     <input
                       aria-label="Edit exercise English name"
                       type="text"
                       defaultValue={editingExercise.nameEn ?? ''}
                       onBlur={(event) => void handleUpdateExercise(editingExercise.id, { nameEn: event.target.value.trim() || undefined })}
-                      className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-750 px-3 py-2 text-sm font-medium text-slate-100 outline-none focus:ring-1 focus:ring-cyan-400"
+                      className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                     />
                   </label>
-                  <label className="text-xs font-bold uppercase text-slate-200">
+                  <label className="text-xs font-bold uppercase text-[#6E6E73]">
                     {t(locale, 'description')}
                     <textarea
                       aria-label="Edit exercise description"
                       defaultValue={editingExercise.description ?? ''}
                       onBlur={(event) => void handleUpdateExercise(editingExercise.id, { description: event.target.value.trim() || undefined })}
                       rows={2}
-                      className="mt-1 w-full resize-none rounded-xl border border-slate-650 bg-slate-750 px-3 py-2 text-sm font-medium text-slate-100 outline-none focus:ring-1 focus:ring-cyan-400"
+                      className="mt-1 w-full resize-none rounded-xl border border-[#D1D1D6] bg-white px-3 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                     />
                   </label>
                 </div>
 
-                <div className="space-y-3.5 pt-1 border-t border-slate-900">
+                <div className="space-y-3.5 pt-1 border-t border-[#E5E5EA]">
                   <div>
-                    <p className="text-xs font-bold uppercase text-slate-200">{t(locale, 'categories')}</p>
+                    <p className="text-xs font-bold uppercase text-[#6E6E73]">{t(locale, 'categories')}</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {exerciseCategoryOptions.map((category) => {
                         const selected = getExerciseCategories(editingExercise).includes(category.value);
@@ -1080,8 +1080,8 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                             })}
                             className={`min-h-8 rounded-lg px-2.5 text-xs font-bold transition-all active:scale-95 ${
                               selected
-                                ? 'bg-sky-200 text-black font-black shadow-sm'
-                                : 'border border-slate-650 bg-slate-750 text-slate-100 hover:bg-slate-650'
+                                ? 'bg-[#2EC4B6] text-white font-bold shadow-sm'
+                                : 'border border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
                             }`}
                           >
                             {labelForCategory(category.value, locale)}
@@ -1092,7 +1092,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   </div>
 
                   <div>
-                    <p className="text-xs font-bold uppercase text-slate-200">{t(locale, 'stages')}</p>
+                    <p className="text-xs font-bold uppercase text-[#6E6E73]">{t(locale, 'stages')}</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {exerciseStageOptions.map((stage) => {
                         const selected = getExerciseStages(editingExercise).includes(stage.value);
@@ -1105,8 +1105,8 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                             })}
                             className={`min-h-8 rounded-lg px-2.5 text-xs font-bold transition-all active:scale-95 ${
                               selected
-                                ? 'bg-sky-200 text-black font-black shadow-sm'
-                                : 'border border-slate-650 bg-slate-750 text-slate-100 hover:bg-slate-650'
+                                ? 'bg-[#2EC4B6] text-white font-bold shadow-sm'
+                                : 'border border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
                             }`}
                           >
                             {labelForStage(stage.value, locale)}
@@ -1116,11 +1116,11 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 border-t border-slate-650 pt-3">
+                <div className="grid grid-cols-2 gap-2 border-t border-[#D1D1D6] pt-3">
                   <button
                     type="button"
                     onClick={() => void handleCancelExerciseChanges()}
-                    className="min-h-10 rounded-xl border border-slate-650 bg-slate-750 text-sm font-bold text-slate-100"
+                    className="ios-button-secondary min-h-10 px-4 text-sm font-bold"
                   >
                     {locale === 'ko' ? '취소' : 'Cancel'}
                   </button>
@@ -1128,7 +1128,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     type="button"
                     onClick={() => void handleSaveExerciseChanges()}
                     disabled={!editingExercise.nameKo.trim()}
-                    className="min-h-10 rounded-xl bg-cyan-400 text-sm font-black text-slate-950 disabled:bg-slate-650 disabled:text-slate-400"
+                    className="ios-button-primary min-h-10 px-4 text-sm font-bold disabled:bg-[#E5E5EA] disabled:text-[#8E8E93] disabled:shadow-none"
                   >
                     {t(locale, 'save')}
                   </button>
@@ -1136,32 +1136,32 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   </>
                 ) : (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-650 bg-slate-750 p-3 text-xs">
+                    <div className="grid grid-cols-2 gap-2 rounded-xl border border-black/5 bg-white p-3 text-xs">
                       <div>
-                        <p className="font-bold uppercase text-slate-300">{t(locale, 'koreanName')}</p>
-                        <p className="mt-1 text-sm font-bold text-slate-100">{editingExercise.nameKo}</p>
+                        <p className="font-bold uppercase text-[#8E8E93]">{t(locale, 'koreanName')}</p>
+                        <p className="mt-1 text-sm font-bold text-[#1C1C1E]">{editingExercise.nameKo}</p>
                       </div>
                       <div>
-                        <p className="font-bold uppercase text-slate-300">{t(locale, 'englishName')}</p>
-                        <p className="mt-1 text-sm font-bold text-slate-100">{editingExercise.nameEn ?? '-'}</p>
+                        <p className="font-bold uppercase text-[#8E8E93]">{t(locale, 'englishName')}</p>
+                        <p className="mt-1 text-sm font-bold text-[#1C1C1E]">{editingExercise.nameEn ?? '-'}</p>
                       </div>
                     </div>
-                    <div className="rounded-xl border border-slate-650 bg-slate-750 p-3">
-                      <p className="text-xs font-bold uppercase text-slate-300">{t(locale, 'description')}</p>
-                      <p className="mt-1 text-sm font-medium leading-5 text-slate-100">
+                    <div className="rounded-xl border border-black/5 bg-white p-3">
+                      <p className="text-xs font-bold uppercase text-[#8E8E93]">{t(locale, 'description')}</p>
+                      <p className="mt-1 text-sm font-medium leading-5 text-[#1C1C1E]">
                         {editingExercise.description || (locale === 'ko' ? '설명이 없습니다.' : 'No description.')}
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="rounded-xl border border-slate-650 bg-slate-750 p-3">
-                        <p className="text-xs font-bold uppercase text-slate-300">{t(locale, 'categories')}</p>
-                        <p className="mt-1 text-sm font-bold text-slate-100">
+                      <div className="rounded-xl border border-black/5 bg-white p-3">
+                        <p className="text-xs font-bold uppercase text-[#8E8E93]">{t(locale, 'categories')}</p>
+                        <p className="mt-1 text-sm font-bold text-[#1C1C1E]">
                           {getExerciseCategories(editingExercise).map((category) => labelForCategory(category, locale)).join(' / ')}
                         </p>
                       </div>
-                      <div className="rounded-xl border border-slate-650 bg-slate-750 p-3">
-                        <p className="text-xs font-bold uppercase text-slate-300">{t(locale, 'stages')}</p>
-                        <p className="mt-1 text-sm font-bold text-slate-100">
+                      <div className="rounded-xl border border-black/5 bg-white p-3">
+                        <p className="text-xs font-bold uppercase text-[#8E8E93]">{t(locale, 'stages')}</p>
+                        <p className="mt-1 text-sm font-bold text-[#1C1C1E]">
                           {getExerciseStages(editingExercise).map((stage) => labelForStage(stage, locale)).join(' / ')}
                         </p>
                       </div>
@@ -1175,14 +1175,14 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
 
         {/* 날짜별 계획 목록과 루틴 운동 계획 편집 */}
         {dayPlans.length > 0 && setupTab === 'routine' && (
-          <section className="shrink-0 space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-md">
-            <div className="flex items-center justify-between gap-3 border-b border-slate-650 pb-2.5">
-              <p className="text-xs font-bold uppercase text-slate-200">{t(locale, 'routineDays')}</p>
+          <section className="ios-card shrink-0 space-y-3 p-3.5">
+            <div className="flex items-center justify-between gap-3 border-b border-[#D1D1D6] pb-2.5">
+              <p className="text-xs font-bold uppercase text-[#6E6E73]">{t(locale, 'routineDays')}</p>
               <div className="flex gap-1.5">
                 <button
                   type="button"
                   onClick={() => void handleRevertRoutineChanges()}
-                  className="flex min-h-8 items-center gap-1 rounded-lg border border-slate-650 bg-slate-850 px-2 text-xs font-bold text-slate-100"
+                  className="ios-button-secondary flex min-h-8 px-2 text-xs font-bold"
                 >
                   <RotateCcw aria-hidden="true" size={12} />
                   <span>{locale === 'ko' ? '취소' : 'Cancel'}</span>
@@ -1190,14 +1190,14 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                 <button
                   type="button"
                   onClick={() => void handleSaveRoutineChanges()}
-                  className="min-h-8 rounded-lg bg-cyan-400 px-3 text-xs font-black text-slate-950"
+                  className="ios-button-primary min-h-8 px-3 text-xs font-bold"
                 >
                   {t(locale, 'save')}
                 </button>
               </div>
             </div>
             {resetStatus && (
-              <p className="rounded-xl bg-cyan-950/80 border border-cyan-900/50 px-3 py-2 text-xs font-bold text-cyan-200">
+              <p className="rounded-xl bg-[#E8F3F3] border border-[#2EC4B6]/20 px-3 py-2 text-xs font-bold text-[#159A91]">
                 {resetStatus}
               </p>
             )}
@@ -1209,10 +1209,10 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                   key={dayPlan.routineDay.id}
                   type="button"
                   onClick={() => setSelectedDayId(dayPlan.routineDay.id)}
-                  className={`min-h-8 shrink-0 rounded-full px-3.5 text-xs font-black transition-all active:scale-95 border ${
+                  className={`min-h-8 shrink-0 rounded-full px-3.5 text-xs font-bold transition-all active:scale-95 border ${
                     selectedDay?.routineDay.id === dayPlan.routineDay.id
-                      ? 'bg-sky-200 border-sky-400 text-black shadow-sm'
-                      : 'border-slate-650 bg-slate-850 text-slate-100 hover:bg-slate-700 hover:text-slate-100'
+                      ? 'bg-[#2EC4B6] border-transparent text-white shadow-sm'
+                      : 'border-[#D1D1D6] bg-white text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
                   }`}
                 >
                   {getRoutineDayDisplayName(dayPlan.routineDay, locale)}
@@ -1230,7 +1230,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     type="text"
                     defaultValue={selectedDay.routineDay.name}
                     onBlur={(event) => void handleUpdateRoutineDayName(selectedDay.routineDay.id, event.target.value)}
-                    className="min-w-0 flex-1 rounded-xl border border-slate-650 bg-slate-850 px-3.5 py-2 text-base font-black text-slate-100 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
+                    className="min-w-0 flex-1 rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-base font-bold text-[#1C1C1E] outline-none transition-all focus:border-[#2EC4B6]"
                   />
                   <button
                     type="button"
@@ -1240,7 +1240,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                       ));
                       resetRoutineAddFinderState();
                     }}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 active:scale-95 transition-all shadow-md"
+                    className="ios-button-primary flex h-9 w-9 shrink-0 items-center justify-center"
                     aria-label={`Add exercise to ${selectedDay.routineDay.name}`}
                   >
                     <Plus aria-hidden="true" size={18} />
@@ -1249,7 +1249,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
 
                 {/* ?대룞 異붽? 寃?됱갹 (?대떦 ?붿씪???쒖꽦?????몄텧) */}
                 {addingDayId === selectedDay.routineDay.id && (
-                  <div className="rounded-xl border border-cyan-500/25 bg-slate-850 p-2.5 shadow-inner">
+                  <div className="rounded-xl border border-[#2EC4B6]/20 bg-white p-2.5 shadow-inner">
                     <ExerciseFinder
                       ariaLabel="Search exercises to add"
                       exercises={availableExercises}
@@ -1266,20 +1266,20 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                 {/* 루틴 계획 운동 목록 */}
                 <div className="space-y-3 max-h-[30rem] overflow-y-auto pr-1 scrollbar-thin">
                   {selectedDay.plans.length === 0 ? (
-                    <p className="rounded-2xl border border-slate-650 bg-slate-850/70 px-4 py-5 text-center text-sm font-semibold leading-relaxed text-slate-100">
+                    <p className="rounded-2xl border border-black/5 bg-[#F2F2F7] px-4 py-5 text-center text-sm font-semibold leading-relaxed text-[#6E6E73]">
                       {t(locale, 'noPlannedExercises')}
                     </p>
                   ) : (
                     selectedDay.plans.map(({ plan, exercise }, planIndex) => (
-                      <div key={plan.id} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3 shadow-md">
+                      <div key={plan.id} className="space-y-2.5 rounded-2xl border border-black/5 bg-[#F2F2F7] p-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <div className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-base shrink-0">
+                            <div className="w-8.5 h-8.5 flex items-center justify-center rounded-xl bg-white border border-[#D1D1D6] text-base shrink-0">
                               {getExerciseIcon(exercise.defaultEmoji)}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-black leading-tight text-slate-100">{getExerciseName(exercise, locale)}</p>
-                              <p className="mt-0.5 truncate text-xs font-bold text-slate-200">
+                              <p className="truncate text-sm font-black leading-tight text-[#1C1C1E]">{getExerciseName(exercise, locale)}</p>
+                              <p className="mt-0.5 truncate text-xs font-semibold text-[#6E6E73]">
                                 {getExerciseCategories(exercise).map((category) => labelForCategory(category, locale)).join(' / ')}
                               </p>
                             </div>
@@ -1289,7 +1289,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                               type="button"
                               onClick={() => void handleMovePlan(plan.id, -1)}
                               disabled={planIndex === 0}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 hover:text-slate-100 disabled:pointer-events-none disabled:opacity-30 active:scale-95"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:pointer-events-none disabled:opacity-30 active:scale-95"
                               aria-label={`Move ${getExerciseName(exercise, locale)} up`}
                             >
                               <ArrowUp aria-hidden="true" size={13} />
@@ -1298,7 +1298,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                               type="button"
                               onClick={() => void handleMovePlan(plan.id, 1)}
                               disabled={planIndex === selectedDay.plans.length - 1}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-650 bg-slate-750 text-slate-100 transition-all hover:bg-slate-650 hover:text-slate-100 disabled:pointer-events-none disabled:opacity-30 active:scale-95"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:pointer-events-none disabled:opacity-30 active:scale-95"
                               aria-label={`Move ${getExerciseName(exercise, locale)} down`}
                             >
                               <ArrowDown aria-hidden="true" size={13} />
@@ -1306,7 +1306,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                             <button
                               type="button"
                               onClick={() => void handleDeletePlan(plan.id)}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 border border-slate-850 text-rose-400 hover:text-rose-300 hover:bg-rose-950/20 active:scale-95 transition-all"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFECEC] text-rose-600 transition-all active:scale-95"
                               aria-label={`Remove ${getExerciseName(exercise, locale)} from ${selectedDay.routineDay.name}`}
                             >
                               <Trash2 aria-hidden="true" size={13} />
@@ -1315,9 +1315,9 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                         </div>
 
                         {/* 怨꾪쉷 ?명듃 諛??잛닔 ?ㅼ젙 怨꾧린??*/}
-                        <div className="grid grid-cols-5 gap-1.5 pt-2 border-t border-slate-900">
+                        <div className="grid grid-cols-5 gap-1.5 pt-2 border-t border-[#E5E5EA]">
                           <label className="block text-center">
-                            <span className="mb-1 block text-xs font-bold uppercase text-slate-200">Sets</span>
+                            <span className="mb-1 block text-xs font-bold uppercase text-[#6E6E73]">Sets</span>
                             <input
                               aria-label={`${getExerciseName(exercise, locale)} planned sets`}
                               type="text"
@@ -1326,11 +1326,11 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                               onBlur={(event) => void handleUpdatePlan(plan.id, {
                                 plannedSets: Math.max(1, Number(event.target.value) || 1),
                               })}
-                              className="w-full rounded-xl border border-slate-650 bg-slate-750 py-2 text-center text-sm font-black text-slate-100 outline-none transition-all focus:ring-1 focus:ring-cyan-400"
+                              className="w-full rounded-xl border border-[#D1D1D6] bg-white py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none transition-all focus:border-[#2EC4B6]"
                             />
                           </label>
                           <label className="block text-center">
-                            <span className="mb-1 block text-xs font-bold uppercase text-slate-200">Kg</span>
+                            <span className="mb-1 block text-xs font-bold uppercase text-[#6E6E73]">Kg</span>
                             <input
                               aria-label={`${getExerciseName(exercise, locale)} planned weight`}
                               type="text"
@@ -1339,11 +1339,11 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                               onBlur={(event) => void handleUpdatePlan(plan.id, {
                                 plannedWeightKg: Number(event.target.value) || undefined,
                               })}
-                              className="w-full rounded-xl border border-slate-650 bg-slate-750 py-2 text-center text-sm font-black text-slate-100 outline-none transition-all focus:ring-1 focus:ring-cyan-400"
+                              className="w-full rounded-xl border border-[#D1D1D6] bg-white py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none transition-all focus:border-[#2EC4B6]"
                             />
                           </label>
                           <label className="block text-center">
-                            <span className="mb-1 block text-xs font-bold uppercase text-slate-200">Reps</span>
+                            <span className="mb-1 block text-xs font-bold uppercase text-[#6E6E73]">Reps</span>
                             <input
                               aria-label={`${getExerciseName(exercise, locale)} planned reps`}
                               type="text"
@@ -1352,11 +1352,11 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                               onBlur={(event) => void handleUpdatePlan(plan.id, {
                                 plannedReps: Math.max(0, Number(event.target.value) || 0),
                               })}
-                              className="w-full rounded-xl border border-slate-650 bg-slate-750 py-2 text-center text-sm font-black text-slate-100 outline-none transition-all focus:ring-1 focus:ring-cyan-400"
+                              className="w-full rounded-xl border border-[#D1D1D6] bg-white py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none transition-all focus:border-[#2EC4B6]"
                             />
                           </label>
                           <label className="block text-center">
-                            <span className="mb-1 block text-xs font-bold uppercase text-slate-200">RIR</span>
+                            <span className="mb-1 block text-xs font-bold uppercase text-[#6E6E73]">RIR</span>
                             <input
                               aria-label={`${getExerciseName(exercise, locale)} planned RIR`}
                               type="text"
@@ -1368,11 +1368,11 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                                   plannedRir: value === '' ? undefined : Math.max(0, Number(value) || 0),
                                 });
                               }}
-                              className="w-full rounded-xl border border-slate-650 bg-slate-750 py-2 text-center text-sm font-black text-slate-100 outline-none transition-all focus:ring-1 focus:ring-cyan-400"
+                              className="w-full rounded-xl border border-[#D1D1D6] bg-white py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none transition-all focus:border-[#2EC4B6]"
                             />
                           </label>
                           <label className="block text-center">
-                            <span className="mb-1 block text-xs font-bold uppercase text-slate-200">Rest</span>
+                            <span className="mb-1 block text-xs font-bold uppercase text-[#6E6E73]">Rest</span>
                             <input
                               aria-label={`${getExerciseName(exercise, locale)} planned rest seconds`}
                               type="text"
@@ -1381,7 +1381,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                               onBlur={(event) => void handleUpdatePlan(plan.id, {
                                 plannedRestSeconds: Math.max(15, Number(event.target.value) || 90),
                               })}
-                              className="w-full rounded-xl border border-slate-650 bg-slate-750 py-2 text-center text-sm font-black text-slate-100 outline-none transition-all focus:ring-1 focus:ring-cyan-400"
+                              className="w-full rounded-xl border border-[#D1D1D6] bg-white py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none transition-all focus:border-[#2EC4B6]"
                             />
                           </label>
                         </div>

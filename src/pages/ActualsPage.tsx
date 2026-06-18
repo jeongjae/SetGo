@@ -78,7 +78,7 @@ export function actualsDayCellLabel(
 }
 
 export function actualsDayCellTextClass(hasWorkoutSummaries: boolean): string {
-  return hasWorkoutSummaries ? 'text-black' : 'text-current';
+  return hasWorkoutSummaries ? 'text-current' : 'text-current';
 }
 
 export function countActualLoggedExercisesForSession(
@@ -145,22 +145,22 @@ export function actualsDayCellClass({
   isSelected: boolean;
   isToday: boolean;
 }): string {
-  let cellStyle = 'bg-slate-850/75 border-slate-650 text-slate-100 hover:bg-slate-700';
+  let cellStyle = 'bg-white border-transparent text-[#8E8E93] hover:bg-[#F2F2F7]';
   if (isSelected) {
-    cellStyle = 'bg-emerald-600/90 border-emerald-300 text-slate-100 ring-1 ring-emerald-300/70 shadow-[0_0_14px_-2px_rgba(46,196,182,0.45)]';
+    cellStyle = 'bg-[#2EC4B6] border-transparent text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] z-10';
   } else if (hasCompleted) {
-    cellStyle = 'bg-amber-300 border-amber-500 text-black shadow-[0_0_0_1px_rgba(245,158,11,0.18)] hover:bg-amber-200';
+    cellStyle = 'bg-[#FF9500]/10 border-transparent text-[#FF9500] hover:bg-[#FF9500]/20';
   } else if (hasInProgress) {
-    cellStyle = 'bg-blue-100 border-blue-300 text-black shadow-[0_0_0_1px_rgba(37,99,235,0.16)] hover:bg-blue-50';
+    cellStyle = 'bg-[#007AFF]/10 border-transparent text-[#007AFF] hover:bg-[#007AFF]/20';
   } else if (hasSkipped) {
-    cellStyle = 'bg-rose-200 border-rose-500 text-black hover:bg-rose-100';
+    cellStyle = 'bg-[#FF3B30]/10 border-transparent text-[#FF3B30] hover:bg-[#FF3B30]/20';
   } else if (isToday) {
-    cellStyle = 'bg-rose-100/90 border-rose-300 text-black hover:bg-rose-100';
+    cellStyle = 'bg-[#007AFF]/10 border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF]/20';
   } else if (isFuture) {
-    cellStyle = 'bg-slate-900/40 border-transparent text-slate-500';
+    cellStyle = 'bg-transparent border-transparent text-[#D1D1D6] opacity-40';
   }
 
-  return isToday ? `${cellStyle} ring-2 ring-rose-300 border-rose-400` : cellStyle;
+  return isToday && !isSelected ? `${cellStyle} ring-2 ring-[#007AFF]/30` : cellStyle;
 }
 
 export function actualsSelectedWeekIndexForDate(
@@ -293,28 +293,26 @@ export function ActualsPage({
   }
 
   return (
-    <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
-      <header className="flex shrink-0 flex-col gap-2.5">
-        <div className="flex items-center justify-between gap-2.5">
-          <div>
-            <p className="text-xs font-extrabold uppercase text-cyan-300">{t(locale, 'records')}</p>
-            <h1 className="text-xl font-black text-slate-100">{t(locale, 'actualsCalendar')}</h1>
-          </div>
+    <section className="viewport-locked ios-screen mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3">
+      <header className="shrink-0 px-1 pb-1 pt-1">
+        <p className="text-sm font-bold text-[#159A91]">{t(locale, 'records')}</p>
+        <div className="mt-1 flex items-end justify-between gap-3 pb-2.5">
+          <h1 className="text-[2rem] font-black leading-none text-[#1C1C1E]">{t(locale, 'actualsCalendar')}</h1>
         </div>
         {recordModeControl}
       </header>
 
       <div className="inner-scroll min-h-0 space-y-2.5 pr-0.5">
-        <section className="rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
+        <section className="shrink-0 ios-card p-3.5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-black uppercase text-slate-200">{locale === 'ko' ? '최근 5주' : 'Recent 5 weeks'}</p>
-              <h2 className="mt-0.5 text-sm font-black text-slate-100">{startKey} - {endKey}</h2>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '최근 5주' : 'Recent 5 weeks'}</p>
+              <h2 className="mt-0.5 text-sm font-black text-[#1C1C1E]">{startKey} - {endKey}</h2>
             </div>
-            <CalendarRange aria-hidden="true" size={19} className="text-cyan-300" />
+            <CalendarRange aria-hidden="true" size={19} className="text-[#159A91]" />
           </div>
 
-          <div className="mt-3 grid grid-cols-7 gap-1 text-center text-xs font-black uppercase text-slate-200">
+          <div className="mt-3 grid grid-cols-7 gap-1 text-center text-xs font-bold uppercase text-[#8E8E93]">
             {(locale === 'ko' ? ['일', '월', '화', '수', '목', '금', '토'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']).map((weekday) => (
               <div key={weekday}>{weekday}</div>
             ))}
@@ -328,7 +326,6 @@ export function ActualsPage({
               const hasSkipped = daySummaries.some((summary) => summary.session.status === 'skipped');
               const dayDistance = daySummaries.reduce((sum, summary) => sum + summarizeCardioDistance(cardioBySessionId[summary.session.id] ?? []), 0);
               const dayLabel = actualsDayCellLabel(daySummaries, locale);
-              const dayTextClass = actualsDayCellTextClass(daySummaries.length > 0);
               const isSelected = selectedDateKey === day.key;
               const isToday = day.key === todayKey;
               const isFuture = day.key > todayKey;
@@ -341,6 +338,8 @@ export function ActualsPage({
                 isToday,
               });
 
+              const dayTextColor = isSelected ? 'text-white' : isToday ? 'text-[#007AFF]' : 'text-[#1C1C1E]';
+
               return (
                 <button
                   type="button"
@@ -349,12 +348,12 @@ export function ActualsPage({
                   className={`flex aspect-square min-h-12 flex-col rounded-xl border p-1.5 transition-all active:scale-95 ${cellStyle}`}
                   aria-label={`${day.key} ${hasCompleted ? t(locale, 'completed') : ''}`.trim()}
                 >
-                  <div className="flex w-full items-center justify-between">
+                  <div className={`flex w-full items-center justify-between ${dayTextColor}`}>
                     <span className="text-xs font-black">{day.date.getDate()}</span>
                     {dayDistance > 0 ? <Footprints aria-hidden="true" size={12} /> : daySummaries.length > 0 ? <Dumbbell aria-hidden="true" size={12} /> : null}
                   </div>
                   {dayLabel ? (
-                    <span className={`mt-0.5 w-full truncate text-[11px] font-black leading-tight ${dayTextClass}`}>{dayLabel}</span>
+                    <span className={`mt-0.5 w-full truncate text-[11px] font-black leading-tight ${dayTextColor}`}>{dayLabel}</span>
                   ) : null}
                 </button>
               );
@@ -362,18 +361,18 @@ export function ActualsPage({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
+        <section className="ios-card p-3.5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-black uppercase text-slate-200">{locale === 'ko' ? '선택 주간 요약' : 'Selected week'}</p>
-              <h2 className="mt-0.5 text-sm font-black text-slate-100">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '선택 주간 요약' : 'Selected week'}</p>
+              <h2 className="mt-0.5 text-sm font-black text-[#1C1C1E]">
                 {selectedWeekDays[0]?.key} - {selectedWeekDays[selectedWeekDays.length - 1]?.key}
               </h2>
             </div>
             <button
               type="button"
               onClick={onOpenStats}
-              className="flex min-h-9 items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-slate-850 px-2.5 text-xs font-black text-cyan-300 active:scale-95"
+              className="ios-button-secondary flex min-h-9 items-center gap-1.5 px-2.5 text-xs"
             >
               <BarChart3 aria-hidden="true" size={14} />
               <span>{t(locale, 'viewAnalysis')}</span>
@@ -388,19 +387,19 @@ export function ActualsPage({
               [locale === 'ko' ? '러닝' : 'Run', `${selectedWeekCardioDistance.toFixed(1)}km`],
               [locale === 'ko' ? '최다부위' : 'Top', topCategory ?? '-'],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-xl border border-slate-650 bg-slate-850/80 px-2 py-2 text-center">
-                <p className="text-[11px] font-black uppercase text-slate-300">{label}</p>
-                <p className="mt-1 truncate text-sm font-black text-slate-100">{value}</p>
+              <div key={label} className="rounded-xl border border-black/5 bg-[#F2F2F7] px-2 py-2 text-center">
+                <p className="text-[11px] font-bold uppercase text-[#6E6E73]">{label}</p>
+                <p className="mt-1 truncate text-sm font-black text-[#1C1C1E]">{value}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-xl">
-          <div className="flex items-center justify-between border-b border-slate-650 pb-2">
+        <section className="space-y-3 ios-card p-3.5">
+          <div className="flex items-center justify-between border-b border-[#E5E5EA] pb-2">
             <div>
-              <p className="text-xs font-black uppercase text-slate-200">{locale === 'ko' ? '선택 날짜' : 'Selected date'}</p>
-              <h2 className="mt-0.5 text-base font-black text-slate-100">{selectedDateKey}</h2>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '선택 날짜' : 'Selected date'}</p>
+              <h2 className="mt-0.5 text-base font-black text-[#1C1C1E]">{selectedDateKey}</h2>
             </div>
             <button
               type="button"
@@ -409,7 +408,7 @@ export function ActualsPage({
                 setAddMenuMode('kind');
               }}
               disabled={!canEditSelectedDate}
-              className="flex min-h-9 items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-2.5 text-xs font-black text-black active:scale-95 disabled:border-slate-650 disabled:bg-slate-850 disabled:text-slate-500"
+              className="ios-button-primary flex min-h-9 items-center gap-1.5 px-2.5 text-xs disabled:opacity-40 disabled:pointer-events-none"
             >
               <Plus aria-hidden="true" size={14} />
               <span>{locale === 'ko' ? '운동 추가' : 'Add workout'}</span>
@@ -417,13 +416,13 @@ export function ActualsPage({
           </div>
 
           {isAddMenuOpen ? (
-            <div className="space-y-2 rounded-xl border border-slate-650 bg-slate-850/80 p-2">
+            <div className="space-y-2 rounded-xl border border-black/5 bg-[#F2F2F7] p-2">
               {addMenuMode === 'kind' ? (
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setAddMenuMode('routine')}
-                    className="min-h-11 rounded-xl border border-slate-650 bg-slate-750 px-2 text-sm font-black text-slate-100 active:scale-95"
+                    className="min-h-11 rounded-xl border border-[#D1D1D6] bg-white px-2 text-sm font-bold text-[#1C1C1E] transition-all active:scale-95"
                   >
                     {locale === 'ko' ? '루틴' : 'Routine'}
                   </button>
@@ -434,7 +433,7 @@ export function ActualsPage({
                       setAddMenuMode('kind');
                       onAddHistoricalWorkout(selectedDateKey, 'free');
                     }}
-                    className="min-h-11 rounded-xl border border-cyan-400/40 bg-cyan-400/15 px-2 text-sm font-black text-black active:scale-95"
+                    className="min-h-11 rounded-xl border border-[#5856D6]/20 bg-[#5856D6]/5 px-2 text-sm font-black text-[#5856D6] transition-all active:scale-95"
                   >
                     {locale === 'ko' ? '자유운동' : 'Free'}
                   </button>
@@ -445,7 +444,7 @@ export function ActualsPage({
                       setAddMenuMode('kind');
                       onAddHistoricalWorkout(selectedDateKey, 'running');
                     }}
-                    className="min-h-11 rounded-xl border border-sky-400/40 bg-sky-400/15 px-2 text-sm font-black text-black active:scale-95"
+                    className="min-h-11 rounded-xl border border-[#007AFF]/20 bg-[#007AFF]/5 px-2 text-sm font-black text-[#007AFF] transition-all active:scale-95"
                   >
                     {locale === 'ko' ? '러닝' : 'Running'}
                   </button>
@@ -453,11 +452,11 @@ export function ActualsPage({
               ) : (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-black uppercase text-slate-300">{locale === 'ko' ? '루틴운동 선택' : 'Select routine day'}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '루틴운동 선택' : 'Select routine day'}</p>
                     <button
                       type="button"
                       onClick={() => setAddMenuMode('kind')}
-                      className="min-h-8 rounded-lg border border-slate-650 bg-slate-750 px-2.5 text-xs font-black text-slate-100 active:scale-95"
+                      className="ios-button-secondary min-h-8 px-2.5 text-xs"
                     >
                       {locale === 'ko' ? '뒤로' : 'Back'}
                     </button>
@@ -473,14 +472,14 @@ export function ActualsPage({
                             setAddMenuMode('kind');
                             onAddHistoricalWorkout(selectedDateKey, 'planned', routineDay.id);
                           }}
-                          className="min-h-10 rounded-xl border border-emerald-500/35 bg-emerald-500/15 px-3 text-sm font-black text-black active:scale-95"
+                          className="min-h-10 rounded-xl border border-[#2EC4B6]/20 bg-[#2EC4B6]/5 px-3 text-sm font-bold text-[#159A91] transition-all active:scale-95"
                         >
                           {getRoutineDayDisplayName(routineDay, locale) ?? routineDay.name}
                         </button>
                       ))}
                     </div>
                   ) : (
-                    <p className="rounded-xl border border-slate-650 bg-slate-750 px-3 py-2 text-xs font-bold text-slate-300">
+                    <p className="rounded-xl border border-[#D1D1D6] bg-white px-3 py-2 text-xs font-bold text-[#8E8E93]">
                       {locale === 'ko' ? '사용 가능한 루틴운동이 없습니다.' : 'No routine days available.'}
                     </p>
                   )}
@@ -490,7 +489,7 @@ export function ActualsPage({
           ) : null}
 
           {selectedSummaries.length === 0 ? (
-            <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-3 text-xs font-bold text-slate-300">
+            <p className="rounded-xl bg-[#F2F2F7] px-3.5 py-3 text-xs font-medium leading-relaxed text-[#6E6E73]">
               {locale === 'ko' ? '이 날짜에는 기록된 운동이 없습니다.' : 'No workout record on this date.'}
             </p>
           ) : (
@@ -507,17 +506,17 @@ export function ActualsPage({
                 );
 
                 return (
-                  <div key={summary.session.id} className="space-y-2.5 rounded-2xl border border-slate-650 bg-slate-850/85 p-3.5">
+                  <div key={summary.session.id} className="space-y-2.5 rounded-2xl border border-black/5 bg-[#F2F2F7] p-3.5">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="text-sm font-black text-slate-100">
+                        <h3 className="text-sm font-black text-[#1C1C1E]">
                           {isRunningOnly
                             ? (locale === 'ko' ? '러닝' : 'Running')
                             : summary.session.entryKind === 'free'
                               ? (locale === 'ko' ? '자유운동' : 'Free workout')
                               : getRoutineDayDisplayName(summary.routineDay, locale) ?? (locale === 'ko' ? '운동' : 'Workout')}
                         </h3>
-                        <p className="mt-1 text-xs font-bold text-slate-300">
+                        <p className="mt-1 text-xs font-bold text-[#6E6E73]">
                           {actualsSessionDetailLabel({
                             actualExerciseCount,
                             totalStrengthVolumeKg: summary.session.totalStrengthVolumeKg,
@@ -527,7 +526,7 @@ export function ActualsPage({
                           })}
                         </p>
                       </div>
-                      <span className="rounded-lg border border-slate-650 bg-slate-750 px-2.5 py-1 text-xs font-black text-cyan-200">
+                      <span className="rounded-lg border border-black/5 bg-white px-2.5 py-1 text-xs font-bold text-[#1C1C1E]">
                         {actualsStatusLabel(locale, summary.session.status, summary.session.date, todayKey)}
                       </span>
                     </div>
@@ -535,7 +534,7 @@ export function ActualsPage({
                       <button
                         type="button"
                         onClick={() => onEditHistoricalWorkout(summary.session.id, selectedDateKey)}
-                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-650 bg-slate-800 px-3 text-xs font-black text-cyan-300 active:scale-95"
+                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-black/5 bg-white px-3 text-xs font-bold text-[#1C1C1E] transition-all active:scale-95"
                       >
                         <Pencil aria-hidden="true" size={14} />
                         <span>{locale === 'ko' ? '기록 수정' : 'Edit'}</span>
@@ -543,7 +542,7 @@ export function ActualsPage({
                       <button
                         type="button"
                         onClick={() => void handleDeleteSession(summary.session.id)}
-                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-danger/30 bg-danger/10 px-3 text-xs font-black text-danger active:scale-95"
+                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 text-xs font-black text-rose-600 transition-all active:scale-95"
                       >
                         <Trash2 aria-hidden="true" size={14} />
                         <span>{locale === 'ko' ? '삭제' : 'Delete'}</span>

@@ -328,31 +328,33 @@ export function ExportPage({ onBack }: ExportPageProps) {
   }
 
   return (
-    <section className="viewport-locked mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3 text-slate-100">
-      <header className="flex shrink-0 items-center gap-2.5">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 text-slate-100 shadow-md transition-all hover:bg-slate-650 active:scale-95"
-          aria-label={locale === 'ko' ? '더보기로 돌아가기' : 'Back to More'}
-        >
-          <ChevronLeft aria-hidden="true" size={20} />
-        </button>
-        <div>
-          <p className="text-xs font-black uppercase text-cyan-300">{t(locale, 'more')}</p>
-          <h1 className="text-xl font-black text-slate-100">{t(locale, 'export')}</h1>
+    <section className="viewport-locked ios-screen mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3">
+      <header className="flex shrink-0 flex-col gap-2.5 pb-1">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-black/5 bg-white text-[#1C1C1E] shadow-sm transition-all active:scale-95 hover:bg-[#F2F2F7]"
+            aria-label={locale === 'ko' ? '더보기로 돌아가기' : 'Back to More'}
+          >
+            <ChevronLeft aria-hidden="true" size={20} className="text-[#1C1C1E]" />
+          </button>
+          <div>
+            <p className="text-xs font-black uppercase leading-none text-[#159A91]">{t(locale, 'more')}</p>
+            <h1 className="mt-0.5 text-xl font-extrabold text-[#1C1C1E]">{t(locale, 'export')}</h1>
+          </div>
         </div>
       </header>
 
       {/* 내부 콘텐츠 스크롤 영역 */}
       <div className="inner-scroll min-h-0 space-y-2.5 pr-0.5">
-        <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+        <section className="space-y-3 ios-card p-3.5">
           <div>
-            <p className="text-xs font-black uppercase text-slate-200">{t(locale, 'workoutSession')}</p>
-            <h2 className="mt-1 text-base font-black text-slate-100">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{t(locale, 'workoutSession')}</p>
+            <h2 className="mt-1 text-base font-black text-[#1C1C1E]">
               {summary ? `${summary.session.date} / ${workoutStatusLabel(locale, summary.session.status)}` : locale === 'ko' ? '저장된 운동이 없습니다' : 'No workout saved yet'}
             </h2>
-            <p className="mt-1.5 text-xs leading-relaxed text-slate-300 font-semibold">
+            <p className="mt-1.5 text-xs font-bold text-[#6E6E73]">
               {summary
                 ? `${exerciseCountLabel(locale, summary.exerciseCount)} / ${summary.session.totalStrengthVolumeKg.toLocaleString()} kg`
                 : locale === 'ko' ? '운동을 완료하면 내보낼 기록이 생성됩니다.' : 'Complete a workout to generate an export.'}
@@ -360,8 +362,8 @@ export function ExportPage({ onBack }: ExportPageProps) {
           </div>
 
           {summaries.length > 0 ? (
-            <div className="space-y-3 pt-3.5 border-t border-slate-700/60">
-              <label htmlFor="export-session-select" className="block text-xs font-extrabold text-slate-100">
+            <div className="space-y-3 pt-3.5 border-t border-[#E5E5EA]">
+              <label htmlFor="export-session-select" className="block text-xs font-extrabold text-[#6E6E73]">
                 {locale === 'ko' ? '기록 선택' : 'Select Session'}
               </label>
               <select
@@ -369,18 +371,18 @@ export function ExportPage({ onBack }: ExportPageProps) {
                 aria-label="Export workout session"
                 value={summary?.session.id ?? ''}
                 onChange={(event) => void handleSelectSummary(event.target.value)}
-                className="min-h-10 w-full cursor-pointer rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
+                className="min-h-10 w-full cursor-pointer rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-bold text-[#1C1C1E] outline-none transition-all focus:border-[#2EC4B6]"
               >
                 {summaries.map((item) => {
                   const routineDayName = getRoutineDayDisplayName(item.routineDay, locale) ?? t(locale, 'freeWorkout');
                   return (
-                    <option key={item.session.id} value={item.session.id} className="bg-slate-900 text-slate-200">
+                    <option key={item.session.id} value={item.session.id}>
                       {item.session.date} / {routineDayName} / {workoutStatusLabel(locale, item.session.status)} / {exerciseCountLabel(locale, item.exerciseCount)}
                     </option>
                   );
                 })}
               </select>
-              <p className="text-xs font-semibold leading-relaxed text-slate-100">
+              <p className="text-xs font-bold text-[#6E6E73]">
                 {locale === 'ko'
                   ? '완료 기록을 우선 선택합니다. 진행 중인 기록은 운동일지에서 완료 후 내보내는 것을 권장합니다.'
                   : 'Completed records are selected first. For in-progress sessions, finish the workout before exporting when possible.'}
@@ -393,23 +395,23 @@ export function ExportPage({ onBack }: ExportPageProps) {
           type="button"
           onClick={() => void handleCopy()}
           disabled={!markdown}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 px-4 text-sm font-black uppercase text-slate-955 shadow-lg shadow-cyan-400/20 transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 disabled:border disabled:border-slate-750 disabled:bg-slate-900 disabled:text-slate-500 disabled:shadow-none active:scale-95"
+          className="ios-button-primary flex min-h-12 w-full items-center justify-center gap-2 px-4 text-sm disabled:opacity-40 disabled:pointer-events-none"
         >
           <Copy aria-hidden="true" size={16} />
           <span>{copyStatus === 'copied' ? t(locale, 'copied') : t(locale, 'copy')}</span>
         </button>
 
-        <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+        <section className="space-y-3 ios-card p-3.5">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-black uppercase text-slate-200">{t(locale, 'localData')}</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{t(locale, 'localData')}</p>
             <div className="flex items-center gap-1.5">
               {isPersisted ? (
-                <span className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-black text-emerald-300">
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                <span className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-[#159A91]">
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#34C759]"></span>
                   <span>Persistent</span>
                 </span>
               ) : (
-                <span className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/15 px-2 py-0.5 text-[11px] font-black text-amber-300">
+                <span className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-600">
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                   <span>Best-effort</span>
                 </span>
@@ -419,21 +421,21 @@ export function ExportPage({ onBack }: ExportPageProps) {
                 aria-label={locale === 'ko' ? '저장 방식 안내' : 'Storage information'}
                 aria-expanded={showPersistenceInfo}
                 onClick={() => setShowPersistenceInfo((current) => !current)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-650 bg-slate-850 text-cyan-300"
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-black/5 bg-[#F2F2F7] text-[#159A91] transition-all active:scale-95"
               >
                 <Info aria-hidden="true" size={14} />
               </button>
             </div>
           </div>
-          <h2 className="text-base font-black text-slate-100">{t(locale, 'backupRestore')}</h2>
-          <p className="text-sm font-semibold leading-relaxed text-slate-100">
+          <h2 className="text-base font-black text-[#1C1C1E]">{t(locale, 'backupRestore')}</h2>
+          <p className="text-sm font-semibold leading-relaxed text-[#6E6E73]">
             {backupSummary ?? (
               locale === 'ko'
                 ? '전체 JSON 백업에는 운동 기록, 루틴, 운동 라이브러리, 주간계획, 날짜별 계획이 모두 포함됩니다.'
                 : t(locale, 'localDataNote')
             )}
           </p>
-          <p className="rounded-xl border border-slate-650 bg-slate-850/75 px-3 py-2.5 text-xs font-bold leading-relaxed text-slate-200">
+          <p className="rounded-xl bg-[#F2F2F7] px-3.5 py-3 text-xs font-medium leading-relaxed text-[#6E6E73]">
             {lastBackupAt
               ? locale === 'ko'
                 ? `최근 전체 백업: ${formatBackupDate(lastBackupAt, locale)}`
@@ -443,7 +445,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
                 : 'No full backup has been created on this device yet. Keep important workout logs in a JSON backup.'}
           </p>
           {showPersistenceInfo && (
-            <p className="rounded-xl border border-amber-800 bg-amber-950/25 px-3 py-2.5 text-xs font-bold leading-relaxed text-amber-100">
+            <p className="rounded-xl bg-[#FFF9E6] border border-[#FFCC00]/30 px-3.5 py-3 text-xs font-medium leading-relaxed text-[#806000]">
               {isPersisted
                 ? locale === 'ko'
                   ? '이 기기에서는 지속 저장소가 허용되었습니다. 중요한 기록은 별도 JSON 백업도 보관하세요.'
@@ -457,12 +459,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
             <button
               type="button"
               onClick={() => void handleBackup()}
-              className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border-strong bg-surface-muted px-3 text-xs font-black text-primary transition-all duration-200 hover:bg-accent-soft active:scale-95"
+              className="ios-button-secondary flex min-h-12 items-center justify-center gap-2 px-3 text-xs"
             >
               <Download aria-hidden="true" size={15} />
               <span>{backupStatus === 'downloaded' ? t(locale, 'downloaded') : t(locale, 'backupJson')}</span>
             </button>
-            <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border-strong bg-surface-muted px-3 text-xs font-black text-primary transition-all duration-200 hover:bg-accent-soft active:scale-95">
+            <label className="ios-button-secondary flex min-h-12 cursor-pointer items-center justify-center gap-2 px-3 text-xs">
               <Upload aria-hidden="true" size={15} />
               <span>
                 {restoreStatus === 'restored'
@@ -484,16 +486,16 @@ export function ExportPage({ onBack }: ExportPageProps) {
           </div>
         </section>
 
-        <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+        <section className="space-y-3 ios-card p-3.5">
           <div>
-            <p className="text-xs font-black uppercase text-slate-200">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
               {locale === 'ko' ? '설정 데이터' : 'Settings Data'}
             </p>
-            <h2 className="mt-1 text-base font-black text-slate-100">
+            <h2 className="mt-1 text-base font-black text-[#1C1C1E]">
               {locale === 'ko' ? '루틴 / 운동 / 주간계획 백업' : 'Routine / Exercise / Weekly Plan Backup'}
             </h2>
           </div>
-          <p className="text-sm font-semibold leading-relaxed text-slate-100">
+          <p className="text-sm font-semibold leading-relaxed text-[#6E6E73]">
             {settingsBackupStatus ?? (
               locale === 'ko'
                 ? '운동 기록은 제외하고 설정에서 저장한 루틴, 루틴별 운동 구성, 운동 라이브러리, 주간계획, 날짜별 계획만 JSON으로 저장합니다.'
@@ -504,12 +506,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
             <button
               type="button"
               onClick={() => void handleSettingsBackup()}
-              className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border-strong bg-surface-muted px-3 text-xs font-black text-primary transition-all duration-200 hover:bg-accent-soft active:scale-95"
+              className="ios-button-secondary flex min-h-12 items-center justify-center gap-2 px-3 text-xs"
             >
               <Download aria-hidden="true" size={15} />
               <span>{locale === 'ko' ? '설정 저장' : 'Export Settings'}</span>
             </button>
-            <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border-strong bg-surface-muted px-3 text-xs font-black text-primary transition-all duration-200 hover:bg-accent-soft active:scale-95">
+            <label className="ios-button-secondary flex min-h-12 cursor-pointer items-center justify-center gap-2 px-3 text-xs">
               <Upload aria-hidden="true" size={15} />
               <span>{locale === 'ko' ? '설정 복원' : 'Restore Settings'}</span>
               <input
@@ -523,16 +525,16 @@ export function ExportPage({ onBack }: ExportPageProps) {
           </div>
         </section>
 
-        <section className="space-y-3 rounded-2xl border border-slate-650 bg-slate-750/90 p-3.5 shadow-2xl">
+        <section className="space-y-3 ios-card p-3.5">
           <div>
-            <p className="text-xs font-black uppercase text-slate-200">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
               {locale === 'ko' ? '운동 라이브러리' : 'Exercise Library'}
             </p>
-            <h2 className="mt-1 text-base font-black text-slate-100">
+            <h2 className="mt-1 text-base font-black text-[#1C1C1E]">
               {locale === 'ko' ? 'CSV 일괄 수정' : 'Bulk CSV Edit'}
             </h2>
           </div>
-          <p className="text-sm font-semibold leading-relaxed text-slate-100">
+          <p className="text-sm font-semibold leading-relaxed text-[#6E6E73]">
             {exerciseCsvStatus ?? (
               locale === 'ko'
                 ? 'CSV를 내려받아 한글명, 영문명, 분류, 설명을 수정한 뒤 다시 가져오세요. categoryTags와 stageTags는 | 로 여러 값을 입력할 수 있습니다.'
@@ -540,11 +542,11 @@ export function ExportPage({ onBack }: ExportPageProps) {
             )}
           </p>
           {exerciseCsvIssues.length > 0 ? (
-            <div className="space-y-2 rounded-xl border border-rose-800 bg-rose-950/25 px-4 py-3">
+            <div className="space-y-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-rose-600">
               <p className="text-sm font-black text-rose-200">
                 {locale === 'ko' ? '가져오기 전 수정할 항목' : 'Items to fix before import'}
               </p>
-              <ul className="grid gap-1 text-xs font-bold leading-relaxed text-rose-100">
+              <ul className="grid gap-1 text-xs font-bold leading-relaxed text-[#FF3B30]">
                 {exerciseCsvIssues.slice(0, 8).map((issue) => (
                   <li key={issue}>{issue}</li>
                 ))}
@@ -562,12 +564,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
             <button
               type="button"
               onClick={() => void handleExerciseCsvExport()}
-              className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200"
+              className="ios-button-secondary flex min-h-12 items-center justify-center gap-2 px-3 text-xs"
             >
               <Download aria-hidden="true" size={15} />
               <span>{locale === 'ko' ? 'CSV 내보내기' : 'Export CSV'}</span>
             </button>
-            <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 px-3 text-xs font-bold text-slate-200 active:scale-95 transition-all duration-200">
+            <label className="ios-button-secondary flex min-h-12 cursor-pointer items-center justify-center gap-2 px-3 text-xs">
               <Upload aria-hidden="true" size={15} />
               <span>{locale === 'ko' ? 'CSV 가져오기' : 'Import CSV'}</span>
               <input
@@ -581,7 +583,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
           </div>
         </section>
 
-        <pre className="min-h-72 overflow-auto whitespace-pre-wrap rounded-2xl bg-slate-900 border border-slate-750 p-4 text-xs leading-relaxed font-semibold text-slate-200 shadow-inner">
+        <pre className="min-h-72 overflow-auto whitespace-pre-wrap rounded-2xl border border-black/5 bg-white p-4 text-xs leading-relaxed font-mono text-[#1C1C1E] shadow-inner">
           {markdown || t(locale, 'noMarkdown')}
         </pre>
       </div>

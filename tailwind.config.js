@@ -9,7 +9,7 @@ export default {
         accent: '#2EC4B6',
         'accent-dark': '#159A91',
         'accent-soft': '#E8F3F3',
-        background: '#F4F7F8',
+        background: '#F2F2F7',
         surface: '#FFFFFF',
         'surface-muted': '#F8FBFB',
         border: '#D5DEE3',

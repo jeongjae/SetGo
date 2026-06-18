@@ -174,7 +174,7 @@ export function App() {
             />;
 
   return (
-    <main className="app-shell bg-background text-slate-100">
+    <main className="app-shell ios-screen">
       <PwaStatus />
       {content}
       {view !== 'workout' ? <AppBottomNav activeView={view} onNavigate={handleNavigate} /> : null}
