@@ -2,6 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .ios-screen {
+    @apply bg-[#F2F2F7] text-[#1C1C1E];
+  }
+
+  .ios-card {
+    @apply rounded-2xl border border-black/5 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)];
+  }
+
+  .ios-group {
+    @apply rounded-2xl border border-black/5 bg-white;
+  }
+
+  .ios-row {
+    @apply border-b border-[#E5E5EA] last:border-b-0;
+  }
+
+  .ios-pill {
+    @apply rounded-full border border-[#D1D1D6] bg-white px-3 py-1.5 text-sm font-semibold text-[#1C1C1E] transition-all active:scale-95;
+  }
+
+  .ios-pill-active {
+    @apply border-transparent bg-[#2EC4B6] text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)];
+  }
+
+  .ios-button-primary {
+    @apply rounded-2xl bg-[#2EC4B6] font-black text-white shadow-[0_10px_22px_rgba(46,196,182,0.26)] transition-all active:scale-[0.98];
+  }
+
+  .ios-button-secondary {
+    @apply rounded-xl border border-[#D1D1D6] bg-white font-bold text-[#1C1C1E] transition-all active:scale-95;
+  }
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   background: #f4f7f8;

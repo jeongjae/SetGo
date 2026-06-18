@@ -209,7 +209,7 @@ const ko: typeof en = {
   noMarkdown: '내보낼 마크다운 기록이 없습니다.',
   noRoutineDayPlanned: '계획된 루틴이 없습니다',
   planned: '계획',
-  plannedExercises: '계획 운동',
+  plannedExercises: '구성',
   plannedValues: '계획값은 새 운동 세션에 복사됩니다.',
   planDate: '날짜 계획',
   rest: '휴식',
