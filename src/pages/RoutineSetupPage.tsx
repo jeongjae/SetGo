@@ -602,7 +602,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
 
   return (
     <section className="viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col gap-0 overflow-hidden px-3.5 py-3 text-[#1C1C1E]">
-      {/* ?ㅼ젙 ?섏쐞 ?붾㈃ ?ㅻ뜑 */}
+      {/* Setup subpage header */}
       <header className="flex shrink-0 flex-col gap-2.5 border-b border-[#D1D1D6] pb-2.5">
         <div className="flex items-center gap-2.5">
           <button

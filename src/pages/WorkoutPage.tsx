@@ -180,7 +180,7 @@ function getWorkoutFinishSummary(
   const cardioCount = countLoggedCardioRecords(cardioRecords);
 
   if (locale === 'ko') {
-    return `${completedExercises}개 운동 / ${completedSets.length}세트 / Hard ${hardSets}세트 / ${totalVolumeKg.toLocaleString()}kg${cardioCount ? ` / 유산소 ${cardioCount}건` : ''}`;
+    return `${completedExercises}\uAC1C \uC6B4\uB3D9 / ${completedSets.length}\uC138\uD2B8 / Hard ${hardSets}\uC138\uD2B8 / ${totalVolumeKg.toLocaleString()}kg${cardioCount ? ` / \uB7EC\uB2DD ${cardioCount}\uAC74` : ''}`;
   }
 
   return `${completedExercises} exercises / ${completedSets.length} sets / ${hardSets} hard / ${totalVolumeKg.toLocaleString()}kg${cardioCount ? ` / ${cardioCount} cardio` : ''}`;
@@ -214,7 +214,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   const [exerciseStageFilter, setExerciseStageFilter] = useState<ExerciseStage | 'all'>('all');
   const [replacingWorkoutExerciseId, setReplacingWorkoutExerciseId] = useState<string | undefined>();
   const [locale] = useState(() => getStoredLocale());
-  const [saveMessage, setSaveMessage] = useState(locale === 'ko' ? '로컬 저장됨' : 'Saved locally');
+  const [saveMessage, setSaveMessage] = useState(locale === 'ko' ? '\uB85C\uCEEC \uC800\uC7A5\uB428' : 'Saved locally');
   const [timerNow, setTimerNow] = useState(() => Date.now());
   const [restTimerStartedAt, setRestTimerStartedAt] = useState<number | undefined>();
   const [restDuration, setRestDuration] = useState(90);
@@ -448,7 +448,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     set: WorkoutSet,
     values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'type'>>,
   ) {
-    setSaveMessage(locale === 'ko' ? '저장 중...' : 'Saving...');
+    setSaveMessage(locale === 'ko' ? '\uC800\uC7A5 \uC911...' : 'Saving...');
     await updateWorkoutSet(set.id, values);
 
     const wasCompleted = set.isCompleted;
@@ -465,7 +465,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     }
 
     await loadWorkout();
-    setSaveMessage(`${locale === 'ko' ? '저장됨' : 'Saved'} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+    setSaveMessage(`${locale === 'ko' ? '\uC800\uC7A5\uB428' : 'Saved'} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
 
     if (isNowCompleted && !wasCompleted) {
       const nextInputId = getNextIncompleteSetInputId(logs, set.id);
@@ -490,7 +490,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       isWarmup: previousSet.isWarmup ?? false,
     });
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '최근 운동 세트를 복사했습니다' : 'Recent workout set copied');
+    setSaveMessage(locale === 'ko' ? '\uCD5C\uADFC \uC6B4\uB3D9 \uC138\uD2B8\uB97C \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4' : 'Recent workout set copied');
   }
 
   async function handleCopyPreviousExercise(log: WorkoutExerciseLog) {
@@ -507,7 +507,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       isWarmup: previousSet.isWarmup ?? false,
     })));
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '최근 운동 세트를 모두 복사했습니다' : 'All recent sets copied');
+    setSaveMessage(locale === 'ko' ? '\uCD5C\uADFC \uC6B4\uB3D9 \uC138\uD2B8\uB97C \uBAA8\uB450 \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4' : 'All recent sets copied');
   }
 
   async function handleQuickAdjustSet(
@@ -555,12 +555,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     const baseName = workoutRoutineDayName ?? workout.routineName ?? workout.session.date;
     const routine = await createRoutineFromWorkoutSession(
       workout.session.id,
-      locale === 'ko' ? `${baseName}에서 만든 루틴` : `${baseName} routine`,
+      locale === 'ko' ? `${baseName}\uC5D0\uC11C \uB9CC\uB4E0 \uB8E8\uD2F4` : `${baseName} routine`,
     );
     setSaveMessage(
       routine
-        ? (locale === 'ko' ? '이 기록을 새 활성 루틴으로 저장했습니다' : 'Saved this workout as the active routine')
-        : (locale === 'ko' ? '루틴으로 저장할 운동 기록이 없습니다' : 'No workout exercises to save as a routine'),
+        ? (locale === 'ko' ? '\uC774 \uAE30\uB85D\uC744 \uD65C\uC131 \uB8E8\uD2F4\uC73C\uB85C \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4' : 'Saved this workout as the active routine')
+        : (locale === 'ko' ? '\uB8E8\uD2F4\uC73C\uB85C \uC800\uC7A5\uD560 \uC6B4\uB3D9 \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4' : 'No workout exercises to save as a routine'),
     );
     await loadWorkout();
   }
@@ -575,7 +575,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   async function handleAddSet(workoutExerciseId: string) {
     await addSetToWorkoutExercise(workoutExerciseId);
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '세트를 추가했습니다' : 'Set added');
+    setSaveMessage(locale === 'ko' ? '\uC138\uD2B8\uB97C \uCD94\uAC00\uD588\uC2B5\uB2C8\uB2E4' : 'Set added');
 
     setTimeout(() => {
       const inputs = document.querySelectorAll(`input[data-we-id="${workoutExerciseId}"]`) as NodeListOf<HTMLInputElement>;
@@ -592,7 +592,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     if (shouldConfirmWorkoutSetDelete(set)) {
       const shouldDelete = window.confirm(
         locale === 'ko'
-          ? '기록값이 있는 세트입니다. 이 세트를 삭제할까요?'
+          ? '\uAE30\uB85D\uAC12\uC774 \uC788\uB294 \uC138\uD2B8\uC785\uB2C8\uB2E4. \uC774 \uC138\uD2B8\uB97C \uC0AD\uC81C\uD560\uAE4C\uC694?'
           : 'This set has logged values. Delete it?',
       );
       if (!shouldDelete) return;
@@ -600,14 +600,14 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
     await deleteWorkoutSet(set.id);
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '세트를 삭제했습니다' : 'Set deleted');
+    setSaveMessage(locale === 'ko' ? '\uC138\uD2B8\uB97C \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4' : 'Set deleted');
   }
 
   async function handleDeleteExercise(log: WorkoutExerciseLog) {
     if (shouldConfirmWorkoutExerciseDelete(log)) {
       const shouldDelete = window.confirm(
         locale === 'ko'
-          ? '기록된 세트나 메모가 있는 운동입니다. 이 운동을 삭제할까요?'
+          ? '\uAE30\uB85D\uB41C \uC138\uD2B8\uB098 \uBA54\uBAA8\uAC00 \uC788\uB294 \uC6B4\uB3D9\uC785\uB2C8\uB2E4. \uC774 \uC6B4\uB3D9\uC744 \uC0AD\uC81C\uD560\uAE4C\uC694?'
           : 'This exercise has logged sets or notes. Delete it?',
       );
       if (!shouldDelete) return;
@@ -615,20 +615,20 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
     await deleteWorkoutExercise(log.workoutExercise.id);
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '운동을 삭제했습니다' : 'Exercise deleted');
+    setSaveMessage(locale === 'ko' ? '\uC6B4\uB3D9\uC744 \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4' : 'Exercise deleted');
   }
 
   async function handleMoveExercise(workoutExerciseId: string, direction: -1 | 1) {
     await moveWorkoutExercise(workoutExerciseId, direction);
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '운동 순서를 저장했습니다' : 'Exercise order saved');
+    setSaveMessage(locale === 'ko' ? '\uC6B4\uB3D9 \uC21C\uC11C\uB97C \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4' : 'Exercise order saved');
   }
 
   async function handleReplaceExercise(workoutExerciseId: string, exerciseId: string) {
     await replaceWorkoutExercise(workoutExerciseId, exerciseId);
     setReplacingWorkoutExerciseId(undefined);
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '운동을 교체했습니다' : 'Exercise replaced');
+    setSaveMessage(locale === 'ko' ? '\uC6B4\uB3D9\uC744 \uAD50\uCCB4\uD588\uC2B5\uB2C8\uB2E4' : 'Exercise replaced');
   }
 
   async function handleAddCardio() {
@@ -636,7 +636,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
     await addCardioRecordToWorkout(workout.session.id);
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '러닝을 추가했습니다' : 'Running added');
+    setSaveMessage(locale === 'ko' ? '\uB7EC\uB2DD\uC744 \uCD94\uAC00\uD588\uC2B5\uB2C8\uB2E4' : 'Running added');
   }
 
   async function handleUpdateCardio(
@@ -645,7 +645,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   ) {
     await updateCardioRecord(cardioRecord.id, values);
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '러닝을 저장했습니다' : 'Running saved');
+    setSaveMessage(locale === 'ko' ? '\uB7EC\uB2DD\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4' : 'Running saved');
   }
 
   function continueWorkoutAfterCardio() {
@@ -676,14 +676,14 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     if (workout?.session.entryKind === 'running') {
       if (cardioRecord.isDraft) {
         await handleUpdateCardio(cardioRecord, { isDraft: false });
-        setSaveMessage(locale === 'ko' ? '러닝을 저장했습니다' : 'Running saved');
+        setSaveMessage(locale === 'ko' ? '\uB7EC\uB2DD\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4' : 'Running saved');
       }
       return;
     }
 
     if (cardioRecord.isDraft) {
       await handleUpdateCardio(cardioRecord, { isDraft: false });
-      setSaveMessage(locale === 'ko' ? '러닝을 기록했습니다' : 'Running logged');
+      setSaveMessage(locale === 'ko' ? '\uB7EC\uB2DD\uC744 \uAE30\uB85D\uD588\uC2B5\uB2C8\uB2E4' : 'Running logged');
     }
 
     continueWorkoutAfterCardio();
@@ -694,27 +694,27 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
     await updateWorkoutSessionMemo(workout.session.id, memo);
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '메모를 저장했습니다' : 'Memo saved');
+    setSaveMessage(locale === 'ko' ? '\uBA54\uBAA8\uB97C \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4' : 'Memo saved');
   }
 
   async function handleUpdateExerciseMemo(workoutExerciseId: string, memo: string) {
     await updateWorkoutExerciseMemo(workoutExerciseId, memo);
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '운동 메모를 저장했습니다' : 'Exercise memo saved');
+    setSaveMessage(locale === 'ko' ? '\uC6B4\uB3D9 \uBA54\uBAA8\uB97C \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4' : 'Exercise memo saved');
   }
 
   async function handleUpdateExerciseRestSeconds(workoutExerciseId: string, restSeconds: number) {
     void workoutExerciseId;
     void restSeconds;
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '운동별 휴식 시간을 저장했습니다' : 'Exercise rest time saved');
+    setSaveMessage(locale === 'ko' ? '\uC6B4\uB3D9\uBCC4 \uD734\uC2DD \uC2DC\uAC04\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4' : 'Exercise rest time saved');
   }
 
   async function handleDeleteCardio(cardioRecord: CardioRecord) {
     if (shouldConfirmCardioDelete(cardioRecord)) {
       const shouldDelete = window.confirm(
         locale === 'ko'
-          ? '기록값이 있는 러닝 항목입니다. 이 항목을 삭제할까요?'
+          ? '\uAE30\uB85D\uAC12\uC774 \uC788\uB294 \uB7EC\uB2DD \uD56D\uBAA9\uC785\uB2C8\uB2E4. \uC774 \uD56D\uBAA9\uC744 \uC0AD\uC81C\uD560\uAE4C\uC694?'
           : 'This running record has logged values. Delete it?',
       );
       if (!shouldDelete) return;
@@ -722,7 +722,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
     await deleteCardioRecord(cardioRecord.id);
     await loadWorkout();
-    setSaveMessage(locale === 'ko' ? '러닝을 삭제했습니다' : 'Running deleted');
+    setSaveMessage(locale === 'ko' ? '\uB7EC\uB2DD\uC744 \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4' : 'Running deleted');
   }
 
   function updateCardioMinutes(cardioRecord: CardioRecord, minutes: number) {
@@ -763,7 +763,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   const isIndependentRunningWorkout = workout?.session.entryKind === 'running';
   const isRunningOnlyWorkout = isIndependentRunningWorkout || (logs.length === 0 && cardioRecords.length > 0);
   const workoutTitle = isRunningOnlyWorkout
-    ? (locale === 'ko' ? '러닝' : 'Running')
+    ? (locale === 'ko' ? '\uB7EC\uB2DD' : 'Running')
     : workout?.session.entryKind === 'free'
       ? t(locale, 'freeWorkout')
       : routineNameLabel(locale, workout?.routineName) ?? t(locale, 'freeWorkout');
@@ -788,10 +788,10 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   );
   const completeHint = locale === 'ko'
     ? completedSetCount === 0 && loggedCardioCount === 0
-      ? '완료한 세트나 러닝 기록이 있어야 운동을 완료할 수 있습니다.'
+      ? '\uC644\uB8CC\uD55C \uC138\uD2B8\uB098 \uB7EC\uB2DD \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uC6B4\uB3D9\uC744 \uC644\uB8CC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.'
       : incompleteSetCount > 0
-        ? `${incompleteSetCount}개 세트가 아직 미완료입니다. 완료해도 기록은 저장됩니다.`
-        : '모든 세트가 완료되었습니다.'
+        ? `${incompleteSetCount}\uAC1C \uC138\uD2B8\uAC00 \uC544\uC9C1 \uBBF8\uC644\uB8CC\uC785\uB2C8\uB2E4. \uC644\uB8CC\uD574\uB3C4 \uAE30\uB85D\uC740 \uC800\uC7A5\uB429\uB2C8\uB2E4.`
+        : '\uBAA8\uB4E0 \uC138\uD2B8\uAC00 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.'
     : completedSetCount === 0 && loggedCardioCount === 0
       ? 'Complete at least one set or running record before finishing.'
       : incompleteSetCount > 0
@@ -800,7 +800,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
   return (
     <section className="viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col overflow-hidden px-3.5 py-3 text-[#1C1C1E]">
-      {/* 1. 상단 고정 헤더 영역 (shrink-0) */}
+      {/* Fixed header */}
       <header className="shrink-0 flex flex-col gap-1.5 border-b border-[#D1D1D6] pb-2.5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -814,7 +814,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
             </button>
             <div className="min-w-0">
               <p className="text-xs font-black uppercase leading-none text-accent-dark">
-                {workout ? workoutStatusLabel(locale, workout.session.status) : (locale === 'ko' ? '불러오는 중...' : 'Loading...')}
+                {workout ? workoutStatusLabel(locale, workout.session.status) : (locale === 'ko' ? '\uBD88\uB7EC\uC624\uB294 \uC911...' : 'Loading...')}
               </p>
               <h1 className="mt-0.5 max-w-[150px] truncate text-lg font-extrabold leading-tight text-[#1C1C1E] md:max-w-[210px]">
                 {workoutTitle}
@@ -822,7 +822,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
             </div>
           </div>
 
-          {/* 콤팩트 실시간 대시보드 */}
+          {/* Compact live dashboard */}
           <div className="flex items-center gap-1.5 shrink-0">
             {!isCompletedEditMode && sessionElapsed ? (
                 <div className="flex items-center gap-1 rounded-full border border-[#D1D1D6] bg-white px-2.5 py-1 text-sm font-bold text-[#1C1C1E] shadow-sm">
@@ -869,35 +869,35 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           </div>
         </div>
 
-        {/* 세션 상태 정보 바 */}
+        {/* Session status bar */}
         <div className="mt-0.5 flex items-center justify-between gap-2 px-0.5 text-xs font-medium text-[#6E6E73]">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-accent-dark animate-pulse"></span>
             <span className="font-semibold text-[#1C1C1E]">{saveMessage}</span>
           </div>
           <div className="font-bold text-[#1C1C1E]">
-            {completedExerciseCount}/{logs.length} {locale === 'ko' ? '운동' : 'Ex'} • {completedSetCount}/{totalSetCount} {locale === 'ko' ? '세트 완료' : 'Sets'}
+            {completedExerciseCount}/{logs.length} {locale === 'ko' ? '\uC6B4\uB3D9' : 'Ex'} / {completedSetCount}/{totalSetCount} {locale === 'ko' ? '\uC138\uD2B8 \uC644\uB8CC' : 'Sets'}
           </div>
         </div>
       </header>
 
-      {/* 2. 가로 스냅 스크롤링 운동 탭바 (헤더 하부 shrink-0) */}
+      {/* Exercise quick navigation is intentionally hidden for compactness. */}
       {false && logs.length > 0 && null}
 
-      {/* 3. 중앙 본문 스크롤 영역 (flex-1 overflow-y-auto overscroll-contain) */}
+      {/* Main scroll area */}
       <div className="inner-scroll -mx-2 flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-2 py-2.5 scrollbar-none">
 
         {isCompletedEditMode ? (
           <section className="shrink-0 ios-card p-3 border-[#2EC4B6]/20 bg-[#2EC4B6]/5 shadow-sm animate-fade-in">
             <p className="text-sm font-bold text-[#159A91] flex items-center gap-1.5">
               <span className="inline-block w-2 h-2 rounded-full bg-[#2EC4B6] animate-pulse"></span>
-              {locale === 'ko' ? '완료된 운동기록 편집 중' : 'Editing a finished workout'}
+              {locale === 'ko' ? '\uC644\uB8CC\uD55C \uC6B4\uB3D9 \uAE30\uB85D \uD3B8\uC9D1 \uC911' : 'Editing a finished workout'}
             </p>
             <p className="mt-1 text-xs font-bold text-[#159A91]">
               {locale === 'ko'
                 ? isHistoricalEditMode
-                  ? '수정 내용은 저장할 때 통계와 내보내기에 반영됩니다.'
-                  : '세트, 운동, 메모를 수정하면 통계와 내보내기에 바로 반영됩니다.'
+                  ? '\uC218\uC815 \uB0B4\uC6A9\uC740 \uC800\uC7A5 \uD6C4 \uD1B5\uACC4\uC640 \uB0B4\uBCF4\uB0B4\uAE30\uC5D0 \uBC18\uC601\uB429\uB2C8\uB2E4.'
+                  : '\uC138\uD2B8, \uC6B4\uB3D9, \uBA54\uBAA8 \uC218\uC815\uC740 \uD1B5\uACC4\uC640 \uB0B4\uBCF4\uB0B4\uAE30\uC5D0 \uBC14\uB85C \uBC18\uC601\uB429\uB2C8\uB2E4.'
                 : isHistoricalEditMode
                   ? 'Your changes update stats and exports when saved.'
                   : 'Set, exercise, and memo edits update stats and exports immediately.'}
@@ -908,9 +908,9 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         {isHistoricalEditMode && workout && !isIndependentRunningWorkout ? (
           <section className="shrink-0 ios-card p-3 space-y-2.5">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '운동 유형' : 'Workout type'}</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '\uC6B4\uB3D9 \uC720\uD615' : 'Workout type'}</p>
               <p className="mt-1 text-xs font-medium text-[#6E6E73]">
-                {locale === 'ko' ? '기존 운동과 세트는 유지하고 소속만 변경합니다.' : 'Existing exercises and sets remain unchanged.'}
+                {locale === 'ko' ? '\uAE30\uC874 \uC6B4\uB3D9\uACFC \uC138\uD2B8\uB294 \uC720\uC9C0\uD558\uACE0 \uC18C\uC18D\uB9CC \uBCC0\uACBD\uD569\uB2C8\uB2E4.' : 'Existing exercises and sets remain unchanged.'}
               </p>
             </div>
             <select
@@ -939,11 +939,11 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           </section>
         ) : null}
 
-        {/* 세션 메모 영역 */}
+        {/* Session memo */}
         <section className="shrink-0 ios-card px-3 py-2.5">
           <label className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 text-xs font-bold text-[#1C1C1E]">
             <span className="shrink-0 rounded-md border border-violet-500/20 bg-[#5856D6]/10 px-2.5 py-1 text-[#5856D6] font-bold">
-              {locale === 'ko' ? '세션 메모' : 'Session Memo'}
+              {locale === 'ko' ? '\uC138\uC158 \uBA54\uBAA8' : 'Session Memo'}
             </span>
             <input
               aria-label="Session memo"
@@ -951,12 +951,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               defaultValue={workout?.session.memo ?? ''}
               onBlur={(event) => void handleUpdateSessionMemo(event.target.value)}
               className="h-8 min-w-0 rounded-md border border-[#D1D1D6] bg-white px-2.5 text-sm font-medium text-[#1C1C1E] outline-none transition-all placeholder:text-[#8E8E93] focus:border-[#2EC4B6]"
-              placeholder={locale === 'ko' ? '컨디션, 특이사항, 오늘 목표 등' : 'Energy, notes, today goals'}
+              placeholder={locale === 'ko' ? '\uCEE8\uB514\uC158, \uD2B9\uC774\uC0AC\uD56D, \uC624\uB298 \uBAA9\uD45C \uB4F1' : 'Energy, notes, today goals'}
             />
           </label>
         </section>
 
-        {/* 운동검색/추가 폼 (isAdding일 때 스크롤 뷰 내 상단에 띄움) */}
+        {/* Exercise finder */}
         {isAdding && (
           <section id="workout-exercise-finder" className="shrink-0 ios-card p-3 shadow-md animate-fade-in">
             <ExerciseFinder
@@ -972,7 +972,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           </section>
         )}
 
-        {/* 개별 운동 세트 아코디언 카드 그룹 */}
+        {/* Exercise cards */}
         <div className="flex flex-col gap-2.5">
           {logs.map((log, index) => {
             const isExpanded = !!expandedExercises[log.workoutExercise.id];
@@ -988,7 +988,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 id={`exercise-card-${log.workoutExercise.id}`}
                 className="ios-card scroll-mt-3 overflow-hidden transition-all duration-300"
               >
-                {/* 아코디언 헤더 */}
+                {/* Accordion header */}
                 <button
                   type="button"
                   onClick={() => {
@@ -1023,27 +1023,27 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                             }
                           }}
                           className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-md bg-[#F2F2F7] text-accent-dark active:scale-90 transition-all cursor-pointer"
-                          aria-label={locale === 'ko' ? '운동 히스토리 보기' : 'View exercise history'}
+                          aria-label={locale === 'ko' ? '\uC6B4\uB3D9 \uD788\uC2A4\uD1A0\uB9AC \uBCF4\uAE30' : 'View exercise history'}
                         >
                           <History aria-hidden="true" size={11} />
                         </div>
                         {allCompleted && (
                             <span className="shrink-0 rounded-full bg-[#E8F3F3] px-2 py-0.5 text-[11px] font-black text-accent-dark">
-                            {locale === 'ko' ? '완료' : 'Done'}
+                            {locale === 'ko' ? '\uC644\uB8CC' : 'Done'}
                           </span>
                         )}
                       </div>
                       <p className="text-xs font-bold text-accent-dark">
                         {completedCount} / {totalCount} Sets
                         {log.workoutExercise.totalVolumeKg > 0 && (
-                          <span className="text-[#8E8E93] font-semibold font-mono"> • {log.workoutExercise.totalVolumeKg.toLocaleString()}kg</span>
+                          <span className="text-[#8E8E93] font-semibold font-mono"> ? {log.workoutExercise.totalVolumeKg.toLocaleString()}kg</span>
                         )}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-xs font-bold uppercase text-[#6E6E73]">
-                      {isExpanded ? (locale === 'ko' ? '접기' : 'Hide') : (locale === 'ko' ? '열기' : 'Show')}
+                      {isExpanded ? (locale === 'ko' ? '\uC811\uAE30' : 'Hide') : (locale === 'ko' ? '\uC5F4\uAE30' : 'Show')}
                     </span>
                     <svg
                       className={`h-4 w-4 text-[#8E8E93] transition-transform duration-200 ${isExpanded ? 'rotate-180 text-accent-dark' : ''}`}
@@ -1056,10 +1056,10 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                   </div>
                 </button>
 
-                {/* 아코디언 바디 */}
+                {/* Accordion body */}
                 {isExpanded && (
                   <div className="border-t border-[#E5E5EA] bg-white px-3 pb-3 pt-2">
-                    {/* 운동조작 버튼(순서 이동, 삭제, 교체) */}
+                    {/* Exercise actions */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-1.5">
                         <button
@@ -1105,7 +1105,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           }`}
                         >
                           <ClipboardList aria-hidden="true" size={13} />
-                          <span>{locale === 'ko' ? '메모' : 'Memo'}</span>
+                          <span>{locale === 'ko' ? '\uBA54\uBAA8' : 'Memo'}</span>
                         </button>
                         <button
                           type="button"
@@ -1122,7 +1122,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           }`}
                         >
                           <RefreshCw aria-hidden="true" size={12} className={replacingWorkoutExerciseId === log.workoutExercise.id ? 'animate-spin' : ''} />
-                          <span>{locale === 'ko' ? '교체' : 'Replace'}</span>
+                          <span>{locale === 'ko' ? '\uAD50\uCCB4' : 'Replace'}</span>
                         </button>
                         <button
                           type="button"
@@ -1130,7 +1130,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           className="flex min-h-9 items-center gap-1.5 rounded-xl bg-[#E8F3F3] px-3 text-xs font-bold text-accent-dark transition-all hover:bg-[#D8EFEF] active:scale-95"
                         >
                           <BarChart3 aria-hidden="true" size={13} />
-                          <span>{locale === 'ko' ? '기록' : 'History'}</span>
+                          <span>{locale === 'ko' ? '\uAE30\uB85D' : 'History'}</span>
                         </button>
                       </div>
                     </div>
@@ -1138,7 +1138,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     {isMemoOpen ? (
                       <label className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-1.5 text-xs font-black uppercase text-[#1C1C1E]">
                         <span className="flex min-h-8 min-w-12 items-center justify-center rounded-md border border-violet-300 bg-violet-100 px-2.5 text-violet-950 shadow-sm">
-                          {locale === 'ko' ? '메모' : 'Memo'}
+                          {locale === 'ko' ? '\uBA54\uBAA8' : 'Memo'}
                         </span>
                         <input
                           aria-label={`${log.exercise.nameKo} memo`}
@@ -1146,12 +1146,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           defaultValue={log.workoutExercise.memo ?? ''}
                           onBlur={(event) => void handleUpdateExerciseMemo(log.workoutExercise.id, event.target.value)}
                           className="h-8 min-w-0 rounded-xl border border-[#D1D1D6] bg-[#F2F2F7] px-2 text-sm font-bold text-[#1C1C1E] outline-none transition-all placeholder:text-[#8E8E93] focus:border-accent focus:ring-1 focus:ring-accent"
-                          placeholder={locale === 'ko' ? '그립, 자세, 세팅' : 'Grip, setup, cues'}
+                          placeholder={locale === 'ko' ? '\uADF8\uB9BD, \uC790\uC138, \uC138\uD305' : 'Grip, setup, cues'}
                         />
                       </label>
                     ) : null}
 
-                    {/* 운동교체 찾기 영역 (교체 활성화 시 노출) */}
+                    {/* Replacement exercise finder */}
                     {replacingWorkoutExerciseId === log.workoutExercise.id && (
                       <div className="mt-3 border-t border-[#E5E5EA] pt-3">
                         <ExerciseFinder
@@ -1162,12 +1162,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           onChange={updateExerciseFinderState}
                           onSelect={(exercise) => void handleReplaceExercise(log.workoutExercise.id, exercise.id)}
                           limit={24}
-                          title={locale === 'ko' ? '교체 운동 찾기' : 'Find replacement'}
+                          title={locale === 'ko' ? '\uAD50\uCCB4 \uC6B4\uB3D9 \uCC3E\uAE30' : 'Find replacement'}
                         />
                       </div>
                     )}
 
-                    {/* 세트 리스트 */}
+                    {/* Set rows */}
                     <div className="mt-2 flex flex-col gap-1.5">
                       {log.sets.map((set, setIndex) => (
                         <WorkoutSetRow
@@ -1192,7 +1192,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                       className="ios-button-secondary mt-2 flex min-h-9 w-full items-center justify-center gap-2 px-3 text-sm"
                     >
                       <Plus aria-hidden="true" size={15} />
-                      <span>{locale === 'ko' ? '세트 추가' : 'Add Set'}</span>
+                      <span>{locale === 'ko' ? '\uC138\uD2B8 \uCD94\uAC00' : 'Add Set'}</span>
                     </button>
                   </div>
                 )}
@@ -1207,7 +1207,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{t(locale, 'cardio')}</p>
               <h2 className="mt-0.5 text-base font-black text-[#1C1C1E]">
-                {cardioRecords.length === 0 ? (locale === 'ko' ? '러닝' : 'Optional Running') : `${cardioRecords.length} ${t(locale, 'cardio')}`}
+                {cardioRecords.length === 0 ? (locale === 'ko' ? '\uB7EC\uB2DD' : 'Optional Running') : `${cardioRecords.length} ${t(locale, 'cardio')}`}
               </h2>
             </div>
             <button
@@ -1223,9 +1223,9 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           <div className="mt-3 flex flex-col gap-3">
             {loggedCardioCount > 0 && (
               <div className="flex items-center justify-between rounded-xl bg-[#F2F2F7] border border-black/5 px-3.5 py-2.5 text-xs font-bold text-[#1C1C1E]">
-                <span>🏃‍♂️ {locale === 'ko' ? '오늘 러닝 누적 요약' : 'Running Summary'}</span>
+                <span>{locale === 'ko' ? '\uC624\uB298 \uB7EC\uB2DD \uC694\uC57D' : 'Running Summary'}</span>
                 <span className="font-mono">
-                  {totalCardioDistance.toFixed(1)} km / {totalCardioMinutes} {locale === 'ko' ? '분' : 'min'}
+                  {totalCardioDistance.toFixed(1)} km / {totalCardioMinutes} {locale === 'ko' ? '\uBD84' : 'min'}
                 </span>
               </div>
             )}
@@ -1237,21 +1237,21 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               );
 
               const machineLabels: Record<string, string> = {
-                treadmill: locale === 'ko' ? '트레드밀' : 'Treadmill',
-                indoor_bike: locale === 'ko' ? '실내 자전거' : 'Indoor Bike',
-                stair_climber: locale === 'ko' ? '천국의 계단' : 'Stair Climber',
-                elliptical: locale === 'ko' ? '엘립티컬' : 'Elliptical',
+                treadmill: locale === 'ko' ? '\uD2B8\uB808\uB4DC\uBC00' : 'Treadmill',
+                indoor_bike: locale === 'ko' ? '\uC2E4\uB0B4 \uC790\uC804\uAC70' : 'Indoor Bike',
+                stair_climber: locale === 'ko' ? '\uCC9C\uAD6D\uC758 \uACC4\uB2E8' : 'Stair Climber',
+                elliptical: locale === 'ko' ? '\uC77C\uB9BD\uD2F0\uCEEC' : 'Elliptical',
               };
               const displayName = cardioRecord.environment === 'outdoor'
-                ? (cardioRecord.location || (locale === 'ko' ? '야외 러닝/워킹' : 'Outdoor Running'))
-                : (machineLabels[cardioRecord.machineType || ''] || (locale === 'ko' ? '실내 러닝' : 'Indoor Running'));
+                ? (cardioRecord.location || (locale === 'ko' ? '\uC57C\uC678 \uB7EC\uB2DD/\uD2B8\uB799' : 'Outdoor Running'))
+                : (machineLabels[cardioRecord.machineType || ''] || (locale === 'ko' ? '\uC2E4\uB0B4 \uB7EC\uB2DD' : 'Indoor Running'));
 
               return (
                 <div key={cardioRecord.id} className="rounded-xl border border-black/5 bg-[#F2F2F7] p-3">
                   <div className="mb-2.5 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm">
-                        {cardioRecord.environment === 'indoor' ? '🏠' : '🌳'}
+                        {cardioRecord.environment === 'indoor' ? '\uC2E4\uB0B4' : '\uC57C\uC678'}
                       </span>
                       <div>
                         <p className="text-sm font-bold text-[#1C1C1E]">
@@ -1259,7 +1259,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                         </p>
                         {cardioRecord.isDraft ? (
                           <span className="mt-0.5 inline-flex rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-bold text-amber-750">
-                            {locale === 'ko' ? '입력 중' : 'Draft'}
+                            {locale === 'ko' ? '\uC785\uB825 \uC911' : 'Draft'}
                           </span>
                         ) : null}
                       </div>
@@ -1274,7 +1274,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     </button>
                   </div>
 
-                  {/* 실내 / 야외 전환 탭 */}
+                  {/* Indoor/outdoor switch */}
                   <div className="mb-2.5 flex rounded-xl bg-white p-0.5 border border-black/5">
                     <button
                       type="button"
@@ -1285,7 +1285,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           : 'text-[#6E6E73] hover:text-[#1C1C1E]'
                       }`}
                     >
-                      {locale === 'ko' ? '실내 러닝' : 'Indoor'}
+                      {locale === 'ko' ? '\uC2E4\uB0B4 \uB7EC\uB2DD' : 'Indoor'}
                     </button>
                     <button
                       type="button"
@@ -1296,15 +1296,15 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           : 'text-[#6E6E73] hover:text-[#1C1C1E]'
                       }`}
                     >
-                      {locale === 'ko' ? '야외 러닝' : 'Outdoor'}
+                      {locale === 'ko' ? '\uC57C\uC678 \uB7EC\uB2DD' : 'Outdoor'}
                     </button>
                   </div>
 
                   <div className="grid gap-3">
-                    {/* 기구 / 장소 입력 */}
+                    {/* Machine or place input */}
                     {cardioRecord.environment === 'indoor' ? (
                       <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                        {locale === 'ko' ? '기구 선택' : 'Machine Select'}
+                        {locale === 'ko' ? '\uAE30\uAD6C \uC120\uD0DD' : 'Machine Select'}
                         <select
                           aria-label="Cardio machine select"
                           value={cardioRecord.machineType || 'treadmill'}
@@ -1313,27 +1313,27 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           })}
                           className="mt-1 min-h-10 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                         >
-                          <option value="treadmill">{locale === 'ko' ? '🏃‍♂️ 트레드밀 (러닝머신)' : '🏃‍♂️ Treadmill'}</option>
-                          <option value="indoor_bike">{locale === 'ko' ? '🚴‍♂️ 실내 자전거' : '🚴‍♂️ Indoor Bike'}</option>
-                          <option value="stair_climber">{locale === 'ko' ? '🧗‍♂️ 천국의 계단' : '🧗‍♂️ Stair Climber'}</option>
-                          <option value="elliptical">{locale === 'ko' ? '🎿 엘립티컬' : '🎿 Elliptical'}</option>
+                          <option value="treadmill">{locale === 'ko' ? '\uD2B8\uB808\uB4DC\uBC00' : 'Treadmill'}</option>
+                          <option value="indoor_bike">{locale === 'ko' ? '\uC2E4\uB0B4 \uC790\uC804\uAC70' : 'Indoor Bike'}</option>
+                          <option value="stair_climber">{locale === 'ko' ? '\uCC9C\uAD6D\uC758 \uACC4\uB2E8' : 'Stair Climber'}</option>
+                          <option value="elliptical">{locale === 'ko' ? '\uC77C\uB9BD\uD2F0\uCEEC' : 'Elliptical'}</option>
                         </select>
                       </label>
                     ) : (
                       <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                        {locale === 'ko' ? '장소 입력' : 'Place'}
+                        {locale === 'ko' ? '\uC7A5\uC18C \uC785\uB825' : 'Place'}
                         <input
                           aria-label="Cardio place input"
                           type="text"
                           defaultValue={cardioRecord.location ?? ''}
                           onBlur={(event) => void handleUpdateCardio(cardioRecord, { location: event.target.value.trim() })}
-                          placeholder={locale === 'ko' ? '예: 동네 공원, 러닝 트랙 등' : 'e.g. Park, track, river'}
+                          placeholder={locale === 'ko' ? '\uC608: \uB3D9\uB124 \uACF5\uC6D0, \uB7EC\uB2DD \uD2B8\uB799' : 'e.g. Park, track, river'}
                           className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                         />
                       </label>
                     )}
 
-                    {/* 퀵 증감 계기판 */}
+                    {/* Running metrics */}
                     <div className={`grid gap-2.5 ${cardioRecord.environment === 'indoor' ? 'grid-cols-3' : 'grid-cols-2'}`}>
                       <label className="text-xs font-bold uppercase text-[#6E6E73]">
                         Km
@@ -1374,7 +1374,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                       </label>
 
                       <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                        {locale === 'ko' ? '분' : 'Min'}
+                        {locale === 'ko' ? '\uBD84' : 'Min'}
                         <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
                           <button
                             type="button"
@@ -1414,7 +1414,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
                       {cardioRecord.environment === 'indoor' && (
                         <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                          {locale === 'ko' ? '경사 (%)' : 'Inc (%)'}
+                          {locale === 'ko' ? '\uACBD\uC0AC (%)' : 'Inc (%)'}
                           <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
                             <button
                               type="button"
@@ -1456,13 +1456,13 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                   </div>
 
                   <label className="mt-2.5 block text-xs font-bold uppercase text-[#6E6E73]">
-                    {locale === 'ko' ? '메모' : 'Memo'}
+                    {locale === 'ko' ? '\uBA54\uBAA8' : 'Memo'}
                     <input
                       aria-label="Cardio memo"
                       type="text"
                       defaultValue={cardioRecord.memo ?? ''}
                       onBlur={(event) => void handleUpdateCardio(cardioRecord, { memo: event.target.value.trim() || undefined })}
-                      placeholder={locale === 'ko' ? '속도 변경, 컨디션 피드백 등' : 'e.g. Speed changes, energy feedback'}
+                      placeholder={locale === 'ko' ? '\uC18D\uB3C4 \uBCC0\uD654, \uCEE8\uB514\uC158 \uD53C\uB4DC\uBC31' : 'e.g. Speed changes, energy feedback'}
                       className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                     />
                   </label>
@@ -1476,21 +1476,21 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     <span>
                       {cardioRecord.isDraft
                         ? isIndependentRunningWorkout
-                          ? locale === 'ko' ? '러닝 저장' : 'Save running'
-                          : locale === 'ko' ? '기록하고 운동 계속' : 'Log cardio and continue'
+                          ? locale === 'ko' ? '\uB7EC\uB2DD \uC800\uC7A5' : 'Save running'
+                          : locale === 'ko' ? '\uAE30\uB85D\uD558\uACE0 \uC6B4\uB3D9 \uACC4\uC18D' : 'Log cardio and continue'
                         : isIndependentRunningWorkout
-                          ? locale === 'ko' ? '러닝 저장됨' : 'Running saved'
-                          : locale === 'ko' ? '운동 기록 계속' : 'Continue workout log'}
+                          ? locale === 'ko' ? '\uB7EC\uB2DD \uC800\uC7A5\uB428' : 'Running saved'
+                          : locale === 'ko' ? '\uC6B4\uB3D9 \uAE30\uB85D \uACC4\uC18D' : 'Continue workout log'}
                     </span>
                   </button>
 
                   {cardioRecord.averageSpeedKmh ? (
                     <p className="mt-3 text-xs font-bold text-[#159A91] bg-[#E8F3F3] border border-[#2EC4B6]/20 rounded-lg px-2.5 py-1.5 inline-block">
-                      ⚡ {locale === 'ko' ? '평균 속도' : 'Average speed'}: <span className="font-mono">{cardioRecord.averageSpeedKmh.toFixed(1)} km/h</span>
+                      {locale === 'ko' ? '\uD3C9\uADE0 \uC18D\uB3C4' : 'Average speed'}: <span className="font-mono">{cardioRecord.averageSpeedKmh.toFixed(1)} km/h</span>
                     </p>
                   ) : (
                     <p className="mt-3 text-xs font-medium text-[#6E6E73]">
-                      ℹ️ {locale === 'ko' ? '거리를 입력하면 평균 속도가 계산됩니다.' : 'Enter distance to calculate average speed.'}
+                      {locale === 'ko' ? '\uAC70\uB9AC\uB97C \uC785\uB825\uD558\uBA74 \uD3C9\uADE0 \uC18D\uB3C4\uAC00 \uACC4\uC0B0\uB429\uB2C8\uB2E4.' : 'Enter distance to calculate average speed.'}
                     </p>
                   )}
                 </div>
@@ -1500,7 +1500,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         </section>
       </div>
 
-      {/* 4. 하단 고정 조작 푸터 영역 (shrink-0) */}
+      {/* Fixed footer actions */}
       <footer className="mt-auto flex shrink-0 flex-col gap-2 border-t border-[#D1D1D6] bg-[#F2F2F7] pb-1 pt-2.5">
         {isHistoricalEditMode ? (
           <>
@@ -1514,7 +1514,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 className="ios-button-secondary flex min-h-11 items-center justify-center gap-2 px-2 text-xs"
               >
                 <Plus aria-hidden="true" size={16} />
-                {locale === 'ko' ? '운동 추가' : 'Add exercise'}
+                {locale === 'ko' ? '\uC6B4\uB3D9 \uCD94\uAC00' : 'Add exercise'}
               </button>
               <button
                 type="button"
@@ -1522,7 +1522,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 className="ios-button-primary flex min-h-11 items-center justify-center gap-2 px-2 text-xs"
               >
                 <ClipboardList aria-hidden="true" size={15} />
-                {locale === 'ko' ? '루틴 저장' : 'Save routine'}
+                {locale === 'ko' ? '\uB8E8\uD2F4 \uC800\uC7A5' : 'Save routine'}
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -1531,7 +1531,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 onClick={() => void handleCancelHistoricalEdit()}
                 className="ios-button-secondary flex min-h-12 items-center justify-center px-4 text-sm"
               >
-                {locale === 'ko' ? '취소' : 'Cancel'}
+                {locale === 'ko' ? '\uCDE8\uC18C' : 'Cancel'}
               </button>
               <button
                 type="button"
@@ -1550,10 +1550,10 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               className="ios-button-secondary flex min-h-12 items-center justify-center gap-1.5 px-3 text-xs"
             >
               <ClipboardList aria-hidden="true" size={15} />
-              <span>{locale === 'ko' ? '루틴 저장' : 'Save routine'}</span>
+              <span>{locale === 'ko' ? '\uB8E8\uD2F4 \uC800\uC7A5' : 'Save routine'}</span>
             </button>
             <button type="button" onClick={onBack} className="ios-button-primary flex min-h-12 items-center justify-center px-4 text-sm">
-              {locale === 'ko' ? '편집 완료' : 'Done Editing'}
+              {locale === 'ko' ? '\uD3B8\uC9D1 \uC644\uB8CC' : 'Done Editing'}
             </button>
           </div>
         ) : (
@@ -1564,7 +1564,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 : 'bg-[#FFF6DF]'
             }`}>
               <p className={`text-[11px] font-black uppercase ${canCompleteWorkout ? 'text-accent-dark' : 'text-[#1C1C1E]'}`}>
-                {locale === 'ko' ? '완료 전 요약' : 'Finish summary'}
+                {locale === 'ko' ? '\uC644\uB8CC \uC804 \uC694\uC57D' : 'Finish summary'}
               </p>
               <p className="mt-0.5 text-xs font-black leading-snug text-[#1C1C1E]">{finishSummary}</p>
               <p className={`mt-1 text-[11px] font-bold leading-snug ${canCompleteWorkout ? 'text-muted' : 'text-danger'}`}>
@@ -1585,7 +1585,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 }`}
               >
                 <Plus size={16} className={`transition-transform duration-300 ${isAdding ? 'rotate-45' : ''}`} />
-                <span>{locale === 'ko' ? '운동 추가' : 'Add'}</span>
+                <span>{locale === 'ko' ? '\uC6B4\uB3D9 \uCD94\uAC00' : 'Add'}</span>
               </button>
 
               <button
@@ -1595,7 +1595,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 className="ios-button-primary flex min-h-12 flex-1 items-center justify-center gap-1.5 px-4 text-sm disabled:bg-[#E5E5EA] disabled:text-[#8E8E93] disabled:shadow-none"
               >
                 <Check aria-hidden="true" size={16} />
-                <span>{locale === 'ko' ? '운동 완료' : 'Complete'}</span>
+                <span>{locale === 'ko' ? '\uC6B4\uB3D9 \uC644\uB8CC' : 'Complete'}</span>
               </button>
 
               <button
@@ -1604,14 +1604,14 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 disabled={!workout}
                 className="flex h-12 shrink-0 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-extrabold text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
               >
-                {locale === 'ko' ? '패스' : 'Skip'}
+                {locale === 'ko' ? '\uD328\uC2A4' : 'Skip'}
               </button>
             </div>
           </div>
         )}
       </footer>
 
-      {/* 5. 플로팅 휴식 타이머 오버레이 (휴식 타이머 활성화 및 카운트 다운 중일 때) */}
+      {/* Floating rest timer */}
       {isRestTimerActive && restRemaining > 0 && (
         <div className="fixed bottom-[4.5rem] left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-yellow-400 bg-yellow-200/95 px-3.5 py-3 shadow-2xl shadow-yellow-500/20 backdrop-blur-md transition-all duration-300 animate-fade-in">
           <div className="flex items-center justify-between gap-3">
