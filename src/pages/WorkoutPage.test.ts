@@ -7,6 +7,7 @@ import {
   formatCountdownSeconds,
   getElapsedMs,
   getLiveSessionElapsedMs,
+  getNextIncompleteSetTarget,
   getWorkoutSetProgressBadges,
   parseOptionalDecimalInput,
   shouldConfirmCardioDelete,
@@ -148,6 +149,46 @@ describe('workout progress counters', () => {
       { sets: [{ isCompleted: true }] },
       { sets: [] },
     ])).toBe(1);
+  });
+});
+
+describe('next set focus target', () => {
+  it('selects the next incomplete set across exercise cards', () => {
+    expect(getNextIncompleteSetTarget([
+      {
+        workoutExercise: { id: 'leg_press' },
+        sets: [
+          { id: 'leg_press_1', isCompleted: true },
+          { id: 'leg_press_2', isCompleted: true },
+        ],
+      },
+      {
+        workoutExercise: { id: 'rdl' },
+        sets: [
+          { id: 'rdl_1', isCompleted: false },
+          { id: 'rdl_2', isCompleted: false },
+        ],
+      },
+    ], 'leg_press_2')).toEqual({
+      workoutExerciseId: 'rdl',
+      inputId: 'weight_input_rdl_1',
+    });
+  });
+
+  it('skips completed sets when choosing the next input', () => {
+    expect(getNextIncompleteSetTarget([
+      {
+        workoutExercise: { id: 'press' },
+        sets: [
+          { id: 'press_1', isCompleted: true },
+          { id: 'press_2', isCompleted: true },
+          { id: 'press_3', isCompleted: false },
+        ],
+      },
+    ], 'press_1')).toEqual({
+      workoutExerciseId: 'press',
+      inputId: 'weight_input_press_3',
+    });
   });
 });
 
