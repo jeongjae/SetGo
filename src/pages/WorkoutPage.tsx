@@ -158,14 +158,27 @@ export function shouldConfirmWorkoutSetDelete(
     || set.rir !== undefined;
 }
 
-function getNextIncompleteSetInputId(logs: WorkoutExerciseLog[], completedSetId: string): string | undefined {
-  const orderedSets = logs.flatMap((log) => log.sets);
-  const completedIndex = orderedSets.findIndex((set) => set.id === completedSetId);
-  const nextSet = orderedSets
+export function getNextIncompleteSetTarget(
+  logs: Array<{
+    workoutExercise: Pick<WorkoutExercise, 'id'>;
+    sets: Array<Pick<WorkoutSet, 'id' | 'isCompleted'>>;
+  }>,
+  completedSetId: string,
+): { workoutExerciseId: string; inputId: string } | undefined {
+  const orderedSets = logs.flatMap((log) => (
+    log.sets.map((set) => ({
+      set,
+      workoutExerciseId: log.workoutExercise.id,
+    }))
+  ));
+  const completedIndex = orderedSets.findIndex((item) => item.set.id === completedSetId);
+  const nextItem = orderedSets
     .slice(Math.max(0, completedIndex + 1))
-    .find((set) => !set.isCompleted);
+    .find((item) => !item.set.isCompleted);
 
-  return nextSet ? `weight_input_${nextSet.id}` : undefined;
+  return nextItem
+    ? { workoutExerciseId: nextItem.workoutExerciseId, inputId: `weight_input_${nextItem.set.id}` }
+    : undefined;
 }
 
 function getWorkoutFinishSummary(
@@ -469,10 +482,17 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'type'>>,
   ) {
     setSaveMessage(locale === 'ko' ? '\uC800\uC7A5 \uC911...' : 'Saving...');
-    await updateWorkoutSet(set.id, values);
-
     const wasCompleted = set.isCompleted;
     const isNowCompleted = values.isCompleted === true;
+    const nextFocusTarget = isNowCompleted && !wasCompleted
+      ? getNextIncompleteSetTarget(logs, set.id)
+      : undefined;
+    const completedLog = logs.find((log) => log.workoutExercise.id === set.workoutExerciseId);
+    const shouldCollapseCompletedExercise = Boolean(
+      completedLog?.sets.every((item) => (item.id === set.id ? true : item.isCompleted)),
+    );
+
+    await updateWorkoutSet(set.id, values);
 
     if (isNowCompleted && !wasCompleted) {
       const now = Date.now();
@@ -488,15 +508,21 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     setSaveMessage(`${locale === 'ko' ? '\uC800\uC7A5\uB428' : 'Saved'} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
 
     if (isNowCompleted && !wasCompleted) {
-      const nextInputId = getNextIncompleteSetInputId(logs, set.id);
-      if (nextInputId) {
+      if (nextFocusTarget) {
+        setExpandedExercises((current) => ({
+          ...current,
+          [set.workoutExerciseId]: shouldCollapseCompletedExercise ? false : current[set.workoutExerciseId],
+          [nextFocusTarget.workoutExerciseId]: true,
+        }));
         window.setTimeout(() => {
-          const inputEl = document.getElementById(nextInputId) as HTMLInputElement | null;
+          const inputEl = document.getElementById(nextFocusTarget.inputId) as HTMLInputElement | null;
           inputEl?.focus();
           inputEl?.select();
-        }, 150);
+          inputEl?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        }, 240);
+      } else {
+        autoTransitionAccordion(set.workoutExerciseId);
       }
-      autoTransitionAccordion(set.workoutExerciseId);
     }
   }
 
