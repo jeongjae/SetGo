@@ -5,6 +5,7 @@ import { getExerciseCategories, getExerciseName, isWarmupOnlyExercise } from '..
 import { getStoredLocale, t, tf } from '../i18n/i18n';
 import { formatDateKey } from '../utils/date';
 import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
+import { IOSPageHeader } from '../components/IosPrimitives';
 
 type Locale = 'ko' | 'en';
 type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulder' | 'biceps' | 'triceps' | 'core';
@@ -900,18 +901,16 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
     : undefined;
   const activeMuscleCount = stats.muscleStats.filter((muscle) => muscle.sets > 0).length;
   const warningSummary = stats.warnings.length > 0
-    ? (locale === 'ko' ? `${stats.warnings.length}개 확인 필요` : `${stats.warnings.length} items to review`)
+    ? (locale === 'ko' ? `${stats.warnings.length}\uAC1C \uD655\uC778 \uD544\uC694` : `${stats.warnings.length} items to review`)
     : c.noWarnings;
 
   return (
     <section className="ios-page">
-      <header className="shrink-0 px-1 pb-1 pt-1">
-        <div className="flex items-center justify-between gap-2.5 pb-2.5">
-          <div>
-            <p className="text-sm font-bold text-[#159A91]">{t(locale, 'records')}</p>
-            <h1 className="text-[2rem] font-black leading-none text-[#1C1C1E]">{c.title}</h1>
-          </div>
-          {!recordModeControl && onOpenActuals ? (
+      <header className="shrink-0 space-y-2 px-0.5 pb-1 pt-1">
+        <IOSPageHeader
+          eyebrow={t(locale, 'records')}
+          title={c.title}
+          action={!recordModeControl && onOpenActuals ? (
             <button
               type="button"
               onClick={onOpenActuals}
@@ -921,7 +920,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
               <span>{t(locale, 'actualsCalendar')}</span>
             </button>
           ) : null}
-        </div>
+        />
         {recordModeControl}
       </header>
 
@@ -943,7 +942,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
-                  {locale === 'ko' ? '이번 주 요약' : 'This Week'}
+                  {locale === 'ko' ? '\uC774\uBC88 \uC8FC \uC694\uC57D' : 'This Week'}
                 </p>
                 <h2 className="mt-0.5 text-base font-black text-[#1C1C1E]">
                   {tf(locale, 'statsWorkoutDaysValue', { days: stats.workoutDays })} / {Math.round(stats.totalVolumeKg).toLocaleString()}kg
@@ -971,7 +970,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
           <section className="ios-card p-3.5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-black text-[#1C1C1E]">{c.dailyTrend}</h2>
-              <span className="text-xs font-semibold text-[#8E8E93]">{locale === 'ko' ? '최근 2주' : 'Last 2 weeks'}</span>
+              <span className="text-xs font-semibold text-[#8E8E93]">{locale === 'ko' ? '\uCD5C\uADFC 2\uC8FC' : 'Last 2 weeks'}</span>
             </div>
             <DailyTrendChart days={stats.dailyTrend} locale={locale} />
           </section>
@@ -979,7 +978,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
           <section className="ios-card p-3.5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-black text-[#1C1C1E]">{c.recentTrend}</h2>
-              <span className="text-xs font-semibold text-[#8E8E93]">{locale === 'ko' ? '볼륨' : 'Volume'}</span>
+              <span className="text-xs font-semibold text-[#8E8E93]">{locale === 'ko' ? '\uBCFC\uB968' : 'Volume'}</span>
             </div>
             <MiniLineChart weeks={stats.weeks} locale={locale} peakLabel={c.peak} />
             {latestWeek ? (
@@ -1013,7 +1012,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
             {stats.warnings.length > 1 ? (
               <details className="mt-2 rounded-xl border border-black/5 bg-[#F2F2F7] px-3 py-2">
                 <summary className="cursor-pointer text-xs font-bold text-[#159A91]">
-                  {locale === 'ko' ? '전체 경고 보기' : 'View all warnings'}
+                  {locale === 'ko' ? '\uC804\uCCB4 \uACBD\uACE0 \uBCF4\uAE30' : 'View all warnings'}
                 </summary>
                 <div className="mt-2 grid gap-2">
                   {stats.warnings.slice(1).map((warning) => (
@@ -1036,7 +1035,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
           </section>
 
           <p className="px-1 pt-1 text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
-            {locale === 'ko' ? '세부 분석' : 'Details'}
+            {locale === 'ko' ? '\uC138\uBD80 \uBD84\uC11D' : 'Details'}
           </p>
 
           <DetailSection
@@ -1139,7 +1138,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
 
           <DetailSection
             title={c.automaticAnalysis}
-            summary={locale === 'ko' ? '분석 내용과 AI 프롬프트' : 'Analysis and AI prompt'}
+            summary={locale === 'ko' ? '\uBD84\uC11D \uB0B4\uC6A9\uACFC AI \uD504\uB86C\uD504\uD2B8' : 'Analysis and AI prompt'}
           >
             <div className="space-y-3">
               <button

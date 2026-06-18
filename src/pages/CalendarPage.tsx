@@ -17,6 +17,7 @@ import { formatDateKey } from '../utils/date';
 import { db } from '../db/db';
 import { getStoredLocale, t } from '../i18n/i18n';
 import type { CalendarPlanOverride, CardioRecord, RoutineDay, WorkoutPlanKind, WorkoutSessionKind, Routine, RoutineCyclePlanItem } from '../types';
+import { IOSPageHeader } from '../components/IosPrimitives';
 
 type CalendarPageProps = {
   initialSelectedDateKey?: string;
@@ -40,15 +41,15 @@ type CalendarPlan = {
 };
 
 const weekdayLabels = {
-  ko: ['일', '월', '화', '수', '목', '금', '토'],
+  ko: ['\uC77C', '\uC6D4', '\uD654', '\uC218', '\uBAA9', '\uAE08', '\uD1A0'],
   en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
 };
 
 function planKindLabel(kind: WorkoutPlanKind, locale: 'ko' | 'en') {
-  if (kind === 'free') return locale === 'ko' ? '자유운동' : 'Free';
-  if (kind === 'running') return locale === 'ko' ? '러닝' : 'Running';
+  if (kind === 'free') return locale === 'ko' ? '\uC790\uC720\uC6B4\uB3D9' : 'Free';
+  if (kind === 'running') return locale === 'ko' ? '\uB7EC\uB2DD' : 'Running';
   if (kind === 'rest') return t(locale, 'rest');
-  return locale === 'ko' ? '운동' : 'Workout';
+  return locale === 'ko' ? '\uC6B4\uB3D9' : 'Workout';
 }
 
 function buildCalendarDays(year: number, monthIndex: number): CalendarDay[] {
@@ -118,12 +119,12 @@ function isRunningOnlySummary(summary: WorkoutSummary): boolean {
 function actualSummaryLabel(summaries: WorkoutSummary[], locale: 'ko' | 'en'): string | undefined {
   const firstSummary = summaries[0];
   if (!firstSummary) return undefined;
-  if (isRunningOnlySummary(firstSummary)) return locale === 'ko' ? '러닝' : 'Run';
-  if (firstSummary.session.entryKind === 'free') return locale === 'ko' ? '자유운동' : 'Free';
+  if (isRunningOnlySummary(firstSummary)) return locale === 'ko' ? '\uB7EC\uB2DD' : 'Run';
+  if (firstSummary.session.entryKind === 'free') return locale === 'ko' ? '\uC790\uC720\uC6B4\uB3D9' : 'Free';
 
   return getRoutineDayDisplayName(firstSummary.routineDay, locale)
     ?? firstSummary.routineName
-    ?? (locale === 'ko' ? '운동' : 'Workout');
+    ?? (locale === 'ko' ? '\uC6B4\uB3D9' : 'Workout');
 }
 
 export function CalendarPage({
@@ -294,14 +295,14 @@ export function CalendarPage({
       const cycleSequence = cycleItems
         .map((item) => {
           if (item.kind === 'rest') return t(locale, 'rest');
-          if (item.kind === 'running') return locale === 'ko' ? '러닝' : 'Running';
-          if (item.kind === 'free') return locale === 'ko' ? '자유' : 'Free';
+          if (item.kind === 'running') return locale === 'ko' ? '\uB7EC\uB2DD' : 'Running';
+          if (item.kind === 'free') return locale === 'ko' ? '\uC790\uC720' : 'Free';
           const rDay = routineDays.find((d) => d.id === item.routineDayId);
-          return rDay ? (getRoutineDayDisplayName(rDay, locale) ?? rDay.name) : (locale === 'ko' ? '루틴' : 'Routine');
+          return rDay ? (getRoutineDayDisplayName(rDay, locale) ?? rDay.name) : (locale === 'ko' ? '\uB8E8\uD2F4' : 'Routine');
         })
-        .join(' → ');
+        .join(' / ');
       return locale === 'ko'
-        ? `${cycleItems.length}일 주기 사이클: ${cycleSequence}`
+        ? `${cycleItems.length}\uC77C \uC8FC\uAE30 \uC0AC\uC774\uD074: ${cycleSequence}`
         : `${cycleItems.length}-day cycle: ${cycleSequence}`;
     }
 
@@ -313,17 +314,17 @@ export function CalendarPage({
           const dayName = weekdayLabels[locale as 'ko' | 'en'][w.weekday];
           const typeName = rDay
             ? (getRoutineDayDisplayName(rDay, locale) ?? rDay.name)
-            : (locale === 'ko' ? '운동' : 'Workout');
+            : (locale === 'ko' ? '\uC6B4\uB3D9' : 'Workout');
           return `${dayName}(${typeName})`;
         });
       if (activeDays.length > 0) {
         return locale === 'ko'
-          ? `주 ${activeDays.length}회 운동: ${activeDays.join(', ')}`
+          ? `\uC8FC ${activeDays.length}\uD68C \uC6B4\uB3D9: ${activeDays.join(', ')}`
           : `${activeDays.length} workouts / week: ${activeDays.join(', ')}`;
       }
     }
 
-    return locale === 'ko' ? '일정 또는 사이클이 아직 설정되지 않았습니다.' : 'No schedule or cycle set yet.';
+    return locale === 'ko' ? '\uC77C\uC815 \uB610\uB294 \uC0AC\uC774\uD074\uC774 \uC544\uC9C1 \uC124\uC815\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.' : 'No schedule or cycle set yet.';
   };
 
   const selectedOverride = overridesByDate[selectedDateKey];
@@ -345,11 +346,8 @@ export function CalendarPage({
 
   return (
     <section className="ios-page">
-      <header className="shrink-0 px-1 pb-1 pt-1">
-        <p className="text-sm font-bold text-[#159A91]">{t(locale, 'planned')}</p>
-        <div className="mt-1 flex items-end justify-between gap-3">
-          <h1 className="text-[2rem] font-black leading-none text-[#1C1C1E]">{t(locale, 'planCalendar')}</h1>
-        </div>
+      <header className="shrink-0 px-0.5 pb-1 pt-1">
+        <IOSPageHeader eyebrow={t(locale, 'planned')} title={t(locale, 'planCalendar')} />
       </header>
 
       <div className="inner-scroll min-h-0 space-y-2.5 pr-0.5">
@@ -357,7 +355,7 @@ export function CalendarPage({
         {activeRoutine ? (
           <div className="ios-card flex flex-col gap-2 p-3.5">
             <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
-              {locale === 'ko' ? '활성 계획 요약' : 'Active Plan Summary'}
+              {locale === 'ko' ? '\uD65C\uC131 \uACC4\uD68D \uC694\uC57D' : 'Active Plan Summary'}
             </p>
             <div>
               <h3 className="text-lg font-black text-[#1C1C1E]">{activeRoutine.name}</h3>
@@ -368,11 +366,11 @@ export function CalendarPage({
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-[#D1D1D6] bg-white p-3.5 text-center text-xs text-[#8E8E93]">
-            {locale === 'ko' ? '활성화된 루틴 플랜이 없습니다.' : 'No active routine plan.'}
+            {locale === 'ko' ? '\uD65C\uC131\uD654\uB41C \uB8E8\uD2F4 \uD50C\uB79C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.' : 'No active routine plan.'}
           </div>
         )}
 
-        {/* 달력 영역 */}
+        {/* Calendar area */}
         <section className="shrink-0 ios-card p-3.5">
         <div className="flex items-center justify-between gap-3">
           <button
@@ -520,7 +518,7 @@ export function CalendarPage({
               <div className="rounded-xl border border-dashed border-[#D1D1D6] p-3 text-center space-y-2.5 bg-white">
                 <p className="text-xs text-[#8E8E93] font-bold leading-normal">
                   {locale === 'ko'
-                    ? '활성화된 루틴이 없어 운동 플랜을 설정할 수 없습니다.'
+                    ? '\uD65C\uC131\uD654\uB41C \uB8E8\uD2F4\uC774 \uC5C6\uC5B4 \uC6B4\uB3D9 \uD50C\uB79C\uC744 \uC124\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.'
                     : 'No active routine set. Workout plan settings are restricted.'}
                 </p>
                 {onNavigateToRoutines && (
@@ -529,17 +527,17 @@ export function CalendarPage({
                     onClick={onNavigateToRoutines}
                     className="ios-button-primary min-h-9 px-4 text-xs"
                   >
-                    {locale === 'ko' ? '루틴 설정하러 가기' : 'Go to Routine Settings'}
+                    {locale === 'ko' ? '\uB8E8\uD2F4 \uC124\uC815\uC73C\uB85C \uAC00\uAE30' : 'Go to Routine Settings'}
                   </button>
                 )}
               </div>
             ) : (
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  { value: '__cycle', label: locale === 'ko' ? '사이클 따르기' : 'Follow Cycle', colorClass: 'border-[#D1D1D6] bg-white text-[#6E6E73] hover:bg-[#F2F2F7]' },
+                  { value: '__cycle', label: locale === 'ko' ? '\uC0AC\uC774\uD074 \uB530\uB974\uAE30' : 'Follow Cycle', colorClass: 'border-[#D1D1D6] bg-white text-[#6E6E73] hover:bg-[#F2F2F7]' },
                   { value: 'rest', label: t(locale, 'rest'), colorClass: 'border-[#D1D1D6] bg-white text-[#6E6E73] hover:bg-[#F2F2F7]' },
-                  { value: 'running', label: locale === 'ko' ? '러닝' : 'Running', colorClass: 'border-[#007AFF]/20 bg-[#007AFF]/5 text-[#007AFF] hover:bg-[#007AFF]/15' },
-                  { value: 'free', label: locale === 'ko' ? '자유' : 'Free', colorClass: 'border-[#5856D6]/20 bg-[#5856D6]/5 text-[#5856D6] hover:bg-[#5856D6]/15' },
+                  { value: 'running', label: locale === 'ko' ? '\uB7EC\uB2DD' : 'Running', colorClass: 'border-[#007AFF]/20 bg-[#007AFF]/5 text-[#007AFF] hover:bg-[#007AFF]/15' },
+                  { value: 'free', label: locale === 'ko' ? '\uC790\uC720' : 'Free', colorClass: 'border-[#5856D6]/20 bg-[#5856D6]/5 text-[#5856D6] hover:bg-[#5856D6]/15' },
                   ...routineDays.map(day => ({
                     value: `routine:${day.id}`,
                     label: getRoutineDayDisplayName(day, locale) ?? day.name,
@@ -568,7 +566,7 @@ export function CalendarPage({
         ) : (
           <p className="rounded-xl bg-[#F2F2F7] px-3.5 py-3 text-xs font-medium leading-relaxed text-[#6E6E73]">
             {locale === 'ko'
-              ? '오늘 이전 날짜는 계획이 아니라 기록을 표시합니다. 과거 운동 기록 수정은 기록 탭에서 처리합니다.'
+              ? '\uC624\uB298 \uC774\uC804 \uB0A0\uC9DC\uB294 \uACC4\uD68D\uC774 \uC544\uB2C8\uB77C \uAE30\uB85D\uC744 \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uACFC\uAC70 \uC6B4\uB3D9 \uAE30\uB85D \uC218\uC815\uC740 \uAE30\uB85D \uD0ED\uC5D0\uC11C \uCC98\uB9AC\uD569\uB2C8\uB2E4.'
               : 'Past dates show records, not plans. Use Records to edit historical workout records.'}
           </p>
         )}
@@ -577,7 +575,7 @@ export function CalendarPage({
           <div className="rounded-xl border border-dashed border-[#D1D1D6] bg-white p-3 text-center space-y-2.5">
             <p className="text-xs text-[#8E8E93] font-bold leading-relaxed">
               {locale === 'ko'
-                ? '과거 운동 기록의 추가, 수정, 삭제는 기록 탭에서 관리할 수 있습니다.'
+                ? '\uACFC\uAC70 \uC6B4\uB3D9 \uAE30\uB85D \uCD94\uAC00, \uC218\uC815, \uC0AD\uC81C\uB294 \uAE30\uB85D \uD0ED\uC5D0\uC11C \uAD00\uB9AC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.'
                 : 'Historical workout logging, edits, and deletions are managed in the Records tab.'}
             </p>
             <button
@@ -585,13 +583,13 @@ export function CalendarPage({
               onClick={onNavigateToRecords}
               className="ios-button-primary min-h-9 px-4 text-xs"
             >
-              {locale === 'ko' ? '기록 탭으로 가기' : 'Go to Records Tab'}
+              {locale === 'ko' ? '\uAE30\uB85D \uD0ED\uC73C\uB85C \uAC00\uAE30' : 'Go to Records Tab'}
             </button>
           </div>
         ) : null}
         <p className="rounded-xl bg-[#F2F2F7] px-3.5 py-3 text-xs font-medium leading-relaxed text-[#6E6E73]">
           {locale === 'ko'
-            ? '이 화면에서는 계획만 수정합니다. 누락 기록 추가와 과거 기록 수정/삭제는 기록 탭에서 처리합니다.'
+            ? '\uC774 \uD654\uBA74\uC5D0\uC11C\uB294 \uACC4\uD68D\uB9CC \uC218\uC815\uD569\uB2C8\uB2E4. \uB204\uB77D \uAE30\uB85D \uCD94\uAC00\uC640 \uACFC\uAC70 \uAE30\uB85D \uC218\uC815/\uC0AD\uC81C\uB294 \uAE30\uB85D \uD0ED\uC5D0\uC11C \uCC98\uB9AC\uD569\uB2C8\uB2E4.'
             : 'This screen only edits plans. Use Records to add missing records or edit/delete past workouts.'}
         </p>
       </section>
@@ -604,7 +602,7 @@ export function CalendarPage({
             onClick={onReturnToWeeklyPlan}
             className="ios-button-secondary flex min-h-11 w-full items-center justify-center px-3 text-sm"
           >
-            {locale === 'ko' ? '운동계획으로 돌아가기' : 'Return to workout plan'}
+            {locale === 'ko' ? '\uC6B4\uB3D9\uACC4\uD68D\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30' : 'Return to workout plan'}
           </button>
         ) : null}
       </footer>

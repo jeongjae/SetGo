@@ -7,6 +7,7 @@ import { getActiveRoutineDays, getRoutineDayDisplayName } from '../db/routines';
 import { getStoredLocale, t, workoutStatusLabel } from '../i18n/i18n';
 import { addDays, buildDateRange, formatDateKey } from '../utils/date';
 import type { CardioRecord, ExerciseMaster, RoutineDay, WorkoutExercise, WorkoutSet, WorkoutStatus } from '../types';
+import { IOSPageHeader } from '../components/IosPrimitives';
 
 type ActualsPageProps = {
   initialSelectedDateKey?: string;
@@ -70,11 +71,11 @@ export function actualsDayCellLabel(
 ): string | undefined {
   const firstSummary = summaries[0];
   if (!firstSummary) return undefined;
-  if (isRunningOnlySummary(firstSummary)) return locale === 'ko' ? '러닝' : 'Run';
-  if (firstSummary.session.entryKind === 'free') return locale === 'ko' ? '자유운동' : 'Free';
+  if (isRunningOnlySummary(firstSummary)) return locale === 'ko' ? '\uB7EC\uB2DD' : 'Run';
+  if (firstSummary.session.entryKind === 'free') return locale === 'ko' ? '\uC790\uC720\uC6B4\uB3D9' : 'Free';
 
   return getRoutineDayDisplayName(firstSummary.routineDay, locale)
-    ?? (locale === 'ko' ? '운동' : 'Workout');
+    ?? (locale === 'ko' ? '\uC6B4\uB3D9' : 'Workout');
 }
 
 export function actualsDayCellTextClass(hasWorkoutSummaries: boolean): string {
@@ -112,19 +113,19 @@ export function actualsSessionDetailLabel({
 }): string {
   const parts: string[] = [];
   if (actualExerciseCount > 0 || totalStrengthVolumeKg > 0) {
-    parts.push(`${actualExerciseCount}${locale === 'ko' ? '개 운동' : ' exercises'} / ${totalStrengthVolumeKg.toLocaleString()}kg`);
+    parts.push(`${actualExerciseCount}${locale === 'ko' ? '\uAC1C \uC6B4\uB3D9' : ' exercises'} / ${totalStrengthVolumeKg.toLocaleString()}kg`);
   }
   if (cardioDistanceKm > 0 || cardioMinutes > 0) {
-    const minuteLabel = locale === 'ko' ? '분' : 'min';
-    parts.push(`${locale === 'ko' ? '러닝' : 'Running'} / ${cardioMinutes}${minuteLabel}, ${cardioDistanceKm.toFixed(2)}km`);
+    const minuteLabel = locale === 'ko' ? '\uBD84' : 'min';
+    parts.push(`${locale === 'ko' ? '\uB7EC\uB2DD' : 'Running'} / ${cardioMinutes}${minuteLabel}, ${cardioDistanceKm.toFixed(2)}km`);
   }
 
-  return parts.join(', ') || (locale === 'ko' ? '기록 없음' : 'No logged detail');
+  return parts.join(', ') || (locale === 'ko' ? '\uAE30\uB85D \uC5C6\uC74C' : 'No logged detail');
 }
 
 export function actualsStatusLabel(locale: 'ko' | 'en', status: WorkoutStatus, dateKey: string, todayKey: string): string {
   if (status === 'in_progress' && dateKey < todayKey) {
-    return locale === 'ko' ? '작성 중' : 'Draft';
+    return locale === 'ko' ? '\uC791\uC131 \uC911' : 'Draft';
   }
 
   return workoutStatusLabel(locale, status);
@@ -283,7 +284,7 @@ export function ActualsPage({
   async function handleDeleteSession(sessionId: string) {
     const shouldDelete = window.confirm(
       locale === 'ko'
-        ? '이 운동 기록을 삭제할까요? 입력한 세트와 러닝 기록도 함께 삭제됩니다.'
+        ? '\uC774 \uC6B4\uB3D9 \uAE30\uB85D\uC744 \uC0AD\uC81C\uD560\uAE4C\uC694? \uC785\uB825\uD55C \uC138\uD2B8\uC640 \uB7EC\uB2DD \uAE30\uB85D\uB3C4 \uD568\uAED8 \uC0AD\uC81C\uB429\uB2C8\uB2E4.'
         : 'Delete this workout record? Its sets and running records will also be removed.',
     );
     if (!shouldDelete) return;
@@ -294,11 +295,8 @@ export function ActualsPage({
 
   return (
     <section className="ios-page">
-      <header className="shrink-0 px-1 pb-1 pt-1">
-        <p className="text-sm font-bold text-[#159A91]">{t(locale, 'records')}</p>
-        <div className="mt-1 flex items-end justify-between gap-3 pb-2.5">
-          <h1 className="text-[2rem] font-black leading-none text-[#1C1C1E]">{t(locale, 'actualsCalendar')}</h1>
-        </div>
+      <header className="shrink-0 space-y-2 px-0.5 pb-1 pt-1">
+        <IOSPageHeader eyebrow={t(locale, 'records')} title={t(locale, 'actualsCalendar')} />
         {recordModeControl}
       </header>
 
@@ -306,14 +304,14 @@ export function ActualsPage({
         <section className="shrink-0 ios-card p-3.5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '최근 5주' : 'Recent 5 weeks'}</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '\uCD5C\uADFC 5\uC8FC' : 'Recent 5 weeks'}</p>
               <h2 className="mt-0.5 text-sm font-black text-[#1C1C1E]">{startKey} - {endKey}</h2>
             </div>
             <CalendarRange aria-hidden="true" size={19} className="text-[#159A91]" />
           </div>
 
           <div className="mt-3 grid grid-cols-7 gap-1 text-center text-xs font-bold uppercase text-[#8E8E93]">
-            {(locale === 'ko' ? ['일', '월', '화', '수', '목', '금', '토'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']).map((weekday) => (
+            {(locale === 'ko' ? ['\uC77C', '\uC6D4', '\uD654', '\uC218', '\uBAA9', '\uAE08', '\uD1A0'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']).map((weekday) => (
               <div key={weekday}>{weekday}</div>
             ))}
           </div>
@@ -364,7 +362,7 @@ export function ActualsPage({
         <section className="ios-card p-3.5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '선택 주간 요약' : 'Selected week'}</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '\uC120\uD0DD \uC8FC\uAC04 \uC694\uC57D' : 'Selected week'}</p>
               <h2 className="mt-0.5 text-sm font-black text-[#1C1C1E]">
                 {selectedWeekDays[0]?.key} - {selectedWeekDays[selectedWeekDays.length - 1]?.key}
               </h2>
@@ -380,12 +378,12 @@ export function ActualsPage({
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2">
             {[
-              [locale === 'ko' ? '운동일수' : 'Days', `${new Set(selectedWeekSummaries.map((summary) => summary.session.date)).size}`],
-              [locale === 'ko' ? '볼륨' : 'Volume', `${Math.round(totalVolume).toLocaleString()}kg`],
-              [locale === 'ko' ? '세트' : 'Sets', `${selectedWeekSets.length}`],
+              [locale === 'ko' ? '\uC6B4\uB3D9\uC77C\uC218' : 'Days', `${new Set(selectedWeekSummaries.map((summary) => summary.session.date)).size}`],
+              [locale === 'ko' ? '\uBCFC\uB968' : 'Volume', `${Math.round(totalVolume).toLocaleString()}kg`],
+              [locale === 'ko' ? '\uC138\uD2B8' : 'Sets', `${selectedWeekSets.length}`],
               [locale === 'ko' ? 'Hard' : 'Hard', `${hardSets}`],
-              [locale === 'ko' ? '러닝' : 'Run', `${selectedWeekCardioDistance.toFixed(1)}km`],
-              [locale === 'ko' ? '최다부위' : 'Top', topCategory ?? '-'],
+              [locale === 'ko' ? '\uB7EC\uB2DD' : 'Run', `${selectedWeekCardioDistance.toFixed(1)}km`],
+              [locale === 'ko' ? '\uCD5C\uB2E4 \uBD80\uC704' : 'Top', topCategory ?? '-'],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl border border-black/5 bg-[#F2F2F7] px-2 py-2 text-center">
                 <p className="text-[11px] font-bold uppercase text-[#6E6E73]">{label}</p>
@@ -398,7 +396,7 @@ export function ActualsPage({
         <section className="space-y-3 ios-card p-3.5">
           <div className="flex items-center justify-between border-b border-[#E5E5EA] pb-2">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '선택 날짜' : 'Selected date'}</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '\uC120\uD0DD \uB0A0\uC9DC' : 'Selected date'}</p>
               <h2 className="mt-0.5 text-base font-black text-[#1C1C1E]">{selectedDateKey}</h2>
             </div>
             <button
@@ -411,7 +409,7 @@ export function ActualsPage({
               className="ios-button-primary flex min-h-9 items-center gap-1.5 px-2.5 text-xs disabled:opacity-40 disabled:pointer-events-none"
             >
               <Plus aria-hidden="true" size={14} />
-              <span>{locale === 'ko' ? '운동 추가' : 'Add workout'}</span>
+              <span>{locale === 'ko' ? '\uC6B4\uB3D9 \uCD94\uAC00' : 'Add workout'}</span>
             </button>
           </div>
 
@@ -424,7 +422,7 @@ export function ActualsPage({
                     onClick={() => setAddMenuMode('routine')}
                     className="min-h-11 rounded-xl border border-[#D1D1D6] bg-white px-2 text-sm font-bold text-[#1C1C1E] transition-all active:scale-95"
                   >
-                    {locale === 'ko' ? '루틴' : 'Routine'}
+                    {locale === 'ko' ? '\uB8E8\uD2F4' : 'Routine'}
                   </button>
                   <button
                     type="button"
@@ -435,7 +433,7 @@ export function ActualsPage({
                     }}
                     className="min-h-11 rounded-xl border border-[#5856D6]/20 bg-[#5856D6]/5 px-2 text-sm font-black text-[#5856D6] transition-all active:scale-95"
                   >
-                    {locale === 'ko' ? '자유운동' : 'Free'}
+                    {locale === 'ko' ? '\uC790\uC720\uC6B4\uB3D9' : 'Free'}
                   </button>
                   <button
                     type="button"
@@ -446,19 +444,19 @@ export function ActualsPage({
                     }}
                     className="min-h-11 rounded-xl border border-[#007AFF]/20 bg-[#007AFF]/5 px-2 text-sm font-black text-[#007AFF] transition-all active:scale-95"
                   >
-                    {locale === 'ko' ? '러닝' : 'Running'}
+                    {locale === 'ko' ? '\uB7EC\uB2DD' : 'Running'}
                   </button>
                 </div>
               ) : (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '루틴운동 선택' : 'Select routine day'}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '\uB8E8\uD2F4 \uC6B4\uB3D9 \uC120\uD0DD' : 'Select routine day'}</p>
                     <button
                       type="button"
                       onClick={() => setAddMenuMode('kind')}
                       className="ios-button-secondary min-h-8 px-2.5 text-xs"
                     >
-                      {locale === 'ko' ? '뒤로' : 'Back'}
+                      {locale === 'ko' ? '\uB4A4\uB85C' : 'Back'}
                     </button>
                   </div>
                   {routineDays.length > 0 ? (
@@ -480,7 +478,7 @@ export function ActualsPage({
                     </div>
                   ) : (
                     <p className="rounded-xl border border-[#D1D1D6] bg-white px-3 py-2 text-xs font-bold text-[#8E8E93]">
-                      {locale === 'ko' ? '사용 가능한 루틴운동이 없습니다.' : 'No routine days available.'}
+                      {locale === 'ko' ? '\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uB8E8\uD2F4 \uC6B4\uB3D9\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.' : 'No routine days available.'}
                     </p>
                   )}
                 </div>
@@ -490,7 +488,7 @@ export function ActualsPage({
 
           {selectedSummaries.length === 0 ? (
             <p className="rounded-xl bg-[#F2F2F7] px-3.5 py-3 text-xs font-medium leading-relaxed text-[#6E6E73]">
-              {locale === 'ko' ? '이 날짜에는 기록된 운동이 없습니다.' : 'No workout record on this date.'}
+              {locale === 'ko' ? '\uC774 \uB0A0\uC9DC\uC5D0\uB294 \uAE30\uB85D\uB41C \uC6B4\uB3D9\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.' : 'No workout record on this date.'}
             </p>
           ) : (
             <div className="grid gap-2.5">
@@ -511,10 +509,10 @@ export function ActualsPage({
                       <div>
                         <h3 className="text-sm font-black text-[#1C1C1E]">
                           {isRunningOnly
-                            ? (locale === 'ko' ? '러닝' : 'Running')
+                            ? (locale === 'ko' ? '\uB7EC\uB2DD' : 'Running')
                             : summary.session.entryKind === 'free'
-                              ? (locale === 'ko' ? '자유운동' : 'Free workout')
-                              : getRoutineDayDisplayName(summary.routineDay, locale) ?? (locale === 'ko' ? '운동' : 'Workout')}
+                              ? (locale === 'ko' ? '\uC790\uC720\uC6B4\uB3D9' : 'Free workout')
+                              : getRoutineDayDisplayName(summary.routineDay, locale) ?? (locale === 'ko' ? '\uC6B4\uB3D9' : 'Workout')}
                         </h3>
                         <p className="mt-1 text-xs font-bold text-[#6E6E73]">
                           {actualsSessionDetailLabel({
@@ -537,7 +535,7 @@ export function ActualsPage({
                         className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-black/5 bg-white px-3 text-xs font-bold text-[#1C1C1E] transition-all active:scale-95"
                       >
                         <Pencil aria-hidden="true" size={14} />
-                        <span>{locale === 'ko' ? '기록 수정' : 'Edit'}</span>
+                        <span>{locale === 'ko' ? '\uAE30\uB85D \uC218\uC815' : 'Edit'}</span>
                       </button>
                       <button
                         type="button"
@@ -545,7 +543,7 @@ export function ActualsPage({
                         className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 text-xs font-black text-rose-600 transition-all active:scale-95"
                       >
                         <Trash2 aria-hidden="true" size={14} />
-                        <span>{locale === 'ko' ? '삭제' : 'Delete'}</span>
+                        <span>{locale === 'ko' ? '\uC0AD\uC81C' : 'Delete'}</span>
                       </button>
                     </div>
                   </div>
