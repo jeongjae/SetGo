@@ -1,7 +1,7 @@
-import { CalendarClock, ChevronRight, Database, Dumbbell, FileDown, Info, Languages, Library, X } from 'lucide-react';
+import { CalendarClock, ChevronRight, Database, Dumbbell, FileDown, Info, Languages, Library } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { getStoredLocale, saveStoredLocale, t, type AppLocale } from '../i18n/i18n';
 import type { AppView } from '../app/App';
+import { getStoredLocale, saveStoredLocale, t, type AppLocale } from '../i18n/i18n';
 
 type MorePageProps = {
   onNavigate: (view: AppView) => void;
@@ -30,6 +30,30 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
     setLocale(nextLocale);
     onLocaleChanged();
   }
+
+  const managementRows = [
+    {
+      view: 'routines' as AppView,
+      icon: Dumbbell,
+      bg: 'bg-[#007AFF]',
+      title: t(locale, 'routine'),
+      detail: locale === 'ko' ? '루틴 선택 및 편집' : 'Choose and edit routines',
+    },
+    {
+      view: 'exercises' as AppView,
+      icon: Library,
+      bg: 'bg-[#FF9500]',
+      title: locale === 'ko' ? '운동 라이브러리' : t(locale, 'exerciseLibrary'),
+      detail: locale === 'ko' ? '운동 검색, 추가, 변경' : 'Search, add and edit exercises',
+    },
+    {
+      view: 'weeklyPlan' as AppView,
+      icon: CalendarClock,
+      bg: 'bg-[#5856D6]',
+      title: locale === 'ko' ? '운동 사이클 계획' : t(locale, 'weeklyPlan'),
+      detail: locale === 'ko' ? '운동/휴식/러닝 사이클' : 'Workout, rest, and running cycle',
+    },
+  ];
 
   return (
     <section className="ios-page gap-3.5 px-4 pb-4 pt-3.5">
@@ -60,11 +84,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
         </p>
 
         <div className="ios-group overflow-hidden">
-          {[
-            { view: 'routines' as AppView, icon: Dumbbell, bg: 'bg-[#007AFF]', title: t(locale, 'routine'), detail: locale === 'ko' ? '루틴 선택 및 편집' : 'Choose and edit routines' },
-            { view: 'exercises' as AppView, icon: Library, bg: 'bg-[#FF9500]', title: locale === 'ko' ? '운동 라이브러리' : t(locale, 'exerciseLibrary'), detail: locale === 'ko' ? '운동 검색, 추가, 변경' : 'Search, add and edit exercises' },
-            { view: 'weeklyPlan' as AppView, icon: CalendarClock, bg: 'bg-[#5856D6]', title: locale === 'ko' ? '운동 사이클 계획' : t(locale, 'weeklyPlan'), detail: locale === 'ko' ? '운동/휴식/러닝 사이클' : 'Workout, rest, and running cycle' },
-          ].map(({ view, icon: Icon, bg, title, detail }) => (
+          {managementRows.map(({ view, icon: Icon, bg, title, detail }) => (
             <button
               key={view}
               type="button"
@@ -109,7 +129,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                 {locale === 'ko' ? '앱 표시 언어' : 'Display language'}
               </span>
             </span>
-            <div className="flex shrink-0 items-center rounded-xl bg-[#F2F2F7] p-0.5 border border-black/5">
+            <div className="flex shrink-0 items-center rounded-xl border border-black/5 bg-[#F2F2F7] p-0.5">
               {(['ko', 'en'] as AppLocale[]).map((item) => (
                 <button
                   key={item}
@@ -117,7 +137,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                   onClick={() => handleLocaleChange(item)}
                   className={`min-h-7 rounded-lg px-3 text-xs font-bold transition-all ${
                     locale === item
-                      ? 'bg-white text-[#1C1C1E] shadow-sm font-black'
+                      ? 'bg-white font-black text-[#1C1C1E] shadow-sm'
                       : 'text-[#6E6E73] hover:text-[#1C1C1E]'
                   }`}
                 >
@@ -127,7 +147,6 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
             </div>
           </div>
         </div>
-
       </div>
 
       {showStorageInfo ? (
@@ -160,7 +179,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                 type="button"
                 autoFocus
                 onClick={() => setShowStorageInfo(false)}
-                className="mt-4 flex min-h-10 w-full items-center justify-center rounded-xl bg-accent-dark font-bold text-white transition-all active:scale-95"
+                className="ios-button-primary mt-4 flex min-h-10 w-full items-center justify-center text-sm"
               >
                 {locale === 'ko' ? '확인' : 'OK'}
               </button>
