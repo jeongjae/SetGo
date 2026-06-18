@@ -293,7 +293,7 @@ export function ActualsPage({
   }
 
   return (
-    <section className="viewport-locked ios-screen mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3">
+    <section className="ios-page">
       <header className="shrink-0 px-1 pb-1 pt-1">
         <p className="text-sm font-bold text-[#159A91]">{t(locale, 'records')}</p>
         <div className="mt-1 flex items-end justify-between gap-3 pb-2.5">

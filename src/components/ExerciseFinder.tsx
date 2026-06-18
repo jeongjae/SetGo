@@ -121,10 +121,10 @@ export function ExerciseFinder({
             key={category.value}
             type="button"
             onClick={() => updateState({ category: category.value })}
-            className={`min-h-9 shrink-0 snap-start flex items-center gap-1.5 rounded-full px-3.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`ios-pill min-h-9 shrink-0 snap-start flex items-center gap-1.5 ${
               state.category === category.value
-                ? 'bg-[#2EC4B6] text-white shadow-sm'
-                : 'border border-[#D1D1D6] bg-white text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
+                ? 'ios-pill-active'
+                : 'text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
             }`}
           >
             <span className="text-sm shrink-0">{categoryEmojis[category.value]}</span>
@@ -142,10 +142,10 @@ export function ExerciseFinder({
             key={stage.value}
             type="button"
             onClick={() => updateState({ stage: stage.value })}
-            className={`min-h-9 shrink-0 snap-start flex items-center gap-1.5 rounded-full px-3.5 text-sm font-bold transition-all active:scale-95 ${
+            className={`ios-pill min-h-9 shrink-0 snap-start flex items-center gap-1.5 ${
               state.stage === stage.value
-                ? 'bg-[#2EC4B6] text-white shadow-sm'
-                : 'border border-[#D1D1D6] bg-white text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
+                ? 'ios-pill-active'
+                : 'text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
             }`}
           >
             <span className="text-sm shrink-0">{stageEmojis[stage.value]}</span>
