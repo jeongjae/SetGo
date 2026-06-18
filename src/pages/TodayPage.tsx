@@ -1,5 +1,6 @@
 import { Dumbbell, Footprints, Play, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { IOSSegmentedControl } from '../components/IosPrimitives';
 import { db } from '../db/db';
 import {
   getActiveRoutineDays,
@@ -8,7 +9,13 @@ import {
   getRoutineScheduleForDate,
 } from '../db/routines';
 import { seedDefaultExercises } from '../db/seed';
-import { deleteWorkoutSession, getRecentWorkoutSummaries, getTodayWorkout, getWorkoutSummariesForDate, type WorkoutSummary } from '../db/workouts';
+import {
+  deleteWorkoutSession,
+  getRecentWorkoutSummaries,
+  getTodayWorkout,
+  getWorkoutSummariesForDate,
+  type WorkoutSummary,
+} from '../db/workouts';
 import { getExerciseName } from '../domain/exercises';
 import { getStoredLocale, t } from '../i18n/i18n';
 import type { CardioRecord, Routine, RoutineDay, WorkoutSession, WorkoutSessionKind } from '../types';
@@ -98,6 +105,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         setInProgressSession(todayWorkout?.session);
         setTodayRoutineDay(todaySchedule.routineDay);
         setNextRoutineDay(nextDay);
+
         const seenRoutineDayIds = new Set<string>();
         const recentCompletedRoutineWorkouts = recentWorkouts
           .filter((summary) => (
@@ -113,12 +121,16 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             return true;
           })
           .slice(0, 3);
+
         setRecentRoutineWorkouts(recentCompletedRoutineWorkouts);
         setIsTodayRestDay(todaySchedule.isRestDay);
         setIsTodayRunningPlan(todaySchedule.kind === 'running');
         setTodayInProgressWorkouts(todayWorkouts.filter((summary) => summary.session.status === 'in_progress'));
         setSelectedRoutineDayId((current) => {
-          const scheduledRoutineDayId = todaySchedule.kind === 'routine' && !todaySchedule.isRestDay ? todaySchedule.routineDay?.id : undefined;
+          const scheduledRoutineDayId = todaySchedule.kind === 'routine' && !todaySchedule.isRestDay
+            ? todaySchedule.routineDay?.id
+            : undefined;
+
           return todayWorkout?.session.routineDayId
             ?? scheduledRoutineDayId
             ?? (days.some((day) => day.id === current) ? current : undefined);
@@ -165,15 +177,16 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
     ? `${routinePlanPrefix ?? t(locale, 'routine')}: ${selectedRoutineDayLabel}`
     : isTodayRunningPlan
       ? locale === 'ko' ? '러닝' : 'Running'
-    : isTodayRestDay
-      ? t(locale, 'restDay')
-      : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
+      : isTodayRestDay
+        ? t(locale, 'restDay')
+        : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
   const workoutRecordLabel = locale === 'ko' ? '운동 기록' : 'Log workout';
   const matchingInProgressWorkout = todayInProgressWorkouts.find((summary) => {
     if (selectedWorkoutKind === 'running') return summary.session.entryKind === 'running';
     if (selectedWorkoutKind === 'free') return summary.session.entryKind === 'free';
     return summary.session.routineDayId === selectedRoutineDayId;
   });
+
   function handleStartSelectedWorkout() {
     if (matchingInProgressWorkout) {
       onStartWorkout(matchingInProgressWorkout.session.routineDayId, matchingInProgressWorkout.session.id);
@@ -246,10 +259,10 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             {inProgressSession
               ? locale === 'ko' ? '진행 중인 운동을 이어서 기록합니다.' : 'An in-progress workout will continue from its saved routine day.'
               : isTodayRestDay && activeRoutine
-              ? locale === 'ko' ? '휴식일에 운동한다면 다음 루틴을 선택하세요.' : 'Tap the next routine if you decide to train on this rest day.'
-              : activeRoutine
-              ? locale === 'ko' ? '운동 사이클에 맞춰 오늘 루틴을 불러왔습니다. 시작 전 다른 루틴으로 바꿀 수 있습니다.' : 'Today is matched to your workout cycle. You can choose a different routine day before starting.'
-              : locale === 'ko' ? '루틴 설정에서 첫 운동 계획을 만들어 보세요.' : 'Choose Routine Setup to create your first local plan.'}
+                ? locale === 'ko' ? '휴식일에 운동한다면 다음 루틴을 선택하세요.' : 'Tap the next routine if you decide to train on this rest day.'
+                : activeRoutine
+                  ? locale === 'ko' ? '운동 사이클에 맞춰 오늘 루틴을 불러왔습니다. 시작 전 다른 루틴으로 바꿀 수 있습니다.' : 'Today is matched to your workout cycle. You can choose a different routine day before starting.'
+                  : locale === 'ko' ? '루틴 설정에서 첫 운동 계획을 만들어 보세요.' : 'Choose Routine Setup to create your first local plan.'}
           </p>
 
           {isTodayRestDay && !inProgressSession && nextRoutineDay ? (
@@ -269,44 +282,16 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             </button>
           ) : null}
 
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedWorkoutKind('planned')}
-              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-2xl border px-2 text-xs font-black transition-all active:scale-95 ${
-                selectedWorkoutKind === 'planned'
-                  ? 'border-transparent bg-accent-dark text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)]'
-                  : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
-              }`}
-            >
-              <Dumbbell aria-hidden="true" size={15} />
-              <span>{locale === 'ko' ? '루틴' : 'Routine'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedWorkoutKind('running')}
-              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-2xl border px-2 text-xs font-black transition-all active:scale-95 ${
-                selectedWorkoutKind === 'running'
-                  ? 'border-transparent bg-[#007AFF] text-white shadow-[0_8px_18px_rgba(0,122,255,0.2)]'
-                  : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
-              }`}
-            >
-              <Footprints aria-hidden="true" size={15} />
-              <span>{locale === 'ko' ? '러닝' : 'Running'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedWorkoutKind('free')}
-              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-2xl border px-2 text-xs font-black transition-all active:scale-95 ${
-                selectedWorkoutKind === 'free'
-                  ? 'border-transparent bg-[#5856D6] text-white shadow-[0_8px_18px_rgba(88,86,214,0.18)]'
-                  : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
-              }`}
-            >
-              <Plus aria-hidden="true" size={15} />
-              <span>{locale === 'ko' ? '자유' : 'Free'}</span>
-            </button>
-          </div>
+          <IOSSegmentedControl
+            value={selectedWorkoutKind}
+            onChange={setSelectedWorkoutKind}
+            columns={3}
+            options={[
+              { value: 'planned', label: locale === 'ko' ? '루틴' : 'Routine', icon: Dumbbell },
+              { value: 'running', label: locale === 'ko' ? '러닝' : 'Running', icon: Footprints },
+              { value: 'free', label: locale === 'ko' ? '자유' : 'Free', icon: Plus },
+            ]}
+          />
 
           {routineDays.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -347,7 +332,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             <div className="rounded-2xl bg-[#F2F2F7] px-3 py-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-black text-primary">{locale === 'ko' ? '최근 루틴 빠른 시작' : 'Recent routine starts'}</p>
-                <span className="text-[11px] font-bold text-text-secondary">{locale === 'ko' ? 'Hevy식 바로 기록' : 'Tap to log'}</span>
+                <span className="text-[11px] font-bold text-text-secondary">{locale === 'ko' ? '바로 기록' : 'Tap to log'}</span>
               </div>
               <div className="mt-2 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                 {recentRoutineWorkouts.map((summary) => (
