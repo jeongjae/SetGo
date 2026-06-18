@@ -3,3 +3,8 @@ dist
 *.log
 .env
 .DS_Store
+
+# Local SetGo export and backup artifacts
+setgo-backup-*.json
+setgo-settings-*.json
+setgo-exercises-*.csv
