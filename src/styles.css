@@ -129,8 +129,8 @@ textarea:focus-visible {
 }
 
 .app-shell {
-  height: 100svh;
-  max-height: 100svh;
+  height: var(--setgo-viewport-height, 100svh);
+  max-height: var(--setgo-viewport-height, 100svh);
   overflow: hidden;
   display: flex;
   flex-direction: column;
