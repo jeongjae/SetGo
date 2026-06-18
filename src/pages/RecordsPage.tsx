@@ -2,6 +2,7 @@ import { BarChart3, CalendarRange } from 'lucide-react';
 import { useState } from 'react';
 import { ActualsPage } from './ActualsPage';
 import { StatsPage } from './StatsPage';
+import { IOSSegmentedControl } from '../components/IosPrimitives';
 import type { WorkoutStartKind } from '../db/workouts';
 import { getStoredLocale, t } from '../i18n/i18n';
 
@@ -25,30 +26,16 @@ export function RecordsPage({
   const [locale] = useState(() => getStoredLocale());
   const [subView, setSubView] = useState<RecordsSubView>('actuals');
   const recordModeControl = (
-    <div className="ios-segmented grid-cols-2">
-      {recordsSubViews.map((view) => {
-        const active = subView === view;
-        const Icon = view === 'actuals' ? CalendarRange : BarChart3;
-        const label = view === 'actuals' ? t(locale, 'recordsCalendar') : t(locale, 'recordsAnalysis');
-
-        return (
-          <button
-            key={view}
-            type="button"
-            onClick={() => setSubView(view)}
-            aria-pressed={active}
-            className={`ios-segment ${
-              active
-                ? 'ios-segment-active'
-                : ''
-            }`}
-          >
-            <Icon aria-hidden="true" size={14} />
-            <span>{label}</span>
-          </button>
-        );
-      })}
-    </div>
+    <IOSSegmentedControl
+      value={subView}
+      onChange={setSubView}
+      columns={2}
+      options={recordsSubViews.map((view) => ({
+        value: view,
+        icon: view === 'actuals' ? CalendarRange : BarChart3,
+        label: view === 'actuals' ? t(locale, 'recordsCalendar') : t(locale, 'recordsAnalysis'),
+      }))}
+    />
   );
 
   if (subView === 'stats') {

@@ -1,16 +1,18 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { PwaStatus } from './PwaStatus';
 import { AppBottomNav } from './AppBottomNav';
-import { CalendarPage } from '../pages/CalendarPage';
-import { ExportPage } from '../pages/ExportPage';
-import { MorePage } from '../pages/MorePage';
-import { RecordsPage } from '../pages/RecordsPage';
-import { RoutineSetupPage } from '../pages/RoutineSetupPage';
-import { TodayPage } from '../pages/TodayPage';
-import { WorkoutPage } from '../pages/WorkoutPage';
 import { getOrCreateTodayWorkout, getOrCreateWorkoutForDate, type WorkoutStartKind } from '../db/workouts';
 import { formatDateKey } from '../utils/date';
 import { requestPersistentStorage } from '../db/db';
+import { getStoredLocale } from '../i18n/i18n';
+
+const CalendarPage = lazy(() => import('../pages/CalendarPage').then((module) => ({ default: module.CalendarPage })));
+const ExportPage = lazy(() => import('../pages/ExportPage').then((module) => ({ default: module.ExportPage })));
+const MorePage = lazy(() => import('../pages/MorePage').then((module) => ({ default: module.MorePage })));
+const RecordsPage = lazy(() => import('../pages/RecordsPage').then((module) => ({ default: module.RecordsPage })));
+const RoutineSetupPage = lazy(() => import('../pages/RoutineSetupPage').then((module) => ({ default: module.RoutineSetupPage })));
+const TodayPage = lazy(() => import('../pages/TodayPage').then((module) => ({ default: module.TodayPage })));
+const WorkoutPage = lazy(() => import('../pages/WorkoutPage').then((module) => ({ default: module.WorkoutPage })));
 
 export type AppView = 'today' | 'calendar' | 'records' | 'more' | 'routines' | 'exercises' | 'weeklyPlan' | 'export' | 'workout';
 type WorkoutReturnView = 'today' | 'calendar' | 'records';
@@ -172,11 +174,14 @@ export function App() {
               refreshKey={refreshKey}
               onStartWorkout={(routineDayId, sessionId, createNew, kind) => void handleStartWorkout(routineDayId, undefined, sessionId, createNew, kind)}
             />;
+  const loadingLabel = getStoredLocale() === 'ko' ? '불러오는 중...' : 'Loading...';
 
   return (
     <main className="app-shell ios-screen">
       <PwaStatus />
-      {content}
+      <Suspense fallback={<div className="ios-page items-center justify-center text-sm font-bold text-[#6E6E73]">{loadingLabel}</div>}>
+        {content}
+      </Suspense>
       {view !== 'workout' ? <AppBottomNav activeView={view} onNavigate={handleNavigate} /> : null}
     </main>
   );
