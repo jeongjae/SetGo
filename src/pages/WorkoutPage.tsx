@@ -1078,7 +1078,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
                 {/* Accordion body */}
                 {isExpanded && (
-                  <div className="border-t border-[#E5E5EA] bg-white px-3 pb-3 pt-2">
+                  <div className={`border-t border-[#E5E5EA] bg-white px-3 ${isKeyboardOpen ? 'pb-2 pt-1.5' : 'pb-3 pt-2'}`}>
                     {/* Exercise actions */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-1.5">
@@ -1188,7 +1188,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     )}
 
                     {/* Set rows */}
-                    <div className="mt-2 flex flex-col gap-1.5">
+                    <div className={`mt-2 flex flex-col ${isKeyboardOpen ? 'gap-1' : 'gap-1.5'}`}>
                       {log.sets.map((set, setIndex) => (
                         <WorkoutSetRow
                           key={set.id}
@@ -1196,6 +1196,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           setIndex={setIndex}
                           log={log}
                           locale={locale}
+                          compactInputMode={isKeyboardOpen}
                           handleQuickAdjustSet={handleQuickAdjustSet}
                           handleSetChange={handleSetChange}
                           handleToggleWarmup={handleToggleWarmup}
@@ -1705,6 +1706,7 @@ type WorkoutSetRowProps = {
   setIndex: number;
   log: WorkoutExerciseLog;
   locale: 'ko' | 'en';
+  compactInputMode?: boolean;
   handleQuickAdjustSet: (set: WorkoutSet, field: 'weightKg' | 'reps' | 'rir', delta: number) => Promise<void>;
   handleSetChange: (
     set: WorkoutSet,
@@ -1721,6 +1723,7 @@ function WorkoutSetRow({
   setIndex,
   log,
   locale,
+  compactInputMode = false,
   handleQuickAdjustSet,
   handleSetChange,
   handleToggleWarmup,
@@ -1822,7 +1825,7 @@ function WorkoutSetRow({
   };
 
   return (
-    <div className="rounded-xl border border-[#E5E5EA] bg-white px-2 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+    <div className={`rounded-xl border border-[#E5E5EA] bg-white px-2 shadow-[0_2px_10px_rgba(0,0,0,0.03)] ${compactInputMode ? 'py-1' : 'py-1.5'}`}>
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
@@ -1869,7 +1872,7 @@ function WorkoutSetRow({
         </div>
       </div>
 
-      {previousSet ? (
+      {previousSet && !compactInputMode ? (
         <button
           type="button"
           onClick={() => void handleCopyPreviousSet(set, previousSet)}
@@ -1887,7 +1890,7 @@ function WorkoutSetRow({
         </button>
       ) : null}
 
-      <div className="mt-1 grid grid-cols-3 gap-1">
+      <div className={`${compactInputMode ? 'mt-0.5' : 'mt-1'} grid grid-cols-3 gap-1`}>
         <label className="text-[11px] font-extrabold uppercase leading-none text-[#6E6E73]">
           kg
           <div className="mt-0.5 grid grid-cols-[1.35rem_1fr_1.35rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-[#F2F2F7] transition-all focus-within:border-accent focus-within:ring-1 focus-within:ring-accent">
@@ -1895,7 +1898,7 @@ function WorkoutSetRow({
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'weightKg', -weightStep)}
               aria-label={`Decrease weight by ${weightStep}kg`}
-              className="h-8 text-sm font-bold text-[#6E6E73] transition-all active:scale-90 active:bg-[#E5E5EA]"
+              className={`${compactInputMode ? 'h-7' : 'h-8'} text-sm font-bold text-[#6E6E73] transition-all active:scale-90 active:bg-[#E5E5EA]`}
             >
               -
             </button>
@@ -1936,7 +1939,7 @@ function WorkoutSetRow({
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'weightKg', weightStep)}
               aria-label={`Increase weight by ${weightStep}kg`}
-              className="h-8 text-sm font-bold text-accent-dark transition-all active:scale-90 active:bg-[#E5E5EA]"
+              className={`${compactInputMode ? 'h-7' : 'h-8'} text-sm font-bold text-accent-dark transition-all active:scale-90 active:bg-[#E5E5EA]`}
             >
               +
             </button>
@@ -1954,7 +1957,7 @@ function WorkoutSetRow({
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'reps', -1)}
-              className="h-8 text-sm font-bold text-[#6E6E73] transition-all active:scale-90 active:bg-[#E5E5EA]"
+              className={`${compactInputMode ? 'h-7' : 'h-8'} text-sm font-bold text-[#6E6E73] transition-all active:scale-90 active:bg-[#E5E5EA]`}
             >
               -
             </button>
@@ -1994,7 +1997,7 @@ function WorkoutSetRow({
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'reps', 1)}
-              className="h-8 text-sm font-bold text-accent-dark transition-all active:scale-90 active:bg-[#E5E5EA]"
+              className={`${compactInputMode ? 'h-7' : 'h-8'} text-sm font-bold text-accent-dark transition-all active:scale-90 active:bg-[#E5E5EA]`}
             >
               +
             </button>
@@ -2012,7 +2015,7 @@ function WorkoutSetRow({
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'rir', -1)}
-              className="h-8 text-sm font-bold text-[#6E6E73] transition-all active:scale-90 active:bg-[#E5E5EA]"
+              className={`${compactInputMode ? 'h-7' : 'h-8'} text-sm font-bold text-[#6E6E73] transition-all active:scale-90 active:bg-[#E5E5EA]`}
             >
               -
             </button>
@@ -2052,7 +2055,7 @@ function WorkoutSetRow({
             <button
               type="button"
               onClick={() => void handleQuickAdjustSet(set, 'rir', 1)}
-              className="h-8 text-sm font-bold text-accent-dark transition-all active:scale-90 active:bg-[#E5E5EA]"
+              className={`${compactInputMode ? 'h-7' : 'h-8'} text-sm font-bold text-accent-dark transition-all active:scale-90 active:bg-[#E5E5EA]`}
             >
               +
             </button>
@@ -2065,11 +2068,11 @@ function WorkoutSetRow({
         </label>
       </div>
 
-      <div className="mt-1 grid grid-cols-6 gap-1">
+      <div className={`${compactInputMode ? 'mt-0.5' : 'mt-1'} grid grid-cols-6 gap-1`}>
         <button
           type="button"
           onClick={() => void handleToggleWarmup(set)}
-          className={`min-h-8 rounded-lg text-xs font-bold transition-all duration-200 active:scale-95 ${
+          className={`${compactInputMode ? 'min-h-7' : 'min-h-8'} rounded-lg text-xs font-bold transition-all duration-200 active:scale-95 ${
             set.isWarmup
               ? 'bg-yellow-100 text-yellow-800 font-extrabold'
               : 'border border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
@@ -2080,7 +2083,7 @@ function WorkoutSetRow({
         <button
           type="button"
           onClick={() => void handleToggleHardSet(set)}
-          className={`min-h-8 rounded-lg text-xs font-bold transition-all duration-200 active:scale-95 ${
+          className={`${compactInputMode ? 'min-h-7' : 'min-h-8'} rounded-lg text-xs font-bold transition-all duration-200 active:scale-95 ${
             !set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3
               ? 'bg-[#FF375F] text-white font-extrabold'
               : 'border border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
@@ -2091,7 +2094,7 @@ function WorkoutSetRow({
         <button
           type="button"
           onClick={() => void handleSetChange(set, { isCompleted: !set.isCompleted })}
-          className={`col-span-2 min-h-8 rounded-lg text-xs font-black transition-all duration-300 active:scale-95 ${
+          className={`col-span-2 ${compactInputMode ? 'min-h-7' : 'min-h-8'} rounded-lg text-xs font-black transition-all duration-300 active:scale-95 ${
             set.isCompleted
               ? 'bg-accent text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)]'
               : 'border border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
@@ -2103,7 +2106,7 @@ function WorkoutSetRow({
           type="button"
           onClick={() => void handleCopyPreviousSet(set, previousSet)}
           disabled={!previousSet}
-          className="flex min-h-8 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+          className={`flex ${compactInputMode ? 'min-h-7' : 'min-h-8'} items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95`}
           aria-label="Copy previous values"
           title="Copy previous workout set"
         >
@@ -2113,7 +2116,7 @@ function WorkoutSetRow({
           type="button"
           onClick={() => void handleDeleteSet(set)}
           disabled={log.sets.length === 1}
-          className="flex min-h-8 items-center justify-center rounded-lg bg-[#FFECEC] text-danger transition-all disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+          className={`flex ${compactInputMode ? 'min-h-7' : 'min-h-8'} items-center justify-center rounded-lg bg-[#FFECEC] text-danger transition-all disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95`}
           aria-label="Delete set"
         >
           <Trash2 aria-hidden="true" size={13} />
