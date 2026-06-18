@@ -1,4 +1,4 @@
-import { Search, Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import {
   exerciseCategoryOptions,
   exerciseMatchesFilters,
@@ -31,23 +31,23 @@ type ExerciseFinderProps = {
 };
 
 const categoryEmojis: Record<string, string> = {
-  all: '🌐',
-  chest: '🏋️‍♂️',
-  back: '🦅',
-  shoulder: '🛡️',
-  biceps: '💪',
-  triceps: '💪',
-  legs: '🦵',
-  cardio: '🏃‍♂️',
-  bodyweight: '🤸‍♂️',
-  mobility: '🧘‍♂️',
+  all: 'All',
+  chest: 'Chest',
+  back: 'Back',
+  shoulder: 'Shoulder',
+  biceps: 'Arm',
+  triceps: 'Arm',
+  legs: 'Leg',
+  cardio: 'Run',
+  bodyweight: 'BW',
+  mobility: 'Mobility',
 };
 
 const stageEmojis: Record<string, string> = {
-  all: '🌐',
-  warmup: '🧘‍♂️',
-  main: '🏋️‍♂️',
-  cooldown: '🧊',
+  all: 'All',
+  warmup: 'Warmup',
+  main: 'Main',
+  cooldown: 'Cool',
 };
 
 const categoryFilters: Array<{ label: string; value: ExerciseCategory | 'all' }> = [
@@ -77,8 +77,6 @@ export function ExerciseFinder({
   title,
 }: ExerciseFinderProps) {
   const filteredExercises = exercises.filter((exercise) => exerciseMatchesFilters(exercise, state));
-  
-  // We remove the hard slice limit to allow browsing all matching exercises, but support fallback if passed explicitly.
   const visibleExercises = limit ? filteredExercises.slice(0, limit) : filteredExercises;
   const hasFilters = state.query.trim().length > 0 || state.category !== 'all' || state.stage !== 'all';
 
@@ -91,9 +89,8 @@ export function ExerciseFinder({
       {title ? (
         <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#6E6E73]">{title}</p>
       ) : null}
-      
-      {/* Modern Sticky Search Bar */}
-      <div className="flex items-center gap-2 rounded-xl border border-[#D1D1D6] bg-white px-3 py-2 transition-all focus-within:border-[#2EC4B6] focus-within:ring-1 focus-within:ring-[#2EC4B6] shadow-sm">
+
+      <div className="flex items-center gap-2 rounded-xl border border-[#D1D1D6] bg-white px-3 py-2 shadow-sm transition-all focus-within:border-[#2EC4B6] focus-within:ring-1 focus-within:ring-[#2EC4B6]">
         <Search aria-hidden="true" size={18} className="shrink-0 text-[#8E8E93]" />
         <input
           aria-label={ariaLabel}
@@ -114,56 +111,47 @@ export function ExerciseFinder({
         ) : null}
       </div>
 
-      {/* Category Horizontal Snap-Scroll Tag Badges */}
       <div className="mt-2.5 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth snap-x">
         {categoryFilters.map((category) => (
           <button
             key={category.value}
             type="button"
             onClick={() => updateState({ category: category.value })}
-            className={`ios-pill min-h-9 shrink-0 snap-start flex items-center gap-1.5 ${
+            className={`ios-pill min-h-9 shrink-0 snap-start ${
               state.category === category.value
                 ? 'ios-pill-active'
                 : 'text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
             }`}
           >
-            <span className="text-sm shrink-0">{categoryEmojis[category.value]}</span>
-            <span>
-              {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
-            </span>
+            {category.value === 'all' ? t(locale, 'all') : labelForCategory(category.value, locale)}
           </button>
         ))}
       </div>
 
-      {/* Stage Horizontal Snap-Scroll Tag Badges */}
       <div className="mt-1.5 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth snap-x">
         {stageFilters.map((stage) => (
           <button
             key={stage.value}
             type="button"
             onClick={() => updateState({ stage: stage.value })}
-            className={`ios-pill min-h-9 shrink-0 snap-start flex items-center gap-1.5 ${
+            className={`ios-pill min-h-9 shrink-0 snap-start ${
               state.stage === stage.value
                 ? 'ios-pill-active'
                 : 'text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
             }`}
+            title={stageEmojis[stage.value]}
           >
-            <span className="text-sm shrink-0">{stageEmojis[stage.value]}</span>
-            <span>
-              {stage.value === 'all' ? t(locale, 'all') : labelForStage(stage.value, locale)}
-            </span>
+            {stage.value === 'all' ? t(locale, 'all') : labelForStage(stage.value, locale)}
           </button>
         ))}
       </div>
 
-      {/* Dynamic Summary Match Count Badge */}
       <div className="mt-2.5 flex items-center justify-between px-1">
         <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
           {exerciseCountLabel(locale, filteredExercises.length)} {locale === 'ko' ? '검색됨' : 'found'}
         </p>
       </div>
 
-      {/* High-Fidelity Exercises Scroll List */}
       <div className="mt-2 max-h-80 space-y-1.5 overflow-y-auto pr-1 scrollbar-thin">
         {visibleExercises.length === 0 ? (
           <p className="rounded-xl border border-black/5 bg-[#F2F2F7] px-4 py-5 text-center text-sm font-medium text-[#6E6E73]">
@@ -179,42 +167,37 @@ export function ExerciseFinder({
                 onClick={() => onSelect(exercise)}
                 className="group flex w-full items-center justify-between gap-2.5 rounded-xl border border-black/5 bg-[#F2F2F7] px-3 py-2.5 text-left transition-all hover:bg-[#E5E5EA] active:scale-[0.98]"
               >
-                {/* Visual Avatar Square & Info */}
-                <div className="flex items-center gap-3 min-w-0">
-                  {/* Left-Aligned Rounded Square Avatar */}
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-xl shadow-sm transition-colors group-hover:border-[#2EC4B6]">
                     {getExerciseIcon(exercise.defaultEmoji)}
                   </div>
-                  
-                  {/* Exercise Name & Tags */}
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="block truncate text-base font-bold text-[#1C1C1E] transition-colors group-hover:text-[#159A91]">
                         {getExerciseName(exercise, locale)}
                       </span>
-                      {isCustom && (
+                      {isCustom ? (
                         <span className="shrink-0 rounded-md border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-extrabold uppercase text-amber-700">
                           My
                         </span>
-                      )}
+                      ) : null}
                     </div>
-                    <span className="mt-1 flex flex-wrap gap-1.5 items-center">
+                    <span className="mt-1 flex flex-wrap items-center gap-1.5">
                       <span className="rounded-full border border-[#D1D1D6] bg-white px-2 py-0.5 text-xs font-medium text-[#6E6E73]">
                         {getExerciseCategories(exercise)
-                          .map((cat) => labelForCategory(cat, locale))
+                          .map((category) => labelForCategory(category, locale))
                           .join(' / ')}
                       </span>
-                      <span className="text-xs font-bold text-[#8E8E93]">•</span>
+                      <span className="text-xs font-bold text-[#8E8E93]">/</span>
                       <span className="text-xs font-medium text-[#6E6E73]">
                         {getExerciseStages(exercise)
-                          .map((stg) => labelForStage(stg, locale))
+                          .map((stage) => labelForStage(stage, locale))
                           .join(' / ')}
                       </span>
                     </span>
                   </div>
                 </div>
 
-                {/* Right-Aligned Interactive Plus Action Button */}
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D1D1D6] bg-white text-[#2EC4B6] shadow-sm transition-all group-hover:border-[#2EC4B6] group-hover:bg-[#2EC4B6] group-hover:text-white">
                   <Plus size={15} strokeWidth={3} />
                 </div>
@@ -227,7 +210,7 @@ export function ExerciseFinder({
       {filteredExercises.length > visibleExercises.length ? (
         <p className="mt-2 rounded-xl border border-black/5 bg-[#F2F2F7] px-3 py-2 text-center text-xs font-medium text-[#6E6E73]">
           {locale === 'ko'
-            ? '검색어나 필터를 추가하면 더 빠르게 찾을 수 있습니다.'
+            ? '검색어와 필터를 추가하면 더 빠르게 찾을 수 있습니다.'
             : 'Add a search term or filter to narrow the remaining exercises.'}
         </p>
       ) : null}
