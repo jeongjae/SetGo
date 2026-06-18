@@ -220,6 +220,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   const [restDuration, setRestDuration] = useState(90);
   const [restRemaining, setRestRemaining] = useState(0);
   const [isRestTimerActive, setIsRestTimerActive] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
   const [memoOpenExercises, setMemoOpenExercises] = useState<Record<string, boolean>>({});
   const [savedRoutines, setSavedRoutines] = useState<Routine[]>([]);
@@ -293,6 +294,25 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       }
     }
   }, [logs]);
+
+  useEffect(() => {
+    const baselineHeight = window.innerHeight;
+    const updateKeyboardState = () => {
+      const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
+      setIsKeyboardOpen(baselineHeight - visibleHeight > 140);
+    };
+
+    updateKeyboardState();
+    window.visualViewport?.addEventListener('resize', updateKeyboardState);
+    window.visualViewport?.addEventListener('scroll', updateKeyboardState);
+    window.addEventListener('resize', updateKeyboardState);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updateKeyboardState);
+      window.visualViewport?.removeEventListener('scroll', updateKeyboardState);
+      window.removeEventListener('resize', updateKeyboardState);
+    };
+  }, []);
 
   async function loadWorkout() {
     const todayWorkout = sessionId ? await getWorkoutBySessionId(sessionId) : await getTodayWorkout();
@@ -1557,8 +1577,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
             </button>
           </div>
         ) : (
-          <div className="space-y-1.5">
-            <div className={`rounded-2xl px-3 py-2 ${
+          <div className={isKeyboardOpen ? 'space-y-0' : 'space-y-1.5'}>
+            <div className={`rounded-2xl px-3 transition-all ${
+              isKeyboardOpen
+                ? 'max-h-0 overflow-hidden py-0 opacity-0'
+                : 'py-2 opacity-100'
+            } ${
               canCompleteWorkout
                 ? 'bg-white'
                 : 'bg-[#FFF6DF]'
@@ -1578,7 +1602,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                   setIsAdding((current) => !current);
                   resetExerciseFinderState();
                 }}
-                className={`flex h-12 px-3.5 items-center justify-center gap-1.5 rounded-xl text-xs font-extrabold transition-all active:scale-95 shrink-0 border ${
+                className={`flex ${isKeyboardOpen ? 'h-10 px-3' : 'h-12 px-3.5'} items-center justify-center gap-1.5 rounded-xl text-xs font-extrabold transition-all active:scale-95 shrink-0 border ${
                   isAdding
                     ? 'border-transparent bg-[#E5E5EA] text-[#1C1C1E]'
                     : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
@@ -1592,7 +1616,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 type="button"
                 onClick={() => void handleCompleteWorkout()}
                 disabled={!workout || !canCompleteWorkout}
-                className="ios-button-primary flex min-h-12 flex-1 items-center justify-center gap-1.5 px-4 text-sm disabled:bg-[#E5E5EA] disabled:text-[#8E8E93] disabled:shadow-none"
+                className={`ios-button-primary flex ${isKeyboardOpen ? 'min-h-10' : 'min-h-12'} flex-1 items-center justify-center gap-1.5 px-4 text-sm disabled:bg-[#E5E5EA] disabled:text-[#8E8E93] disabled:shadow-none`}
               >
                 <Check aria-hidden="true" size={16} />
                 <span>{locale === 'ko' ? '\uC6B4\uB3D9 \uC644\uB8CC' : 'Complete'}</span>
@@ -1602,7 +1626,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 type="button"
                 onClick={() => void handleSkipWorkout()}
                 disabled={!workout}
-                className="flex h-12 shrink-0 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-extrabold text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                className={`flex ${isKeyboardOpen ? 'h-10' : 'h-12'} shrink-0 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-extrabold text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95`}
               >
                 {locale === 'ko' ? '\uD328\uC2A4' : 'Skip'}
               </button>
@@ -1849,15 +1873,15 @@ function WorkoutSetRow({
         <button
           type="button"
           onClick={() => void handleCopyPreviousSet(set, previousSet)}
-          className="mt-1 flex min-h-6 w-full flex-wrap items-center gap-x-1 gap-y-0.5 rounded-lg bg-[#E8F3F3] px-2 py-0.5 text-left text-[11px] font-black text-[#1C1C1E] transition-all hover:bg-[#D8EFEF] active:scale-[0.99]"
+          className="mt-1 flex min-h-6 w-full items-center gap-1 overflow-hidden rounded-lg bg-[#E8F3F3] px-2 py-0.5 text-left text-[11px] font-black text-[#1C1C1E] transition-all hover:bg-[#D8EFEF] active:scale-[0.99]"
         >
-          <span className="font-black text-emerald-900">{locale === 'ko' ? '최근 적용:' : 'Use recent:'}</span>
-          <span className="font-mono font-black text-emerald-950">
+          <span className="shrink-0 font-black text-emerald-900">{locale === 'ko' ? '\uCD5C\uADFC:' : 'Recent:'}</span>
+          <span className="min-w-0 truncate font-mono font-black text-emerald-950">
             {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
           </span>
           {displayBestWeight > 0 ? (
-            <span className="font-black text-emerald-950">
-              {locale === 'ko' ? `(최고 중량: ${displayBestWeight.toLocaleString()}kg)` : `(best: ${displayBestWeight.toLocaleString()}kg)`}
+            <span className="shrink-0 font-black text-emerald-950">
+              {locale === 'ko' ? `\uCD5C\uACE0 ${displayBestWeight.toLocaleString()}kg` : `best ${displayBestWeight.toLocaleString()}kg`}
             </span>
           ) : null}
         </button>
