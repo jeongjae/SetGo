@@ -819,9 +819,9 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         : 'All sets are complete.';
 
   return (
-    <section className="viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col overflow-hidden px-3.5 py-3 text-[#1C1C1E]">
+    <section className={`viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col overflow-hidden px-3.5 text-[#1C1C1E] ${isKeyboardOpen ? 'py-2' : 'py-3'}`}>
       {/* Fixed header */}
-      <header className="shrink-0 flex flex-col gap-1.5 border-b border-[#D1D1D6] pb-2.5">
+      <header className={`shrink-0 flex flex-col border-b border-[#D1D1D6] ${isKeyboardOpen ? 'gap-1 pb-1.5' : 'gap-1.5 pb-2.5'}`}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <button
@@ -836,7 +836,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               <p className="text-xs font-black uppercase leading-none text-accent-dark">
                 {workout ? workoutStatusLabel(locale, workout.session.status) : (locale === 'ko' ? '\uBD88\uB7EC\uC624\uB294 \uC911...' : 'Loading...')}
               </p>
-              <h1 className="mt-0.5 max-w-[150px] truncate text-lg font-extrabold leading-tight text-[#1C1C1E] md:max-w-[210px]">
+              <h1 className={`${isKeyboardOpen ? 'max-w-[132px] text-base' : 'mt-0.5 max-w-[150px] text-lg'} truncate font-extrabold leading-tight text-[#1C1C1E] md:max-w-[210px]`}>
                 {workoutTitle}
               </h1>
             </div>
@@ -890,7 +890,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         </div>
 
         {/* Session status bar */}
-        <div className="mt-0.5 flex items-center justify-between gap-2 px-0.5 text-xs font-medium text-[#6E6E73]">
+        <div className={`${isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0' : 'mt-0.5 max-h-8 opacity-100'} flex items-center justify-between gap-2 px-0.5 text-xs font-medium text-[#6E6E73] transition-all`}>
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-accent-dark animate-pulse"></span>
             <span className="font-semibold text-[#1C1C1E]">{saveMessage}</span>
@@ -1636,7 +1636,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       </footer>
 
       {/* Floating rest timer */}
-      {isRestTimerActive && restRemaining > 0 && (
+      {isRestTimerActive && restRemaining > 0 && !isKeyboardOpen && (
         <div className="fixed bottom-[4.5rem] left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-yellow-400 bg-yellow-200/95 px-3.5 py-3 shadow-2xl shadow-yellow-500/20 backdrop-blur-md transition-all duration-300 animate-fade-in">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
