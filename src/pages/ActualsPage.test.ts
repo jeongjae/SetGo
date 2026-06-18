@@ -129,14 +129,13 @@ describe('actuals day cell style', () => {
       isToday: false,
     });
 
-    expect(className).toContain('bg-emerald-600/90');
-    expect(className).toContain('border-emerald-300');
-    expect(className).toContain('ring-emerald-300/70');
-    expect(className).not.toContain('bg-amber-300');
+    expect(className).toContain('bg-[#2EC4B6]');
+    expect(className).toContain('text-white');
+    expect(className).not.toContain('bg-[#FF9500]/10');
   });
 
   it('uses dark text for days with workout records', () => {
-    expect(actualsDayCellTextClass(true)).toBe('text-black');
+    expect(actualsDayCellTextClass(true)).toBe('text-current');
     expect(actualsDayCellTextClass(false)).toBe('text-current');
   });
 
@@ -150,9 +149,8 @@ describe('actuals day cell style', () => {
       isToday: false,
     });
 
-    expect(className).toContain('bg-blue-100');
-    expect(className).not.toContain('bg-cyan-200');
-    expect(className).not.toContain('bg-emerald-600/90');
+    expect(className).toContain('bg-[#007AFF]/10');
+    expect(className).not.toContain('bg-[#2EC4B6]');
   });
 
   it('marks today like the plan calendar', () => {
@@ -165,10 +163,9 @@ describe('actuals day cell style', () => {
       isToday: true,
     });
 
-    expect(className).toContain('bg-rose-100/90');
-    expect(className).toContain('border-rose-400');
-    expect(className).toContain('ring-rose-300');
-    expect(className).toContain('text-black');
+    expect(className).toContain('bg-[#007AFF]/10');
+    expect(className).toContain('border-[#007AFF]');
+    expect(className).toContain('ring-[#007AFF]/30');
   });
 });
 

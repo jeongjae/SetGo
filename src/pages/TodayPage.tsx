@@ -261,8 +261,8 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
               }}
               className={`min-h-11 w-full rounded-xl border px-3 text-left text-sm font-bold transition-all active:scale-95 ${
                 selectedRoutineDayId === nextRoutineDay.id
-                  ? 'border-accent-dark bg-accent-dark text-white'
-                  : 'border-slate-650 bg-white text-primary hover:bg-accent-soft'
+                  ? 'border-accent-dark bg-accent-dark text-white shadow-sm'
+                  : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
               }`}
             >
               {locale === 'ko' ? '추천 다음 루틴' : 'Recommended Next'}: {getRoutineDayDisplayName(nextRoutineDay, locale)}

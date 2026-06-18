@@ -888,12 +888,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       <div className="inner-scroll -mx-2 flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-2 py-2.5 scrollbar-none">
 
         {isCompletedEditMode ? (
-          <section className="shrink-0 rounded-2xl border border-cyan-500/40 bg-cyan-950/25 p-3 shadow-lg animate-fade-in">
-            <p className="text-sm font-bold text-cyan-300 flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#22d3ee]"></span>
+          <section className="shrink-0 ios-card p-3 border-[#2EC4B6]/20 bg-[#2EC4B6]/5 shadow-sm animate-fade-in">
+            <p className="text-sm font-bold text-[#159A91] flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-[#2EC4B6] animate-pulse"></span>
               {locale === 'ko' ? '완료된 운동기록 편집 중' : 'Editing a finished workout'}
             </p>
-            <p className="mt-1 text-sm font-medium leading-5 text-slate-100">
+            <p className="mt-1 text-xs font-bold text-[#159A91]">
               {locale === 'ko'
                 ? isHistoricalEditMode
                   ? '수정 내용은 저장할 때 통계와 내보내기에 반영됩니다.'
@@ -906,10 +906,10 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         ) : null}
 
         {isHistoricalEditMode && workout && !isIndependentRunningWorkout ? (
-          <section className="shrink-0 space-y-2.5 rounded-2xl border border-slate-650 bg-slate-750/90 p-3 shadow-md">
+          <section className="shrink-0 ios-card p-3 space-y-2.5">
             <div>
-              <p className="text-xs font-black uppercase text-slate-200">{locale === 'ko' ? '운동 유형' : 'Workout type'}</p>
-              <p className="mt-1 text-xs font-semibold text-slate-100">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{locale === 'ko' ? '운동 유형' : 'Workout type'}</p>
+              <p className="mt-1 text-xs font-medium text-[#6E6E73]">
                 {locale === 'ko' ? '기존 운동과 세트는 유지하고 소속만 변경합니다.' : 'Existing exercises and sets remain unchanged.'}
               </p>
             </div>
@@ -917,7 +917,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               aria-label="Historical workout routine"
               value={historyRoutineId}
               onChange={(event) => void handleHistoryRoutineChange(event.target.value)}
-              className="min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100"
+              className="min-h-10 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
             >
               <option value="">{t(locale, 'freeWorkout')}</option>
               {savedRoutines.map((routine) => (
@@ -929,7 +929,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 aria-label="Historical workout routine day"
                 value={historyRoutineDayId}
                 onChange={(event) => setHistoryRoutineDayId(event.target.value)}
-                className="min-h-10 w-full rounded-xl border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100"
+                className="min-h-10 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
               >
                 {historyRoutineDays.map((day) => (
                   <option key={day.id} value={day.id}>{getRoutineDayDisplayName(day, locale) ?? day.name}</option>
@@ -940,9 +940,9 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         ) : null}
 
         {/* 세션 메모 영역 */}
-        <section className="shrink-0 rounded-lg border border-slate-650 bg-slate-750/75 px-2 py-1.5 shadow-md">
-          <label className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 text-xs font-black text-slate-100">
-            <span className="shrink-0 rounded-md border border-violet-300 bg-violet-100 px-2 py-1 text-violet-950 shadow-sm">
+        <section className="shrink-0 ios-card px-3 py-2.5">
+          <label className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 text-xs font-bold text-[#1C1C1E]">
+            <span className="shrink-0 rounded-md border border-violet-500/20 bg-[#5856D6]/10 px-2.5 py-1 text-[#5856D6] font-bold">
               {locale === 'ko' ? '세션 메모' : 'Session Memo'}
             </span>
             <input
@@ -950,7 +950,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               type="text"
               defaultValue={workout?.session.memo ?? ''}
               onBlur={(event) => void handleUpdateSessionMemo(event.target.value)}
-              className="h-8 min-w-0 rounded-md border border-slate-500 bg-slate-50 px-2 text-sm font-bold text-slate-950 outline-none transition-all placeholder:text-slate-500 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-300"
+              className="h-8 min-w-0 rounded-md border border-[#D1D1D6] bg-white px-2.5 text-sm font-medium text-[#1C1C1E] outline-none transition-all placeholder:text-[#8E8E93] focus:border-[#2EC4B6]"
               placeholder={locale === 'ko' ? '컨디션, 특이사항, 오늘 목표 등' : 'Energy, notes, today goals'}
             />
           </label>
@@ -958,7 +958,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
         {/* 운동검색/추가 폼 (isAdding일 때 스크롤 뷰 내 상단에 띄움) */}
         {isAdding && (
-          <section id="workout-exercise-finder" className="shrink-0 rounded-2xl border border-cyan-500/30 bg-slate-750/90 p-3 shadow-xl animate-fade-in">
+          <section id="workout-exercise-finder" className="shrink-0 ios-card p-3 shadow-md animate-fade-in">
             <ExerciseFinder
               ariaLabel="Search exercises to add"
               exercises={availableExercises}
@@ -1036,7 +1036,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                       <p className="text-xs font-bold text-accent-dark">
                         {completedCount} / {totalCount} Sets
                         {log.workoutExercise.totalVolumeKg > 0 && (
-                          <span className="text-slate-300 font-semibold font-mono"> • {log.workoutExercise.totalVolumeKg.toLocaleString()}kg</span>
+                          <span className="text-[#8E8E93] font-semibold font-mono"> • {log.workoutExercise.totalVolumeKg.toLocaleString()}kg</span>
                         )}
                       </p>
                     </div>
@@ -1153,7 +1153,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
                     {/* 운동교체 찾기 영역 (교체 활성화 시 노출) */}
                     {replacingWorkoutExerciseId === log.workoutExercise.id && (
-                      <div className="mt-3 border-t border-slate-800/80 pt-3">
+                      <div className="mt-3 border-t border-[#E5E5EA] pt-3">
                         <ExerciseFinder
                           ariaLabel={`Search replacement for ${getExerciseName(log.exercise, locale)}`}
                           exercises={getAvailableExercises(log.exercise.id)}
@@ -1189,7 +1189,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     <button
                       type="button"
                       onClick={() => void handleAddSet(log.workoutExercise.id)}
-                      className="mt-2 flex min-h-9 w-full items-center justify-center gap-2 rounded-lg border border-slate-650 bg-slate-850 px-3 text-sm font-bold text-slate-100 transition-all duration-200 hover:bg-slate-750 active:scale-95"
+                      className="ios-button-secondary mt-2 flex min-h-9 w-full items-center justify-center gap-2 px-3 text-sm"
                     >
                       <Plus aria-hidden="true" size={15} />
                       <span>{locale === 'ko' ? '세트 추가' : 'Add Set'}</span>
@@ -1202,18 +1202,18 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         </div>
 
         {/* Running input area */}
-        <section className="shrink-0 rounded-2xl border border-slate-650 bg-slate-750/75 p-3 shadow-md">
+        <section className="shrink-0 ios-card p-3.5 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-extrabold uppercase text-slate-200">{t(locale, 'cardio')}</p>
-              <h2 className="mt-0.5 text-base font-bold text-slate-100">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{t(locale, 'cardio')}</p>
+              <h2 className="mt-0.5 text-base font-black text-[#1C1C1E]">
                 {cardioRecords.length === 0 ? (locale === 'ko' ? '러닝' : 'Optional Running') : `${cardioRecords.length} ${t(locale, 'cardio')}`}
               </h2>
             </div>
             <button
               type="button"
               onClick={() => void handleAddCardio()}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-400 text-slate-950 hover:bg-cyan-300 active:scale-95 transition-all shadow-md shrink-0"
+              className="ios-button-primary flex h-10 w-10 items-center justify-center shrink-0"
               aria-label="Add cardio"
             >
               <Plus aria-hidden="true" size={20} />
@@ -1222,7 +1222,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
           <div className="mt-3 flex flex-col gap-3">
             {loggedCardioCount > 0 && (
-              <div className="flex items-center justify-between rounded-xl bg-cyan-950/40 border border-cyan-500/20 px-3.5 py-2.5 text-xs font-bold text-cyan-300 shadow-inner">
+              <div className="flex items-center justify-between rounded-xl bg-[#F2F2F7] border border-black/5 px-3.5 py-2.5 text-xs font-bold text-[#1C1C1E]">
                 <span>🏃‍♂️ {locale === 'ko' ? '오늘 러닝 누적 요약' : 'Running Summary'}</span>
                 <span className="font-mono">
                   {totalCardioDistance.toFixed(1)} km / {totalCardioMinutes} {locale === 'ko' ? '분' : 'min'}
@@ -1247,18 +1247,18 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 : (machineLabels[cardioRecord.machineType || ''] || (locale === 'ko' ? '실내 러닝' : 'Indoor Running'));
 
               return (
-                <div key={cardioRecord.id} className="rounded-xl border border-slate-650 bg-slate-850/85 p-3">
+                <div key={cardioRecord.id} className="rounded-xl border border-black/5 bg-[#F2F2F7] p-3">
                   <div className="mb-2.5 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm">
                         {cardioRecord.environment === 'indoor' ? '🏠' : '🌳'}
                       </span>
                       <div>
-                        <p className="text-sm font-bold text-slate-100">
+                        <p className="text-sm font-bold text-[#1C1C1E]">
                           {displayName}
                         </p>
                         {cardioRecord.isDraft ? (
-                          <span className="mt-0.5 inline-flex rounded-md border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[11px] font-black text-amber-200">
+                          <span className="mt-0.5 inline-flex rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-bold text-amber-750">
                             {locale === 'ko' ? '입력 중' : 'Draft'}
                           </span>
                         ) : null}
@@ -1267,7 +1267,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     <button
                       type="button"
                       onClick={() => void handleDeleteCardio(cardioRecord)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-rose-400 hover:bg-rose-500/10 active:scale-95 transition-all"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 transition-all active:scale-95 duration-200"
                       aria-label="Delete cardio"
                     >
                       <Trash2 aria-hidden="true" size={14} />
@@ -1275,14 +1275,14 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                   </div>
 
                   {/* 실내 / 야외 전환 탭 */}
-                  <div className="mb-2.5 flex rounded-xl border border-slate-650 bg-slate-750 p-1">
+                  <div className="mb-2.5 flex rounded-xl bg-white p-0.5 border border-black/5">
                     <button
                       type="button"
                       onClick={() => void handleUpdateCardio(cardioRecord, { environment: 'indoor', machineType: 'treadmill' })}
-                      className={`flex-1 rounded-lg py-1.5 text-xs font-extrabold transition-all active:scale-95 ${
+                      className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-all active:scale-95 ${
                         cardioRecord.environment === 'indoor'
-                          ? 'bg-slate-800 text-cyan-300 shadow-sm border border-slate-700/50'
-                          : 'text-slate-100 hover:bg-slate-650 hover:text-slate-100'
+                          ? 'bg-[#F2F2F7] text-[#1C1C1E] shadow-sm'
+                          : 'text-[#6E6E73] hover:text-[#1C1C1E]'
                       }`}
                     >
                       {locale === 'ko' ? '실내 러닝' : 'Indoor'}
@@ -1290,10 +1290,10 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     <button
                       type="button"
                       onClick={() => void handleUpdateCardio(cardioRecord, { environment: 'outdoor', location: '' })}
-                      className={`flex-1 rounded-lg py-1.5 text-xs font-extrabold transition-all active:scale-95 ${
+                      className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-all active:scale-95 ${
                         cardioRecord.environment === 'outdoor'
-                          ? 'bg-slate-800 text-cyan-300 shadow-sm border border-slate-700/50'
-                          : 'text-slate-100 hover:bg-slate-650 hover:text-slate-100'
+                          ? 'bg-[#F2F2F7] text-[#1C1C1E] shadow-sm'
+                          : 'text-[#6E6E73] hover:text-[#1C1C1E]'
                       }`}
                     >
                       {locale === 'ko' ? '야외 러닝' : 'Outdoor'}
@@ -1303,7 +1303,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                   <div className="grid gap-3">
                     {/* 기구 / 장소 입력 */}
                     {cardioRecord.environment === 'indoor' ? (
-                      <label className="text-xs font-bold uppercase text-slate-200">
+                      <label className="text-xs font-bold uppercase text-[#6E6E73]">
                         {locale === 'ko' ? '기구 선택' : 'Machine Select'}
                         <select
                           aria-label="Cardio machine select"
@@ -1311,7 +1311,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           onChange={(event) => void handleUpdateCardio(cardioRecord, {
                             machineType: event.target.value as CardioRecord['machineType'],
                           })}
-                          className="mt-1 min-h-10 w-full rounded-xl border border-slate-650 bg-slate-750 px-3 text-sm font-medium text-slate-100 outline-none"
+                          className="mt-1 min-h-10 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                         >
                           <option value="treadmill">{locale === 'ko' ? '🏃‍♂️ 트레드밀 (러닝머신)' : '🏃‍♂️ Treadmill'}</option>
                           <option value="indoor_bike">{locale === 'ko' ? '🚴‍♂️ 실내 자전거' : '🚴‍♂️ Indoor Bike'}</option>
@@ -1320,7 +1320,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                         </select>
                       </label>
                     ) : (
-                      <label className="text-xs font-bold uppercase text-slate-200">
+                      <label className="text-xs font-bold uppercase text-[#6E6E73]">
                         {locale === 'ko' ? '장소 입력' : 'Place'}
                         <input
                           aria-label="Cardio place input"
@@ -1328,23 +1328,23 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                           defaultValue={cardioRecord.location ?? ''}
                           onBlur={(event) => void handleUpdateCardio(cardioRecord, { location: event.target.value.trim() })}
                           placeholder={locale === 'ko' ? '예: 동네 공원, 러닝 트랙 등' : 'e.g. Park, track, river'}
-                          className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-750 px-3.5 py-2 text-sm font-medium text-slate-100 outline-none focus:border-cyan-400"
+                          className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                         />
                       </label>
                     )}
 
                     {/* 퀵 증감 계기판 */}
                     <div className={`grid gap-2.5 ${cardioRecord.environment === 'indoor' ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                      <label className="text-xs font-bold uppercase text-slate-200">
+                      <label className="text-xs font-bold uppercase text-[#6E6E73]">
                         Km
-                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 focus-within:ring-1 focus-within:ring-cyan-400">
+                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
                           <button
                             type="button"
                             onClick={() => {
                               const nextVal = Math.max(0, Number(((cardioRecord.distanceKm || 0) - 0.5).toFixed(1)));
                               void handleUpdateCardio(cardioRecord, { distanceKm: nextVal || undefined });
                             }}
-                            className="min-h-10 text-sm font-bold text-slate-100 hover:text-slate-100 active:bg-slate-850/50"
+                            className="min-h-10 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
                           >
                             -
                           </button>
@@ -1358,7 +1358,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                               distanceKm: parseOptionalDecimalInput(event.target.value),
                             })}
                             placeholder="0.0"
-                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-slate-100 outline-none"
+                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
                           />
                           <button
                             type="button"
@@ -1366,23 +1366,23 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                               const nextVal = Number(((cardioRecord.distanceKm || 0) + 0.5).toFixed(1));
                               void handleUpdateCardio(cardioRecord, { distanceKm: nextVal });
                             }}
-                            className="min-h-10 text-sm font-bold text-cyan-400 hover:text-cyan-300 active:bg-slate-850/50"
+                            className="min-h-10 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
                           >
                             +
                           </button>
                         </div>
                       </label>
 
-                      <label className="text-xs font-bold uppercase text-slate-200">
+                      <label className="text-xs font-bold uppercase text-[#6E6E73]">
                         {locale === 'ko' ? '분' : 'Min'}
-                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 focus-within:ring-1 focus-within:ring-cyan-400">
+                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
                           <button
                             type="button"
                             onClick={() => {
                               const nextVal = Math.max(1, minutes - 5);
                               void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
                             }}
-                            className="min-h-10 text-sm font-bold text-slate-100 hover:text-slate-100 active:bg-slate-850/50"
+                            className="min-h-10 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
                           >
                             -
                           </button>
@@ -1397,7 +1397,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                               void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, val) });
                             }}
                             placeholder="min"
-                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-slate-100 outline-none"
+                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
                           />
                           <button
                             type="button"
@@ -1405,7 +1405,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                               const nextVal = minutes + 5;
                               void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
                             }}
-                            className="min-h-10 text-sm font-bold text-cyan-400 hover:text-cyan-300 active:bg-slate-850/50"
+                            className="min-h-10 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
                           >
                             +
                           </button>
@@ -1413,16 +1413,16 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                       </label>
 
                       {cardioRecord.environment === 'indoor' && (
-                        <label className="text-xs font-bold uppercase text-slate-200">
+                        <label className="text-xs font-bold uppercase text-[#6E6E73]">
                           {locale === 'ko' ? '경사 (%)' : 'Inc (%)'}
-                          <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-slate-650 bg-slate-750 focus-within:ring-1 focus-within:ring-cyan-400">
+                          <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
                             <button
                               type="button"
                               onClick={() => {
                                 const nextVal = Math.max(0, (cardioRecord.inclinePercent || 0) - 1);
                                 void handleUpdateCardio(cardioRecord, { inclinePercent: nextVal });
                               }}
-                              className="min-h-10 text-sm font-bold text-slate-100 hover:text-slate-100 active:bg-slate-850/50"
+                              className="min-h-10 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
                             >
                               -
                             </button>
@@ -1437,7 +1437,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                                 void handleUpdateCardio(cardioRecord, { inclinePercent: val });
                               }}
                               placeholder="%"
-                              className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-black text-slate-100 outline-none"
+                              className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
                             />
                             <button
                               type="button"
@@ -1445,7 +1445,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                                 const nextVal = (cardioRecord.inclinePercent || 0) + 1;
                                 void handleUpdateCardio(cardioRecord, { inclinePercent: nextVal });
                               }}
-                              className="min-h-10 text-sm font-bold text-cyan-400 hover:text-cyan-300 active:bg-slate-850/50"
+                              className="min-h-10 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
                             >
                               +
                             </button>
@@ -1455,7 +1455,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     </div>
                   </div>
 
-                  <label className="mt-2.5 block text-xs font-bold uppercase text-slate-200">
+                  <label className="mt-2.5 block text-xs font-bold uppercase text-[#6E6E73]">
                     {locale === 'ko' ? '메모' : 'Memo'}
                     <input
                       aria-label="Cardio memo"
@@ -1463,14 +1463,14 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                       defaultValue={cardioRecord.memo ?? ''}
                       onBlur={(event) => void handleUpdateCardio(cardioRecord, { memo: event.target.value.trim() || undefined })}
                       placeholder={locale === 'ko' ? '속도 변경, 컨디션 피드백 등' : 'e.g. Speed changes, energy feedback'}
-                      className="mt-1 w-full rounded-xl border border-slate-650 bg-slate-750 px-3.5 py-2 text-sm font-medium text-slate-100 outline-none focus:border-cyan-400"
+                      className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                     />
                   </label>
 
                   <button
                     type="button"
                     onClick={() => void handleSaveCardioAndContinue(cardioRecord)}
-                    className="mt-2.5 flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-cyan-400 px-3 text-sm font-black text-slate-950 shadow-md shadow-cyan-400/15 transition-all hover:bg-cyan-300 active:scale-95"
+                    className="ios-button-primary flex min-h-11 w-full items-center justify-center gap-1.5 px-3 text-sm mt-2.5"
                   >
                     <Check aria-hidden="true" size={15} />
                     <span>
@@ -1485,11 +1485,11 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                   </button>
 
                   {cardioRecord.averageSpeedKmh ? (
-                    <p className="mt-3 text-xs font-bold text-cyan-400 bg-cyan-950/30 border border-cyan-500/10 rounded-lg px-2.5 py-1.5 inline-block">
+                    <p className="mt-3 text-xs font-bold text-[#159A91] bg-[#E8F3F3] border border-[#2EC4B6]/20 rounded-lg px-2.5 py-1.5 inline-block">
                       ⚡ {locale === 'ko' ? '평균 속도' : 'Average speed'}: <span className="font-mono">{cardioRecord.averageSpeedKmh.toFixed(1)} km/h</span>
                     </p>
                   ) : (
-                    <p className="mt-3 text-xs font-medium text-slate-100">
+                    <p className="mt-3 text-xs font-medium text-[#6E6E73]">
                       ℹ️ {locale === 'ko' ? '거리를 입력하면 평균 속도가 계산됩니다.' : 'Enter distance to calculate average speed.'}
                     </p>
                   )}
@@ -1511,7 +1511,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                   setIsAdding((current) => !current);
                   resetExerciseFinderState();
                 }}
-                className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-650 bg-slate-750 px-2 text-xs font-bold text-slate-100"
+                className="ios-button-secondary flex min-h-11 items-center justify-center gap-2 px-2 text-xs"
               >
                 <Plus aria-hidden="true" size={16} />
                 {locale === 'ko' ? '운동 추가' : 'Add exercise'}
@@ -1519,7 +1519,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               <button
                 type="button"
                 onClick={() => void handleCreateRoutineFromWorkout()}
-                className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-950/35 px-2 text-xs font-black text-cyan-100"
+                className="ios-button-primary flex min-h-11 items-center justify-center gap-2 px-2 text-xs"
               >
                 <ClipboardList aria-hidden="true" size={15} />
                 {locale === 'ko' ? '루틴 저장' : 'Save routine'}
@@ -1529,14 +1529,14 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               <button
                 type="button"
                 onClick={() => void handleCancelHistoricalEdit()}
-                className="flex min-h-12 items-center justify-center rounded-xl border border-slate-650 bg-slate-750 px-4 text-sm font-bold text-slate-100"
+                className="ios-button-secondary flex min-h-12 items-center justify-center px-4 text-sm"
               >
                 {locale === 'ko' ? '취소' : 'Cancel'}
               </button>
               <button
                 type="button"
                 onClick={() => void handleSaveHistoricalEdit()}
-                className="flex min-h-12 items-center justify-center rounded-xl bg-cyan-400 px-4 text-sm font-bold text-slate-950 shadow-md"
+                className="ios-button-primary flex min-h-12 items-center justify-center px-4 text-sm"
               >
                 {t(locale, 'save')}
               </button>
@@ -1547,12 +1547,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
             <button
               type="button"
               onClick={() => void handleCreateRoutineFromWorkout()}
-              className="flex min-h-12 items-center justify-center gap-1.5 rounded-xl border border-slate-650 bg-slate-750 px-3 text-xs font-black text-slate-100 transition-all hover:bg-slate-650 active:scale-95"
+              className="ios-button-secondary flex min-h-12 items-center justify-center gap-1.5 px-3 text-xs"
             >
               <ClipboardList aria-hidden="true" size={15} />
               <span>{locale === 'ko' ? '루틴 저장' : 'Save routine'}</span>
             </button>
-            <button type="button" onClick={onBack} className="flex min-h-12 items-center justify-center rounded-xl bg-cyan-400 px-4 text-sm font-bold text-slate-950 hover:bg-cyan-300 active:scale-95 transition-all shadow-md">
+            <button type="button" onClick={onBack} className="ios-button-primary flex min-h-12 items-center justify-center px-4 text-sm">
               {locale === 'ko' ? '편집 완료' : 'Done Editing'}
             </button>
           </div>
@@ -1806,14 +1806,14 @@ function WorkoutSetRow({
           </span>
         </button>
         <div className="flex items-center gap-1">
-          <div className="flex overflow-hidden rounded-md border border-slate-650 bg-slate-900">
+          <div className="flex overflow-hidden rounded-md border border-[#D1D1D6] bg-[#F2F2F7]">
             {[1, 2.5].map((step) => (
               <button
                 key={step}
                 type="button"
                 onClick={() => setWeightStep(step)}
-                className={`px-1.5 py-0.5 text-[11px] font-black ${
-                  weightStep === step ? 'bg-cyan-400 text-slate-950' : 'text-slate-300'
+                className={`px-1.5 py-0.5 text-[11px] font-bold ${
+                  weightStep === step ? 'bg-[#2EC4B6] text-white' : 'text-[#6E6E73]'
                 }`}
                 aria-label={`Set weight step to ${step}kg`}
               >
@@ -1912,7 +1912,7 @@ function WorkoutSetRow({
             </button>
           </div>
           {previousSet && previousSet.weightKg > 0 && (
-            <span className="hidden truncate text-[11px] font-bold normal-case leading-none text-slate-300">
+            <span className="hidden truncate text-[11px] font-bold normal-case leading-none text-[#8E8E93]">
               {locale === 'ko' ? `최근: ${previousSet.weightKg}kg` : `Recent: ${previousSet.weightKg}kg`}
             </span>
           )}
@@ -1970,7 +1970,7 @@ function WorkoutSetRow({
             </button>
           </div>
           {previousSet && previousSet.reps > 0 && (
-            <span className="hidden truncate text-[11px] font-bold normal-case leading-none text-slate-300">
+            <span className="hidden truncate text-[11px] font-bold normal-case leading-none text-[#8E8E93]">
               {locale === 'ko' ? `최근: ${previousSet.reps}회` : `Recent: ${previousSet.reps} reps`}
             </span>
           )}
@@ -2028,7 +2028,7 @@ function WorkoutSetRow({
             </button>
           </div>
           {previousSet && previousSet.rir !== undefined && (
-            <span className="hidden truncate text-[11px] font-bold normal-case leading-none text-slate-300">
+            <span className="hidden truncate text-[11px] font-bold normal-case leading-none text-[#8E8E93]">
               {locale === 'ko' ? `최근: RIR ${previousSet.rir}` : `Recent: RIR ${previousSet.rir}`}
             </span>
           )}
