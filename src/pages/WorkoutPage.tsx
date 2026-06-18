@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, BarChart3, Check, ChevronLeft, ClipboardList, Clock3, Copy, History, Plus, RefreshCw, Trash2, Trophy } from 'lucide-react';
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, type FocusEvent } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { ExerciseHistoryModal } from '../components/ExerciseHistoryModal';
 import { db } from '../db/db';
@@ -1751,6 +1751,12 @@ function WorkoutSetRow({
   }, [set, log.sets, log.previousSets, setIndex, currentType]);
   const enteredWeight = parseOptionalDecimalInput(weight) ?? set.weightKg ?? 0;
   const displayBestWeight = Math.max(log.pastBestWeight ?? 0, enteredWeight, previousSet?.weightKg ?? 0);
+  const handleSetInputFocus = (event: FocusEvent<HTMLInputElement>) => {
+    event.currentTarget.select();
+    window.setTimeout(() => {
+      event.currentTarget.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+    }, 80);
+  };
 
   const handleToggleSetType = async () => {
     const NEXT_TYPES: Record<WorkoutSetType, WorkoutSetType> = {
@@ -1792,7 +1798,7 @@ function WorkoutSetRow({
   };
 
   return (
-    <div className="rounded-2xl border border-[#E5E5EA] bg-white px-2.5 py-2 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+    <div className="rounded-xl border border-[#E5E5EA] bg-white px-2 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
@@ -1843,7 +1849,7 @@ function WorkoutSetRow({
         <button
           type="button"
           onClick={() => void handleCopyPreviousSet(set, previousSet)}
-          className="mt-1.5 flex min-h-7 w-full flex-wrap items-center gap-x-1 gap-y-0.5 rounded-xl bg-[#E8F3F3] px-2.5 py-1 text-left text-[11px] font-black text-[#1C1C1E] transition-all hover:bg-[#D8EFEF] active:scale-[0.99]"
+          className="mt-1 flex min-h-6 w-full flex-wrap items-center gap-x-1 gap-y-0.5 rounded-lg bg-[#E8F3F3] px-2 py-0.5 text-left text-[11px] font-black text-[#1C1C1E] transition-all hover:bg-[#D8EFEF] active:scale-[0.99]"
         >
           <span className="font-black text-emerald-900">{locale === 'ko' ? '최근 적용:' : 'Use recent:'}</span>
           <span className="font-mono font-black text-emerald-950">
@@ -1857,7 +1863,7 @@ function WorkoutSetRow({
         </button>
       ) : null}
 
-      <div className="mt-1.5 grid grid-cols-3 gap-1">
+      <div className="mt-1 grid grid-cols-3 gap-1">
         <label className="text-[11px] font-extrabold uppercase leading-none text-[#6E6E73]">
           kg
           <div className="mt-0.5 grid grid-cols-[1.35rem_1fr_1.35rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-[#F2F2F7] transition-all focus-within:border-accent focus-within:ring-1 focus-within:ring-accent">
@@ -1879,7 +1885,7 @@ function WorkoutSetRow({
               tabIndex={setIndex * 3 + 1}
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
-              onFocus={(e) => e.target.select()}
+              onFocus={handleSetInputFocus}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -1938,7 +1944,7 @@ function WorkoutSetRow({
               tabIndex={setIndex * 3 + 2}
               value={reps}
               onChange={(e) => setReps(e.target.value)}
-              onFocus={(e) => e.target.select()}
+              onFocus={handleSetInputFocus}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -1996,7 +2002,7 @@ function WorkoutSetRow({
               tabIndex={setIndex * 3 + 3}
               value={rir}
               onChange={(e) => setRir(e.target.value)}
-              onFocus={(e) => e.target.select()}
+              onFocus={handleSetInputFocus}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -2035,7 +2041,7 @@ function WorkoutSetRow({
         </label>
       </div>
 
-      <div className="mt-1.5 grid grid-cols-6 gap-1">
+      <div className="mt-1 grid grid-cols-6 gap-1">
         <button
           type="button"
           onClick={() => void handleToggleWarmup(set)}

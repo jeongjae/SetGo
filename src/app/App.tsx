@@ -38,6 +38,24 @@ export function App() {
   useEffect(() => {
     void requestPersistentStorage();
   }, []);
+
+  useEffect(() => {
+    const updateViewportHeight = () => {
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      document.documentElement.style.setProperty('--setgo-viewport-height', `${viewportHeight}px`);
+    };
+
+    updateViewportHeight();
+    window.visualViewport?.addEventListener('resize', updateViewportHeight);
+    window.visualViewport?.addEventListener('scroll', updateViewportHeight);
+    window.addEventListener('resize', updateViewportHeight);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updateViewportHeight);
+      window.visualViewport?.removeEventListener('scroll', updateViewportHeight);
+      window.removeEventListener('resize', updateViewportHeight);
+    };
+  }, []);
   const [activeWorkoutSessionId, setActiveWorkoutSessionId] = useState<string | undefined>();
   const [workoutMode, setWorkoutMode] = useState<WorkoutMode>('active');
   const [calendarReviewingWeeklyPlan, setCalendarReviewingWeeklyPlan] = useState(false);
