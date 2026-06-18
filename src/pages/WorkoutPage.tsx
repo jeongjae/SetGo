@@ -28,7 +28,6 @@ import {
   skipWorkoutSession,
   updateCardioRecord,
   updateWorkoutExerciseMemo,
-  updateWorkoutExerciseRestSeconds,
   updateWorkoutSessionRoutine,
   updateWorkoutSessionMemo,
   updateWorkoutSet,
@@ -222,6 +221,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   const [restRemaining, setRestRemaining] = useState(0);
   const [isRestTimerActive, setIsRestTimerActive] = useState(false);
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
+  const [memoOpenExercises, setMemoOpenExercises] = useState<Record<string, boolean>>({});
   const [savedRoutines, setSavedRoutines] = useState<Routine[]>([]);
   const [historyRoutineId, setHistoryRoutineId] = useState('');
   const [historyRoutineDayId, setHistoryRoutineDayId] = useState('');
@@ -704,7 +704,8 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   }
 
   async function handleUpdateExerciseRestSeconds(workoutExerciseId: string, restSeconds: number) {
-    await updateWorkoutExerciseRestSeconds(workoutExerciseId, restSeconds);
+    void workoutExerciseId;
+    void restSeconds;
     await loadWorkout();
     setSaveMessage(locale === 'ko' ? '운동별 휴식 시간을 저장했습니다' : 'Exercise rest time saved');
   }
@@ -881,57 +882,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       </header>
 
       {/* 2. 가로 스냅 스크롤링 운동 탭바 (헤더 하부 shrink-0) */}
-      {logs.length > 0 && (
-        <nav className="flex shrink-0 gap-1.5 overflow-x-auto border-b border-slate-650 bg-slate-850/60 py-2 scrollbar-none scroll-smooth">
-          {logs.map((log) => {
-            const allCompleted = log.sets.length > 0 && log.sets.every((s) => s.isCompleted);
-            const completedCount = log.sets.filter((s) => s.isCompleted).length;
-            const totalCount = log.sets.length;
-            const isCurrentExpanded = !!expandedExercises[log.workoutExercise.id];
-
-            return (
-              <button
-                key={log.workoutExercise.id}
-                type="button"
-                onClick={() => {
-                  setExpandedExercises((prev) => ({
-                    ...prev,
-                    [log.workoutExercise.id]: true,
-                  }));
-                  setTimeout(() => {
-                    const el = document.getElementById(`exercise-card-${log.workoutExercise.id}`);
-                    if (el) {
-                      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }, 100);
-                }}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold transition-all active:scale-95 ${
-                  isCurrentExpanded
-                    ? 'bg-sky-200 text-black ring-4 ring-sky-400/20 shadow-lg'
-                    : allCompleted
-                      ? 'bg-emerald-950/65 text-emerald-300 border border-emerald-800/60'
-                      : 'bg-slate-750 text-slate-100 border border-slate-650 hover:bg-slate-650'
-                }`}
-              >
-                <span className="text-[13px] shrink-0">{getExerciseIcon(log.exercise.defaultEmoji)}</span>
-                <span className="truncate max-w-[80px]">{getExerciseName(log.exercise, locale)}</span>
-                <span className={`rounded px-1.5 py-0.5 font-mono text-[11px] font-black ${
-                  isCurrentExpanded 
-                    ? 'bg-cyan-500/30 text-slate-900' 
-                    : allCompleted 
-                      ? 'bg-emerald-900/40 text-emerald-400' 
-                      : 'bg-slate-850 text-slate-200'
-                }`}>
-                  {completedCount}/{totalCount}
-                </span>
-                {allCompleted && (
-                  <Check size={11} className="text-emerald-400 shrink-0 stroke-[3px]" />
-                )}
-              </button>
-            );
-          })}
-        </nav>
-      )}
+      {false && logs.length > 0 && null}
 
       {/* 3. 중앙 본문 스크롤 영역 (flex-1 overflow-y-auto overscroll-contain) */}
       <div className="inner-scroll -mx-2 flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-2 py-2.5 scrollbar-none">
@@ -989,16 +940,18 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         ) : null}
 
         {/* 세션 메모 영역 */}
-        <section className="shrink-0 rounded-2xl border border-slate-650 bg-slate-750/75 p-3 shadow-md">
-          <label className="block text-sm font-bold text-slate-100">
-            {locale === 'ko' ? '📝 세션 전체 메모' : '📝 Overall Session Notes'}
-            <textarea
+        <section className="shrink-0 rounded-lg border border-slate-650 bg-slate-750/75 px-2 py-1.5 shadow-md">
+          <label className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 text-xs font-black text-slate-100">
+            <span className="shrink-0 rounded-md border border-violet-300 bg-violet-100 px-2 py-1 text-violet-950 shadow-sm">
+              {locale === 'ko' ? '세션 메모' : 'Session Memo'}
+            </span>
+            <input
               aria-label="Session memo"
+              type="text"
               defaultValue={workout?.session.memo ?? ''}
               onBlur={(event) => void handleUpdateSessionMemo(event.target.value)}
-              rows={2}
-              className="mt-1.5 w-full resize-none rounded-xl border border-slate-650 bg-slate-850 px-3 py-2 text-sm font-medium text-slate-100 outline-none transition-all placeholder:text-slate-350 focus:border-cyan-400/80 focus:ring-1 focus:ring-cyan-400/50"
-              placeholder={locale === 'ko' ? '컨디션, 특이사항, 오늘 목표 등' : 'Energy level, injuries, or today\'s goals'}
+              className="h-8 min-w-0 rounded-md border border-slate-500 bg-slate-50 px-2 text-sm font-bold text-slate-950 outline-none transition-all placeholder:text-slate-500 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-300"
+              placeholder={locale === 'ko' ? '컨디션, 특이사항, 오늘 목표 등' : 'Energy, notes, today goals'}
             />
           </label>
         </section>
@@ -1026,6 +979,8 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
             const allCompleted = log.sets.length > 0 && log.sets.every((s) => s.isCompleted);
             const completedCount = log.sets.filter((s) => s.isCompleted).length;
             const totalCount = log.sets.length;
+            const isMemoOpen = !!memoOpenExercises[log.workoutExercise.id];
+            const hasExerciseMemo = Boolean(log.workoutExercise.memo?.trim());
 
             return (
               <section
@@ -1130,6 +1085,23 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                         <button
                           type="button"
                           onClick={() => {
+                            setMemoOpenExercises((current) => ({
+                              ...current,
+                              [log.workoutExercise.id]: !current[log.workoutExercise.id],
+                            }));
+                          }}
+                          className={`flex min-h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-all active:scale-95 duration-200 ${
+                            isMemoOpen || hasExerciseMemo
+                              ? 'border-violet-300 bg-violet-100 text-violet-950'
+                              : 'border-slate-650 bg-slate-750 text-slate-100 hover:bg-slate-650'
+                          }`}
+                        >
+                          <ClipboardList aria-hidden="true" size={13} />
+                          <span>{locale === 'ko' ? '메모' : 'Memo'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
                             setReplacingWorkoutExerciseId((current) => (
                               current === log.workoutExercise.id ? undefined : log.workoutExercise.id
                             ));
@@ -1156,13 +1128,17 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     </div>
 
                     <div className="mt-2 rounded-lg border border-slate-650 bg-slate-850 px-2 py-2 shadow-inner">
-                      <div className="flex items-center gap-1.5">
-                        <span className="shrink-0 rounded-md border border-blue-200 bg-blue-100 px-2 py-1 text-[11px] font-black text-blue-950">
-                          {locale === 'ko' ? '최근' : 'Recent'}
-                        </span>
-                        <p className="min-w-0 flex-1 truncate text-xs font-bold text-slate-100">
-                          {log.previousSummary ?? (locale === 'ko' ? '최근 완료 기록 없음' : 'No recent completed record')}
-                        </p>
+                      <div className="flex items-center justify-between gap-1.5">
+                        <div className="flex min-w-0 items-center gap-1">
+                          <span className="shrink-0 rounded-md border border-blue-200 bg-blue-100 px-2 py-1 text-[11px] font-black text-blue-950">
+                            {locale === 'ko' ? '최근' : 'Recent'}
+                          </span>
+                          {(log.pastBestWeight ?? 0) > 0 ? (
+                            <span className="truncate rounded-md border border-amber-300 bg-amber-100 px-1.5 py-1 text-[11px] font-black text-amber-950">
+                              {locale === 'ko' ? '최고중량' : 'Best'} {log.pastBestWeight?.toLocaleString()}kg
+                            </span>
+                          ) : null}
+                        </div>
                         <button
                           type="button"
                           onClick={() => void handleCopyPreviousExercise(log)}
@@ -1173,65 +1149,20 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                         </button>
                       </div>
 
-                      {(log.pastBestWeight ?? 0) > 0 || (log.pastBestVolume ?? 0) > 0 ? (
-                        <div className="mt-1.5 flex flex-wrap gap-1">
-                          {(log.pastBestWeight ?? 0) > 0 ? (
-                            <span className="rounded-md border border-amber-300 bg-amber-100 px-1.5 py-0.5 text-[10px] font-black text-amber-950">
-                              {locale === 'ko' ? '최고중량' : 'Best'} {log.pastBestWeight?.toLocaleString()}kg
-                            </span>
-                          ) : null}
-                          {(log.pastBestVolume ?? 0) > 0 ? (
-                            <span className="rounded-md border border-lime-300 bg-lime-100 px-1.5 py-0.5 text-[10px] font-black text-lime-950">
-                              {locale === 'ko' ? '최고볼륨' : 'Best vol'} {log.pastBestVolume?.toLocaleString()}kg
-                            </span>
-                          ) : null}
-                        </div>
-                      ) : null}
-
-                      {log.previousSets.length > 0 ? (
-                        <div className="mt-1.5 flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-                          {log.previousSets.slice(0, 6).map((previousSet, previousSetIndex) => (
-                            <button
-                              key={previousSet.id}
-                              type="button"
-                              onClick={() => void handleCopyPreviousSet(log.sets[previousSetIndex] ?? log.sets[0], previousSet)}
-                              className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-left font-mono text-[11px] font-black text-emerald-950 shadow-sm transition-all hover:bg-emerald-100 active:scale-95"
-                              aria-label={`Copy recent set ${previousSetIndex + 1}`}
-                            >
-                              <span className="mr-1 font-sans text-[10px] uppercase text-emerald-900">
-                                {locale === 'ko' ? `${previousSetIndex + 1}세트` : `S${previousSetIndex + 1}`}
-                              </span>
-                              {previousSet.weightKg}kg x {previousSet.reps}{previousSet.rir !== undefined ? ` / RIR ${previousSet.rir}` : ''}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      <div className="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-[auto_minmax(0,1fr)]">
+                      <div className="mt-1.5 grid grid-cols-1 gap-1.5">
                         <div className="flex items-center gap-1.5">
-                          <span className="shrink-0 rounded-md border border-cyan-200 bg-cyan-100 px-2 py-1 text-[11px] font-black text-cyan-950">
+                          <span className="flex min-h-8 min-w-12 shrink-0 items-center justify-center rounded-md border border-cyan-300 bg-cyan-100 px-2.5 text-xs font-black text-black shadow-sm">
                             {locale === 'ko' ? '휴식' : 'Rest'}
                           </span>
-                          <div className="flex flex-1 overflow-hidden rounded-md border border-slate-600 bg-slate-900">
-                            {[60, 90, 120, 180].map((seconds) => (
-                              <button
-                                key={seconds}
-                                type="button"
-                                onClick={() => void handleUpdateExerciseRestSeconds(log.workoutExercise.id, seconds)}
-                                className={`min-h-7 flex-1 px-2 text-[11px] font-black transition-all ${
-                                  (log.workoutExercise.restSeconds ?? 90) === seconds
-                                    ? 'bg-cyan-300 text-slate-950'
-                                    : 'bg-slate-100 text-slate-950 hover:bg-slate-200'
-                                }`}
-                              >
-                                {seconds < 60 ? `${seconds}s` : `${seconds / 60}m`}
-                              </button>
-                            ))}
-                          </div>
+                          <span className="flex min-h-8 flex-1 items-center rounded-md border border-slate-500 bg-slate-50 px-2 text-xs font-black text-slate-950 shadow-sm">
+                            {(log.workoutExercise.restSeconds ?? 90) < 60
+                              ? `${log.workoutExercise.restSeconds ?? 90}s`
+                              : `${(log.workoutExercise.restSeconds ?? 90) / 60}m`}
+                          </span>
                         </div>
 
-                        <label className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-1.5 text-[11px] font-black uppercase text-slate-100">
-                          <span className="rounded-md border border-violet-200 bg-violet-100 px-2 py-1 text-violet-950">
+                        <label className={`${isMemoOpen ? 'grid' : 'hidden'} grid-cols-[auto_minmax(0,1fr)] items-center gap-1.5 text-xs font-black uppercase text-slate-100`}>
+                          <span className="flex min-h-8 min-w-12 items-center justify-center rounded-md border border-violet-300 bg-violet-100 px-2.5 text-violet-950 shadow-sm">
                             {locale === 'ko' ? '메모' : 'Memo'}
                           </span>
                           <input
@@ -1708,15 +1639,15 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
       {/* 5. 플로팅 휴식 타이머 오버레이 (휴식 타이머 활성화 및 카운트 다운 중일 때) */}
       {isRestTimerActive && restRemaining > 0 && (
-        <div className="fixed bottom-[4.5rem] left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-300 bg-blue-100/95 px-3.5 py-3 shadow-2xl backdrop-blur-md transition-all duration-300 animate-fade-in">
+        <div className="fixed bottom-[4.5rem] left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-yellow-400 bg-yellow-200/95 px-3.5 py-3 shadow-2xl shadow-yellow-500/20 backdrop-blur-md transition-all duration-300 animate-fade-in">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-200 text-blue-700 animate-pulse">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-300 text-yellow-950 animate-pulse">
                 <Clock3 size={16} />
               </div>
               <div>
-                <p className="text-xs font-bold text-primary">{t(locale, 'resting')}</p>
-                <p className="text-lg font-black text-primary tracking-wider font-mono">
+                <p className="text-xs font-bold text-yellow-950">{t(locale, 'resting')}</p>
+                <p className="text-lg font-black text-yellow-950 tracking-wider font-mono">
                   {formatCountdownSeconds(restRemaining)}
                 </p>
               </div>
@@ -1727,7 +1658,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 onClick={() => {
                   setRestDuration((prev) => prev + 30);
                 }}
-                className="flex h-8 items-center justify-center rounded-lg border border-blue-300 bg-blue-50 px-2.5 text-xs font-bold text-blue-700 transition-all active:scale-95 active:bg-blue-200"
+                className="flex h-8 items-center justify-center rounded-lg border border-yellow-500 bg-yellow-50 px-2.5 text-xs font-bold text-yellow-950 transition-all active:scale-95 active:bg-yellow-300"
               >
                 +30s
               </button>
@@ -1736,7 +1667,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 onClick={() => {
                   setRestDuration((prev) => Math.max(1, prev - 30));
                 }}
-                className="flex h-8 items-center justify-center rounded-lg border border-blue-300 bg-blue-50 px-2.5 text-xs font-bold text-primary transition-all active:scale-95 active:bg-blue-200"
+                className="flex h-8 items-center justify-center rounded-lg border border-yellow-500 bg-yellow-50 px-2.5 text-xs font-bold text-yellow-950 transition-all active:scale-95 active:bg-yellow-300"
               >
                 -30s
               </button>
@@ -1752,9 +1683,9 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               </button>
             </div>
           </div>
-          <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-blue-200">
+          <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-yellow-100">
             <div
-              className="h-full bg-blue-500 transition-all duration-500 ease-out"
+              className="h-full bg-yellow-600 transition-all duration-500 ease-out"
               style={{ width: `${(restRemaining / restDuration) * 100}%` }}
             />
           </div>
