@@ -32,11 +32,11 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
   }
 
   return (
-    <section className="viewport-locked ios-screen mx-auto flex max-w-md flex-col gap-3.5 overflow-hidden px-4 pb-4 pt-3.5">
-      <header className="flex shrink-0 items-center justify-between gap-2.5">
+    <section className="ios-page gap-3.5 px-4 pb-4 pt-3.5">
+      <header className="ios-page-header">
         <div>
-          <p className="text-xs font-black uppercase text-accent-dark">{t(locale, 'more')}</p>
-          <h1 className="text-2xl font-black text-[#1C1C1E]">
+          <p className="ios-eyebrow">{t(locale, 'more')}</p>
+          <h1 className="ios-title">
             {locale === 'ko' ? '관리 및 데이터' : 'Management and Data'}
           </h1>
         </div>
@@ -46,14 +46,14 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
           aria-haspopup="dialog"
           aria-expanded={showStorageInfo}
           onClick={() => setShowStorageInfo(true)}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-black/5 bg-white text-[#8E8E93] shadow-sm transition-all active:scale-95 hover:bg-[#F2F2F7]"
+          className="ios-icon-button"
         >
           <Info aria-hidden="true" size={20} />
         </button>
       </header>
 
       <div className="inner-scroll min-h-0 space-y-4 py-0.5">
-        <p className="px-0.5 text-sm font-semibold leading-relaxed text-[#6E6E73]">
+        <p className="ios-subtext px-0.5">
           {locale === 'ko'
             ? '루틴, 운동 라이브러리와 로컬 백업을 관리합니다.'
             : 'Manage routines, the exercise library, and local backups.'}

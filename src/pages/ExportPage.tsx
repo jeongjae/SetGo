@@ -328,7 +328,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
   }
 
   return (
-    <section className="viewport-locked ios-screen mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3">
+    <section className="ios-page">
       <header className="flex shrink-0 flex-col gap-2.5 pb-1">
         <div className="flex items-center gap-2.5">
           <button

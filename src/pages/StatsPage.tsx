@@ -781,7 +781,7 @@ function MiniSparkBars({ history }: { history: ExercisePerformance['oneRmHistory
         <div key={`${item.label}_${item.valueKg}`} className="flex flex-1 flex-col items-center gap-1">
           <span className="text-[10px] font-bold text-[#1C1C1E]">{Math.round(item.valueKg)}</span>
           <div
-            className="w-full rounded-t bg-gradient-to-t from-[#2EC4B6] to-[#159A91]"
+            className="w-full rounded-t bg-accent"
             style={{ height: `${Math.max(6, (item.valueKg / maxValue) * 32)}px` }}
             aria-label={`${item.label} ${item.valueKg.toFixed(1)}kg`}
           />
@@ -904,7 +904,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
     : c.noWarnings;
 
   return (
-    <section className="viewport-locked ios-screen mx-auto flex max-w-md flex-col gap-2.5 overflow-hidden px-3.5 pb-3.5 pt-3">
+    <section className="ios-page">
       <header className="shrink-0 px-1 pb-1 pt-1">
         <div className="flex items-center justify-between gap-2.5 pb-2.5">
           <div>

@@ -114,7 +114,7 @@ export function ExerciseHistoryModal({ exerciseId, onClose, locale }: ExerciseHi
             </div>
 
             <div className="rounded-2xl border border-black/5 bg-white p-3 flex flex-col justify-between min-h-[4.5rem] shadow-sm">
-              <div className="flex items-center gap-1 text-[10px] font-bold text-cyan-600 uppercase tracking-wider">
+              <div className="flex items-center gap-1 text-[10px] font-bold text-accent-dark uppercase tracking-wider">
                 <Trophy size={11} />
                 <span>{locale === 'ko' ? '최고 중량' : 'Best Weight'}</span>
               </div>
@@ -161,7 +161,7 @@ export function ExerciseHistoryModal({ exerciseId, onClose, locale }: ExerciseHi
                       </span>
                       <div
                         style={{ height: `${pct}%` }}
-                        className="w-full rounded-t-lg bg-gradient-to-t from-[#2EC4B6]/50 to-[#2EC4B6] transition-all group-hover:to-[#159A91]"
+                        className="w-full rounded-t-lg bg-accent transition-all group-hover:bg-accent-dark"
                       />
                       <span className="mt-2 text-[9px] font-bold text-[#8E8E93] font-mono">
                         {h.date.slice(5)}
