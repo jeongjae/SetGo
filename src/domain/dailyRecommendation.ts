@@ -32,6 +32,7 @@ export type RoutineScheduleSnapshot = {
 export type BuildDailyWorkoutRecommendationInput = {
   schedule: RoutineScheduleSnapshot;
   nextRoutineDay?: RoutineDay;
+  makeUpRoutineDay?: RoutineDay;
   hasActiveRoutine: boolean;
   freeWorkoutLabel: string;
   runningLabel: string;
@@ -46,6 +47,7 @@ export function buildDailyWorkoutRecommendation(
   const {
     schedule,
     nextRoutineDay,
+    makeUpRoutineDay,
     hasActiveRoutine,
     freeWorkoutLabel,
     runningLabel,
@@ -62,6 +64,19 @@ export function buildDailyWorkoutRecommendation(
       source: 'fallback',
       reason: 'noActiveRoutine',
       confidence: 'low',
+    };
+  }
+
+  const makeUpLabel = getRoutineDayLabel(makeUpRoutineDay);
+  if (makeUpRoutineDay && makeUpLabel && !schedule.override && schedule.kind !== 'running') {
+    return {
+      kind: 'routine',
+      sessionKind: 'planned',
+      routineDay: makeUpRoutineDay,
+      label: makeUpLabel,
+      source: 'make-up',
+      reason: 'makeUpSkippedWorkout',
+      confidence: 'medium',
     };
   }
 

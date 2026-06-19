@@ -88,6 +88,25 @@ describe('daily workout recommendations', () => {
     });
   });
 
+  it('prioritizes a recently skipped routine before the normal routine schedule', () => {
+    expect(buildDailyWorkoutRecommendation(buildInput({
+      makeUpRoutineDay: lowerDay,
+      schedule: {
+        schedule: { routineDayId: upperDay.id, isRestDay: false },
+        routineDay: upperDay,
+        kind: 'routine',
+        isRestDay: false,
+      },
+    }))).toMatchObject({
+      kind: 'routine',
+      routineDay: lowerDay,
+      label: 'Lower',
+      source: 'make-up',
+      reason: 'makeUpSkippedWorkout',
+      confidence: 'medium',
+    });
+  });
+
   it('suggests the next routine day when today is a rest day', () => {
     expect(buildDailyWorkoutRecommendation(buildInput({
       nextRoutineDay: upperDay,

@@ -30,6 +30,7 @@ export type WorkoutRecommendationSource =
   | 'override'
   | 'cycle'
   | 'weekly-schedule'
+  | 'make-up'
   | 'next-routine-day'
   | 'rest'
   | 'fallback';
@@ -37,6 +38,7 @@ export type WorkoutRecommendationReason =
   | 'manualOverride'
   | 'cycleRoutine'
   | 'weeklyRoutine'
+  | 'makeUpSkippedWorkout'
   | 'plannedRunning'
   | 'restDay'
   | 'nextRoutineAfterLatestWorkout'
