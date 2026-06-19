@@ -428,6 +428,8 @@ Acceptance criteria:
 - SetGo has a clear path for importing or manually managing running records
 - strength and running plans can coexist without confusing Today
 
+Phase 5 planning document: `docs/v2-running-data-import-plan.md`
+
 ## Implementation Progress
 
 Current v2 branch: `v2-workout-logging`
@@ -450,10 +452,12 @@ Completed startup work:
 - recommendation snapshots persist when a workout starts from Today
 - daily recommendations can prioritize a recently skipped routine
 - recommendation snapshots include exercise-level weight/reps/set targets
+- running and activity-import execution path documented
 
 Current code direction:
 
 - surface the full recommended exercise plan in Today and Workout mode
+- introduce import-friendly cardio record provenance fields
 - add richer missed-workout and fatigue/load handling
 - keep test/build/e2e pass after each step
 
