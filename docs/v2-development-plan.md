@@ -454,11 +454,12 @@ Completed startup work:
 - recommendation snapshots include exercise-level weight/reps/set targets
 - running and activity-import execution path documented
 - cardio records now have import-friendly provenance and duration fields
+- imported activity normalization and duplicate detection domain logic added
 
 Current code direction:
 
 - surface the full recommended exercise plan in Today and Workout mode
-- prototype a narrow file-based activity import path
+- wire the activity import domain into a review UI when the core workout UI is cleaned up
 - add richer missed-workout and fatigue/load handling
 - keep test/build/e2e pass after each step
 
