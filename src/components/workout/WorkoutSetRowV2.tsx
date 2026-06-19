@@ -20,7 +20,7 @@ type WorkoutSetRowV2Props = {
   handleDeleteSet: (set: WorkoutSet) => Promise<void>;
 };
 
-function parseDecimalInput(value: string): number | undefined {
+export function parseWorkoutSetDecimalInput(value: string): number | undefined {
   const trimmed = value.trim();
   if (!trimmed) return undefined;
 
@@ -28,7 +28,7 @@ function parseDecimalInput(value: string): number | undefined {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
-function getSetKindLabel(type: WorkoutSetType | undefined, isWarmup: boolean | undefined, locale: 'ko' | 'en'): string {
+export function getSetKindLabel(type: WorkoutSetType | undefined, isWarmup: boolean | undefined, locale: 'ko' | 'en'): string {
   const setType = type || (isWarmup ? 'warmup' : 'normal');
 
   if (locale === 'ko') {
@@ -44,7 +44,7 @@ function getSetKindLabel(type: WorkoutSetType | undefined, isWarmup: boolean | u
   return 'Work';
 }
 
-function getNextSetType(type: WorkoutSetType | undefined, isWarmup: boolean | undefined): WorkoutSetType {
+export function getNextSetType(type: WorkoutSetType | undefined, isWarmup: boolean | undefined): WorkoutSetType {
   const current = type || (isWarmup ? 'warmup' : 'normal');
   const nextTypes: Record<WorkoutSetType, WorkoutSetType> = {
     normal: 'warmup',
@@ -56,7 +56,7 @@ function getNextSetType(type: WorkoutSetType | undefined, isWarmup: boolean | un
   return nextTypes[current];
 }
 
-function getProgressLabel(
+export function getProgressLabel(
   set: Pick<WorkoutSet, 'isCompleted' | 'weightKg' | 'reps'>,
   pastBestWeight?: number,
   pastBestVolume?: number,
@@ -199,7 +199,7 @@ export function WorkoutSetRowV2({
             onFocus={handleFocus}
             onKeyDown={handleEnterKey}
             onBlur={() => {
-              const nextWeight = parseDecimalInput(weight) ?? 0;
+              const nextWeight = parseWorkoutSetDecimalInput(weight) ?? 0;
               if (nextWeight !== set.weightKg) void handleSetChange(set, { weightKg: nextWeight });
             }}
             className="mt-0.5 h-9 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-sm font-black text-[#1C1C1E] outline-none focus:border-accent"
