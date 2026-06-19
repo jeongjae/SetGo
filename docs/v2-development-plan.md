@@ -449,10 +449,11 @@ Completed startup work:
 - Today-level workout recommendation model added with domain tests
 - recommendation snapshots persist when a workout starts from Today
 - daily recommendations can prioritize a recently skipped routine
+- recommendation snapshots include exercise-level weight/reps/set targets
 
 Current code direction:
 
-- expand daily recommendations from routine-day choice into full exercise plans
+- surface the full recommended exercise plan in Today and Workout mode
 - add richer missed-workout and fatigue/load handling
 - keep test/build/e2e pass after each step
 

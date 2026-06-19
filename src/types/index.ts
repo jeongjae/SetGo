@@ -51,7 +51,20 @@ export type WorkoutRecommendationSnapshot = {
   source: WorkoutRecommendationSource;
   reason: WorkoutRecommendationReason;
   confidence: 'low' | 'medium' | 'high';
+  exerciseTargets?: WorkoutRecommendationExerciseTarget[];
   createdAt: string;
+};
+export type WorkoutRecommendationExerciseTarget = {
+  planId: string;
+  exerciseId: string;
+  weightKg: number;
+  reps: number;
+  sets: number;
+  rir?: number;
+  targetRepMin?: number;
+  targetRepMax?: number;
+  confidence: 'low' | 'medium' | 'high';
+  reason: string;
 };
 
 export type TimeBand = 'early' | 'morning' | 'afternoon' | 'evening';

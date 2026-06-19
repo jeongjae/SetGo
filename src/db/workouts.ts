@@ -1,6 +1,6 @@
 import { db } from './db';
 import { getActiveRoutine, getRoutineScheduleForDate } from './routines';
-import type { CardioRecord, ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutExercise, WorkoutRecommendationSnapshot, WorkoutSession, WorkoutSessionKind, WorkoutSet } from '../types';
+import type { CardioRecord, ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutExercise, WorkoutRecommendationExerciseTarget, WorkoutRecommendationSnapshot, WorkoutSession, WorkoutSessionKind, WorkoutSet } from '../types';
 import { formatDateKey, getTimeBand } from '../utils/date';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg, calculateSessionStrengthVolumeKg } from '../domain/volume';
 import { isWarmupOnlyExercise } from '../domain/exercises';
@@ -283,9 +283,10 @@ export function createWorkoutExerciseSeed(
   plans: RoutineExercisePlan[],
   exerciseById: Map<string, ExerciseMaster | undefined>,
   recommendationByPlanId: Map<string, ExerciseTargetRecommendation> = new Map(),
-): { workoutExercises: WorkoutExercise[]; workoutSets: WorkoutSet[] } {
+): { workoutExercises: WorkoutExercise[]; workoutSets: WorkoutSet[]; recommendationTargets: WorkoutRecommendationExerciseTarget[] } {
   const workoutExercises: WorkoutExercise[] = [];
   const workoutSets: WorkoutSet[] = [];
+  const recommendationTargets: WorkoutRecommendationExerciseTarget[] = [];
 
   plans.forEach((plan, index) => {
     const workoutExerciseId = `${sessionId}_${plan.id}`;
@@ -294,6 +295,18 @@ export function createWorkoutExerciseSeed(
     const isWarmup = isWarmupOnlyExercise(exercise);
     const recommendation = recommendationByPlanId.get(plan.id);
     const targetSets = Math.max(1, recommendation?.sets ?? plannedSets);
+    recommendationTargets.push({
+      planId: plan.id,
+      exerciseId: plan.exerciseId,
+      weightKg: recommendation?.weightKg ?? plan.plannedWeightKg ?? 0,
+      reps: recommendation?.reps ?? plan.plannedReps ?? 0,
+      sets: targetSets,
+      rir: recommendation?.rir ?? plan.plannedRir,
+      targetRepMin: recommendation?.targetRepMin ?? plan.targetRepMin,
+      targetRepMax: recommendation?.targetRepMax ?? plan.targetRepMax,
+      confidence: recommendation?.confidence ?? 'low',
+      reason: recommendation?.reason ?? 'Routine plan default.',
+    });
 
     workoutExercises.push({
       id: workoutExerciseId,
@@ -316,7 +329,7 @@ export function createWorkoutExerciseSeed(
     })));
   });
 
-  return { workoutExercises, workoutSets };
+  return { workoutExercises, workoutSets, recommendationTargets };
 }
 
 async function getRecentExerciseSessions(
@@ -409,9 +422,18 @@ async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayI
   const recommendationByPlanId = new Map(plans.map((plan, index) => [plan.id, recommendations[index]]));
   const seed = createWorkoutExerciseSeed(sessionId, plans, exerciseById, recommendationByPlanId);
 
-  await db.transaction('rw', db.workoutExercises, db.workoutSets, async () => {
+  await db.transaction('rw', db.workoutSessions, db.workoutExercises, db.workoutSets, async () => {
     await db.workoutExercises.bulkPut(seed.workoutExercises);
     await db.workoutSets.bulkPut(seed.workoutSets);
+    const session = await db.workoutSessions.get(sessionId);
+    if (session?.recommendationSnapshot) {
+      await db.workoutSessions.update(sessionId, {
+        recommendationSnapshot: {
+          ...session.recommendationSnapshot,
+          exerciseTargets: seed.recommendationTargets,
+        },
+      });
+    }
   });
 }
 
