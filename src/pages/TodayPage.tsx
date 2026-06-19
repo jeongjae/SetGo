@@ -237,12 +237,20 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
       : isTodayRestDay
         ? t(locale, 'restDay')
         : getRoutineDayDisplayName(todayRoutineDay, locale) ?? t(locale, 'noRoutineDayPlanned');
-  const workoutRecordLabel = locale === 'ko' ? '운동 기록' : 'Log workout';
+  const displayedPlanLabel = activeRoutine ? planLabel : dailyRecommendation?.label ?? t(locale, 'freeWorkout');
   const matchingInProgressWorkout = todayInProgressWorkouts.find((summary) => {
     if (selectedWorkoutKind === 'running') return summary.session.entryKind === 'running';
     if (selectedWorkoutKind === 'free') return summary.session.entryKind === 'free';
     return summary.session.routineDayId === selectedRoutineDayId;
   });
+  const selectedWorkoutLabel = selectedWorkoutKind === 'running'
+    ? locale === 'ko' ? '러닝' : 'Running'
+    : selectedWorkoutKind === 'free'
+      ? t(locale, 'freeWorkout')
+      : selectedRoutineDayLabel;
+  const workoutRecordLabel = matchingInProgressWorkout
+    ? locale === 'ko' ? '계속 기록하기' : 'Continue Logging'
+    : locale === 'ko' ? `${selectedWorkoutLabel} 시작` : `Start ${selectedWorkoutLabel}`;
 
   function handleStartSelectedWorkout() {
     if (matchingInProgressWorkout) {
@@ -293,40 +301,52 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
 
       <div className="inner-scroll space-y-2.5 py-0.5 pr-0.5 [@media(max-height:820px)]:space-y-2">
         <section className="ios-card flex flex-col gap-2.5 p-3.5 [@media(max-height:820px)]:gap-2 [@media(max-height:820px)]:p-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#E8F3F3] text-accent-dark">
-              <Dumbbell aria-hidden="true" size={26} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{t(locale, 'activeRoutine')}</p>
-              <h2 className="mt-0.5 truncate text-xl font-black text-[#1C1C1E]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-wide text-[#8E8E93]">{t(locale, 'activeRoutine')}</p>
+              <h2 className="mt-0.5 truncate text-lg font-black text-[#1C1C1E]">
                 {activeRoutineName ?? t(locale, 'noActiveRoutine')}
               </h2>
             </div>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#E8F3F3] text-accent-dark">
+              <Dumbbell aria-hidden="true" size={23} />
+            </div>
           </div>
 
-          <div className="rounded-2xl bg-[#F2F2F7] px-3.5 py-3">
-            <p className="text-sm font-bold text-[#6E6E73]">{t(locale, 'todaysPlan')}</p>
-            <p className="mt-1.5 flex items-center gap-2 text-lg font-black text-[#1C1C1E]">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-accent-dark" />
-              {planLabel}
+          <div className="rounded-2xl bg-[#10201F] px-4 py-3.5 text-white shadow-[0_12px_24px_rgba(16,32,31,0.14)]">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-black uppercase tracking-wide text-white/65">{t(locale, 'todayRecommendation')}</p>
+            </div>
+            <p className="mt-2 flex items-center gap-2 text-[1.7rem] font-black leading-none">
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#2EC4B6]" />
+              {displayedPlanLabel}
             </p>
             {dailyRecommendation ? (
-              <p className="mt-1.5 text-xs font-bold leading-4 text-[#6E6E73]">
-                {t(locale, 'todayRecommendation')}: {dailyRecommendation.label} - {dailyRecommendationReasonLabel(dailyRecommendation.reason, locale)}
+              <p className="mt-2 text-sm font-semibold leading-5 text-white/72">
+                {dailyRecommendationReasonLabel(dailyRecommendation.reason, locale)}
               </p>
+            ) : null}
+            {plannedExerciseNames.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {plannedExerciseNames.slice(0, 4).map((exerciseName) => (
+                  <span key={exerciseName} className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-white/85">
+                    {exerciseName}
+                  </span>
+                ))}
+                {plannedExerciseNames.length > 4 ? (
+                  <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-white/85">
+                    +{plannedExerciseNames.length - 4}
+                  </span>
+                ) : null}
+              </div>
             ) : null}
           </div>
 
-          <p className="text-sm font-medium leading-5 text-[#6E6E73]">
-            {inProgressSession
-              ? locale === 'ko' ? '진행 중인 운동을 이어서 기록합니다.' : 'An in-progress workout will continue from its saved routine day.'
-              : isTodayRestDay && activeRoutine
-                ? locale === 'ko' ? '휴식일에 운동한다면 다음 루틴을 선택하세요.' : 'Tap the next routine if you decide to train on this rest day.'
-                : activeRoutine
-                  ? locale === 'ko' ? '운동 사이클에 맞춰 오늘 루틴을 불러왔습니다. 시작 전 다른 루틴으로 바꿀 수 있습니다.' : 'Today is matched to your workout cycle. You can choose a different routine day before starting.'
-                  : locale === 'ko' ? '루틴 설정에서 첫 운동 계획을 만들어 보세요.' : 'Choose Routine Setup to create your first local plan.'}
-          </p>
+          {!activeRoutine ? (
+            <p className="text-sm font-semibold leading-5 text-[#6E6E73]">
+              {locale === 'ko' ? '루틴은 나중에 만들고, 지금은 바로 기록을 시작할 수 있습니다.' : 'You can start logging now and build a routine later.'}
+            </p>
+          ) : null}
 
           {isTodayRestDay && !inProgressSession && nextRoutineDay ? (
             <button
@@ -375,19 +395,6 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
                   {getRoutineDayDisplayName(routineDay, locale)}
                 </button>
               ))}
-            </div>
-          ) : null}
-
-          {plannedExerciseNames.length > 0 ? (
-            <div className="flex min-h-10 items-start gap-2 rounded-2xl bg-[#F2F2F7] px-3 py-2">
-              <p className="shrink-0 pt-0.5 text-sm font-black text-[#6E6E73]">{t(locale, 'plannedExercises')}</p>
-              <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-                {plannedExerciseNames.slice(0, 6).map((exerciseName) => (
-                  <span key={exerciseName} className="shrink-0 rounded-full border border-[#D1D1D6] bg-white px-2.5 py-1 text-[11px] font-bold leading-none text-[#1C1C1E]">
-                    {exerciseName}
-                  </span>
-                ))}
-              </div>
             </div>
           ) : null}
 
