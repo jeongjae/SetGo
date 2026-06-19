@@ -444,13 +444,16 @@ Completed startup work:
 - exercise log card extracted from `WorkoutPage`
 - cardio/running section extracted from `WorkoutPage`
 - floating rest timer extracted from `WorkoutPage`
+- Playwright mobile smoke tests added for Today and workout logging
+- exercise-level target recommendation model added with domain tests
+- Today-level workout recommendation model added with domain tests
 
 Current code direction:
 
-- continue shrinking `WorkoutPage` into focused orchestration
-- keep set entry compact, thumb-friendly, and iPhone-safe
-- move display-only workout UI into reusable components before larger interaction changes
-- preserve test/build pass after each step
+- finish the first functional recommendation path from Today into Workout mode
+- add missed/skipped workout handling to the daily recommendation model
+- persist recommendation snapshots with newly started workouts
+- keep test/build/e2e pass after each step
 
 ## Open Product Questions
 

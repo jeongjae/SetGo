@@ -16,8 +16,13 @@ import {
   getWorkoutSummariesForDate,
   type WorkoutSummary,
 } from '../db/workouts';
+import {
+  buildDailyWorkoutRecommendation,
+  type DailyWorkoutRecommendation,
+  type DailyWorkoutRecommendationReason,
+} from '../domain/dailyRecommendation';
 import { getExerciseName } from '../domain/exercises';
-import { getStoredLocale, t } from '../i18n/i18n';
+import { getStoredLocale, t, type AppLocale } from '../i18n/i18n';
 import type { CardioRecord, Routine, RoutineDay, WorkoutSession, WorkoutSessionKind } from '../types';
 import { formatDateKey } from '../utils/date';
 
@@ -31,6 +36,16 @@ function getRoutinePlanPrefix(routine: Routine | undefined, locale: 'ko' | 'en')
   const splitNumber = routine.name.match(/(\d+)[-\s]?Day/i)?.[1] ?? routine.name.match(/(\d+)분할/)?.[1];
   if (splitNumber) return locale === 'ko' ? `${splitNumber}분할 루틴` : `${splitNumber}-Day Routine`;
   return routine.name;
+}
+
+function dailyRecommendationReasonLabel(reason: DailyWorkoutRecommendationReason, locale: AppLocale): string {
+  if (reason === 'manualOverride') return t(locale, 'todayRecommendationManualOverride');
+  if (reason === 'cycleRoutine') return t(locale, 'todayRecommendationCycleRoutine');
+  if (reason === 'weeklyRoutine') return t(locale, 'todayRecommendationWeeklyRoutine');
+  if (reason === 'plannedRunning') return t(locale, 'todayRecommendationRunning');
+  if (reason === 'restDay') return t(locale, 'todayRecommendationRestDay');
+  if (reason === 'nextRoutineAfterLatestWorkout') return t(locale, 'todayRecommendationNextRoutine');
+  return t(locale, 'todayRecommendationNoRoutine');
 }
 
 export function todayWorkoutSummaryLabel(
@@ -72,6 +87,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const [nextRoutineDay, setNextRoutineDay] = useState<RoutineDay | undefined>();
   const [plannedExerciseNames, setPlannedExerciseNames] = useState<string[]>([]);
   const [recentRoutineWorkouts, setRecentRoutineWorkouts] = useState<WorkoutSummary[]>([]);
+  const [dailyRecommendation, setDailyRecommendation] = useState<DailyWorkoutRecommendation | undefined>();
   const [isTodayRestDay, setIsTodayRestDay] = useState(false);
   const [isTodayRunningPlan, setIsTodayRunningPlan] = useState(false);
   const [todayInProgressWorkouts, setTodayInProgressWorkouts] = useState<WorkoutSummary[]>([]);
@@ -105,6 +121,17 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         setInProgressSession(todayWorkout?.session);
         setTodayRoutineDay(todaySchedule.routineDay);
         setNextRoutineDay(nextDay);
+        const recommendation = buildDailyWorkoutRecommendation({
+          schedule: todaySchedule,
+          nextRoutineDay: nextDay,
+          hasActiveRoutine: Boolean(routine),
+          freeWorkoutLabel: t(locale, 'freeWorkout'),
+          runningLabel: locale === 'ko' ? '러닝' : 'Running',
+          restDayLabel: t(locale, 'restDay'),
+          noRoutineDayLabel: t(locale, 'noRoutineDayPlanned'),
+          getRoutineDayLabel: (routineDay) => getRoutineDayDisplayName(routineDay, locale),
+        });
+        setDailyRecommendation(recommendation);
 
         const seenRoutineDayIds = new Set<string>();
         const recentCompletedRoutineWorkouts = recentWorkouts
@@ -126,6 +153,10 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         setIsTodayRestDay(todaySchedule.isRestDay);
         setIsTodayRunningPlan(todaySchedule.kind === 'running');
         setTodayInProgressWorkouts(todayWorkouts.filter((summary) => summary.session.status === 'in_progress'));
+        setSelectedWorkoutKind((current) => (
+          todayWorkout?.session.entryKind
+            ?? (current === 'planned' ? recommendation.sessionKind : current)
+        ));
         setSelectedRoutineDayId((current) => {
           const scheduledRoutineDayId = todaySchedule.kind === 'routine' && !todaySchedule.isRestDay
             ? todaySchedule.routineDay?.id
@@ -133,6 +164,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
 
           return todayWorkout?.session.routineDayId
             ?? scheduledRoutineDayId
+            ?? recommendation.routineDay?.id
             ?? (days.some((day) => day.id === current) ? current : undefined);
         });
       } catch (error) {
@@ -253,6 +285,11 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-accent-dark" />
               {planLabel}
             </p>
+            {dailyRecommendation ? (
+              <p className="mt-1.5 text-xs font-bold leading-4 text-[#6E6E73]">
+                {t(locale, 'todayRecommendation')}: {dailyRecommendation.label} - {dailyRecommendationReasonLabel(dailyRecommendation.reason, locale)}
+              </p>
+            ) : null}
           </div>
 
           <p className="text-sm font-medium leading-5 text-[#6E6E73]">

@@ -159,6 +159,14 @@ const en = {
   statsWarningMuscleGap: '{muscle} was repeated within 48 hours.',
   statsWarningVolumeSpike: 'Weekly volume increased {change}% versus last week.',
   statsWarningHardSetRatio: 'Hard sets are {ratio}% of sets. Watch accumulated fatigue.',
+  todayRecommendation: 'Recommendation',
+  todayRecommendationManualOverride: 'Based on your date-specific plan.',
+  todayRecommendationCycleRoutine: 'Based on the active routine cycle.',
+  todayRecommendationWeeklyRoutine: 'Based on the weekly workout schedule.',
+  todayRecommendationRunning: 'Today is planned as a running day.',
+  todayRecommendationRestDay: 'Today is planned as a rest day.',
+  todayRecommendationNextRoutine: 'Rest day today. This is the next routine if you choose to train.',
+  todayRecommendationNoRoutine: 'No active routine yet, so free workout is the best start.',
 };
 
 const ko: typeof en = {
@@ -306,6 +314,14 @@ const ko: typeof en = {
   statsWarningMuscleGap: '{muscle} 부위가 48시간 미만 간격으로 반복되었습니다.',
   statsWarningVolumeSpike: '주간 볼륨이 전주 대비 {change}% 증가했습니다.',
   statsWarningHardSetRatio: 'Hard Set 비율이 {ratio}%입니다. 누적 피로를 확인하세요.',
+  todayRecommendation: '추천',
+  todayRecommendationManualOverride: '날짜별 계획에서 직접 지정한 운동입니다.',
+  todayRecommendationCycleRoutine: '활성 루틴의 반복 사이클을 기준으로 골랐습니다.',
+  todayRecommendationWeeklyRoutine: '주간 운동계획을 기준으로 골랐습니다.',
+  todayRecommendationRunning: '오늘은 러닝으로 계획되어 있습니다.',
+  todayRecommendationRestDay: '오늘은 휴식일로 계획되어 있습니다.',
+  todayRecommendationNextRoutine: '휴식일이지만 운동한다면 다음 루틴을 추천합니다.',
+  todayRecommendationNoRoutine: '활성 루틴이 없어 자유 운동으로 시작하는 것이 적절합니다.',
 };
 
 const messages = { ko, en } satisfies Record<AppLocale, Record<string, string>>;
