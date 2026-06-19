@@ -322,5 +322,17 @@ describe('routine plan seeding', () => {
       { weightKg: 62.5, reps: 8, rir: 2 },
       { weightKg: 62.5, reps: 8, rir: 2 },
     ]);
+    expect(seed.recommendationTargets).toEqual([{
+      planId: plan.id,
+      exerciseId: 'bench_press',
+      weightKg: 62.5,
+      reps: 8,
+      sets: 4,
+      rir: 2,
+      targetRepMin: 8,
+      targetRepMax: 10,
+      confidence: 'medium',
+      reason: 'Last session reached the top of the range.',
+    }]);
   });
 });
