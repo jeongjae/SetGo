@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, CalendarRange } from 'lucide-react';
+import { AlertTriangle, BarChart3, CalendarRange, Dumbbell, Target, TrendingUp } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { db } from '../db/db';
 import { getExerciseCategories, getExerciseName, isWarmupOnlyExercise } from '../domain/exercises';
@@ -261,6 +261,60 @@ function formatPct(value?: number): string {
   if (value === undefined) return '-';
   const sign = value > 0 ? '+' : '';
   return `${sign}${value.toFixed(0)}%`;
+}
+
+function formatKg(value: number): string {
+  return `${Math.round(value).toLocaleString()}kg`;
+}
+
+function signedTone(value?: number): string {
+  if (value === undefined) return 'text-[#8E8E93]';
+  if (value > 0) return 'text-[#159A91]';
+  if (value < 0) return 'text-[#FF9500]';
+  return 'text-[#6E6E73]';
+}
+
+function muscleTone(status: LoadStatus): string {
+  if (status === 'normal') return 'bg-[#34C759]';
+  if (status === 'high') return 'bg-[#FF3B30]';
+  if (status === 'caution') return 'bg-[#FF9500]';
+  return 'bg-[#8E8E93]';
+}
+
+function insightStatus(stats: StatsView): LoadStatus {
+  if (stats.warnings.length > 0 || stats.hardSetRatio > 70) return 'caution';
+  if (stats.workoutDays === 0 || stats.totalSets === 0) return 'low';
+  return 'normal';
+}
+
+function insightLabel(status: LoadStatus, locale: Locale): string {
+  if (locale === 'ko') {
+    if (status === 'normal') return '좋음';
+    if (status === 'high') return '과부하';
+    if (status === 'caution') return '점검';
+    return '부족';
+  }
+
+  if (status === 'normal') return 'Good';
+  if (status === 'high') return 'High';
+  if (status === 'caution') return 'Review';
+  return 'Low';
+}
+
+function insightMessage(stats: StatsView, locale: Locale): string {
+  const lowMuscles = stats.muscleStats.filter((muscle) => muscle.status === 'low');
+  const highMuscles = stats.muscleStats.filter((muscle) => muscle.status === 'high' || muscle.status === 'caution');
+
+  if (stats.warnings.length > 0) return stats.warnings[0];
+  if (lowMuscles.length > 0) {
+    const muscles = lowMuscles.slice(0, 2).map((muscle) => muscleLabels[locale][muscle.group]).join(', ');
+    return locale === 'ko' ? `${muscles} 볼륨을 우선 보강하세요.` : `Add priority volume for ${muscles}.`;
+  }
+  if (highMuscles.length > 0) {
+    const muscles = highMuscles.slice(0, 2).map((muscle) => muscleLabels[locale][muscle.group]).join(', ');
+    return locale === 'ko' ? `${muscles} 부하를 줄이고 회복을 확인하세요.` : `Reduce load and check recovery for ${muscles}.`;
+  }
+  return locale === 'ko' ? '이번 주 부하는 안정적인 범위입니다.' : 'This week is inside a stable load range.';
 }
 
 function decorateMuscleStat(stat: Omit<MuscleStat, 'status' | 'targetPct' | 'deficitSets' | 'excessSets'>): MuscleStat {
@@ -643,6 +697,244 @@ function Badge({ status, locale }: { status: LoadStatus; locale: Locale }) {
   return <span className={`rounded-lg px-2 py-0.5 text-[11px] font-bold uppercase ${className}`}>{labels[locale][status]}</span>;
 }
 
+function StatTile({
+  label,
+  value,
+  helper,
+  icon,
+  tone = 'text-[#1C1C1E]',
+}: {
+  label: string;
+  value: string;
+  helper?: string;
+  icon: ReactNode;
+  tone?: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-xl bg-[#F2F2F7] px-2.5 py-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[#8E8E93]">{icon}</span>
+        {helper ? <span className={`truncate text-[11px] font-black ${tone}`}>{helper}</span> : null}
+      </div>
+      <p className="mt-1 text-[11px] font-bold uppercase text-[#6E6E73]">{label}</p>
+      <p className={`mt-0.5 truncate text-lg font-black leading-none ${tone}`}>{value}</p>
+    </div>
+  );
+}
+
+function ReadinessPanel({ stats, locale }: { stats: StatsView; locale: Locale }) {
+  const status = insightStatus(stats);
+  const statusClass = status === 'normal'
+    ? 'bg-[#2EC4B6] text-white'
+    : status === 'caution'
+      ? 'bg-[#FF9500] text-white'
+      : 'bg-[#8E8E93] text-white';
+
+  return (
+    <section className="ios-card p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-black uppercase tracking-wide text-[#159A91]">
+            {locale === 'ko' ? '훈련 판정' : 'Training read'}
+          </p>
+          <h2 className="mt-1 text-xl font-black leading-tight text-[#1C1C1E]">
+            {locale === 'ko'
+              ? `${stats.workoutDays}일 / ${formatKg(stats.totalVolumeKg)}`
+              : `${stats.workoutDays}d / ${formatKg(stats.totalVolumeKg)}`}
+          </h2>
+          <p className="mt-1 line-clamp-2 text-xs font-bold leading-relaxed text-[#6E6E73]">
+            {insightMessage(stats, locale)}
+          </p>
+        </div>
+        <span className={`shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-black uppercase shadow-sm ${statusClass}`}>
+          {insightLabel(status, locale)}
+        </span>
+      </div>
+    </section>
+  );
+}
+
+function WeeklyLoadStrip({ weeks, locale }: { weeks: WeekStat[]; locale: Locale }) {
+  const maxVolume = Math.max(1, ...weeks.map((week) => week.volumeKg));
+  const latest = weeks[weeks.length - 1];
+  const previous = weeks[weeks.length - 2];
+  const latestChange = latest && previous ? pctChange(latest.volumeKg, previous.volumeKg) : undefined;
+
+  return (
+    <section className="ios-card p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '8주 부하' : '8-week load'}</h2>
+          <p className="mt-0.5 text-[11px] font-bold text-[#8E8E93]">
+            {latest ? `${latest.label} ${formatKg(latest.volumeKg)}` : '0kg'}
+          </p>
+        </div>
+        <span className={`text-sm font-black ${signedTone(latestChange)}`}>{formatPct(latestChange)}</span>
+      </div>
+      <div className="mt-2.5 flex h-16 items-end gap-1.5">
+        {weeks.map((week, index) => {
+          const isLatest = index === weeks.length - 1;
+          return (
+            <div key={week.key} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+              <div
+                className={`w-full rounded-t-md ${isLatest ? 'bg-[#2EC4B6]' : 'bg-[#D1D1D6]'}`}
+                style={{ height: `${Math.max(5, (week.volumeKg / maxVolume) * 48)}px` }}
+                aria-label={`${week.label} ${Math.round(week.volumeKg)}kg`}
+              />
+              <span className={`text-[9px] font-bold ${isLatest ? 'text-[#159A91]' : 'text-[#8E8E93]'}`}>{week.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function DailyLoadRail({ days, locale }: { days: DailyTrendStat[]; locale: Locale }) {
+  const maxStrength = Math.max(1, ...days.map((day) => day.strengthVolumeKg));
+  const maxCardio = Math.max(1, ...days.map((day) => day.cardioDistanceKm));
+
+  return (
+    <section className="ios-card p-3">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '최근 14일' : 'Last 14 days'}</h2>
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase text-[#8E8E93]">
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#34C759]" />kg</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#007AFF]" />km</span>
+        </div>
+      </div>
+      <div className="mt-2 grid grid-cols-[repeat(14,minmax(0,1fr))] gap-1">
+        {days.map((day) => {
+          const strengthHeight = day.strengthVolumeKg > 0 ? Math.max(8, (day.strengthVolumeKg / maxStrength) * 38) : 0;
+          const cardioHeight = day.cardioDistanceKm > 0 ? Math.max(5, (day.cardioDistanceKm / maxCardio) * 22) : 0;
+          const hasWork = strengthHeight > 0 || cardioHeight > 0;
+
+          return (
+            <div key={day.date} className="flex min-w-0 flex-col items-center gap-1">
+              <div className={`flex h-12 w-full flex-col justify-end overflow-hidden rounded-md ${hasWork ? 'bg-white' : 'bg-[#F2F2F7]'}`}>
+                {cardioHeight > 0 ? <span className="w-full bg-[#007AFF]" style={{ height: `${cardioHeight}px` }} /> : null}
+                {strengthHeight > 0 ? <span className="w-full bg-[#34C759]" style={{ height: `${strengthHeight}px` }} /> : null}
+              </div>
+              <span className="text-[8px] font-bold text-[#8E8E93]">{day.label.split('/')[1]}</span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function MuscleBalancePanel({ muscles, locale }: { muscles: MuscleStat[]; locale: Locale }) {
+  const sorted = muscles
+    .slice()
+    .sort((a, b) => {
+      const statusRank = { high: 0, caution: 1, low: 2, normal: 3 } satisfies Record<LoadStatus, number>;
+      return statusRank[a.status] - statusRank[b.status] || b.sets - a.sets;
+    });
+
+  return (
+    <section className="ios-card p-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '부위 밸런스' : 'Muscle balance'}</h2>
+        <span className="text-[11px] font-bold text-[#8E8E93]">{locale === 'ko' ? '목표 대비 세트' : 'sets vs target'}</span>
+      </div>
+      <div className="mt-2.5 grid gap-2">
+        {sorted.map((muscle) => {
+          const minPct = Math.min(100, Math.round((muscle.recommendedMin / Math.max(1, muscle.recommendedMax)) * 100));
+          const fillPct = muscle.sets > 0 ? Math.max(3, muscle.targetPct) : 0;
+          const targetLabel = `${muscle.sets}/${muscle.recommendedMin}-${muscle.recommendedMax}`;
+
+          return (
+            <div key={muscle.group} className="grid grid-cols-[4.3rem_1fr_4.2rem] items-center gap-2">
+              <span className="truncate text-xs font-black text-[#1C1C1E]">{muscleLabels[locale][muscle.group]}</span>
+              <div
+                className="relative h-2 rounded-full bg-[#E5E5EA]"
+                aria-label={`${muscleLabels[locale][muscle.group]} ${targetLabel}`}
+              >
+                <span
+                  className="absolute top-0 h-2 rounded-r-full bg-white/55"
+                  style={{ left: `${minPct}%`, width: `${100 - minPct}%` }}
+                />
+                <span
+                  className="absolute top-[-3px] z-10 h-4 w-0.5 rounded-full bg-[#1C1C1E]/45"
+                  style={{ left: `calc(${minPct}% - 1px)` }}
+                />
+                <span
+                  className={`absolute left-0 top-0 z-0 h-2 rounded-full ${muscleTone(muscle.status)}`}
+                  style={{ width: `${fillPct}%` }}
+                />
+              </div>
+              <span className="text-right text-[11px] font-black tabular-nums text-[#1C1C1E]">{targetLabel}</span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ActionPanel({ stats, locale }: { stats: StatsView; locale: Locale }) {
+  return (
+    <section className="ios-card p-3">
+      <div className="flex items-center gap-2">
+        <AlertTriangle aria-hidden="true" size={16} className={stats.warnings.length > 0 ? 'text-[#FF3B30]' : 'text-[#34C759]'} />
+        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '다음 액션' : 'Next actions'}</h2>
+      </div>
+      <div className="mt-2 grid gap-1.5">
+        {stats.nextWeekSuggestions.map((suggestion) => (
+          <p key={suggestion} className="rounded-lg bg-[#F2F2F7] px-2.5 py-2 text-xs font-bold leading-relaxed text-[#1C1C1E]">
+            {suggestion}
+          </p>
+        ))}
+        {stats.warnings.slice(0, 2).map((warning) => (
+          <p key={warning} className="rounded-lg bg-[#FFF2F2] px-2.5 py-2 text-xs font-bold leading-relaxed text-[#C92A2A]">
+            {warning}
+          </p>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PerformanceCompactList({
+  performances,
+  locale,
+  labels,
+}: {
+  performances: ExercisePerformance[];
+  locale: Locale;
+  labels: {
+    noPerformance: string;
+    recentVolume: string;
+    estimatedOneRm: string;
+  };
+}) {
+  return (
+    <section className="ios-card p-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '운동 성과 Top 5' : 'Top exercise signals'}</h2>
+        <span className="text-[11px] font-bold text-[#8E8E93]">{locale === 'ko' ? '최근 볼륨순' : 'recent volume'}</span>
+      </div>
+      <div className="mt-2 grid gap-2">
+        {performances.length === 0 ? (
+          <p className="py-4 text-center text-xs font-bold text-[#8E8E93]">{labels.noPerformance}</p>
+        ) : performances.slice(0, 5).map((performance, index) => (
+          <div key={performance.id} className="grid grid-cols-[1.25rem_1fr_auto] items-center gap-2 rounded-lg bg-[#F2F2F7] px-2.5 py-2">
+            <span className="text-center text-xs font-black text-[#8E8E93]">{index + 1}</span>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-black text-[#1C1C1E]">{performance.name}</p>
+              <p className="mt-0.5 text-[11px] font-bold text-[#6E6E73]">
+                {labels.recentVolume} {formatKg(performance.recentVolumeKg)} · {labels.estimatedOneRm} {performance.estimatedOneRmKg.toFixed(1)}kg
+              </p>
+            </div>
+            <span className={`text-xs font-black ${signedTone(performance.fourWeekChangePct)}`}>{formatPct(performance.fourWeekChangePct)}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function MiniBarChart({ weeks, metric }: { weeks: WeekStat[]; metric: 'sets' | 'workoutDays' }) {
   const maxValue = Math.max(1, ...weeks.map((week) => week[metric]));
   return (
@@ -894,15 +1186,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
     || stats.performances.length > 0
     || stats.dailyTrend.some((day) => day.strengthVolumeKg > 0 || day.cardioDistanceKm > 0)
     || stats.weeks.some((week) => week.volumeKg > 0 || week.sets > 0 || week.workoutDays > 0);
-  const latestWeek = stats.weeks[stats.weeks.length - 1];
-  const previousWeek = stats.weeks[stats.weeks.length - 2];
-  const latestWeekVolumeChange = latestWeek && previousWeek
-    ? pctChange(latestWeek.volumeKg, previousWeek.volumeKg)
-    : undefined;
   const activeMuscleCount = stats.muscleStats.filter((muscle) => muscle.sets > 0).length;
-  const warningSummary = stats.warnings.length > 0
-    ? (locale === 'ko' ? `${stats.warnings.length}\uAC1C \uD655\uC778 \uD544\uC694` : `${stats.warnings.length} items to review`)
-    : c.noWarnings;
 
   return (
     <section className="ios-page">
@@ -937,105 +1221,46 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
           </section>
         </div>
       ) : (
-        <div className="inner-scroll min-h-0 space-y-2.5 pr-0.5">
-          <section className="ios-card p-3.5 space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
-                  {locale === 'ko' ? '\uC774\uBC88 \uC8FC \uC694\uC57D' : 'This Week'}
-                </p>
-                <h2 className="mt-0.5 text-base font-black text-[#1C1C1E]">
-                  {tf(locale, 'statsWorkoutDaysValue', { days: stats.workoutDays })} / {Math.round(stats.totalVolumeKg).toLocaleString()}kg
-                </h2>
-              </div>
-              <div className="rounded-xl px-3 py-2 text-right bg-[#F2F2F7] border border-black/5">
-                <p className="text-[11px] font-bold text-[#6E6E73] uppercase">{c.weekOverWeek}</p>
-                <p className="text-sm font-black text-[#1C1C1E]">{formatPct(stats.weekOverWeekPct)}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                [c.totalSets, `${stats.totalSets}`],
-                [c.hardSets, `${stats.hardSets}`],
-                [c.hardSetRatio, `${stats.hardSetRatio.toFixed(0)}%`],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-xl border border-black/5 bg-[#F2F2F7] px-2 py-2 text-center">
-                  <p className="text-[11px] font-bold text-[#6E6E73] uppercase">{label}</p>
-                  <p className="mt-1 text-base font-black text-[#1C1C1E]">{value}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+        <div className="inner-scroll min-h-0 space-y-2 pr-0.5">
+          <ReadinessPanel stats={stats} locale={locale} />
 
-          <section className="ios-card p-3.5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-black text-[#1C1C1E]">{c.dailyTrend}</h2>
-              <span className="text-xs font-semibold text-[#8E8E93]">{locale === 'ko' ? '\uCD5C\uADFC 2\uC8FC' : 'Last 2 weeks'}</span>
-            </div>
-            <DailyTrendChart days={stats.dailyTrend} locale={locale} />
-          </section>
+          <div className="grid grid-cols-3 gap-2">
+            <StatTile
+              label={c.totalSets}
+              value={`${stats.totalSets}`}
+              icon={<Dumbbell aria-hidden="true" size={15} />}
+            />
+            <StatTile
+              label={c.hardSets}
+              value={`${stats.hardSets}`}
+              helper={`${stats.hardSetRatio.toFixed(0)}%`}
+              icon={<Target aria-hidden="true" size={15} />}
+              tone={stats.hardSetRatio > 70 ? 'text-[#FF9500]' : 'text-[#1C1C1E]'}
+            />
+            <StatTile
+              label={c.weekOverWeek}
+              value={formatPct(stats.weekOverWeekPct)}
+              icon={<TrendingUp aria-hidden="true" size={15} />}
+              tone={signedTone(stats.weekOverWeekPct)}
+            />
+          </div>
 
-          <section className="ios-card p-3.5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-black text-[#1C1C1E]">{c.recentTrend}</h2>
-              <span className="text-xs font-semibold text-[#8E8E93]">{locale === 'ko' ? '\uBCFC\uB968' : 'Volume'}</span>
-            </div>
-            <MiniLineChart weeks={stats.weeks} locale={locale} peakLabel={c.peak} />
-            {latestWeek ? (
-              <p className="rounded-xl bg-[#F2F2F7] px-3.5 py-3 text-xs font-medium leading-relaxed text-[#6E6E73]">
-                {tf(locale, 'statsTrendSummaryText', {
-                  week: latestWeek.label,
-                  days: latestWeek.workoutDays,
-                  sets: latestWeek.sets,
-                  volume: Math.round(latestWeek.volumeKg).toLocaleString(),
-                  change: formatPct(latestWeekVolumeChange),
-                })}
-              </p>
-            ) : null}
-          </section>
+          <DailyLoadRail days={stats.dailyTrend} locale={locale} />
+          <WeeklyLoadStrip weeks={stats.weeks} locale={locale} />
+          <MuscleBalancePanel muscles={stats.muscleStats} locale={locale} />
+          <ActionPanel stats={stats} locale={locale} />
+          <PerformanceCompactList
+            performances={stats.performances}
+            locale={locale}
+            labels={{
+              noPerformance: c.noPerformance,
+              recentVolume: c.recentVolume,
+              estimatedOneRm: c.estimatedOneRm,
+            }}
+          />
 
-          <section className="ios-card p-3.5 space-y-3">
-            <div className="flex items-center gap-2.5">
-              <AlertTriangle aria-hidden="true" size={17} className={stats.warnings.length > 0 ? 'text-danger' : 'text-[#34C759]'} />
-              <div>
-                <h2 className="text-sm font-black text-[#1C1C1E]">{c.recoveryWarnings}</h2>
-                <p className={`mt-0.5 text-xs font-bold ${stats.warnings.length > 0 ? 'text-danger' : 'text-[#34C759]'}`}>
-                  {warningSummary}
-                </p>
-              </div>
-            </div>
-            {stats.warnings.length > 0 ? (
-              <p className="mt-1 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2.5 text-xs font-bold leading-relaxed text-rose-600">
-                {stats.warnings[0]}
-              </p>
-            ) : null}
-            {stats.warnings.length > 1 ? (
-              <details className="mt-2 rounded-xl border border-black/5 bg-[#F2F2F7] px-3 py-2">
-                <summary className="cursor-pointer text-xs font-bold text-[#159A91]">
-                  {locale === 'ko' ? '\uC804\uCCB4 \uACBD\uACE0 \uBCF4\uAE30' : 'View all warnings'}
-                </summary>
-                <div className="mt-2 grid gap-2">
-                  {stats.warnings.slice(1).map((warning) => (
-                    <p key={warning} className="text-xs font-bold leading-relaxed text-rose-600">{warning}</p>
-                  ))}
-                </div>
-              </details>
-            ) : null}
-          </section>
-
-          <section className="ios-card p-3.5 space-y-2.5">
-            <h2 className="text-sm font-black text-[#1C1C1E]">{t(locale, 'statsNextWeekPlan')}</h2>
-            <div className="grid gap-2">
-              {stats.nextWeekSuggestions.map((suggestion) => (
-                <p key={suggestion} className="rounded-xl border border-[#2EC4B6]/20 bg-[#2EC4B6]/5 px-3 py-2 text-xs font-bold leading-relaxed text-accent-dark">
-                  {suggestion}
-                </p>
-              ))}
-            </div>
-          </section>
-
-          <p className="px-1 pt-1 text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
-            {locale === 'ko' ? '\uC138\uBD80 \uBD84\uC11D' : 'Details'}
+          <p className="px-1 pt-1 text-xs font-black uppercase tracking-wide text-[#8E8E93]">
+            {locale === 'ko' ? '상세 분석' : 'Details'}
           </p>
 
           <DetailSection
