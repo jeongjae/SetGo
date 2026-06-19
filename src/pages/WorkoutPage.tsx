@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, BarChart3, Check, ChevronLeft, ClipboardList, Clock3, Copy, History, Plus, RefreshCw, Trash2, Trophy } from 'lucide-react';
+import { ArrowDown, ArrowUp, BarChart3, Check, ChevronLeft, ClipboardList, Clock3, Copy, History, MoreHorizontal, Plus, RefreshCw, Trash2, Trophy } from 'lucide-react';
 import { useEffect, useRef, useState, useMemo, type FocusEvent } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { ExerciseHistoryModal } from '../components/ExerciseHistoryModal';
@@ -236,6 +236,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
   const [memoOpenExercises, setMemoOpenExercises] = useState<Record<string, boolean>>({});
+  const [actionOpenExercises, setActionOpenExercises] = useState<Record<string, boolean>>({});
   const [savedRoutines, setSavedRoutines] = useState<Routine[]>([]);
   const [historyRoutineId, setHistoryRoutineId] = useState('');
   const [historyRoutineDayId, setHistoryRoutineDayId] = useState('');
@@ -1026,6 +1027,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
             const completedCount = log.sets.filter((s) => s.isCompleted).length;
             const totalCount = log.sets.length;
             const isMemoOpen = !!memoOpenExercises[log.workoutExercise.id];
+            const isActionsOpen = !!actionOpenExercises[log.workoutExercise.id];
             const hasExerciseMemo = Boolean(log.workoutExercise.memo?.trim());
 
             return (
@@ -1105,80 +1107,103 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 {/* Accordion body */}
                 {isExpanded && (
                   <div className={`border-t border-[#E5E5EA] bg-white px-3 ${isKeyboardOpen ? 'pb-2 pt-1.5' : 'pb-3 pt-2'}`}>
-                    {/* Exercise actions */}
-                    <div className={`flex items-center justify-between gap-3 transition-all ${isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0' : 'max-h-10 opacity-100'}`}>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => void handleMoveExercise(log.workoutExercise.id, -1)}
-                          disabled={index === 0}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all duration-200 hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
-                          aria-label={`Move ${log.exercise.nameKo} up`}
-                        >
-                          <ArrowUp aria-hidden="true" size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleMoveExercise(log.workoutExercise.id, 1)}
-                          disabled={index === logs.length - 1}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all duration-200 hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
-                          aria-label={`Move ${log.exercise.nameKo} down`}
-                        >
-                          <ArrowDown aria-hidden="true" size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleDeleteExercise(log)}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFECEC] text-danger transition-all duration-200 active:scale-95"
-                          aria-label={`Delete ${log.exercise.nameKo}`}
-                        >
-                          <Trash2 aria-hidden="true" size={15} />
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-1.5">
+                    {/* Exercise management stays tucked away during logging. */}
+                    <div className={`transition-all ${isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0' : 'max-h-20 opacity-100'}`}>
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => {
-                            setMemoOpenExercises((current) => ({
+                            setActionOpenExercises((current) => ({
                               ...current,
                               [log.workoutExercise.id]: !current[log.workoutExercise.id],
                             }));
                           }}
-                          className={`flex min-h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-all active:scale-95 duration-200 ${
-                            isMemoOpen || hasExerciseMemo
+                          className={`flex min-h-8 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-all active:scale-95 ${
+                            isActionsOpen
                               ? 'border-transparent bg-[#E8F3F3] text-accent-dark'
                               : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
                           }`}
                         >
-                          <ClipboardList aria-hidden="true" size={13} />
-                          <span>{locale === 'ko' ? '\uBA54\uBAA8' : 'Memo'}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setReplacingWorkoutExerciseId((current) => (
-                              current === log.workoutExercise.id ? undefined : log.workoutExercise.id
-                            ));
-                            resetExerciseFinderState();
-                          }}
-                          className={`flex min-h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-all active:scale-95 duration-200 ${
-                            replacingWorkoutExerciseId === log.workoutExercise.id
-                              ? 'border-transparent bg-[#F2F2F7] text-[#6E6E73]'
-                              : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
-                          }`}
-                        >
-                          <RefreshCw aria-hidden="true" size={12} className={replacingWorkoutExerciseId === log.workoutExercise.id ? 'animate-spin' : ''} />
-                          <span>{locale === 'ko' ? '\uAD50\uCCB4' : 'Replace'}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedHistoryExerciseId(log.exercise.id)}
-                          className="flex min-h-9 items-center gap-1.5 rounded-xl bg-[#E8F3F3] px-3 text-xs font-bold text-accent-dark transition-all hover:bg-[#D8EFEF] active:scale-95"
-                        >
-                          <BarChart3 aria-hidden="true" size={13} />
-                          <span>{locale === 'ko' ? '\uAE30\uB85D' : 'History'}</span>
+                          <MoreHorizontal aria-hidden="true" size={14} />
+                          <span>{locale === 'ko' ? '\uAD00\uB9AC' : 'Manage'}</span>
                         </button>
                       </div>
+
+                      {isActionsOpen ? (
+                        <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => void handleMoveExercise(log.workoutExercise.id, -1)}
+                            disabled={index === 0}
+                            className="flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] transition-all duration-200 hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                            aria-label={`Move ${log.exercise.nameKo} up`}
+                          >
+                            <ArrowUp aria-hidden="true" size={14} />
+                            <span>{locale === 'ko' ? '\uC704' : 'Up'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleMoveExercise(log.workoutExercise.id, 1)}
+                            disabled={index === logs.length - 1}
+                            className="flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] transition-all duration-200 hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                            aria-label={`Move ${log.exercise.nameKo} down`}
+                          >
+                            <ArrowDown aria-hidden="true" size={14} />
+                            <span>{locale === 'ko' ? '\uC544\uB798' : 'Down'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDeleteExercise(log)}
+                            className="flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-[#FFECEC] px-2 text-xs font-bold text-danger transition-all duration-200 active:scale-95"
+                            aria-label={`Delete ${log.exercise.nameKo}`}
+                          >
+                            <Trash2 aria-hidden="true" size={14} />
+                            <span>{locale === 'ko' ? '\uC0AD\uC81C' : 'Delete'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMemoOpenExercises((current) => ({
+                                ...current,
+                                [log.workoutExercise.id]: !current[log.workoutExercise.id],
+                              }));
+                            }}
+                            className={`flex min-h-9 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs font-bold transition-all active:scale-95 duration-200 ${
+                              isMemoOpen || hasExerciseMemo
+                                ? 'border-transparent bg-[#E8F3F3] text-accent-dark'
+                                : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
+                            }`}
+                          >
+                            <ClipboardList aria-hidden="true" size={14} />
+                            <span>{locale === 'ko' ? '\uBA54\uBAA8' : 'Memo'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReplacingWorkoutExerciseId((current) => (
+                                current === log.workoutExercise.id ? undefined : log.workoutExercise.id
+                              ));
+                              resetExerciseFinderState();
+                            }}
+                            className={`flex min-h-9 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs font-bold transition-all active:scale-95 duration-200 ${
+                              replacingWorkoutExerciseId === log.workoutExercise.id
+                                ? 'border-transparent bg-[#F2F2F7] text-[#6E6E73]'
+                                : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
+                            }`}
+                          >
+                            <RefreshCw aria-hidden="true" size={13} className={replacingWorkoutExerciseId === log.workoutExercise.id ? 'animate-spin' : ''} />
+                            <span>{locale === 'ko' ? '\uAD50\uCCB4' : 'Replace'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedHistoryExerciseId(log.exercise.id)}
+                            className="flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-[#E8F3F3] px-2 text-xs font-bold text-accent-dark transition-all hover:bg-[#D8EFEF] active:scale-95"
+                          >
+                            <BarChart3 aria-hidden="true" size={14} />
+                            <span>{locale === 'ko' ? '\uAE30\uB85D' : 'History'}</span>
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
 
                     {isMemoOpen ? (
