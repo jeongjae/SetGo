@@ -1,7 +1,7 @@
-import { Clock3 } from 'lucide-react';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { ExerciseHistoryModal } from '../components/ExerciseHistoryModal';
+import { FloatingRestTimer } from '../components/workout/FloatingRestTimer';
 import { ExerciseLogCard } from '../components/workout/ExerciseLogCard';
 import { WorkoutCardioSection } from '../components/workout/WorkoutCardioSection';
 import { WorkoutFooterActions } from '../components/workout/WorkoutFooterActions';
@@ -1048,60 +1048,25 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         onSkipWorkout={() => void handleSkipWorkout()}
       />
 
-      {/* Floating rest timer */}
-      {isRestTimerActive && restRemaining > 0 && !isKeyboardOpen && (
-        <div className="fixed bottom-[4.5rem] left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-yellow-400 bg-yellow-200/95 px-3.5 py-3 shadow-2xl shadow-yellow-500/20 backdrop-blur-md transition-all duration-300 animate-fade-in">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-300 text-yellow-950 animate-pulse">
-                <Clock3 size={16} />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-yellow-950">{t(locale, 'resting')}</p>
-                <p className="text-lg font-black text-yellow-950 tracking-wider font-mono">
-                  {formatCountdownSeconds(restRemaining)}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setRestDuration((prev) => prev + 30);
-                }}
-                className="flex h-8 items-center justify-center rounded-lg border border-yellow-500 bg-yellow-50 px-2.5 text-xs font-bold text-yellow-950 transition-all active:scale-95 active:bg-yellow-300"
-              >
-                +30s
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setRestDuration((prev) => Math.max(1, prev - 30));
-                }}
-                className="flex h-8 items-center justify-center rounded-lg border border-yellow-500 bg-yellow-50 px-2.5 text-xs font-bold text-yellow-950 transition-all active:scale-95 active:bg-yellow-300"
-              >
-                -30s
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsRestTimerActive(false);
-                  setRestRemaining(0);
-                }}
-                className="flex h-8 items-center justify-center rounded-lg border border-danger/45 bg-danger/15 px-2.5 text-xs font-black text-danger transition-all hover:bg-danger/25 active:scale-95"
-              >
-                {t(locale, 'skip')}
-              </button>
-            </div>
-          </div>
-          <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-yellow-100">
-            <div
-              className="h-full bg-yellow-600 transition-all duration-500 ease-out"
-              style={{ width: `${(restRemaining / restDuration) * 100}%` }}
-            />
-          </div>
-        </div>
-      )}
+      {isRestTimerActive && restRemaining > 0 && !isKeyboardOpen ? (
+        <FloatingRestTimer
+          label={t(locale, 'resting')}
+          skipLabel={t(locale, 'skip')}
+          remainingSeconds={restRemaining}
+          durationSeconds={restDuration}
+          formatCountdownSeconds={formatCountdownSeconds}
+          onIncreaseDuration={() => {
+            setRestDuration((prev) => prev + 30);
+          }}
+          onDecreaseDuration={() => {
+            setRestDuration((prev) => Math.max(1, prev - 30));
+          }}
+          onSkip={() => {
+            setIsRestTimerActive(false);
+            setRestRemaining(0);
+          }}
+        />
+      ) : null}
       {selectedHistoryExerciseId ? (
         <ExerciseHistoryModal
           exerciseId={selectedHistoryExerciseId}
