@@ -103,6 +103,10 @@ export type RoutineExercisePlan = {
   plannedSets?: number;
   plannedRir?: number;
   plannedRestSeconds?: number;
+  targetRepMin?: number;
+  targetRepMax?: number;
+  progressionStyle?: 'compound' | 'isolation' | 'bodyweight' | 'stable';
+  preferredWeightIncrementKg?: number;
   note?: string;
 };
 

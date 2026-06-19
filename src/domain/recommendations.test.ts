@@ -1,0 +1,121 @@
+import { describe, expect, it } from 'vitest';
+import { recommendExerciseTarget, resolveTargetRepRange, type RecentExerciseSession } from './recommendations';
+
+function session(date: string, sets: RecentExerciseSession['sets']): RecentExerciseSession {
+  return { date, sets };
+}
+
+describe('exercise target recommendations', () => {
+  it('uses the routine target when there is no completed history', () => {
+    expect(recommendExerciseTarget({
+      plan: {
+        plannedWeightKg: 60,
+        plannedReps: 10,
+        plannedSets: 3,
+        plannedRir: 2,
+      },
+      recentSessions: [],
+    })).toMatchObject({
+      weightKg: 60,
+      reps: 10,
+      sets: 3,
+      rir: 2,
+      confidence: 'low',
+    });
+  });
+
+  it('increases compound weight after all working sets reach the top of range with controlled RIR', () => {
+    expect(recommendExerciseTarget({
+      plan: {
+        plannedWeightKg: 60,
+        plannedReps: 10,
+        targetRepMin: 8,
+        targetRepMax: 10,
+        progressionStyle: 'compound',
+      },
+      recentSessions: [
+        session('2026-06-18', [
+          { weightKg: 60, reps: 10, rir: 2, isCompleted: true },
+          { weightKg: 60, reps: 10, rir: 2, isCompleted: true },
+          { weightKg: 60, reps: 10, rir: 2, isCompleted: true },
+        ]),
+      ],
+    })).toMatchObject({
+      weightKg: 62.5,
+      reps: 8,
+      sets: 3,
+      rir: 2,
+      confidence: 'medium',
+    });
+  });
+
+  it('holds weight when recent working sets are inside the target range', () => {
+    expect(recommendExerciseTarget({
+      plan: {
+        plannedWeightKg: 60,
+        plannedReps: 10,
+        targetRepMin: 8,
+        targetRepMax: 10,
+        progressionStyle: 'compound',
+      },
+      recentSessions: [
+        session('2026-06-18', [
+          { weightKg: 60, reps: 9, rir: 2, isCompleted: true },
+          { weightKg: 60, reps: 8, rir: 2, isCompleted: true },
+        ]),
+      ],
+    })).toMatchObject({
+      weightKg: 60,
+      reps: 9,
+      sets: 3,
+      confidence: 'medium',
+    });
+  });
+
+  it('prefers rep progression for isolation exercises before weight jumps', () => {
+    expect(recommendExerciseTarget({
+      plan: {
+        plannedWeightKg: 12,
+        plannedReps: 12,
+        targetRepMin: 10,
+        targetRepMax: 12,
+        progressionStyle: 'isolation',
+      },
+      recentSessions: [
+        session('2026-06-18', [
+          { weightKg: 12, reps: 10, rir: 2, isCompleted: true },
+          { weightKg: 12, reps: 10, rir: 2, isCompleted: true },
+        ]),
+      ],
+    })).toMatchObject({
+      weightKg: 12,
+      reps: 11,
+    });
+  });
+
+  it('reduces weight after missing the low end of range at max effort', () => {
+    expect(recommendExerciseTarget({
+      plan: {
+        plannedWeightKg: 100,
+        plannedReps: 8,
+        targetRepMin: 6,
+        targetRepMax: 8,
+        progressionStyle: 'compound',
+      },
+      recentSessions: [
+        session('2026-06-18', [
+          { weightKg: 100, reps: 6, rir: 1, isCompleted: true },
+          { weightKg: 100, reps: 5, rir: 0, isCompleted: true },
+        ]),
+      ],
+    })).toMatchObject({
+      weightKg: 97.5,
+      reps: 6,
+      confidence: 'medium',
+    });
+  });
+
+  it('derives a default rep range from the planned reps', () => {
+    expect(resolveTargetRepRange({ plannedReps: 10 })).toEqual({ min: 8, max: 10 });
+  });
+});

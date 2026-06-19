@@ -4,6 +4,7 @@ import type { CardioRecord, ExerciseMaster, RoutineDay, RoutineExercisePlan, Wor
 import { formatDateKey, getTimeBand } from '../utils/date';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg, calculateSessionStrengthVolumeKg } from '../domain/volume';
 import { isWarmupOnlyExercise } from '../domain/exercises';
+import { recommendExerciseTarget, type ExerciseTargetRecommendation, type RecentExerciseSession } from '../domain/recommendations';
 
 export type ActiveWorkout = {
   session: WorkoutSession;
@@ -24,6 +25,7 @@ export type WorkoutExerciseLog = {
   previousSets: WorkoutSet[];
   pastBestWeight?: number;
   pastBestVolume?: number;
+  targetRecommendation?: ExerciseTargetRecommendation;
 };
 
 export type WorkoutStartKind = WorkoutSessionKind;
@@ -268,6 +270,7 @@ export function createWorkoutExerciseSeed(
   sessionId: string,
   plans: RoutineExercisePlan[],
   exerciseById: Map<string, ExerciseMaster | undefined>,
+  recommendationByPlanId: Map<string, ExerciseTargetRecommendation> = new Map(),
 ): { workoutExercises: WorkoutExercise[]; workoutSets: WorkoutSet[] } {
   const workoutExercises: WorkoutExercise[] = [];
   const workoutSets: WorkoutSet[] = [];
@@ -277,6 +280,8 @@ export function createWorkoutExerciseSeed(
     const plannedSets = Math.max(1, plan.plannedSets ?? 3);
     const exercise = exerciseById.get(plan.exerciseId);
     const isWarmup = isWarmupOnlyExercise(exercise);
+    const recommendation = recommendationByPlanId.get(plan.id);
+    const targetSets = Math.max(1, recommendation?.sets ?? plannedSets);
 
     workoutExercises.push({
       id: workoutExerciseId,
@@ -287,19 +292,95 @@ export function createWorkoutExerciseSeed(
       totalVolumeKg: 0,
       restSeconds: plan.plannedRestSeconds ?? 90,
     });
-    workoutSets.push(...Array.from({ length: plannedSets }, (_, setIndex) => ({
+    workoutSets.push(...Array.from({ length: targetSets }, (_, setIndex) => ({
       id: `${workoutExerciseId}_set_${setIndex + 1}`,
       workoutExerciseId,
       setNo: setIndex + 1,
-      weightKg: plan.plannedWeightKg ?? 0,
-      reps: plan.plannedReps ?? 0,
-      rir: plan.plannedRir,
+      weightKg: recommendation?.weightKg ?? plan.plannedWeightKg ?? 0,
+      reps: recommendation?.reps ?? plan.plannedReps ?? 0,
+      rir: recommendation?.rir ?? plan.plannedRir,
       isCompleted: false,
       isWarmup,
     })));
   });
 
   return { workoutExercises, workoutSets };
+}
+
+async function getRecentExerciseSessions(
+  currentSessionId: string,
+  exerciseId: string,
+  limit = 5,
+): Promise<RecentExerciseSession[]> {
+  const currentSession = await db.workoutSessions.get(currentSessionId);
+  const currentStartedAt = currentSession?.startedAt ?? new Date().toISOString();
+  const workoutExercises = await db.workoutExercises
+    .where('exerciseId')
+    .equals(exerciseId)
+    .filter((item) => item.sessionId !== currentSessionId)
+    .toArray();
+
+  const candidates = await Promise.all(workoutExercises.map(async (workoutExercise) => {
+    const [session, sets] = await Promise.all([
+      db.workoutSessions.get(workoutExercise.sessionId),
+      db.workoutSets.where('workoutExerciseId').equals(workoutExercise.id).sortBy('setNo'),
+    ]);
+
+    return { session, sets };
+  }));
+
+  return candidates
+    .filter((candidate): candidate is { session: WorkoutSession; sets: WorkoutSet[] } => (
+      candidate.session !== undefined
+      && candidate.session.status === 'completed'
+      && candidate.session.startedAt !== undefined
+      && candidate.session.startedAt < currentStartedAt
+      && candidate.sets.some((set) => set.isCompleted)
+    ))
+    .sort((a, b) => (b.session.startedAt ?? '').localeCompare(a.session.startedAt ?? ''))
+    .slice(0, limit)
+    .map((candidate) => ({
+      date: candidate.session.date,
+      sets: candidate.sets,
+    }));
+}
+
+async function getPlanRecommendation(
+  sessionId: string,
+  plan: RoutineExercisePlan,
+  exercise: ExerciseMaster | undefined,
+): Promise<ExerciseTargetRecommendation> {
+  const recentSessions = await getRecentExerciseSessions(sessionId, plan.exerciseId);
+  return recommendExerciseTarget({ plan, recentSessions, exercise });
+}
+
+async function getTargetRecommendationForWorkoutExercise(
+  session: WorkoutSession,
+  workoutExercise: WorkoutExercise,
+  exercise: ExerciseMaster,
+  currentSets: WorkoutSet[],
+): Promise<ExerciseTargetRecommendation> {
+  const routinePlan = session.routineDayId
+    ? await db.routineExercisePlans
+      .where('routineDayId')
+      .equals(session.routineDayId)
+      .filter((plan) => plan.exerciseId === workoutExercise.exerciseId)
+      .first()
+    : undefined;
+  const firstSet = currentSets[0];
+  const fallbackPlan: RoutineExercisePlan = {
+    id: `${workoutExercise.id}_target_plan`,
+    routineDayId: session.routineDayId ?? '',
+    exerciseId: workoutExercise.exerciseId,
+    order: workoutExercise.order,
+    plannedSets: Math.max(1, currentSets.length || 3),
+    plannedWeightKg: firstSet?.weightKg || undefined,
+    plannedReps: firstSet?.reps || 10,
+    plannedRir: firstSet?.rir ?? 2,
+    plannedRestSeconds: workoutExercise.restSeconds ?? 90,
+  };
+
+  return getPlanRecommendation(session.id, routinePlan ?? fallbackPlan, exercise);
 }
 
 async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayId?: string): Promise<void> {
@@ -310,7 +391,11 @@ async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayI
 
   const planExercises = await Promise.all(plans.map((plan) => db.exercises.get(plan.exerciseId)));
   const exerciseById = new Map(plans.map((plan, index) => [plan.exerciseId, planExercises[index]]));
-  const seed = createWorkoutExerciseSeed(sessionId, plans, exerciseById);
+  const recommendations = await Promise.all(
+    plans.map((plan, index) => getPlanRecommendation(sessionId, plan, planExercises[index])),
+  );
+  const recommendationByPlanId = new Map(plans.map((plan, index) => [plan.id, recommendations[index]]));
+  const seed = createWorkoutExerciseSeed(sessionId, plans, exerciseById, recommendationByPlanId);
 
   await db.transaction('rw', db.workoutExercises, db.workoutSets, async () => {
     await db.workoutExercises.bulkPut(seed.workoutExercises);
@@ -352,6 +437,7 @@ export async function getWorkoutSummariesForDate(date: string): Promise<WorkoutS
 
 export async function getWorkoutExerciseLogs(sessionId: string): Promise<WorkoutExerciseLog[]> {
   const workoutExercises = await db.workoutExercises.where('sessionId').equals(sessionId).sortBy('order');
+  const session = await db.workoutSessions.get(sessionId);
 
   return Promise.all(
     workoutExercises.map(async (workoutExercise) => {
@@ -366,6 +452,9 @@ export async function getWorkoutExerciseLogs(sessionId: string): Promise<Workout
 
       const prevRecord = await getPreviousExerciseRecord(workoutExercise.sessionId, workoutExercise.exerciseId);
       const pastBests = await getExercisePastBests(workoutExercise.sessionId, workoutExercise.exerciseId);
+      const targetRecommendation = session
+        ? await getTargetRecommendationForWorkoutExercise(session, workoutExercise, exercise, sets)
+        : undefined;
 
       return {
         workoutExercise,
@@ -374,6 +463,7 @@ export async function getWorkoutExerciseLogs(sessionId: string): Promise<Workout
         ...prevRecord,
         pastBestWeight: pastBests.bestWeight,
         pastBestVolume: pastBests.bestVolume,
+        targetRecommendation,
       };
     }),
   );
@@ -544,6 +634,16 @@ export async function addExerciseToWorkout(sessionId: string, exerciseId: string
 
   const isWarmup = isWarmupOnlyExercise(exercise);
   const workoutExerciseId = `${sessionId}_${exerciseId}_${Date.now()}`;
+  const recommendation = await getPlanRecommendation(sessionId, {
+    id: `${workoutExerciseId}_free_plan`,
+    routineDayId: '',
+    exerciseId,
+    order,
+    plannedSets: 3,
+    plannedReps: isWarmup ? 12 : 10,
+    plannedRir: isWarmup ? undefined : 2,
+    plannedRestSeconds: 90,
+  }, exercise);
   const workoutExercise: WorkoutExercise = {
     id: workoutExerciseId,
     sessionId,
@@ -554,13 +654,14 @@ export async function addExerciseToWorkout(sessionId: string, exerciseId: string
     restSeconds: 90,
   };
 
-  const sets: WorkoutSet[] = [1, 2, 3].map((setNo) => ({
+  const targetSetCount = Math.max(1, recommendation.sets);
+  const sets: WorkoutSet[] = Array.from({ length: targetSetCount }, (_, index) => index + 1).map((setNo) => ({
     id: `${workoutExerciseId}_set_${setNo}`,
     workoutExerciseId,
     setNo,
-    weightKg: 0,
-    reps: 0,
-    rir: undefined,
+    weightKg: recommendation.weightKg ?? 0,
+    reps: recommendation.reps ?? 0,
+    rir: recommendation.rir,
     isCompleted: false,
     isWarmup,
   }));
