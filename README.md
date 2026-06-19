@@ -61,9 +61,11 @@ npm run build
 9. Add SetGo to Home Screen.
 10. Relaunch from Home Screen and confirm layout, keyboard input, and offline shell.
 
-## Product Benchmark
+## Product Direction
 
-SetGo's next development cycle uses `docs/benchmark-workout-apps.md` as the benchmark guide for Strong, Hevy, Fitbod, and JEFIT. The goal is not feature parity; it is to keep SetGo fast, local-first, mobile-friendly, and useful during real strength training.
+SetGo v2 uses `docs/v2-development-plan.md` as the product and development guide. The v2 priority is Strong/Hevy-level workout logging first, then smarter exercise-level weight/reps defaults and eventually full daily workout recommendations.
+
+`docs/benchmark-workout-apps.md` remains the benchmark guide for Strong, Hevy, Fitbod, JEFIT, and related workout app patterns.
 
 ## Out Of Beta
 

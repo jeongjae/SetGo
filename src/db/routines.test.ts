@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { getCyclePlanItemForDate, getRoutineDayDisplayName, getRoutineTemplateName, getRoutineTemplateSummary, isRoutineScheduledForDate, routineTemplates } from './routines';
+import {
+  buildRoutineDuplicateRecords,
+  getCyclePlanItemForDate,
+  getRoutineDayDisplayName,
+  getRoutineTemplateName,
+  getRoutineTemplateSummary,
+  isRoutineScheduledForDate,
+  routineTemplates,
+} from './routines';
+import type { Routine, RoutineCyclePlanItem, RoutineDay, RoutineExercisePlan, WeeklySchedule } from '../types';
 
 describe('routine templates', () => {
   it('uses Korean release names for template cards', () => {
@@ -75,5 +84,114 @@ describe('routine templates', () => {
     expect(getCyclePlanItemForDate(routine, cycle, '2026-05-03')?.kind).toBe('running');
     expect(getCyclePlanItemForDate(routine, cycle, '2026-05-04')?.kind).toBe('rest');
     expect(getCyclePlanItemForDate(routine, cycle, '2026-05-05')?.routineDayId).toBe('upper');
+  });
+});
+
+describe('routine duplication safety', () => {
+  const sourceRoutine: Routine = {
+    id: 'routine_source',
+    name: 'Source Routine',
+    splitType: 'upper_lower_2',
+    startDate: '2026-06-01',
+    isActive: false,
+    createdAt: '2026-06-01T00:00:00.000Z',
+    updatedAt: '2026-06-01T00:00:00.000Z',
+  };
+  const sourceDays: RoutineDay[] = [
+    { id: 'day_upper', routineId: 'routine_source', code: 'upper', name: 'Upper', sequence: 1 },
+    { id: 'day_lower', routineId: 'routine_source', code: 'lower', name: 'Lower', sequence: 2 },
+  ];
+  const sourcePlans: RoutineExercisePlan[] = [
+    {
+      id: 'day_upper_bench_press',
+      routineDayId: 'day_upper',
+      exerciseId: 'bench_press',
+      order: 1,
+      plannedSets: 4,
+      plannedWeightKg: 82.5,
+      plannedReps: 8,
+      plannedRir: 1,
+      plannedRestSeconds: 120,
+    },
+    {
+      id: 'day_lower_squat',
+      routineDayId: 'day_lower',
+      exerciseId: 'barbell_squat',
+      order: 1,
+      plannedSets: 3,
+      plannedWeightKg: 100,
+      plannedReps: 5,
+      plannedRir: 2,
+      plannedRestSeconds: 150,
+    },
+  ];
+  const sourceCycleItems: RoutineCyclePlanItem[] = [
+    { id: 'cycle_1', routineId: 'routine_source', order: 1, kind: 'routine', routineDayId: 'day_upper' },
+    { id: 'cycle_2', routineId: 'routine_source', order: 2, kind: 'running' },
+    { id: 'cycle_3', routineId: 'routine_source', order: 3, kind: 'routine', routineDayId: 'day_lower' },
+  ];
+  const sourceWeeklySchedules: WeeklySchedule[] = [
+    { id: 'weekday_1', routineId: 'routine_source', weekday: 1, routineDayId: 'day_upper', isRestDay: false },
+    { id: 'weekday_2', routineId: 'routine_source', weekday: 2, isRestDay: true },
+  ];
+
+  it('rewrites copied routine children to the new routine and day ids', () => {
+    const duplicate = buildRoutineDuplicateRecords(
+      sourceRoutine,
+      sourceDays,
+      sourcePlans,
+      sourceCycleItems,
+      sourceWeeklySchedules,
+      'routine_copy_1',
+      '2026-06-19T00:00:00.000Z',
+      'Strength Copy',
+    );
+
+    expect(duplicate.routine).toMatchObject({
+      id: 'routine_copy_1',
+      name: 'Strength Copy',
+      isActive: true,
+      createdAt: '2026-06-19T00:00:00.000Z',
+      updatedAt: '2026-06-19T00:00:00.000Z',
+    });
+    expect(duplicate.days.map((day) => [day.id, day.routineId])).toEqual([
+      ['routine_copy_1_upper', 'routine_copy_1'],
+      ['routine_copy_1_lower', 'routine_copy_1'],
+    ]);
+    expect(duplicate.plans.map((plan) => [plan.id, plan.routineDayId, plan.exerciseId])).toEqual([
+      ['routine_copy_1_upper_bench_press_1', 'routine_copy_1_upper', 'bench_press'],
+      ['routine_copy_1_lower_barbell_squat_1', 'routine_copy_1_lower', 'barbell_squat'],
+    ]);
+    expect(duplicate.cycleItems.map((item) => [item.id, item.routineId, item.routineDayId])).toEqual([
+      ['routine_copy_1_cycle_1', 'routine_copy_1', 'routine_copy_1_upper'],
+      ['routine_copy_1_cycle_2', 'routine_copy_1', undefined],
+      ['routine_copy_1_cycle_3', 'routine_copy_1', 'routine_copy_1_lower'],
+    ]);
+    expect(duplicate.weeklySchedules.map((schedule) => [schedule.id, schedule.routineId, schedule.routineDayId])).toEqual([
+      ['routine_copy_1_weekday_1', 'routine_copy_1', 'routine_copy_1_upper'],
+      ['routine_copy_1_weekday_2', 'routine_copy_1', undefined],
+    ]);
+  });
+
+  it('falls back to a copy name without mutating planned set details', () => {
+    const duplicate = buildRoutineDuplicateRecords(
+      sourceRoutine,
+      sourceDays,
+      sourcePlans,
+      sourceCycleItems,
+      sourceWeeklySchedules,
+      'routine_copy_2',
+      '2026-06-19T00:00:00.000Z',
+      '   ',
+    );
+
+    expect(duplicate.routine.name).toBe('Source Routine Copy');
+    expect(duplicate.plans[0]).toMatchObject({
+      plannedSets: 4,
+      plannedWeightKg: 82.5,
+      plannedReps: 8,
+      plannedRir: 1,
+      plannedRestSeconds: 120,
+    });
   });
 });

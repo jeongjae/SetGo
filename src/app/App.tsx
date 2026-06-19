@@ -15,8 +15,20 @@ const TodayPage = lazy(() => import('../pages/TodayPage').then((module) => ({ de
 const WorkoutPage = lazy(() => import('../pages/WorkoutPage').then((module) => ({ default: module.WorkoutPage })));
 
 export type AppView = 'today' | 'calendar' | 'records' | 'more' | 'routines' | 'exercises' | 'weeklyPlan' | 'export' | 'workout';
-type WorkoutReturnView = 'today' | 'calendar' | 'records';
-type WorkoutMode = 'active' | 'history-edit';
+export type WorkoutReturnView = 'today' | 'calendar' | 'records';
+export type WorkoutMode = 'active' | 'history-edit';
+
+export function shouldResetCalendarContextOnNavigate(nextView: AppView): boolean {
+  return nextView === 'calendar' || nextView === 'records';
+}
+
+export function workoutReturnViewForStart(dateKey?: string): WorkoutReturnView {
+  return dateKey ? 'calendar' : 'today';
+}
+
+export function workoutModeForHistoricalAdd(dateKey: string, todayKey: string): WorkoutMode {
+  return dateKey === todayKey ? 'active' : 'history-edit';
+}
 
 function describeStartupError(error: unknown) {
   if (error instanceof Error) {
@@ -81,7 +93,7 @@ export function App() {
   }
 
   function handleNavigate(nextView: AppView) {
-    if (nextView === 'calendar' || nextView === 'records') {
+    if (shouldResetCalendarContextOnNavigate(nextView)) {
       setCalendarSelectedDateKey(formatDateKey(new Date()));
       setCalendarReviewingWeeklyPlan(false);
     }
@@ -99,9 +111,9 @@ export function App() {
     setWorkoutMode('active');
     if (dateKey) {
       setCalendarSelectedDateKey(dateKey);
-      setWorkoutReturnView('calendar');
+      setWorkoutReturnView(workoutReturnViewForStart(dateKey));
     } else {
-      setWorkoutReturnView('today');
+      setWorkoutReturnView(workoutReturnViewForStart());
     }
 
     if (sessionId) {
@@ -134,7 +146,7 @@ export function App() {
     setCalendarSelectedDateKey(dateKey);
     const todayKey = formatDateKey(new Date());
     setWorkoutReturnView('records');
-    setWorkoutMode(dateKey === todayKey ? 'active' : 'history-edit');
+    setWorkoutMode(workoutModeForHistoricalAdd(dateKey, todayKey));
 
     try {
       const workout = await getOrCreateWorkoutForDate(dateKey, routineDayId, {
