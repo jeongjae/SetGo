@@ -1,8 +1,9 @@
-import { Check, ClipboardList, Clock3, Plus, Trash2 } from 'lucide-react';
+import { Clock3 } from 'lucide-react';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { ExerciseHistoryModal } from '../components/ExerciseHistoryModal';
 import { ExerciseLogCard } from '../components/workout/ExerciseLogCard';
+import { WorkoutCardioSection } from '../components/workout/WorkoutCardioSection';
 import { WorkoutFooterActions } from '../components/workout/WorkoutFooterActions';
 import { WorkoutHeader } from '../components/workout/WorkoutHeader';
 import { db } from '../db/db';
@@ -36,6 +37,8 @@ import {
   type WorkoutExerciseLog,
 } from '../db/workouts';
 import type { CardioRecord, ExerciseCategory, ExerciseMaster, ExerciseStage, Routine, RoutineDay, WorkoutExercise, WorkoutSession, WorkoutSet, WorkoutSetType } from '../types';
+
+export { parseOptionalDecimalInput } from '../components/workout/WorkoutCardioSection';
 
 type WorkoutPageProps = {
   mode?: 'active' | 'history-edit';
@@ -207,14 +210,6 @@ export function shouldConfirmCardioDelete(
     || (cardioRecord.inclinePercent ?? 0) > 0
     || Boolean(cardioRecord.location?.trim())
     || Boolean(cardioRecord.memo?.trim());
-}
-
-export function parseOptionalDecimalInput(value: string): number | undefined {
-  const trimmed = value.trim();
-  if (trimmed === '') return undefined;
-
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
 export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, onSkipped }: WorkoutPageProps) {
@@ -773,11 +768,6 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     setSaveMessage(locale === 'ko' ? '\uB7EC\uB2DD\uC744 \uC0AD\uC81C\uD588\uC2B5\uB2C8\uB2E4' : 'Running deleted');
   }
 
-  function updateCardioMinutes(cardioRecord: CardioRecord, minutes: number) {
-    const startedAt = new Date(cardioRecord.startedAt);
-    return new Date(startedAt.getTime() + Math.max(1, minutes) * 60 * 1000).toISOString();
-  }
-
   const getAvailableExercises = (currentExerciseId?: string) => {
     const addedExerciseIds = new Set(
       logs
@@ -1021,303 +1011,19 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         </div>
 
         {/* Running input area */}
-        <section className="shrink-0 ios-card p-3.5 space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{t(locale, 'cardio')}</p>
-              <h2 className="mt-0.5 text-base font-black text-[#1C1C1E]">
-                {cardioRecords.length === 0 ? (locale === 'ko' ? '\uB7EC\uB2DD' : 'Optional Running') : `${cardioRecords.length} ${t(locale, 'cardio')}`}
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => void handleAddCardio()}
-              className="ios-button-primary flex h-10 w-10 items-center justify-center shrink-0"
-              aria-label="Add cardio"
-            >
-              <Plus aria-hidden="true" size={20} />
-            </button>
-          </div>
-
-          <div className="mt-3 flex flex-col gap-3">
-            {loggedCardioCount > 0 && (
-              <div className="flex items-center justify-between rounded-xl bg-[#F2F2F7] border border-black/5 px-3.5 py-2.5 text-xs font-bold text-[#1C1C1E]">
-                <span>{locale === 'ko' ? '\uC624\uB298 \uB7EC\uB2DD \uC694\uC57D' : 'Running Summary'}</span>
-                <span className="font-mono">
-                  {totalCardioDistance.toFixed(1)} km / {totalCardioMinutes} {locale === 'ko' ? '\uBD84' : 'min'}
-                </span>
-              </div>
-            )}
-
-            {cardioRecords.map((cardioRecord) => {
-              const minutes = Math.max(
-                1,
-                Math.round((new Date(cardioRecord.endedAt).getTime() - new Date(cardioRecord.startedAt).getTime()) / 60000),
-              );
-
-              const machineLabels: Record<string, string> = {
-                treadmill: locale === 'ko' ? '\uD2B8\uB808\uB4DC\uBC00' : 'Treadmill',
-                indoor_bike: locale === 'ko' ? '\uC2E4\uB0B4 \uC790\uC804\uAC70' : 'Indoor Bike',
-                stair_climber: locale === 'ko' ? '\uCC9C\uAD6D\uC758 \uACC4\uB2E8' : 'Stair Climber',
-                elliptical: locale === 'ko' ? '\uC77C\uB9BD\uD2F0\uCEEC' : 'Elliptical',
-              };
-              const displayName = cardioRecord.environment === 'outdoor'
-                ? (cardioRecord.location || (locale === 'ko' ? '\uC57C\uC678 \uB7EC\uB2DD/\uD2B8\uB799' : 'Outdoor Running'))
-                : (machineLabels[cardioRecord.machineType || ''] || (locale === 'ko' ? '\uC2E4\uB0B4 \uB7EC\uB2DD' : 'Indoor Running'));
-
-              return (
-                <div key={cardioRecord.id} className="rounded-xl border border-black/5 bg-[#F2F2F7] p-3">
-                  <div className="mb-2.5 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm">
-                        {cardioRecord.environment === 'indoor' ? '\uC2E4\uB0B4' : '\uC57C\uC678'}
-                      </span>
-                      <div>
-                        <p className="text-sm font-bold text-[#1C1C1E]">
-                          {displayName}
-                        </p>
-                        {cardioRecord.isDraft ? (
-                          <span className="mt-0.5 inline-flex rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-bold text-amber-750">
-                            {locale === 'ko' ? '\uC785\uB825 \uC911' : 'Draft'}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void handleDeleteCardio(cardioRecord)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 transition-all active:scale-95 duration-200"
-                      aria-label="Delete cardio"
-                    >
-                      <Trash2 aria-hidden="true" size={14} />
-                    </button>
-                  </div>
-
-                  {/* Indoor/outdoor switch */}
-                  <div className="mb-2.5 flex rounded-xl bg-white p-0.5 border border-black/5">
-                    <button
-                      type="button"
-                      onClick={() => void handleUpdateCardio(cardioRecord, { environment: 'indoor', machineType: 'treadmill' })}
-                      className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-all active:scale-95 ${
-                        cardioRecord.environment === 'indoor'
-                          ? 'bg-[#F2F2F7] text-[#1C1C1E] shadow-sm'
-                          : 'text-[#6E6E73] hover:text-[#1C1C1E]'
-                      }`}
-                    >
-                      {locale === 'ko' ? '\uC2E4\uB0B4 \uB7EC\uB2DD' : 'Indoor'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleUpdateCardio(cardioRecord, { environment: 'outdoor', location: '' })}
-                      className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-all active:scale-95 ${
-                        cardioRecord.environment === 'outdoor'
-                          ? 'bg-[#F2F2F7] text-[#1C1C1E] shadow-sm'
-                          : 'text-[#6E6E73] hover:text-[#1C1C1E]'
-                      }`}
-                    >
-                      {locale === 'ko' ? '\uC57C\uC678 \uB7EC\uB2DD' : 'Outdoor'}
-                    </button>
-                  </div>
-
-                  <div className="grid gap-3">
-                    {/* Machine or place input */}
-                    {cardioRecord.environment === 'indoor' ? (
-                      <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                        {locale === 'ko' ? '\uAE30\uAD6C \uC120\uD0DD' : 'Machine Select'}
-                        <select
-                          aria-label="Cardio machine select"
-                          value={cardioRecord.machineType || 'treadmill'}
-                          onChange={(event) => void handleUpdateCardio(cardioRecord, {
-                            machineType: event.target.value as CardioRecord['machineType'],
-                          })}
-                          className="mt-1 min-h-10 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
-                        >
-                          <option value="treadmill">{locale === 'ko' ? '\uD2B8\uB808\uB4DC\uBC00' : 'Treadmill'}</option>
-                          <option value="indoor_bike">{locale === 'ko' ? '\uC2E4\uB0B4 \uC790\uC804\uAC70' : 'Indoor Bike'}</option>
-                          <option value="stair_climber">{locale === 'ko' ? '\uCC9C\uAD6D\uC758 \uACC4\uB2E8' : 'Stair Climber'}</option>
-                          <option value="elliptical">{locale === 'ko' ? '\uC77C\uB9BD\uD2F0\uCEEC' : 'Elliptical'}</option>
-                        </select>
-                      </label>
-                    ) : (
-                      <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                        {locale === 'ko' ? '\uC7A5\uC18C \uC785\uB825' : 'Place'}
-                        <input
-                          aria-label="Cardio place input"
-                          type="text"
-                          defaultValue={cardioRecord.location ?? ''}
-                          onBlur={(event) => void handleUpdateCardio(cardioRecord, { location: event.target.value.trim() })}
-                          placeholder={locale === 'ko' ? '\uC608: \uB3D9\uB124 \uACF5\uC6D0, \uB7EC\uB2DD \uD2B8\uB799' : 'e.g. Park, track, river'}
-                          className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
-                        />
-                      </label>
-                    )}
-
-                    {/* Running metrics */}
-                    <div className={`grid gap-2.5 ${cardioRecord.environment === 'indoor' ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                      <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                        Km
-                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const nextVal = Math.max(0, Number(((cardioRecord.distanceKm || 0) - 0.5).toFixed(1)));
-                              void handleUpdateCardio(cardioRecord, { distanceKm: nextVal || undefined });
-                            }}
-                            className="min-h-10 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
-                          >
-                            -
-                          </button>
-                          <input
-                            aria-label="Cardio distance"
-                            type="text"
-                            inputMode="decimal"
-                            enterKeyHint="done"
-                            defaultValue={cardioRecord.distanceKm ?? ''}
-                            onBlur={(event) => void handleUpdateCardio(cardioRecord, {
-                              distanceKm: parseOptionalDecimalInput(event.target.value),
-                            })}
-                            placeholder="0.0"
-                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const nextVal = Number(((cardioRecord.distanceKm || 0) + 0.5).toFixed(1));
-                              void handleUpdateCardio(cardioRecord, { distanceKm: nextVal });
-                            }}
-                            className="min-h-10 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </label>
-
-                      <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                        {locale === 'ko' ? '\uBD84' : 'Min'}
-                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const nextVal = Math.max(1, minutes - 5);
-                              void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
-                            }}
-                            className="min-h-10 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
-                          >
-                            -
-                          </button>
-                          <input
-                            aria-label="Cardio minutes"
-                            type="text"
-                            inputMode="numeric"
-                            enterKeyHint="done"
-                            value={minutes}
-                            onChange={(event) => {
-                              const val = Math.max(1, Math.round(Number(event.target.value)) || 1);
-                              void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, val) });
-                            }}
-                            placeholder="min"
-                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const nextVal = minutes + 5;
-                              void handleUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
-                            }}
-                            className="min-h-10 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </label>
-
-                      {cardioRecord.environment === 'indoor' && (
-                        <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                          {locale === 'ko' ? '\uACBD\uC0AC (%)' : 'Inc (%)'}
-                          <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const nextVal = Math.max(0, (cardioRecord.inclinePercent || 0) - 1);
-                                void handleUpdateCardio(cardioRecord, { inclinePercent: nextVal });
-                              }}
-                              className="min-h-10 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
-                            >
-                              -
-                            </button>
-                            <input
-                              aria-label="Cardio incline"
-                              type="text"
-                              inputMode="numeric"
-                              enterKeyHint="done"
-                              value={cardioRecord.inclinePercent ?? ''}
-                              onChange={(event) => {
-                                const val = event.target.value === '' ? undefined : Number(event.target.value) || 0;
-                                void handleUpdateCardio(cardioRecord, { inclinePercent: val });
-                              }}
-                              placeholder="%"
-                              className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const nextVal = (cardioRecord.inclinePercent || 0) + 1;
-                                void handleUpdateCardio(cardioRecord, { inclinePercent: nextVal });
-                              }}
-                              className="min-h-10 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </label>
-                      )}
-                    </div>
-                  </div>
-
-                  <label className="mt-2.5 block text-xs font-bold uppercase text-[#6E6E73]">
-                    {locale === 'ko' ? '\uBA54\uBAA8' : 'Memo'}
-                    <input
-                      aria-label="Cardio memo"
-                      type="text"
-                      defaultValue={cardioRecord.memo ?? ''}
-                      onBlur={(event) => void handleUpdateCardio(cardioRecord, { memo: event.target.value.trim() || undefined })}
-                      placeholder={locale === 'ko' ? '\uC18D\uB3C4 \uBCC0\uD654, \uCEE8\uB514\uC158 \uD53C\uB4DC\uBC31' : 'e.g. Speed changes, energy feedback'}
-                      className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={() => void handleSaveCardioAndContinue(cardioRecord)}
-                    className="ios-button-primary flex min-h-11 w-full items-center justify-center gap-1.5 px-3 text-sm mt-2.5"
-                  >
-                    <Check aria-hidden="true" size={15} />
-                    <span>
-                      {cardioRecord.isDraft
-                        ? isIndependentRunningWorkout
-                          ? locale === 'ko' ? '\uB7EC\uB2DD \uC800\uC7A5' : 'Save running'
-                          : locale === 'ko' ? '\uAE30\uB85D\uD558\uACE0 \uC6B4\uB3D9 \uACC4\uC18D' : 'Log cardio and continue'
-                        : isIndependentRunningWorkout
-                          ? locale === 'ko' ? '\uB7EC\uB2DD \uC800\uC7A5\uB428' : 'Running saved'
-                          : locale === 'ko' ? '\uC6B4\uB3D9 \uAE30\uB85D \uACC4\uC18D' : 'Continue workout log'}
-                    </span>
-                  </button>
-
-                  {cardioRecord.averageSpeedKmh ? (
-                    <p className="mt-3 text-xs font-bold text-[#159A91] bg-[#E8F3F3] border border-[#2EC4B6]/20 rounded-lg px-2.5 py-1.5 inline-block">
-                      {locale === 'ko' ? '\uD3C9\uADE0 \uC18D\uB3C4' : 'Average speed'}: <span className="font-mono">{cardioRecord.averageSpeedKmh.toFixed(1)} km/h</span>
-                    </p>
-                  ) : (
-                    <p className="mt-3 text-xs font-medium text-[#6E6E73]">
-                      {locale === 'ko' ? '\uAC70\uB9AC\uB97C \uC785\uB825\uD558\uBA74 \uD3C9\uADE0 \uC18D\uB3C4\uAC00 \uACC4\uC0B0\uB429\uB2C8\uB2E4.' : 'Enter distance to calculate average speed.'}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      </div>
+        <WorkoutCardioSection
+          locale={locale}
+          cardioRecords={cardioRecords}
+          loggedCardioCount={loggedCardioCount}
+          totalCardioDistance={totalCardioDistance}
+          totalCardioMinutes={totalCardioMinutes}
+          isIndependentRunningWorkout={isIndependentRunningWorkout}
+          cardioLabel={t(locale, 'cardio')}
+          onAddCardio={() => void handleAddCardio()}
+          onUpdateCardio={(cardioRecord, values) => void handleUpdateCardio(cardioRecord, values)}
+          onDeleteCardio={(cardioRecord) => void handleDeleteCardio(cardioRecord)}
+          onSaveCardioAndContinue={(cardioRecord) => void handleSaveCardioAndContinue(cardioRecord)}
+        />      </div>
 
       <WorkoutFooterActions
         locale={locale}
