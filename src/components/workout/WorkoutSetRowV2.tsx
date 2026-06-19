@@ -119,9 +119,10 @@ export function WorkoutSetRowV2({
     : locale === 'ko' ? '이전 없음' : 'No previous';
 
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
-    event.currentTarget.select();
+    const target = event.currentTarget;
+    target.select();
     window.setTimeout(() => {
-      event.currentTarget.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
     }, 80);
   };
 
