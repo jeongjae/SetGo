@@ -11,6 +11,7 @@ The v2 product direction is:
 - make workout logging as fast and focused as Strong and Hevy
 - allow the current menu and UI structure to change if a better logging flow requires it
 - keep SetGo local-first, mobile-first, and Korean-first
+- follow Apple Human Interface Guidelines strictly for iPhone-oriented interaction and visual design
 - preserve routine planning, calendar review, records, export, and local analytics
 - add recommendation features gradually through useful defaults, not opaque automation
 
@@ -451,9 +452,12 @@ SetGo v2 should be judged by:
 ## Implementation Principles
 
 - Logging speed beats visual complexity.
+- Apple HIG is the default design contract for navigation, controls, feedback, touch targets, and typography.
 - Recommendations should be explainable.
 - Planned and actual values must stay separate.
 - Workout mode should be resilient to interruption.
 - Local data must remain portable through backup/export.
 - Keep deterministic rules before adding any AI dependency.
 - Add tests around recommendation logic before relying on it in the UI.
+
+Design rules document: `docs/v2-apple-hig-design-rules.md`
