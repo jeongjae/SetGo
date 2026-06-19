@@ -428,6 +428,30 @@ Acceptance criteria:
 - SetGo has a clear path for importing or manually managing running records
 - strength and running plans can coexist without confusing Today
 
+## Implementation Progress
+
+Current v2 branch: `v2-workout-logging`
+
+Completed startup work:
+
+- v1 deployment baseline completed on `main`
+- Apple HIG design rules documented
+- major-page v2 UI design plan documented
+- workout header extracted from `WorkoutPage`
+- workout footer actions extracted from `WorkoutPage`
+- HIG-oriented strength set row introduced and legacy row removed
+- set-row presentation helpers covered by unit tests
+- exercise log card extracted from `WorkoutPage`
+- cardio/running section extracted from `WorkoutPage`
+- floating rest timer extracted from `WorkoutPage`
+
+Current code direction:
+
+- continue shrinking `WorkoutPage` into focused orchestration
+- keep set entry compact, thumb-friendly, and iPhone-safe
+- move display-only workout UI into reusable components before larger interaction changes
+- preserve test/build pass after each step
+
 ## Open Product Questions
 
 - Should Today remain a tab, or should the app open directly into a start-workout screen?
