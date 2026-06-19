@@ -348,6 +348,8 @@ Acceptance criteria:
 - clear decision on whether to keep or change the current tab structure
 - list of v1 components to reuse, revise, or replace
 
+Phase 0 audit document: `docs/v2-phase0-baseline-audit.md`
+
 ### Phase 1: Focused Workout Mode
 
 Deliverables:
