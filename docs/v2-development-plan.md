@@ -447,12 +447,13 @@ Completed startup work:
 - Playwright mobile smoke tests added for Today and workout logging
 - exercise-level target recommendation model added with domain tests
 - Today-level workout recommendation model added with domain tests
+- recommendation snapshots persist when a workout starts from Today
+- daily recommendations can prioritize a recently skipped routine
 
 Current code direction:
 
-- finish the first functional recommendation path from Today into Workout mode
-- add missed/skipped workout handling to the daily recommendation model
-- persist recommendation snapshots with newly started workouts
+- expand daily recommendations from routine-day choice into full exercise plans
+- add richer missed-workout and fatigue/load handling
 - keep test/build/e2e pass after each step
 
 ## Open Product Questions

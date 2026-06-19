@@ -42,6 +42,7 @@ function dailyRecommendationReasonLabel(reason: DailyWorkoutRecommendationReason
   if (reason === 'manualOverride') return t(locale, 'todayRecommendationManualOverride');
   if (reason === 'cycleRoutine') return t(locale, 'todayRecommendationCycleRoutine');
   if (reason === 'weeklyRoutine') return t(locale, 'todayRecommendationWeeklyRoutine');
+  if (reason === 'makeUpSkippedWorkout') return t(locale, 'todayRecommendationMakeUp');
   if (reason === 'plannedRunning') return t(locale, 'todayRecommendationRunning');
   if (reason === 'restDay') return t(locale, 'todayRecommendationRestDay');
   if (reason === 'nextRoutineAfterLatestWorkout') return t(locale, 'todayRecommendationNextRoutine');
@@ -138,9 +139,16 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         setInProgressSession(todayWorkout?.session);
         setTodayRoutineDay(todaySchedule.routineDay);
         setNextRoutineDay(nextDay);
+        const makeUpRoutineDay = recentWorkouts.find((summary) => (
+          summary.session.status === 'skipped'
+          && summary.session.entryKind !== 'running'
+          && summary.session.entryKind !== 'free'
+          && summary.routineDay
+        ))?.routineDay;
         const recommendation = buildDailyWorkoutRecommendation({
           schedule: todaySchedule,
           nextRoutineDay: nextDay,
+          makeUpRoutineDay,
           hasActiveRoutine: Boolean(routine),
           freeWorkoutLabel: t(locale, 'freeWorkout'),
           runningLabel: locale === 'ko' ? '러닝' : 'Running',
