@@ -1,6 +1,6 @@
 import { db } from './db';
 import { getActiveRoutine, getRoutineScheduleForDate } from './routines';
-import type { CardioRecord, ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutExercise, WorkoutSession, WorkoutSessionKind, WorkoutSet } from '../types';
+import type { CardioRecord, ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutExercise, WorkoutRecommendationSnapshot, WorkoutSession, WorkoutSessionKind, WorkoutSet } from '../types';
 import { formatDateKey, getTimeBand } from '../utils/date';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg, calculateSessionStrengthVolumeKg } from '../domain/volume';
 import { isWarmupOnlyExercise } from '../domain/exercises';
@@ -33,6 +33,7 @@ export type WorkoutStartKind = WorkoutSessionKind;
 export type WorkoutStartOptions = {
   createNew?: boolean;
   kind?: WorkoutStartKind;
+  recommendationSnapshot?: WorkoutRecommendationSnapshot;
 };
 
 async function getWorkoutSessionsForDate(date: string): Promise<WorkoutSession[]> {
@@ -71,6 +72,7 @@ export function createWorkoutSessionForDate(
   routineId?: string,
   routineDayId?: string,
   entryKind: WorkoutStartKind = 'planned',
+  recommendationSnapshot?: WorkoutRecommendationSnapshot,
 ): WorkoutSession {
   const timestamp = now.toISOString();
   const isFirstBackdatedSession = _existingSessionCount === 0 && date !== formatDateKey(now);
@@ -83,6 +85,7 @@ export function createWorkoutSessionForDate(
     routineId,
     routineDayId,
     entryKind: entryKind === 'planned' ? undefined : entryKind,
+    recommendationSnapshot,
     status: 'in_progress',
     totalStrengthVolumeKg: 0,
     createdAt: timestamp,
@@ -117,6 +120,7 @@ export function selectWorkoutStartSession(
       routineId,
       routineDayId,
       options.kind ?? 'planned',
+      options.recommendationSnapshot,
     ),
   };
 }
@@ -164,7 +168,15 @@ export async function getOrCreateWorkoutForDate(
   );
 
   if (sessionSelection.kind === 'reuse') {
-    const existingSession = sessionSelection.session;
+    let existingSession = sessionSelection.session;
+    if (options.recommendationSnapshot && !existingSession.recommendationSnapshot) {
+      existingSession = {
+        ...existingSession,
+        recommendationSnapshot: options.recommendationSnapshot,
+        updatedAt: now.toISOString(),
+      };
+      await db.workoutSessions.put(existingSession);
+    }
     const existingExerciseCount = await db.workoutExercises.where('sessionId').equals(existingSession.id).count();
     if (existingExerciseCount === 0 && existingSession.routineDayId) {
       await seedWorkoutExercisesFromRoutineDay(existingSession.id, existingSession.routineDayId);

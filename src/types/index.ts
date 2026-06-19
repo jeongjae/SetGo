@@ -26,6 +26,31 @@ export type WorkoutExerciseStatus = 'planned' | 'completed' | 'skipped';
 
 export type WorkoutPlanKind = 'routine' | 'rest' | 'running' | 'free';
 export type WorkoutSessionKind = 'planned' | 'running' | 'free';
+export type WorkoutRecommendationSource =
+  | 'override'
+  | 'cycle'
+  | 'weekly-schedule'
+  | 'next-routine-day'
+  | 'rest'
+  | 'fallback';
+export type WorkoutRecommendationReason =
+  | 'manualOverride'
+  | 'cycleRoutine'
+  | 'weeklyRoutine'
+  | 'plannedRunning'
+  | 'restDay'
+  | 'nextRoutineAfterLatestWorkout'
+  | 'noActiveRoutine';
+export type WorkoutRecommendationSnapshot = {
+  kind: WorkoutPlanKind;
+  sessionKind: WorkoutSessionKind;
+  routineDayId?: string;
+  label: string;
+  source: WorkoutRecommendationSource;
+  reason: WorkoutRecommendationReason;
+  confidence: 'low' | 'medium' | 'high';
+  createdAt: string;
+};
 
 export type TimeBand = 'early' | 'morning' | 'afternoon' | 'evening';
 
@@ -119,6 +144,7 @@ export type WorkoutSession = {
   routineId?: string;
   routineDayId?: string;
   entryKind?: WorkoutSessionKind;
+  recommendationSnapshot?: WorkoutRecommendationSnapshot;
   status: WorkoutStatus;
   totalStrengthVolumeKg: number;
   memo?: string;

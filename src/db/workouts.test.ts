@@ -5,7 +5,7 @@ import {
   selectReusableInProgressSession,
   selectWorkoutStartSession,
 } from './workouts';
-import type { ExerciseMaster, RoutineExercisePlan, WorkoutSession } from '../types';
+import type { ExerciseMaster, RoutineExercisePlan, WorkoutRecommendationSnapshot, WorkoutSession } from '../types';
 
 function session(
   id: string,
@@ -161,6 +161,31 @@ describe('workout date binding and session creation safety (Scenario C)', () => 
       routineId: undefined,
       routineDayId: undefined,
       entryKind: 'free',
+    });
+  });
+
+  it('stores the recommendation snapshot used to start a workout', () => {
+    const snapshot: WorkoutRecommendationSnapshot = {
+      kind: 'routine',
+      sessionKind: 'planned',
+      routineDayId: 'routine_push_pull_day_1',
+      label: 'Push',
+      source: 'weekly-schedule',
+      reason: 'weeklyRoutine',
+      confidence: 'medium',
+      createdAt: '2026-05-21T09:30:00.000Z',
+    };
+
+    expect(createWorkoutSessionForDate(
+      '2026-05-21',
+      new Date('2026-05-21T09:30:00.000Z'),
+      0,
+      'routine_push_pull',
+      'routine_push_pull_day_1',
+      'planned',
+      snapshot,
+    )).toMatchObject({
+      recommendationSnapshot: snapshot,
     });
   });
 

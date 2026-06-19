@@ -5,6 +5,7 @@ import { getOrCreateTodayWorkout, getOrCreateWorkoutForDate, type WorkoutStartKi
 import { formatDateKey } from '../utils/date';
 import { requestPersistentStorage } from '../db/db';
 import { getStoredLocale } from '../i18n/i18n';
+import type { WorkoutRecommendationSnapshot } from '../types';
 
 const CalendarPage = lazy(() => import('../pages/CalendarPage').then((module) => ({ default: module.CalendarPage })));
 const ExportPage = lazy(() => import('../pages/ExportPage').then((module) => ({ default: module.ExportPage })));
@@ -107,6 +108,7 @@ export function App() {
     sessionId?: string,
     createNew = false,
     kind: WorkoutStartKind = 'planned',
+    recommendationSnapshot?: WorkoutRecommendationSnapshot,
   ) {
     setWorkoutMode('active');
     if (dateKey) {
@@ -124,8 +126,8 @@ export function App() {
 
     try {
       const workout = dateKey
-        ? await getOrCreateWorkoutForDate(dateKey, routineDayId, { createNew, kind })
-        : await getOrCreateTodayWorkout(routineDayId, { createNew, kind });
+        ? await getOrCreateWorkoutForDate(dateKey, routineDayId, { createNew, kind, recommendationSnapshot })
+        : await getOrCreateTodayWorkout(routineDayId, { createNew, kind, recommendationSnapshot });
       setActiveWorkoutSessionId(workout.session.id);
       setRefreshKey((current) => current + 1);
       setView('workout');
@@ -202,7 +204,7 @@ export function App() {
             ? <WorkoutPage mode={workoutMode} sessionId={activeWorkoutSessionId} onBack={handleWorkoutBack} onCompleted={handleWorkoutCompleted} onSkipped={handleWorkoutSkipped} />
             : <TodayPage
               refreshKey={refreshKey}
-              onStartWorkout={(routineDayId, sessionId, createNew, kind) => void handleStartWorkout(routineDayId, undefined, sessionId, createNew, kind)}
+              onStartWorkout={(routineDayId, sessionId, createNew, kind, recommendationSnapshot) => void handleStartWorkout(routineDayId, undefined, sessionId, createNew, kind, recommendationSnapshot)}
             />;
   const loadingLabel = getStoredLocale() === 'ko' ? '불러오는 중...' : 'Loading...';
 
