@@ -23,12 +23,12 @@ import {
 } from '../domain/dailyRecommendation';
 import { getExerciseName } from '../domain/exercises';
 import { getStoredLocale, t, type AppLocale } from '../i18n/i18n';
-import type { CardioRecord, Routine, RoutineDay, WorkoutSession, WorkoutSessionKind } from '../types';
+import type { CardioRecord, Routine, RoutineDay, WorkoutRecommendationSnapshot, WorkoutSession, WorkoutSessionKind } from '../types';
 import { formatDateKey } from '../utils/date';
 
 type TodayPageProps = {
   refreshKey: number;
-  onStartWorkout: (routineDayId?: string, sessionId?: string, createNew?: boolean, kind?: WorkoutSessionKind) => void;
+  onStartWorkout: (routineDayId?: string, sessionId?: string, createNew?: boolean, kind?: WorkoutSessionKind, recommendationSnapshot?: WorkoutRecommendationSnapshot) => void;
 };
 
 function getRoutinePlanPrefix(routine: Routine | undefined, locale: 'ko' | 'en'): string | undefined {
@@ -46,6 +46,23 @@ function dailyRecommendationReasonLabel(reason: DailyWorkoutRecommendationReason
   if (reason === 'restDay') return t(locale, 'todayRecommendationRestDay');
   if (reason === 'nextRoutineAfterLatestWorkout') return t(locale, 'todayRecommendationNextRoutine');
   return t(locale, 'todayRecommendationNoRoutine');
+}
+
+function toWorkoutRecommendationSnapshot(
+  recommendation: DailyWorkoutRecommendation | undefined,
+): WorkoutRecommendationSnapshot | undefined {
+  if (!recommendation) return undefined;
+
+  return {
+    kind: recommendation.kind,
+    sessionKind: recommendation.sessionKind,
+    routineDayId: recommendation.routineDay?.id,
+    label: recommendation.label,
+    source: recommendation.source,
+    reason: recommendation.reason,
+    confidence: recommendation.confidence,
+    createdAt: new Date().toISOString(),
+  };
 }
 
 export function todayWorkoutSummaryLabel(
@@ -240,6 +257,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
       undefined,
       todayInProgressWorkouts.length > 0 || selectedWorkoutKind !== 'planned',
       selectedWorkoutKind,
+      toWorkoutRecommendationSnapshot(dailyRecommendation),
     );
   }
 

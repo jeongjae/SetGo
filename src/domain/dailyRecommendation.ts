@@ -1,21 +1,14 @@
-import type { CalendarPlanOverride, RoutineDay, WorkoutPlanKind, WorkoutSessionKind } from '../types';
+import type {
+  CalendarPlanOverride,
+  RoutineDay,
+  WorkoutPlanKind,
+  WorkoutRecommendationReason,
+  WorkoutRecommendationSource,
+  WorkoutSessionKind,
+} from '../types';
 
-export type DailyWorkoutRecommendationSource =
-  | 'override'
-  | 'cycle'
-  | 'weekly-schedule'
-  | 'next-routine-day'
-  | 'rest'
-  | 'fallback';
-
-export type DailyWorkoutRecommendationReason =
-  | 'manualOverride'
-  | 'cycleRoutine'
-  | 'weeklyRoutine'
-  | 'plannedRunning'
-  | 'restDay'
-  | 'nextRoutineAfterLatestWorkout'
-  | 'noActiveRoutine';
+export type DailyWorkoutRecommendationSource = WorkoutRecommendationSource;
+export type DailyWorkoutRecommendationReason = WorkoutRecommendationReason;
 
 export type DailyWorkoutRecommendation = {
   kind: WorkoutPlanKind;
