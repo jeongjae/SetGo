@@ -4,6 +4,7 @@ import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } fr
 import { ExerciseHistoryModal } from '../components/ExerciseHistoryModal';
 import { WorkoutFooterActions } from '../components/workout/WorkoutFooterActions';
 import { WorkoutHeader } from '../components/workout/WorkoutHeader';
+import { WorkoutSetRowV2 } from '../components/workout/WorkoutSetRowV2';
 import { db } from '../db/db';
 import { createRoutineFromWorkoutSession, getAllRoutines, getRoutineDayDisplayName, getRoutineDays } from '../db/routines';
 import { getExerciseIcon } from '../utils/exerciseIcon';
@@ -1188,7 +1189,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                     {/* Set rows */}
                     <div className={`${isKeyboardOpen ? 'mt-1' : 'mt-2'} flex flex-col ${isKeyboardOpen ? 'gap-1' : 'gap-1.5'}`}>
                       {log.sets.map((set, setIndex) => (
-                        <WorkoutSetRow
+                        <WorkoutSetRowV2
                           key={set.id}
                           set={set}
                           setIndex={setIndex}
