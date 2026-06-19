@@ -193,15 +193,24 @@ export type WorkoutSet = {
   type?: WorkoutSetType;
 };
 
+export type CardioRecordSource = 'manual' | 'imported';
+export type CardioActivityType = 'running' | 'walking' | 'cycling' | 'elliptical' | 'other';
+
 export type CardioRecord = {
   id: string;
   sessionId: string;
   isDraft?: boolean;
+  source?: CardioRecordSource;
+  sourceName?: string;
+  externalId?: string;
+  importedAt?: string;
+  activityType?: CardioActivityType;
   environment: 'indoor' | 'outdoor';
   machineType?: 'treadmill' | 'indoor_bike' | 'stair_climber' | 'elliptical';
   location?: string;
   startedAt: string;
   endedAt: string;
+  durationSeconds?: number;
   distanceKm?: number;
   averageSpeedKmh?: number;
   inclinePercent?: number;

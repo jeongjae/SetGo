@@ -453,11 +453,12 @@ Completed startup work:
 - daily recommendations can prioritize a recently skipped routine
 - recommendation snapshots include exercise-level weight/reps/set targets
 - running and activity-import execution path documented
+- cardio records now have import-friendly provenance and duration fields
 
 Current code direction:
 
 - surface the full recommended exercise plan in Today and Workout mode
-- introduce import-friendly cardio record provenance fields
+- prototype a narrow file-based activity import path
 - add richer missed-workout and fatigue/load handling
 - keep test/build/e2e pass after each step
 

@@ -507,22 +507,35 @@ export async function getWorkoutCardioRecords(sessionId: string): Promise<Cardio
   return db.cardioRecords.where('sessionId').equals(sessionId).toArray();
 }
 
-export async function addCardioRecordToWorkout(sessionId: string): Promise<void> {
-  const now = new Date();
+export function calculateCardioDurationSeconds(startedAt: string, endedAt: string): number | undefined {
+  const startMs = new Date(startedAt).getTime();
+  const endMs = new Date(endedAt).getTime();
+  if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) return undefined;
+  return Math.round((endMs - startMs) / 1000);
+}
+
+export function createDraftCardioRecord(sessionId: string, now = new Date()): CardioRecord {
   const startedAt = now.toISOString();
   const endedAt = new Date(now.getTime() + 20 * 60 * 1000).toISOString();
 
-  await db.cardioRecords.put({
-    id: `${sessionId}_cardio_${Date.now()}`,
+  return {
+    id: `${sessionId}_cardio_${now.getTime()}`,
     sessionId,
     isDraft: true,
+    source: 'manual',
+    activityType: 'running',
     environment: 'indoor',
     machineType: 'treadmill',
     startedAt,
     endedAt,
+    durationSeconds: calculateCardioDurationSeconds(startedAt, endedAt),
     distanceKm: 0,
     averageSpeedKmh: undefined,
-  });
+  };
+}
+
+export async function addCardioRecordToWorkout(sessionId: string): Promise<void> {
+  await db.cardioRecords.put(createDraftCardioRecord(sessionId));
 }
 
 async function ensureRunningDraft(sessionId: string): Promise<void> {
@@ -542,6 +555,7 @@ export async function updateCardioRecord(
   const updated = { ...existing, ...values };
   await db.cardioRecords.update(cardioRecordId, {
     ...values,
+    durationSeconds: calculateCardioDurationSeconds(updated.startedAt, updated.endedAt),
     averageSpeedKmh: updated.distanceKm
       ? calculateAverageSpeedKmh(updated.distanceKm, updated.startedAt, updated.endedAt)
       : undefined,

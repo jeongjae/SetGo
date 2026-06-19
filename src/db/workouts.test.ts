@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  calculateCardioDurationSeconds,
+  createDraftCardioRecord,
   createWorkoutExerciseSeed,
   createWorkoutSessionForDate,
   selectReusableInProgressSession,
@@ -334,5 +336,29 @@ describe('routine plan seeding', () => {
       confidence: 'medium',
       reason: 'Last session reached the top of the range.',
     }]);
+  });
+});
+
+describe('cardio records', () => {
+  it('creates manual running drafts with import-friendly provenance fields', () => {
+    expect(createDraftCardioRecord(
+      'workout_2026-05-21',
+      new Date('2026-05-21T09:30:00.000Z'),
+    )).toMatchObject({
+      id: 'workout_2026-05-21_cardio_1779355800000',
+      sessionId: 'workout_2026-05-21',
+      isDraft: true,
+      source: 'manual',
+      activityType: 'running',
+      durationSeconds: 1200,
+      distanceKm: 0,
+    });
+  });
+
+  it('returns undefined for invalid cardio durations', () => {
+    expect(calculateCardioDurationSeconds(
+      '2026-05-21T09:30:00.000Z',
+      '2026-05-21T09:20:00.000Z',
+    )).toBeUndefined();
   });
 });
