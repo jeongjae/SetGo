@@ -461,3 +461,4 @@ SetGo v2 should be judged by:
 - Add tests around recommendation logic before relying on it in the UI.
 
 Design rules document: `docs/v2-apple-hig-design-rules.md`
+UI design plan: `docs/v2-ui-design-plan.md`
