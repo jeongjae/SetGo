@@ -254,4 +254,48 @@ describe('routine plan seeding', () => {
 
     expect(seed.workoutSets.map((set) => set.isWarmup)).toEqual([true, true]);
   });
+
+  it('prefills new workout sets from exercise target recommendations when available', () => {
+    const plan: RoutineExercisePlan = {
+      id: 'routine_day_1_bench_press',
+      routineDayId: 'routine_day_1',
+      exerciseId: 'bench_press',
+      order: 1,
+      plannedSets: 3,
+      plannedWeightKg: 60,
+      plannedReps: 10,
+      plannedRir: 2,
+    };
+
+    const seed = createWorkoutExerciseSeed(
+      'workout_2026-05-21',
+      [plan],
+      new Map([['bench_press', exercise('bench_press', 'main')]]),
+      new Map([[
+        plan.id,
+        {
+          weightKg: 62.5,
+          reps: 8,
+          sets: 4,
+          rir: 2,
+          targetRepMin: 8,
+          targetRepMax: 10,
+          reason: 'Last session reached the top of the range.',
+          confidence: 'medium',
+        },
+      ]]),
+    );
+
+    expect(seed.workoutSets).toHaveLength(4);
+    expect(seed.workoutSets.map((set) => ({
+      weightKg: set.weightKg,
+      reps: set.reps,
+      rir: set.rir,
+    }))).toEqual([
+      { weightKg: 62.5, reps: 8, rir: 2 },
+      { weightKg: 62.5, reps: 8, rir: 2 },
+      { weightKg: 62.5, reps: 8, rir: 2 },
+      { weightKg: 62.5, reps: 8, rir: 2 },
+    ]);
+  });
 });

@@ -75,6 +75,15 @@ export function ExerciseLogCard({
   const totalCount = log.sets.length;
   const hasExerciseMemo = Boolean(log.workoutExercise.memo?.trim());
   const workoutExerciseId = log.workoutExercise.id;
+  const targetRecommendation = log.targetRecommendation;
+  const targetSummary = targetRecommendation
+    ? [
+        targetRecommendation.weightKg ? `${targetRecommendation.weightKg}kg` : undefined,
+        `${targetRecommendation.reps} reps`,
+        `${targetRecommendation.sets} sets`,
+        targetRecommendation.rir !== undefined ? `RIR ${targetRecommendation.rir}` : undefined,
+      ].filter(Boolean).join(' x ')
+    : undefined;
 
   return (
     <section
@@ -242,6 +251,17 @@ export function ExerciseLogCard({
                 placeholder={locale === 'ko' ? '그립, 자세, 세팅' : 'Grip, setup, cues'}
               />
             </label>
+          ) : null}
+
+          {targetRecommendation && targetSummary ? (
+            <div className="mt-2 rounded-xl border border-[#2EC4B6]/20 bg-[#E8F3F3] px-3 py-2 text-xs font-bold text-accent-dark">
+              <p>
+                {locale === 'ko' ? '추천 목표' : 'Suggested target'}: <span className="font-mono">{targetSummary}</span>
+              </p>
+              <p className="mt-0.5 font-semibold text-[#6E6E73]">
+                {locale === 'ko' ? '최근 기록과 루틴 목표 기준' : targetRecommendation.reason}
+              </p>
+            </div>
           ) : null}
 
           {isReplacing ? (
