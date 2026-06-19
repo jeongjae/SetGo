@@ -1,7 +1,8 @@
-import { ArrowDown, ArrowUp, BarChart3, Check, ChevronLeft, ClipboardList, Clock3, Copy, History, MoreHorizontal, Plus, RefreshCw, Trash2, Trophy } from 'lucide-react';
+import { ArrowDown, ArrowUp, BarChart3, Check, ClipboardList, Clock3, Copy, History, MoreHorizontal, Plus, RefreshCw, Trash2, Trophy } from 'lucide-react';
 import { useEffect, useRef, useState, useMemo, type FocusEvent } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { ExerciseHistoryModal } from '../components/ExerciseHistoryModal';
+import { WorkoutHeader } from '../components/workout/WorkoutHeader';
 import { db } from '../db/db';
 import { createRoutineFromWorkoutSession, getAllRoutines, getRoutineDayDisplayName, getRoutineDays } from '../db/routines';
 import { getExerciseIcon } from '../utils/exerciseIcon';
@@ -847,86 +848,31 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
   return (
     <section className={`viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col overflow-hidden px-3.5 text-[#1C1C1E] ${isKeyboardOpen ? 'py-2' : 'py-3'}`}>
-      {/* Fixed header */}
-      <header className={`shrink-0 flex flex-col border-b border-[#D1D1D6] ${isKeyboardOpen ? 'gap-1 pb-1.5' : 'gap-1.5 pb-2.5'}`}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <button
-              type="button"
-              onClick={onBack}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#D1D1D6] bg-white text-[#1C1C1E] shadow-sm transition-all hover:bg-[#F2F2F7] active:scale-95"
-              aria-label="Back to Today"
-            >
-              <ChevronLeft aria-hidden="true" size={20} />
-            </button>
-            <div className="min-w-0">
-              <p className="text-xs font-black uppercase leading-none text-accent-dark">
-                {workout ? workoutStatusLabel(locale, workout.session.status) : (locale === 'ko' ? '\uBD88\uB7EC\uC624\uB294 \uC911...' : 'Loading...')}
-              </p>
-              <h1 className={`${isKeyboardOpen ? 'max-w-[132px] text-base' : 'mt-0.5 max-w-[150px] text-lg'} truncate font-extrabold leading-tight text-[#1C1C1E] md:max-w-[210px]`}>
-                {workoutTitle}
-              </h1>
-            </div>
-          </div>
-
-          {/* Compact live dashboard */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {!isCompletedEditMode && sessionElapsed ? (
-                <div className="flex items-center gap-1 rounded-full border border-[#D1D1D6] bg-white px-2.5 py-1 text-sm font-bold text-[#1C1C1E] shadow-sm">
-                <Clock3 size={13} className="text-[#6E6E73]" />
-                <span className="font-mono tracking-wide">{sessionElapsed}</span>
-              </div>
-            ) : workout && !isCompletedEditMode ? (
-                <div className="rounded-full border border-[#D1D1D6] bg-white px-2.5 py-1 text-sm font-bold text-[#1C1C1E] shadow-sm">
-                <span className="font-mono">{workout.session.date}</span>
-              </div>
-            ) : null}
-            {isRestTimerActive && restRemaining > 0 ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setRestTimerStartedAt(Date.now());
-                  setRestRemaining(restDuration);
-                  setIsRestTimerActive(true);
-                }}
-                className="flex items-center gap-1 rounded-full bg-yellow-200 px-2.5 py-1 text-sm font-bold text-[#1C1C1E] shadow-sm animate-pulse"
-              >
-                <span>Rest</span>
-                <span className="font-mono tracking-wide">{formatCountdownSeconds(restRemaining)}</span>
-              </button>
-            ) : restTimerStartedAt && !isCompletedEditMode ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setRestTimerStartedAt(Date.now());
-                  setRestRemaining(restDuration);
-                  setIsRestTimerActive(true);
-                }}
-                className="flex items-center gap-1 rounded-full border border-[#D1D1D6] bg-white px-2.5 py-1 text-sm font-bold text-[#1C1C1E]"
-              >
-                <span>Rest</span>
-                <span className="font-mono tracking-wide">{restElapsed}</span>
-              </button>
-            ) : null}
-            {workout && (
-              <div className="flex items-center gap-1 rounded-full border border-[#D1D1D6] bg-white px-2.5 py-1 text-sm font-bold text-accent-dark shadow-sm">
-                <span className="font-mono">{workout.session.totalStrengthVolumeKg.toLocaleString()}kg</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Session status bar */}
-        <div className={`${isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0' : 'mt-0.5 max-h-8 opacity-100'} flex items-center justify-between gap-2 px-0.5 text-xs font-medium text-[#6E6E73] transition-all`}>
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent-dark animate-pulse"></span>
-            <span className="font-semibold text-[#1C1C1E]">{saveMessage}</span>
-          </div>
-          <div className="font-bold text-[#1C1C1E]">
-            {completedExerciseCount}/{logs.length} {locale === 'ko' ? '\uC6B4\uB3D9' : 'Ex'} / {completedSetCount}/{totalSetCount} {locale === 'ko' ? '\uC138\uD2B8 \uC644\uB8CC' : 'Sets'}
-          </div>
-        </div>
-      </header>
+      <WorkoutHeader
+        locale={locale}
+        isKeyboardOpen={isKeyboardOpen}
+        isCompletedEditMode={isCompletedEditMode}
+        workoutStatusLabel={workout ? workoutStatusLabel(locale, workout.session.status) : (locale === 'ko' ? '\uBD88\uB7EC\uC624\uB294 \uC911...' : 'Loading...')}
+        workoutTitle={workoutTitle}
+        sessionElapsed={sessionElapsed}
+        workoutDate={workout?.session.date}
+        isRestTimerActive={isRestTimerActive}
+        restRemaining={restRemaining}
+        restElapsed={restTimerStartedAt ? restElapsed : '--:--'}
+        totalStrengthVolumeKg={workout?.session.totalStrengthVolumeKg}
+        saveMessage={saveMessage}
+        completedExerciseCount={completedExerciseCount}
+        exerciseCount={logs.length}
+        completedSetCount={completedSetCount}
+        totalSetCount={totalSetCount}
+        onBack={onBack}
+        onRestartRestTimer={() => {
+          setRestTimerStartedAt(Date.now());
+          setRestRemaining(restDuration);
+          setIsRestTimerActive(true);
+        }}
+        formatCountdownSeconds={formatCountdownSeconds}
+      />
 
       {/* Exercise quick navigation is intentionally hidden for compactness. */}
       {false && logs.length > 0 && null}
