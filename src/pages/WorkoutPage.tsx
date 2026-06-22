@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
+import { Dumbbell, Plus } from 'lucide-react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { ExerciseHistoryModal } from '../components/ExerciseHistoryModal';
 import { FloatingRestTimer } from '../components/workout/FloatingRestTimer';
@@ -939,6 +940,46 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           </label>
         </section>
 
+        {/* Empty state placeholder when there are no exercises and no running records */}
+        {logs.length === 0 && cardioRecords.length === 0 ? (
+          <section className="flex flex-col items-center justify-center p-6 text-center ios-card gap-4 my-auto shrink-0 py-8">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F3F3] text-accent-dark shadow-sm">
+              <Dumbbell size={28} />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-black text-[#1C1C1E]">
+                {locale === 'ko' ? '오늘의 운동을 기록해보세요' : 'Build Your Workout Today'}
+              </h3>
+              <p className="text-xs font-bold text-[#6E6E73] max-w-[280px] leading-snug">
+                {locale === 'ko'
+                  ? '아직 추가된 운동이 없습니다. 아래 버튼이나 하단바를 사용하여 운동/러닝 기록을 추가하세요.'
+                  : 'No exercises added yet. Use the buttons below or the footer to add exercise or running logs.'}
+              </p>
+            </div>
+            <div className="flex gap-2.5 w-full max-w-[280px]">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAdding(true);
+                  resetExerciseFinderState();
+                }}
+                className="flex-1 ios-button-secondary flex min-h-10 items-center justify-center gap-1.5 px-3 text-xs font-extrabold"
+              >
+                <Plus size={14} />
+                <span>{locale === 'ko' ? '운동 추가' : 'Add Exercise'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleAddCardio()}
+                className="flex-1 ios-button-primary flex min-h-10 items-center justify-center gap-1.5 px-3 text-xs font-extrabold"
+              >
+                <Plus size={14} />
+                <span>{locale === 'ko' ? '러닝 추가' : 'Add Run'}</span>
+              </button>
+            </div>
+          </section>
+        ) : null}
+
         {/* Exercise finder */}
         {isAdding && (
           <section id="workout-exercise-finder" className="shrink-0 ios-card p-3 shadow-md animate-fade-in">
@@ -1036,10 +1077,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         finishSummary={finishSummary}
         completeHint={completeHint}
         saveLabel={t(locale, 'save')}
+        isRunningOnlyWorkout={isRunningOnlyWorkout}
         onToggleAddExercise={() => {
           setIsAdding((current) => !current);
           resetExerciseFinderState();
         }}
+        onAddCardio={() => void handleAddCardio()}
         onCreateRoutineFromWorkout={() => void handleCreateRoutineFromWorkout()}
         onCancelHistoricalEdit={() => void handleCancelHistoricalEdit()}
         onSaveHistoricalEdit={() => void handleSaveHistoricalEdit()}

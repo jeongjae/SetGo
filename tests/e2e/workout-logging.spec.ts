@@ -41,7 +41,7 @@ test('starts a free workout and logs the first bench press set', async ({ page }
     await expect(page.getByLabel('Session memo')).toBeVisible();
     await expect(page.getByText('로컬 저장됨')).toBeVisible();
 
-    await page.getByRole('button', { name: '운동 추가' }).click();
+    await page.getByRole('button', { name: '운동 추가' }).first().click();
     await expect(page.getByLabel('Search exercises to add')).toBeVisible();
 
     await page.getByRole('button', { name: /^🏋️‍♂️ 벤치프레스/ }).click();

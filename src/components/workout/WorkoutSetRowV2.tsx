@@ -153,106 +153,87 @@ export function WorkoutSetRowV2({
 
   return (
     <div className={`rounded-xl border ${rowTone} px-2.5 shadow-[0_1px_5px_rgba(0,0,0,0.03)] ${compactInputMode ? 'py-1' : 'py-2'}`}>
-      <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_2.9rem_2.7rem_2.6rem_2.4rem] items-center gap-1.5">
+      <div className="grid grid-cols-[1.8rem_3rem_minmax(0,1fr)_3.2rem_3rem_2.4rem] items-center gap-1.5">
+        <div className="flex h-10 w-full items-center justify-center text-sm font-black text-[#8E8E93]">
+          {set.setNo}
+        </div>
+
         <button
           type="button"
           onClick={() => void handleToggleSetType()}
-          className={`flex h-10 flex-col items-center justify-center rounded-lg text-[10px] font-black leading-none transition-all active:scale-95 ${
+          className={`flex h-10 w-full items-center justify-center rounded-lg text-[10px] font-black leading-none transition-all active:scale-95 ${
             currentType === 'warmup'
-              ? 'bg-yellow-100 text-yellow-800'
+              ? 'bg-yellow-50 text-yellow-805 border border-yellow-200'
               : currentType === 'failure'
-                ? 'bg-[#FFECEC] text-danger'
+                ? 'bg-[#FFECEC] text-danger border border-rose-100'
                 : currentType === 'drop'
-                  ? 'bg-[#E8F3F3] text-accent-dark'
-                  : 'bg-[#F2F2F7] text-[#1C1C1E]'
+                  ? 'bg-[#E8F3F3] text-accent-dark border border-accent/20'
+                  : 'bg-[#F2F2F7] text-[#1C1C1E] border border-black/5'
           }`}
           aria-label={`Set ${set.setNo} type: ${currentType}`}
         >
-          <span>{set.setNo}</span>
-          <span className="mt-0.5 truncate">{getSetKindLabel(set.type, set.isWarmup, locale)}</span>
+          {getSetKindLabel(set.type, set.isWarmup, locale)}
         </button>
 
-        <button
-          type="button"
-          onClick={() => void handleCopyPreviousSet(set, previousSet)}
-          disabled={!previousSet}
-          className="min-w-0 rounded-lg bg-[#F2F2F7] px-2 py-1.5 text-left transition-all active:scale-[0.99] disabled:text-[#8E8E93]"
-          aria-label={locale === 'ko' ? '이전 세트 값 복사' : 'Copy previous set values'}
-        >
-          <span className="block truncate text-[10px] font-black uppercase text-[#6E6E73]">
-            {locale === 'ko' ? '이전' : 'Prev'}
-          </span>
-          <span className="block truncate text-[11px] font-black text-[#1C1C1E]">{referenceText}</span>
-        </button>
+        <input
+          id={`weight_input_${set.id}`}
+          data-we-id={log.workoutExercise.id}
+          aria-label={`${log.exercise.nameKo} set ${set.setNo} weight`}
+          type="text"
+          inputMode="decimal"
+          enterKeyHint="next"
+          tabIndex={setIndex * 3 + 1}
+          value={weight}
+          onChange={(event) => setWeight(event.target.value)}
+          onFocus={handleFocus}
+          onKeyDown={handleEnterKey}
+          onBlur={() => {
+            const nextWeight = parseWorkoutSetDecimalInput(weight) ?? 0;
+            if (nextWeight !== set.weightKg) void handleSetChange(set, { weightKg: nextWeight });
+          }}
+          className="h-10 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-sm font-black text-[#1C1C1E] outline-none focus:border-accent"
+          placeholder="kg"
+        />
 
-        <label className="min-w-0 text-[10px] font-black uppercase leading-none text-[#6E6E73]">
-          kg
-          <input
-            id={`weight_input_${set.id}`}
-            data-we-id={log.workoutExercise.id}
-            aria-label={`${log.exercise.nameKo} set ${set.setNo} weight`}
-            type="text"
-            inputMode="decimal"
-            enterKeyHint="next"
-            tabIndex={setIndex * 3 + 1}
-            value={weight}
-            onChange={(event) => setWeight(event.target.value)}
-            onFocus={handleFocus}
-            onKeyDown={handleEnterKey}
-            onBlur={() => {
-              const nextWeight = parseWorkoutSetDecimalInput(weight) ?? 0;
-              if (nextWeight !== set.weightKg) void handleSetChange(set, { weightKg: nextWeight });
-            }}
-            className="mt-0.5 h-9 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-sm font-black text-[#1C1C1E] outline-none focus:border-accent"
-            placeholder="kg"
-          />
-        </label>
+        <input
+          id={`reps_input_${set.id}`}
+          data-we-id={log.workoutExercise.id}
+          aria-label={`${log.exercise.nameKo} set ${set.setNo} reps`}
+          type="text"
+          inputMode="numeric"
+          enterKeyHint="next"
+          tabIndex={setIndex * 3 + 2}
+          value={reps}
+          onChange={(event) => setReps(event.target.value)}
+          onFocus={handleFocus}
+          onKeyDown={handleEnterKey}
+          onBlur={() => {
+            const nextReps = Math.round(Number(reps)) || 0;
+            if (nextReps !== set.reps) void handleSetChange(set, { reps: nextReps });
+          }}
+          className="h-10 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-sm font-black text-[#1C1C1E] outline-none focus:border-accent"
+          placeholder="0"
+        />
 
-        <label className="min-w-0 text-[10px] font-black uppercase leading-none text-[#6E6E73]">
-          reps
-          <input
-            id={`reps_input_${set.id}`}
-            data-we-id={log.workoutExercise.id}
-            aria-label={`${log.exercise.nameKo} set ${set.setNo} reps`}
-            type="text"
-            inputMode="numeric"
-            enterKeyHint="next"
-            tabIndex={setIndex * 3 + 2}
-            value={reps}
-            onChange={(event) => setReps(event.target.value)}
-            onFocus={handleFocus}
-            onKeyDown={handleEnterKey}
-            onBlur={() => {
-              const nextReps = Math.round(Number(reps)) || 0;
-              if (nextReps !== set.reps) void handleSetChange(set, { reps: nextReps });
-            }}
-            className="mt-0.5 h-9 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-sm font-black text-[#1C1C1E] outline-none focus:border-accent"
-            placeholder="0"
-          />
-        </label>
-
-        <label className="min-w-0 text-[10px] font-black uppercase leading-none text-[#6E6E73]">
-          RIR
-          <input
-            id={`rir_input_${set.id}`}
-            data-we-id={log.workoutExercise.id}
-            aria-label={`${log.exercise.nameKo} set ${set.setNo} RIR`}
-            type="text"
-            inputMode="numeric"
-            enterKeyHint="done"
-            tabIndex={setIndex * 3 + 3}
-            value={rir}
-            onChange={(event) => setRir(event.target.value)}
-            onFocus={handleFocus}
-            onKeyDown={handleEnterKey}
-            onBlur={() => {
-              const nextRir = rir === '' ? undefined : Number(rir) || 0;
-              if (nextRir !== set.rir) void handleSetChange(set, { rir: nextRir });
-            }}
-            className="mt-0.5 h-9 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-sm font-black text-[#1C1C1E] outline-none focus:border-accent"
-            placeholder="-"
-          />
-        </label>
+        <input
+          id={`rir_input_${set.id}`}
+          data-we-id={log.workoutExercise.id}
+          aria-label={`${log.exercise.nameKo} set ${set.setNo} RIR`}
+          type="text"
+          inputMode="numeric"
+          enterKeyHint="done"
+          tabIndex={setIndex * 3 + 3}
+          value={rir}
+          onChange={(event) => setRir(event.target.value)}
+          onFocus={handleFocus}
+          onKeyDown={handleEnterKey}
+          onBlur={() => {
+            const nextRir = rir === '' ? undefined : Number(rir) || 0;
+            if (nextRir !== set.rir) void handleSetChange(set, { rir: nextRir });
+          }}
+          className="h-10 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-sm font-black text-[#1C1C1E] outline-none focus:border-accent"
+          placeholder="-"
+        />
 
         <button
           type="button"
@@ -269,41 +250,56 @@ export function WorkoutSetRowV2({
       </div>
 
       <div className="mt-1.5 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-1.5">
+        <div className="flex min-w-0 items-center gap-1.5 flex-wrap">
+          {previousSet ? (
+            <button
+              type="button"
+              onClick={() => void handleCopyPreviousSet(set, previousSet)}
+              className="text-[10px] font-black text-[#6E6E73] hover:text-accent-dark hover:border-accent-dark/30 hover:bg-[#E8F3F3] active:scale-[0.98] transition-all bg-[#F2F2F7] px-1.5 py-0.5 rounded-md flex items-center gap-1 border border-black/5"
+              title={locale === 'ko' ? '이전 기록 복사' : 'Copy previous values'}
+            >
+              <span>{locale === 'ko' ? '이전' : 'Prev'}:</span>
+              <span className="font-mono">{previousSet.weightKg}kg x {previousSet.reps}</span>
+            </button>
+          ) : (
+            <span className="text-[10px] font-bold text-[#C7C7CC] px-1.5 py-0.5 bg-[#F2F2F7]/50 rounded-md border border-black/[0.02]">
+              {locale === 'ko' ? '이전 없음' : 'No prev'}
+            </span>
+          )}
           {progressLabel ? (
-            <span className="rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-black text-amber-700">
+            <span className="rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-black text-amber-700 leading-none">
               {progressLabel}
             </span>
           ) : null}
           {!set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3 ? (
-            <span className="rounded-md border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[10px] font-black text-rose-600">
+            <span className="rounded-md border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-black text-rose-600 leading-none">
               Hard
             </span>
           ) : null}
           <button
             type="button"
             onClick={() => setIsActionsOpen((current) => !current)}
-            className="flex h-7 items-center gap-1 rounded-lg border border-[#D1D1D6] bg-white px-2 text-[11px] font-black text-[#1C1C1E]"
+            className="flex h-6 items-center gap-0.5 rounded-lg border border-[#D1D1D6] bg-white px-1.5 text-[9px] font-black text-[#1C1C1E]"
             aria-expanded={isActionsOpen}
             aria-label={locale === 'ko' ? '세트 추가 작업' : 'More set actions'}
           >
-            <MoreHorizontal aria-hidden="true" size={13} />
+            <MoreHorizontal aria-hidden="true" size={11} />
             {locale === 'ko' ? '더보기' : 'More'}
           </button>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center rounded-lg border border-[#D1D1D6] bg-white overflow-hidden h-6 shadow-sm">
           <button
             type="button"
             onClick={() => void handleQuickAdjustSet(set, 'weightKg', -2.5)}
-            className="h-7 rounded-lg border border-[#D1D1D6] bg-white px-2 text-[11px] font-black text-[#6E6E73]"
+            className="px-2 text-[10px] font-black text-[#6E6E73] hover:bg-[#F2F2F7] active:bg-[#E5E5EA] transition-all h-full border-r border-[#D1D1D6] flex items-center justify-center"
           >
             -2.5
           </button>
           <button
             type="button"
             onClick={() => void handleQuickAdjustSet(set, 'weightKg', 2.5)}
-            className="h-7 rounded-lg border border-[#D1D1D6] bg-white px-2 text-[11px] font-black text-accent-dark"
+            className="px-2 text-[10px] font-black text-accent-dark hover:bg-[#F2F2F7] active:bg-[#E5E5EA] transition-all h-full flex items-center justify-center"
           >
             +2.5
           </button>

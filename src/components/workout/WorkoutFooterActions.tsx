@@ -11,7 +11,9 @@ type WorkoutFooterActionsProps = {
   finishSummary: string;
   completeHint: string;
   saveLabel: string;
+  isRunningOnlyWorkout?: boolean;
   onToggleAddExercise: () => void;
+  onAddCardio?: () => void;
   onCreateRoutineFromWorkout: () => void;
   onCancelHistoricalEdit: () => void;
   onSaveHistoricalEdit: () => void;
@@ -31,7 +33,9 @@ export function WorkoutFooterActions({
   finishSummary,
   completeHint,
   saveLabel,
+  isRunningOnlyWorkout = false,
   onToggleAddExercise,
+  onAddCardio,
   onCreateRoutineFromWorkout,
   onCancelHistoricalEdit,
   onSaveHistoricalEdit,
@@ -40,7 +44,7 @@ export function WorkoutFooterActions({
   onSkipWorkout,
 }: WorkoutFooterActionsProps) {
   return (
-    <footer className="mt-auto flex shrink-0 flex-col gap-2 border-t border-[#D1D1D6] bg-[#F2F2F7] pb-1 pt-2.5">
+    <footer className={`mt-auto flex shrink-0 flex-col gap-2 border-t border-[#D1D1D6] bg-[#F2F2F7] pb-1 pt-2.5 ${isKeyboardOpen ? 'hidden' : ''}`}>
       {isHistoricalEditMode ? (
         <>
           <div className="grid grid-cols-2 gap-2">
@@ -112,18 +116,29 @@ export function WorkoutFooterActions({
             </p>
           </div>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onToggleAddExercise}
-              className={`flex ${isKeyboardOpen ? 'h-10 px-3' : 'h-12 px-3.5'} items-center justify-center gap-1.5 rounded-xl text-xs font-extrabold transition-all active:scale-95 shrink-0 border ${
-                isAdding
-                  ? 'border-transparent bg-[#E5E5EA] text-[#1C1C1E]'
-                  : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
-              }`}
-            >
-              <Plus size={16} className={`transition-transform duration-300 ${isAdding ? 'rotate-45' : ''}`} />
-              <span>{locale === 'ko' ? '운동 추가' : 'Add'}</span>
-            </button>
+            {isRunningOnlyWorkout ? (
+              <button
+                type="button"
+                onClick={onAddCardio}
+                className={`flex ${isKeyboardOpen ? 'h-10 px-3' : 'h-12 px-3.5'} items-center justify-center gap-1.5 rounded-xl text-xs font-extrabold transition-all active:scale-95 shrink-0 border border-accent-dark bg-[#E8F3F3] text-accent-dark`}
+              >
+                <Plus size={16} />
+                <span>{locale === 'ko' ? '러닝 추가' : 'Add Run'}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onToggleAddExercise}
+                className={`flex ${isKeyboardOpen ? 'h-10 px-3' : 'h-12 px-3.5'} items-center justify-center gap-1.5 rounded-xl text-xs font-extrabold transition-all active:scale-95 shrink-0 border ${
+                  isAdding
+                    ? 'border-transparent bg-[#E5E5EA] text-[#1C1C1E]'
+                    : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
+                }`}
+              >
+                <Plus size={16} className={`transition-transform duration-300 ${isAdding ? 'rotate-45' : ''}`} />
+                <span>{locale === 'ko' ? '운동 추가' : 'Add'}</span>
+              </button>
+            )}
 
             <button
               type="button"
