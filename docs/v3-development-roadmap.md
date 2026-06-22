@@ -1,5 +1,7 @@
 # SetGo v3 Development Roadmap
 
+Canonical v3 IA update: see `docs/v3-strong-hevy-menu-migration.md` for the current Strong/Hevy-style menu migration plan. The v3 bottom navigation target is `Today / Routines / History / Insights / More`.
+
 SetGo v2의 개발 진척 상황을 진단하고, 핵심 벤치마킹 대상(Strong, Hevy, Fitbod)과의 격차를 분석하여 향후 SetGo의 다음 단계인 v3의 개발 목표와 구체적인 개발 계획을 수립합니다.
 
 ---

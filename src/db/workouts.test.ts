@@ -355,6 +355,16 @@ describe('cardio records', () => {
     });
   });
 
+  it('stores an optional display order on running drafts', () => {
+    expect(createDraftCardioRecord(
+      'workout_2026-05-21',
+      new Date('2026-05-21T09:30:00.000Z'),
+      3,
+    )).toMatchObject({
+      order: 3,
+    });
+  });
+
   it('returns undefined for invalid cardio durations', () => {
     expect(calculateCardioDurationSeconds(
       '2026-05-21T09:30:00.000Z',

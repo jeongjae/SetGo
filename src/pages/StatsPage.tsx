@@ -1192,7 +1192,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
     <section className="ios-page">
       <header className="shrink-0 space-y-2 px-0.5 pb-1 pt-1">
         <IOSPageHeader
-          eyebrow={t(locale, 'records')}
+          eyebrow={t(locale, 'insights')}
           title={c.title}
           action={!recordModeControl && onOpenActuals ? (
             <button

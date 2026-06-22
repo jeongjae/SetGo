@@ -296,7 +296,7 @@ export function ActualsPage({
   return (
     <section className="ios-page">
       <header className="shrink-0 space-y-2 px-0.5 pb-1 pt-1">
-        <IOSPageHeader eyebrow={t(locale, 'records')} title={t(locale, 'actualsCalendar')} />
+        <IOSPageHeader eyebrow={t(locale, 'history')} title={t(locale, 'actualsCalendar')} />
         {recordModeControl}
       </header>
 

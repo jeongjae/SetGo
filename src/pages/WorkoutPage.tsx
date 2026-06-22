@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
-import { Dumbbell, Plus } from 'lucide-react';
+import { Dumbbell, Plus, X } from 'lucide-react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { ExerciseHistoryModal } from '../components/ExerciseHistoryModal';
 import { FloatingRestTimer } from '../components/workout/FloatingRestTimer';
@@ -26,6 +26,7 @@ import {
   getWorkoutBySessionId,
   getTodayWorkout,
   getWorkoutExerciseLogs,
+  moveWorkoutCardioBlock,
   moveWorkoutExercise,
   replaceWorkoutExercise,
   skipWorkoutSession,
@@ -668,6 +669,14 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     setSaveMessage(locale === 'ko' ? '\uC6B4\uB3D9 \uC21C\uC11C\uB97C \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4' : 'Exercise order saved');
   }
 
+  async function handleMoveCardio(direction: -1 | 1) {
+    if (!workout) return;
+
+    await moveWorkoutCardioBlock(workout.session.id, direction);
+    await loadWorkout();
+    setSaveMessage(locale === 'ko' ? '\uB7EC\uB2DD \uC21C\uC11C\uB97C \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4' : 'Running order saved');
+  }
+
   async function handleReplaceExercise(workoutExerciseId: string, exerciseId: string) {
     await replaceWorkoutExercise(workoutExerciseId, exerciseId);
     setReplacingWorkoutExerciseId(undefined);
@@ -806,6 +815,22 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     : workout?.session.entryKind === 'free'
       ? t(locale, 'freeWorkout')
       : routineNameLabel(locale, workout?.routineName) ?? t(locale, 'freeWorkout');
+  const cardioOrder = cardioRecords.length > 0
+    ? Math.min(...cardioRecords.map((record, index) => record.order ?? logs.length + index + 1))
+    : undefined;
+  const workoutDisplayItems = [
+    ...logs.map((log) => ({
+      kind: 'strength' as const,
+      id: log.workoutExercise.id,
+      order: log.workoutExercise.order,
+      log,
+    })),
+    ...(cardioOrder !== undefined ? [{
+      kind: 'cardio' as const,
+      id: 'cardio',
+      order: cardioOrder,
+    }] : []),
+  ].sort((a, b) => a.order - b.order);
 
   const liveSessionElapsed = workout
     ? getLiveSessionElapsedMs(workout.session, timerNow)
@@ -980,91 +1005,101 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           </section>
         ) : null}
 
-        {/* Exercise finder */}
-        {isAdding && (
-          <section id="workout-exercise-finder" className="shrink-0 ios-card p-3 shadow-md animate-fade-in">
-            <ExerciseFinder
-              ariaLabel="Search exercises to add"
-              exercises={availableExercises}
-              locale={locale}
-              state={exerciseFinderState}
-              onChange={updateExerciseFinderState}
-              onSelect={(exercise) => void handleAddExercise(exercise.id)}
-              limit={24}
-              title={t(locale, 'exerciseFinder')}
-            />
-          </section>
-        )}
-
-        {/* Exercise cards */}
+        {/* Workout item cards */}
         <div className="flex flex-col gap-2.5">
-          {logs.map((log, index) => (
-            <ExerciseLogCard
-              key={log.workoutExercise.id}
-              log={log}
-              index={index}
-              totalExerciseCount={logs.length}
-              locale={locale}
-              isExpanded={!!expandedExercises[log.workoutExercise.id]}
-              isKeyboardOpen={isKeyboardOpen}
-              isMemoOpen={!!memoOpenExercises[log.workoutExercise.id]}
-              isActionsOpen={!!actionOpenExercises[log.workoutExercise.id]}
-              isReplacing={replacingWorkoutExerciseId === log.workoutExercise.id}
-              exerciseFinderState={exerciseFinderState}
-              replacementExercises={getAvailableExercises(log.exercise.id)}
-              onToggleExpanded={(workoutExerciseId) => {
-                setExpandedExercises((prev) => ({
-                  ...prev,
-                  [workoutExerciseId]: !prev[workoutExerciseId],
-                }));
-              }}
-              onViewHistory={setSelectedHistoryExerciseId}
-              onToggleActions={(workoutExerciseId) => {
-                setActionOpenExercises((current) => ({
-                  ...current,
-                  [workoutExerciseId]: !current[workoutExerciseId],
-                }));
-              }}
-              onMoveExercise={(workoutExerciseId, direction) => void handleMoveExercise(workoutExerciseId, direction)}
-              onDeleteExercise={(exerciseLog) => void handleDeleteExercise(exerciseLog)}
-              onToggleMemo={(workoutExerciseId) => {
-                setMemoOpenExercises((current) => ({
-                  ...current,
-                  [workoutExerciseId]: !current[workoutExerciseId],
-                }));
-              }}
-              onToggleReplace={(workoutExerciseId) => {
-                setReplacingWorkoutExerciseId((current) => (current === workoutExerciseId ? undefined : workoutExerciseId));
-                resetExerciseFinderState();
-              }}
-              onUpdateExerciseMemo={(workoutExerciseId, memo) => void handleUpdateExerciseMemo(workoutExerciseId, memo)}
-              onExerciseFinderChange={updateExerciseFinderState}
-              onReplaceExercise={(workoutExerciseId, exerciseId) => void handleReplaceExercise(workoutExerciseId, exerciseId)}
-              onAddSet={(workoutExerciseId) => void handleAddSet(workoutExerciseId)}
-              handleQuickAdjustSet={handleQuickAdjustSet}
-              handleSetChange={handleSetChange}
-              handleToggleWarmup={handleToggleWarmup}
-              handleToggleHardSet={handleToggleHardSet}
-              handleCopyPreviousSet={handleCopyPreviousSet}
-              handleDeleteSet={handleDeleteSet}
-            />
-          ))}
-        </div>
+          {workoutDisplayItems.map((item, displayIndex) => {
+            if (item.kind === 'cardio') {
+              return (
+                <WorkoutCardioSection
+                  key="cardio"
+                  locale={locale}
+                  cardioRecords={cardioRecords}
+                  loggedCardioCount={loggedCardioCount}
+                  totalCardioDistance={totalCardioDistance}
+                  totalCardioMinutes={totalCardioMinutes}
+                  isIndependentRunningWorkout={isIndependentRunningWorkout}
+                  cardioLabel={t(locale, 'cardio')}
+                  canMoveUp={displayIndex > 0}
+                  canMoveDown={displayIndex < workoutDisplayItems.length - 1}
+                  onMoveCardio={(direction) => void handleMoveCardio(direction)}
+                  onAddCardio={() => void handleAddCardio()}
+                  onUpdateCardio={(cardioRecord, values) => void handleUpdateCardio(cardioRecord, values)}
+                  onDeleteCardio={(cardioRecord) => void handleDeleteCardio(cardioRecord)}
+                  onSaveCardioAndContinue={(cardioRecord) => void handleSaveCardioAndContinue(cardioRecord)}
+                />
+              );
+            }
 
-        {/* Running input area */}
-        <WorkoutCardioSection
-          locale={locale}
-          cardioRecords={cardioRecords}
-          loggedCardioCount={loggedCardioCount}
-          totalCardioDistance={totalCardioDistance}
-          totalCardioMinutes={totalCardioMinutes}
-          isIndependentRunningWorkout={isIndependentRunningWorkout}
-          cardioLabel={t(locale, 'cardio')}
-          onAddCardio={() => void handleAddCardio()}
-          onUpdateCardio={(cardioRecord, values) => void handleUpdateCardio(cardioRecord, values)}
-          onDeleteCardio={(cardioRecord) => void handleDeleteCardio(cardioRecord)}
-          onSaveCardioAndContinue={(cardioRecord) => void handleSaveCardioAndContinue(cardioRecord)}
-        />      </div>
+            const log = item.log;
+            return (
+              <ExerciseLogCard
+                key={log.workoutExercise.id}
+                log={log}
+                index={displayIndex}
+                totalExerciseCount={workoutDisplayItems.length}
+                locale={locale}
+                isExpanded={!!expandedExercises[log.workoutExercise.id]}
+                isKeyboardOpen={isKeyboardOpen}
+                isMemoOpen={!!memoOpenExercises[log.workoutExercise.id]}
+                isActionsOpen={!!actionOpenExercises[log.workoutExercise.id]}
+                isReplacing={replacingWorkoutExerciseId === log.workoutExercise.id}
+                exerciseFinderState={exerciseFinderState}
+                replacementExercises={getAvailableExercises(log.exercise.id)}
+                onToggleExpanded={(workoutExerciseId) => {
+                  setExpandedExercises((prev) => ({
+                    ...prev,
+                    [workoutExerciseId]: !prev[workoutExerciseId],
+                  }));
+                }}
+                onViewHistory={setSelectedHistoryExerciseId}
+                onToggleActions={(workoutExerciseId) => {
+                  setActionOpenExercises((current) => ({
+                    ...current,
+                    [workoutExerciseId]: !current[workoutExerciseId],
+                  }));
+                }}
+                onMoveExercise={(workoutExerciseId, direction) => void handleMoveExercise(workoutExerciseId, direction)}
+                onDeleteExercise={(exerciseLog) => void handleDeleteExercise(exerciseLog)}
+                onToggleMemo={(workoutExerciseId) => {
+                  setMemoOpenExercises((current) => ({
+                    ...current,
+                    [workoutExerciseId]: !current[workoutExerciseId],
+                  }));
+                }}
+                onToggleReplace={(workoutExerciseId) => {
+                  setReplacingWorkoutExerciseId((current) => (current === workoutExerciseId ? undefined : workoutExerciseId));
+                  resetExerciseFinderState();
+                }}
+                onUpdateExerciseMemo={(workoutExerciseId, memo) => void handleUpdateExerciseMemo(workoutExerciseId, memo)}
+                onExerciseFinderChange={updateExerciseFinderState}
+                onReplaceExercise={(workoutExerciseId, exerciseId) => void handleReplaceExercise(workoutExerciseId, exerciseId)}
+                onAddSet={(workoutExerciseId) => void handleAddSet(workoutExerciseId)}
+                handleQuickAdjustSet={handleQuickAdjustSet}
+                handleSetChange={handleSetChange}
+                handleToggleWarmup={handleToggleWarmup}
+                handleToggleHardSet={handleToggleHardSet}
+                handleCopyPreviousSet={handleCopyPreviousSet}
+                handleDeleteSet={handleDeleteSet}
+              />
+            );
+          })}
+        </div>
+        {cardioRecords.length === 0 ? (
+          <WorkoutCardioSection
+            locale={locale}
+            cardioRecords={cardioRecords}
+            loggedCardioCount={loggedCardioCount}
+            totalCardioDistance={totalCardioDistance}
+            totalCardioMinutes={totalCardioMinutes}
+            isIndependentRunningWorkout={isIndependentRunningWorkout}
+            cardioLabel={t(locale, 'cardio')}
+            onAddCardio={() => void handleAddCardio()}
+            onUpdateCardio={(cardioRecord, values) => void handleUpdateCardio(cardioRecord, values)}
+            onDeleteCardio={(cardioRecord) => void handleDeleteCardio(cardioRecord)}
+            onSaveCardioAndContinue={(cardioRecord) => void handleSaveCardioAndContinue(cardioRecord)}
+          />
+        ) : null}
+      </div>
 
       <WorkoutFooterActions
         locale={locale}
@@ -1090,6 +1125,48 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         onCompleteWorkout={() => void handleCompleteWorkout()}
         onSkipWorkout={() => void handleSkipWorkout()}
       />
+
+      {isAdding ? (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/35 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-16 backdrop-blur-[2px]">
+          <section
+            id="workout-exercise-finder"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="workout-exercise-finder-title"
+            className="flex max-h-[78vh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-[#D1D1D6] bg-white shadow-2xl animate-fade-in"
+          >
+            <header className="flex shrink-0 items-center justify-between border-b border-[#E5E5EA] px-4 py-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
+                  {locale === 'ko' ? '운동 추가' : 'Add exercise'}
+                </p>
+                <h2 id="workout-exercise-finder-title" className="text-base font-black text-[#1C1C1E]">
+                  {t(locale, 'exerciseFinder')}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAdding(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#8E8E93] transition-all hover:bg-[#F2F2F7] active:scale-95"
+                aria-label={locale === 'ko' ? '운동 검색 닫기' : 'Close exercise search'}
+              >
+                <X aria-hidden="true" size={18} />
+              </button>
+            </header>
+            <div className="min-h-0 flex-1 overflow-y-auto p-3.5">
+              <ExerciseFinder
+                ariaLabel="Search exercises to add"
+                exercises={availableExercises}
+                locale={locale}
+                state={exerciseFinderState}
+                onChange={updateExerciseFinderState}
+                onSelect={(exercise) => void handleAddExercise(exercise.id)}
+                limit={24}
+              />
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       {isRestTimerActive && restRemaining > 0 && !isKeyboardOpen ? (
         <FloatingRestTimer

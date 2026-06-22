@@ -1,4 +1,4 @@
-import { CalendarClock, Database, Dumbbell, FileDown, Info, Languages, Library } from 'lucide-react';
+import { Database, FileDown, Info, Languages, Library } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { AppView } from '../app/App';
 import { IOSListRow, IOSPageHeader } from '../components/IosPrimitives';
@@ -34,25 +34,11 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
 
   const managementRows = [
     {
-      view: 'routines' as AppView,
-      icon: Dumbbell,
-      bg: 'bg-[#007AFF]',
-      title: t(locale, 'routine'),
-      detail: locale === 'ko' ? '루틴 선택 및 편집' : 'Choose and edit routines',
-    },
-    {
       view: 'exercises' as AppView,
       icon: Library,
       bg: 'bg-[#FF9500]',
       title: t(locale, 'exerciseLibrary'),
       detail: locale === 'ko' ? '운동 검색, 추가, 변경' : 'Search, add and edit exercises',
-    },
-    {
-      view: 'weeklyPlan' as AppView,
-      icon: CalendarClock,
-      bg: 'bg-[#5856D6]',
-      title: t(locale, 'weeklyPlan'),
-      detail: locale === 'ko' ? '운동, 휴식, 러닝 사이클' : 'Workout, rest, and running cycle',
     },
   ];
 
@@ -78,8 +64,8 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
       <div className="inner-scroll min-h-0 space-y-4 py-0.5">
         <p className="ios-subtext px-0.5">
           {locale === 'ko'
-            ? '루틴, 운동 라이브러리, 로컬 백업을 한곳에서 관리합니다.'
-            : 'Manage routines, the exercise library, and local backups.'}
+            ? '운동 라이브러리, 로컬 백업, 언어와 저장소 설정을 관리합니다.'
+            : 'Manage the exercise library, local backups, language, and storage.'}
         </p>
 
         <div className="ios-group overflow-hidden">

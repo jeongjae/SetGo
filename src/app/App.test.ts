@@ -7,9 +7,9 @@ import {
 } from './App';
 
 describe('app navigation state rules', () => {
-  it('resets calendar context only for primary planning and records tabs', () => {
-    const resetViews: AppView[] = ['calendar', 'records'];
-    const preservedViews: AppView[] = ['today', 'more', 'routines', 'exercises', 'weeklyPlan', 'export', 'workout'];
+  it('resets calendar context only for history and temporary planning calendar tabs', () => {
+    const resetViews: AppView[] = ['calendar', 'history'];
+    const preservedViews: AppView[] = ['today', 'more', 'routines', 'insights', 'exercises', 'weeklyPlan', 'export', 'workout'];
 
     expect(resetViews.map(shouldResetCalendarContextOnNavigate)).toEqual([true, true]);
     expect(preservedViews.map(shouldResetCalendarContextOnNavigate)).toEqual([
@@ -20,11 +20,12 @@ describe('app navigation state rules', () => {
       false,
       false,
       false,
+      false,
     ]);
   });
 
-  it('returns calendar-started workouts to the plan tab and today-started workouts to Today', () => {
-    expect(workoutReturnViewForStart('2026-06-19')).toBe('calendar');
+  it('returns dated workouts to History and today-started workouts to Today', () => {
+    expect(workoutReturnViewForStart('2026-06-19')).toBe('history');
     expect(workoutReturnViewForStart()).toBe('today');
   });
 

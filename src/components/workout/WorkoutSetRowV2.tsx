@@ -9,6 +9,7 @@ type WorkoutSetRowV2Props = {
   log: WorkoutExerciseLog;
   locale: 'ko' | 'en';
   compactInputMode?: boolean;
+  isCurrentSet?: boolean;
   handleQuickAdjustSet: (set: WorkoutSet, field: 'weightKg' | 'reps' | 'rir', delta: number) => Promise<void>;
   handleSetChange: (
     set: WorkoutSet,
@@ -77,6 +78,7 @@ export function WorkoutSetRowV2({
   log,
   locale,
   compactInputMode = false,
+  isCurrentSet = false,
   handleQuickAdjustSet,
   handleSetChange,
   handleToggleWarmup,
@@ -149,12 +151,15 @@ export function WorkoutSetRowV2({
 
   const rowTone = set.isCompleted
     ? 'border-[#2EC4B6]/35 bg-[#F4FBFA]'
-    : 'border-[#D1D1D6] bg-white';
+    : isCurrentSet
+      ? 'border-[#007AFF]/65 bg-[#EAF4FF] shadow-[0_2px_10px_rgba(0,122,255,0.12)]'
+      : 'border-[#D1D1D6] bg-white';
+  const rowShadow = isCurrentSet ? '' : 'shadow-[0_1px_5px_rgba(0,0,0,0.03)]';
 
   return (
-    <div className={`rounded-xl border ${rowTone} px-2.5 shadow-[0_1px_5px_rgba(0,0,0,0.03)] ${compactInputMode ? 'py-1' : 'py-2'}`}>
+    <div className={`rounded-xl border ${rowTone} px-2.5 ${rowShadow} ${compactInputMode ? 'py-1' : 'py-2'}`}>
       <div className="grid grid-cols-[1.8rem_3rem_minmax(0,1fr)_3.2rem_3rem_2.4rem] items-center gap-1.5">
-        <div className="flex h-10 w-full items-center justify-center text-sm font-black text-[#8E8E93]">
+        <div className={`flex h-10 w-full items-center justify-center text-sm font-black ${isCurrentSet ? 'text-[#007AFF]' : 'text-[#8E8E93]'}`}>
           {set.setNo}
         </div>
 

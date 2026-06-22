@@ -46,7 +46,7 @@ import type { ExerciseCategory, ExerciseMaster, ExerciseStage, Routine, RoutineD
 
 type RoutineSetupPageProps = {
   initialSection: SetupTab;
-  onBack: () => void;
+  onBack?: () => void;
   onRoutineSaved: () => void;
   onReviewCalendar: (dateKey: string) => void;
 };
@@ -99,7 +99,7 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
   const [isEditingExercise, setIsEditingExercise] = useState(false);
   const [showHiddenExercises, setShowHiddenExercises] = useState(false);
   const [locale] = useState(() => getStoredLocale());
-  const [setupTab] = useState<SetupTab>(initialSection);
+  const [setupTab, setSetupTab] = useState<SetupTab>(initialSection);
   const [scheduleStartDate, setScheduleStartDate] = useState('');
   const [scheduleEndDate, setScheduleEndDate] = useState('');
   const [scheduleDirty, setScheduleDirty] = useState(false);
@@ -152,6 +152,10 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
   useEffect(() => {
     void loadSetup(true);
   }, []);
+
+  useEffect(() => {
+    setSetupTab(initialSection);
+  }, [initialSection]);
 
   async function handleActivate(splitType: RoutineSplitType) {
     const template = routineTemplates.find((item) => item.splitType === splitType);
@@ -602,23 +606,44 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
 
   return (
     <section className="viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col gap-0 overflow-hidden px-3.5 py-3 text-[#1C1C1E]">
-      {/* Setup subpage header */}
       <header className="flex shrink-0 flex-col gap-2.5 border-b border-[#D1D1D6] pb-2.5">
         <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#1C1C1E] shadow-md transition-all hover:bg-[#F2F2F7] active:scale-95"
-            aria-label={locale === 'ko' ? '더보기로 돌아가기' : 'Back to More'}
-          >
-            <ChevronLeft aria-hidden="true" size={20} />
-          </button>
+          {onBack ? (
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#1C1C1E] shadow-md transition-all hover:bg-[#F2F2F7] active:scale-95"
+              aria-label={locale === 'ko' ? '이전 화면으로 돌아가기' : 'Back'}
+            >
+              <ChevronLeft aria-hidden="true" size={20} />
+            </button>
+          ) : null}
           <div>
-            <p className="text-xs font-black uppercase leading-none text-accent-dark">{t(locale, 'more')}</p>
+            <p className="text-xs font-black uppercase leading-none text-accent-dark">{t(locale, 'routines')}</p>
             <h1 className="mt-0.5 text-lg font-extrabold text-[#1C1C1E]">
               {setupTab === 'routine' ? t(locale, 'routine') : setupTab === 'library' ? t(locale, 'exerciseLibrary') : t(locale, 'weeklyPlan')}
             </h1>
           </div>
+        </div>
+        <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F2F2F7] p-1">
+          {([
+            ['routine', t(locale, 'routine')],
+            ['library', t(locale, 'exerciseLibrary')],
+            ['schedule', t(locale, 'weeklyPlan')],
+          ] as Array<[SetupTab, string]>).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setSetupTab(value)}
+              className={`min-h-9 rounded-lg px-1.5 text-xs font-black transition-all active:scale-95 ${
+                setupTab === value
+                  ? 'bg-white text-[#1C1C1E] shadow-sm'
+                  : 'text-[#6E6E73] hover:text-[#1C1C1E]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </header>
 
