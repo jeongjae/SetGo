@@ -10,21 +10,22 @@ import type { WorkoutRecommendationSnapshot } from '../types';
 const CalendarPage = lazy(() => import('../pages/CalendarPage').then((module) => ({ default: module.CalendarPage })));
 const ExportPage = lazy(() => import('../pages/ExportPage').then((module) => ({ default: module.ExportPage })));
 const MorePage = lazy(() => import('../pages/MorePage').then((module) => ({ default: module.MorePage })));
-const RecordsPage = lazy(() => import('../pages/RecordsPage').then((module) => ({ default: module.RecordsPage })));
+const ActualsPage = lazy(() => import('../pages/ActualsPage').then((module) => ({ default: module.ActualsPage })));
 const RoutineSetupPage = lazy(() => import('../pages/RoutineSetupPage').then((module) => ({ default: module.RoutineSetupPage })));
+const StatsPage = lazy(() => import('../pages/StatsPage').then((module) => ({ default: module.StatsPage })));
 const TodayPage = lazy(() => import('../pages/TodayPage').then((module) => ({ default: module.TodayPage })));
 const WorkoutPage = lazy(() => import('../pages/WorkoutPage').then((module) => ({ default: module.WorkoutPage })));
 
-export type AppView = 'today' | 'calendar' | 'records' | 'more' | 'routines' | 'exercises' | 'weeklyPlan' | 'export' | 'workout';
-export type WorkoutReturnView = 'today' | 'calendar' | 'records';
+export type AppView = 'today' | 'routines' | 'history' | 'insights' | 'more' | 'exercises' | 'weeklyPlan' | 'export' | 'workout' | 'calendar';
+export type WorkoutReturnView = 'today' | 'history';
 export type WorkoutMode = 'active' | 'history-edit';
 
 export function shouldResetCalendarContextOnNavigate(nextView: AppView): boolean {
-  return nextView === 'calendar' || nextView === 'records';
+  return nextView === 'calendar' || nextView === 'history';
 }
 
 export function workoutReturnViewForStart(dateKey?: string): WorkoutReturnView {
-  return dateKey ? 'calendar' : 'today';
+  return dateKey ? 'history' : 'today';
 }
 
 export function workoutModeForHistoricalAdd(dateKey: string, todayKey: string): WorkoutMode {
@@ -138,7 +139,7 @@ export function App() {
 
   function handleEditHistoricalWorkout(sessionId: string, dateKey: string) {
     setCalendarSelectedDateKey(dateKey);
-    setWorkoutReturnView('records');
+    setWorkoutReturnView('history');
     setWorkoutMode('history-edit');
     setActiveWorkoutSessionId(sessionId);
     setView('workout');
@@ -147,7 +148,7 @@ export function App() {
   async function handleAddHistoricalWorkout(dateKey: string, kind: WorkoutStartKind, routineDayId?: string) {
     setCalendarSelectedDateKey(dateKey);
     const todayKey = formatDateKey(new Date());
-    setWorkoutReturnView('records');
+    setWorkoutReturnView('history');
     setWorkoutMode(workoutModeForHistoricalAdd(dateKey, todayKey));
 
     try {
@@ -167,7 +168,6 @@ export function App() {
     ? (
       <RoutineSetupPage
         initialSection={view === 'routines' ? 'routine' : view === 'exercises' ? 'library' : 'schedule'}
-        onBack={() => setView('more')}
         onRoutineSaved={handleRoutineSaved}
         onReviewCalendar={(dateKey) => {
           setCalendarSelectedDateKey(dateKey);
@@ -183,19 +183,22 @@ export function App() {
           onSelectedDateChange={setCalendarSelectedDateKey}
           reviewingWeeklyPlan={calendarReviewingWeeklyPlan}
           onReturnToWeeklyPlan={() => setView('weeklyPlan')}
-          onNavigateToRecords={() => setView('records')}
+          onNavigateToRecords={() => setView('history')}
           onNavigateToRoutines={() => setView('routines')}
         />
       )
-      : view === 'records'
+      : view === 'history'
         ? (
-          <RecordsPage
+          <ActualsPage
             initialSelectedDateKey={calendarSelectedDateKey}
             onSelectedDateChange={setCalendarSelectedDateKey}
             onAddHistoricalWorkout={(dateKey, kind, routineDayId) => void handleAddHistoricalWorkout(dateKey, kind, routineDayId)}
             onEditHistoricalWorkout={handleEditHistoricalWorkout}
+            onOpenStats={() => setView('insights')}
           />
         )
+      : view === 'insights'
+        ? <StatsPage onOpenActuals={() => setView('history')} />
       : view === 'export'
         ? <ExportPage onBack={() => setView('more')} />
         : view === 'more'

@@ -199,6 +199,7 @@ export type CardioActivityType = 'running' | 'walking' | 'cycling' | 'elliptical
 export type CardioRecord = {
   id: string;
   sessionId: string;
+  order?: number;
   isDraft?: boolean;
   source?: CardioRecordSource;
   sourceName?: string;

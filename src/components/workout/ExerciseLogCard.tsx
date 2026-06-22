@@ -75,6 +75,7 @@ export function ExerciseLogCard({
   const totalCount = log.sets.length;
   const hasExerciseMemo = Boolean(log.workoutExercise.memo?.trim());
   const workoutExerciseId = log.workoutExercise.id;
+  const currentSetId = log.sets.find((set) => !set.isCompleted)?.id;
   const targetRecommendation = log.targetRecommendation;
   const targetSummary = targetRecommendation
     ? [
@@ -248,9 +249,6 @@ export function ExerciseLogCard({
                 <p className="leading-tight text-accent-dark">
                   {locale === 'ko' ? '추천 목표' : 'Suggested target'}: <span className="font-mono font-black">{targetSummary}</span>
                 </p>
-                <p className="text-[11px] font-medium leading-tight text-[#6E6E73] truncate">
-                  {locale === 'ko' ? '최근 기록과 루틴 목표 기준' : targetRecommendation.reason}
-                </p>
               </div>
             </div>
           ) : null}
@@ -289,6 +287,7 @@ export function ExerciseLogCard({
                 log={log}
                 locale={locale}
                 compactInputMode={isKeyboardOpen}
+                isCurrentSet={set.id === currentSetId}
                 handleQuickAdjustSet={handleQuickAdjustSet}
                 handleSetChange={handleSetChange}
                 handleToggleWarmup={handleToggleWarmup}

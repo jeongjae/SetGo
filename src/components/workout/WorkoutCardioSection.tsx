@@ -1,4 +1,5 @@
-import { Check, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronDown, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { CardioRecord } from '../../types';
 
 type CardioUpdate = Partial<Pick<
@@ -14,7 +15,10 @@ type WorkoutCardioSectionProps = {
   totalCardioMinutes: number;
   isIndependentRunningWorkout: boolean;
   cardioLabel: string;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   onAddCardio: () => void;
+  onMoveCardio?: (direction: -1 | 1) => void;
   onUpdateCardio: (cardioRecord: CardioRecord, values: CardioUpdate) => void;
   onDeleteCardio: (cardioRecord: CardioRecord) => void;
   onSaveCardioAndContinue: (cardioRecord: CardioRecord) => void;
@@ -62,11 +66,30 @@ export function WorkoutCardioSection({
   totalCardioMinutes,
   isIndependentRunningWorkout,
   cardioLabel,
+  canMoveUp = false,
+  canMoveDown = false,
   onAddCardio,
+  onMoveCardio,
   onUpdateCardio,
   onDeleteCardio,
   onSaveCardioAndContinue,
 }: WorkoutCardioSectionProps) {
+  const [isExpanded, setIsExpanded] = useState(() => cardioRecords.length > 0);
+
+  useEffect(() => {
+    if (cardioRecords.length > 0) setIsExpanded(true);
+  }, [cardioRecords.length]);
+
+  function handleHeaderAction() {
+    if (cardioRecords.length === 0) {
+      setIsExpanded(true);
+      onAddCardio();
+      return;
+    }
+
+    setIsExpanded((current) => !current);
+  }
+
   return (
     <section className="shrink-0 ios-card p-3.5 space-y-3">
       <div className="flex items-center justify-between gap-3">
@@ -76,16 +99,53 @@ export function WorkoutCardioSection({
             {cardioRecords.length === 0 ? (locale === 'ko' ? '러닝' : 'Optional Running') : `${cardioRecords.length} ${cardioLabel}`}
           </h2>
         </div>
-        <button
-          type="button"
-          onClick={onAddCardio}
-          className="ios-button-primary flex h-10 w-10 items-center justify-center shrink-0"
-          aria-label="Add cardio"
-        >
-          <Plus aria-hidden="true" size={20} />
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          {cardioRecords.length > 0 ? (
+            <>
+              <button
+                type="button"
+                onClick={() => onMoveCardio?.(-1)}
+                disabled={!canMoveUp}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                aria-label={locale === 'ko' ? '러닝 위로 이동' : 'Move running up'}
+              >
+                <ArrowUp aria-hidden="true" size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onMoveCardio?.(1)}
+                disabled={!canMoveDown}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                aria-label={locale === 'ko' ? '러닝 아래로 이동' : 'Move running down'}
+              >
+                <ArrowDown aria-hidden="true" size={14} />
+              </button>
+            </>
+          ) : null}
+          <button
+            type="button"
+            onClick={handleHeaderAction}
+            className={`flex h-10 shrink-0 items-center justify-center transition-all active:scale-95 ${
+              cardioRecords.length === 0
+                ? 'ios-button-primary w-10'
+                : 'rounded-xl px-2 text-xs font-bold uppercase text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
+            }`}
+            aria-expanded={cardioRecords.length > 0 ? isExpanded : undefined}
+            aria-label={cardioRecords.length === 0 ? 'Add cardio' : isExpanded ? 'Collapse cardio' : 'Expand cardio'}
+          >
+            {cardioRecords.length === 0 ? (
+              <Plus aria-hidden="true" size={20} />
+            ) : (
+              <>
+                <span>{isExpanded ? (locale === 'ko' ? '접기' : 'Hide') : (locale === 'ko' ? '열기' : 'Show')}</span>
+                <ChevronDown aria-hidden="true" size={16} className={`ml-1 transition-transform ${isExpanded ? 'rotate-180 text-accent-dark' : ''}`} />
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
+      {isExpanded ? (
       <div className="mt-3 flex flex-col gap-3">
         {loggedCardioCount > 0 ? (
           <div className="flex items-center justify-between rounded-xl bg-[#F2F2F7] border border-black/5 px-3.5 py-2.5 text-xs font-bold text-[#1C1C1E]">
@@ -106,12 +166,12 @@ export function WorkoutCardioSection({
                   <span className="text-sm">
                     {cardioRecord.environment === 'indoor' ? '실내' : '야외'}
                   </span>
-                  <div>
+                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                     <p className="text-sm font-bold text-[#1C1C1E]">
                       {getCardioDisplayName(cardioRecord, locale)}
                     </p>
                     {cardioRecord.isDraft ? (
-                      <span className="mt-0.5 inline-flex rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-bold text-amber-750">
+                      <span className="inline-flex rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-bold leading-none text-amber-750">
                         {locale === 'ko' ? '입력 중' : 'Draft'}
                       </span>
                     ) : null}
@@ -327,7 +387,7 @@ export function WorkoutCardioSection({
                   {cardioRecord.isDraft
                     ? isIndependentRunningWorkout
                       ? locale === 'ko' ? '러닝 저장' : 'Save running'
-                      : locale === 'ko' ? '기록하고 운동 계속' : 'Log cardio and continue'
+                      : locale === 'ko' ? '저장' : 'Save'
                     : isIndependentRunningWorkout
                       ? locale === 'ko' ? '러닝 저장됨' : 'Running saved'
                       : locale === 'ko' ? '운동 기록 계속' : 'Continue workout log'}
@@ -347,6 +407,7 @@ export function WorkoutCardioSection({
           );
         })}
       </div>
+      ) : null}
     </section>
   );
 }

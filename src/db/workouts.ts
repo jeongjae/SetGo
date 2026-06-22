@@ -503,8 +503,31 @@ export async function getWorkoutExerciseLogs(sessionId: string): Promise<Workout
   );
 }
 
+async function getNextWorkoutItemOrder(sessionId: string): Promise<number> {
+  const [workoutExercises, cardioRecords] = await Promise.all([
+    db.workoutExercises.where('sessionId').equals(sessionId).toArray(),
+    db.cardioRecords.where('sessionId').equals(sessionId).toArray(),
+  ]);
+  const maxOrder = Math.max(
+    0,
+    ...workoutExercises.map((item) => item.order),
+    ...cardioRecords.map((item) => item.order ?? 0),
+  );
+
+  return maxOrder + 1;
+}
+
 export async function getWorkoutCardioRecords(sessionId: string): Promise<CardioRecord[]> {
-  return db.cardioRecords.where('sessionId').equals(sessionId).toArray();
+  const [workoutExercises, cardioRecords] = await Promise.all([
+    db.workoutExercises.where('sessionId').equals(sessionId).toArray(),
+    db.cardioRecords.where('sessionId').equals(sessionId).toArray(),
+  ]);
+  const fallbackStart = workoutExercises.length + 1;
+
+  return cardioRecords
+    .map((record, index) => ({ record, order: record.order ?? fallbackStart + index }))
+    .sort((a, b) => a.order - b.order || a.record.startedAt.localeCompare(b.record.startedAt))
+    .map((item) => item.record);
 }
 
 export function calculateCardioDurationSeconds(startedAt: string, endedAt: string): number | undefined {
@@ -514,13 +537,14 @@ export function calculateCardioDurationSeconds(startedAt: string, endedAt: strin
   return Math.round((endMs - startMs) / 1000);
 }
 
-export function createDraftCardioRecord(sessionId: string, now = new Date()): CardioRecord {
+export function createDraftCardioRecord(sessionId: string, now = new Date(), order?: number): CardioRecord {
   const startedAt = now.toISOString();
   const endedAt = new Date(now.getTime() + 20 * 60 * 1000).toISOString();
 
   return {
     id: `${sessionId}_cardio_${now.getTime()}`,
     sessionId,
+    order,
     isDraft: true,
     source: 'manual',
     activityType: 'running',
@@ -535,7 +559,14 @@ export function createDraftCardioRecord(sessionId: string, now = new Date()): Ca
 }
 
 export async function addCardioRecordToWorkout(sessionId: string): Promise<void> {
-  await db.cardioRecords.put(createDraftCardioRecord(sessionId));
+  const existingCardio = await db.cardioRecords.where('sessionId').equals(sessionId).toArray();
+  const existingCardioOrder = existingCardio
+    .map((record) => record.order)
+    .filter((order): order is number => order !== undefined)
+    .sort((a, b) => a - b)[0];
+  const order = existingCardioOrder ?? await getNextWorkoutItemOrder(sessionId);
+
+  await db.cardioRecords.put(createDraftCardioRecord(sessionId, new Date(), order));
 }
 
 async function ensureRunningDraft(sessionId: string): Promise<void> {
@@ -676,7 +707,7 @@ export async function addExerciseToWorkout(sessionId: string, exerciseId: string
 
   if (existing) return existing.id;
 
-  const order = await db.workoutExercises.where('sessionId').equals(sessionId).count() + 1;
+  const order = await getNextWorkoutItemOrder(sessionId);
   const exercise = await db.exercises.get(exerciseId);
   if (!exercise) return undefined;
 
@@ -842,20 +873,79 @@ async function clearWorkoutSessionRecords(sessionId: string, deleteSession = fal
   });
 }
 
+type WorkoutOrderItem = {
+  kind: 'strength' | 'cardio';
+  id: string;
+  sessionId: string;
+  order: number;
+};
+
+async function getWorkoutOrderItems(sessionId: string): Promise<WorkoutOrderItem[]> {
+  const [workoutExercises, cardioRecords] = await Promise.all([
+    db.workoutExercises.where('sessionId').equals(sessionId).toArray(),
+    db.cardioRecords.where('sessionId').equals(sessionId).toArray(),
+  ]);
+  const cardioOrders = cardioRecords
+    .map((record, index) => record.order ?? workoutExercises.length + index + 1);
+  const cardioOrder = cardioOrders.length > 0 ? Math.min(...cardioOrders) : undefined;
+
+  return [
+    ...workoutExercises.map((item): WorkoutOrderItem => ({
+      kind: 'strength',
+      id: item.id,
+      sessionId,
+      order: item.order,
+    })),
+    ...(cardioOrder !== undefined ? [{
+      kind: 'cardio' as const,
+      id: 'cardio',
+      sessionId,
+      order: cardioOrder,
+    }] : []),
+  ].sort((a, b) => a.order - b.order);
+}
+
+async function updateWorkoutOrderItem(item: WorkoutOrderItem, order: number): Promise<void> {
+  if (item.kind === 'strength') {
+    await db.workoutExercises.update(item.id, { order });
+    return;
+  }
+
+  const cardioRecords = await db.cardioRecords.where('sessionId').equals(item.sessionId).toArray();
+  await Promise.all(cardioRecords.map((record) => db.cardioRecords.update(record.id, { order })));
+}
+
+async function moveWorkoutOrderItem(item: WorkoutOrderItem, direction: -1 | 1): Promise<void> {
+  const items = await getWorkoutOrderItems(item.sessionId);
+  const index = items.findIndex((candidate) => candidate.kind === item.kind && candidate.id === item.id);
+  const target = items[index + direction];
+
+  if (index < 0 || !target) return;
+
+  await db.transaction('rw', db.workoutExercises, db.cardioRecords, async () => {
+    await updateWorkoutOrderItem(item, target.order);
+    await updateWorkoutOrderItem(target, item.order);
+  });
+}
+
 export async function moveWorkoutExercise(workoutExerciseId: string, direction: -1 | 1): Promise<void> {
   const workoutExercise = await db.workoutExercises.get(workoutExerciseId);
   if (!workoutExercise) return;
 
-  const workoutExercises = await db.workoutExercises.where('sessionId').equals(workoutExercise.sessionId).sortBy('order');
-  const index = workoutExercises.findIndex((item) => item.id === workoutExerciseId);
-  const target = workoutExercises[index + direction];
+  await moveWorkoutOrderItem({
+    kind: 'strength',
+    id: workoutExercise.id,
+    sessionId: workoutExercise.sessionId,
+    order: workoutExercise.order,
+  }, direction);
+}
 
-  if (index < 0 || !target) return;
+export async function moveWorkoutCardioBlock(sessionId: string, direction: -1 | 1): Promise<void> {
+  const items = await getWorkoutOrderItems(sessionId);
+  const cardioItem = items.find((item) => item.kind === 'cardio');
+  if (!cardioItem) return;
 
-  await db.transaction('rw', db.workoutExercises, async () => {
-    await db.workoutExercises.update(workoutExercise.id, { order: target.order });
-    await db.workoutExercises.update(target.id, { order: workoutExercise.order });
-  });
+  await moveWorkoutOrderItem(cardioItem, direction);
 }
 
 export async function updateWorkoutSet(

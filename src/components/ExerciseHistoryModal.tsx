@@ -75,9 +75,9 @@ export function ExerciseHistoryModal({ exerciseId, onClose, locale }: ExerciseHi
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4 backdrop-blur-xs animate-fade-in">
       <div className="flex h-[92vh] w-full max-w-md flex-col rounded-t-3xl border-t border-[#D1D1D6] bg-[#F2F2F7] shadow-2xl sm:h-[85vh] sm:rounded-3xl sm:border overflow-hidden text-[#1C1C1E]">
         {/* 모달 헤더 */}
-        <header className="flex shrink-0 items-center justify-between border-b border-[#D1D1D6] px-4 py-3.5 bg-white shadow-sm">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F2F2F7] text-xl border border-black/5 shadow-inner">
+        <header className="flex shrink-0 items-center justify-between border-b border-[#D1D1D6] bg-white px-3.5 py-2.5 shadow-sm">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-black/5 bg-[#F2F2F7] text-lg shadow-inner">
               {getExerciseIcon(exercise.defaultEmoji)}
             </div>
             <div className="min-w-0">
@@ -92,7 +92,7 @@ export function ExerciseHistoryModal({ exerciseId, onClose, locale }: ExerciseHi
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#8E8E93] transition-all hover:bg-[#F2F2F7] active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#8E8E93] transition-all hover:bg-[#F2F2F7] active:scale-95"
             aria-label="Close modal"
           >
             <X aria-hidden="true" size={18} />
@@ -100,45 +100,45 @@ export function ExerciseHistoryModal({ exerciseId, onClose, locale }: ExerciseHi
         </header>
 
         {/* 모달 바디 스크롤 영역 */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4.5 scrollbar-thin">
+        <div className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 scrollbar-thin">
           {/* 베스트 스펙 카드 그리드 */}
-          <section className="grid grid-cols-2 gap-2.5">
-            <div className="rounded-2xl border border-black/5 bg-white p-3 flex flex-col justify-between min-h-[4.5rem] shadow-sm">
+          <section className="grid grid-cols-2 gap-2">
+            <div className="flex min-h-[3.8rem] flex-col justify-between rounded-xl border border-black/5 bg-white p-2.5 shadow-sm">
               <div className="flex items-center gap-1 text-[10px] font-bold text-amber-500 uppercase tracking-wider">
                 <Trophy size={11} />
                 <span>Best 1RM</span>
               </div>
-              <p className="mt-1.5 text-lg font-black text-[#1C1C1E] font-mono">
+              <p className="mt-1 text-base font-black text-[#1C1C1E] font-mono">
                 {details.bestEstimated1RM > 0 ? `${details.bestEstimated1RM.toLocaleString()} kg` : '-'}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-black/5 bg-white p-3 flex flex-col justify-between min-h-[4.5rem] shadow-sm">
+            <div className="flex min-h-[3.8rem] flex-col justify-between rounded-xl border border-black/5 bg-white p-2.5 shadow-sm">
               <div className="flex items-center gap-1 text-[10px] font-bold text-accent-dark uppercase tracking-wider">
                 <Trophy size={11} />
                 <span>{locale === 'ko' ? '최고 중량' : 'Best Weight'}</span>
               </div>
-              <p className="mt-1.5 text-lg font-black text-[#1C1C1E] font-mono">
+              <p className="mt-1 text-base font-black text-[#1C1C1E] font-mono">
                 {details.bestWeight > 0 ? `${details.bestWeight.toLocaleString()} kg` : '-'}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-black/5 bg-white p-3 flex flex-col justify-between min-h-[4.5rem] shadow-sm">
+            <div className="flex min-h-[3.8rem] flex-col justify-between rounded-xl border border-black/5 bg-white p-2.5 shadow-sm">
               <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
                 <Trophy size={11} />
                 <span>{locale === 'ko' ? '최고 세트볼륨' : 'Best Set Vol'}</span>
               </div>
-              <p className="mt-1.5 text-lg font-black text-[#1C1C1E] font-mono">
+              <p className="mt-1 text-base font-black text-[#1C1C1E] font-mono">
                 {details.bestVolume > 0 ? `${details.bestVolume.toLocaleString()} kg` : '-'}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-black/5 bg-white p-3 flex flex-col justify-between min-h-[4.5rem] shadow-sm">
+            <div className="flex min-h-[3.8rem] flex-col justify-between rounded-xl border border-black/5 bg-white p-2.5 shadow-sm">
               <div className="flex items-center gap-1 text-[10px] font-bold text-[#5856D6] uppercase tracking-wider">
                 <Trophy size={11} />
                 <span>{locale === 'ko' ? '최고 세션볼륨' : 'Best Session Vol'}</span>
               </div>
-              <p className="mt-1.5 text-lg font-black text-[#1C1C1E] font-mono">
+              <p className="mt-1 text-base font-black text-[#1C1C1E] font-mono">
                 {details.bestSessionVolume > 0 ? `${details.bestSessionVolume.toLocaleString()} kg` : '-'}
               </p>
             </div>
@@ -146,24 +146,24 @@ export function ExerciseHistoryModal({ exerciseId, onClose, locale }: ExerciseHi
 
           {/* 5세션 볼륨 트렌드 미니 차트 */}
           {recent5.length > 0 ? (
-            <section className="ios-card p-3.5 shadow-sm">
+            <section className="ios-card p-2.5 shadow-sm">
               <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#159A91] uppercase tracking-wider">
                 <BarChart3 size={13} />
                 <span>{locale === 'ko' ? '최근 5세션 볼륨 트렌드' : 'Recent 5-Session Volume Trend'}</span>
               </div>
-              <div className="mt-5 flex h-28 items-end justify-between px-2 gap-4">
+              <div className="mt-3 flex h-20 items-end justify-between gap-2 px-1.5">
                 {recent5.map((h, i) => {
                   const pct = Math.max(10, Math.round((h.totalVolumeKg / maxVolume) * 100));
                   return (
                     <div key={h.sessionId} className="flex flex-1 flex-col items-center h-full justify-end group">
-                      <span className="mb-1.5 text-[10px] font-bold text-[#6E6E73] font-mono opacity-80 scale-90">
+                      <span className="mb-1 text-[9px] font-bold text-[#6E6E73] font-mono opacity-80 scale-90">
                         {h.totalVolumeKg.toLocaleString()}
                       </span>
                       <div
                         style={{ height: `${pct}%` }}
                         className="w-full rounded-t-lg bg-accent transition-all group-hover:bg-accent-dark"
                       />
-                      <span className="mt-2 text-[9px] font-bold text-[#8E8E93] font-mono">
+                      <span className="mt-1.5 text-[9px] font-bold text-[#8E8E93] font-mono">
                         {h.date.slice(5)}
                       </span>
                     </div>
@@ -174,7 +174,7 @@ export function ExerciseHistoryModal({ exerciseId, onClose, locale }: ExerciseHi
           ) : null}
 
           {/* 세션 기록 리스트 */}
-          <section className="space-y-2.5">
+          <section className="space-y-2">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#159A91] uppercase tracking-wider">
               <TrendingUp size={13} />
               <span>{locale === 'ko' ? '세션 히스토리' : 'Session History'}</span>
@@ -184,9 +184,9 @@ export function ExerciseHistoryModal({ exerciseId, onClose, locale }: ExerciseHi
                 {locale === 'ko' ? '완료된 이전 세션 기록이 없습니다.' : 'No completed session records yet.'}
               </p>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {details.history.map((entry) => (
-                  <div key={entry.sessionId} className="rounded-2xl border border-black/5 bg-white p-3.5 space-y-2 shadow-sm">
+                  <div key={entry.sessionId} className="space-y-1.5 rounded-xl border border-black/5 bg-white p-2.5 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-[#1C1C1E]">
                         <Calendar size={13} className="text-[#8E8E93]" />
@@ -202,13 +202,13 @@ export function ExerciseHistoryModal({ exerciseId, onClose, locale }: ExerciseHi
                       </span>
                     </div>
                     {/* 세트 목록 */}
-                    <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-[#E5E5EA]">
+                    <div className="grid grid-cols-2 gap-1 border-t border-[#E5E5EA] pt-1.5">
                       {entry.sets.map((set, sIdx) => {
                         const isWeightPR = set.isCompleted && set.weightKg === details.bestWeight;
                         const isVolPR = set.isCompleted && (set.weightKg * set.reps) === details.bestVolume;
 
                         return (
-                          <div key={set.id} className="flex items-center justify-between rounded-lg bg-[#F2F2F7] px-2 py-1 text-[11px] font-medium text-[#1C1C1E]">
+                          <div key={set.id} className="flex items-center justify-between rounded-lg bg-[#F2F2F7] px-2 py-0.5 text-[11px] font-medium text-[#1C1C1E]">
                             <span className="font-bold text-[#6E6E73]">
                               {sIdx + 1}S
                             </span>

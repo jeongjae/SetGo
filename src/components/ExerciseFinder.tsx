@@ -111,13 +111,13 @@ export function ExerciseFinder({
         ) : null}
       </div>
 
-      <div className="mt-2.5 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth snap-x">
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
         {categoryFilters.map((category) => (
           <button
             key={category.value}
             type="button"
             onClick={() => updateState({ category: category.value })}
-            className={`ios-pill min-h-9 shrink-0 snap-start ${
+            className={`ios-pill min-h-8 px-2.5 text-xs ${
               state.category === category.value
                 ? 'ios-pill-active'
                 : 'text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
@@ -128,13 +128,13 @@ export function ExerciseFinder({
         ))}
       </div>
 
-      <div className="mt-1.5 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none scroll-smooth snap-x">
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
         {stageFilters.map((stage) => (
           <button
             key={stage.value}
             type="button"
             onClick={() => updateState({ stage: stage.value })}
-            className={`ios-pill min-h-9 shrink-0 snap-start ${
+            className={`ios-pill min-h-8 px-2.5 text-xs ${
               state.stage === stage.value
                 ? 'ios-pill-active'
                 : 'text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
