@@ -376,7 +376,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             ]}
           />
 
-          {routineDays.length > 0 ? (
+          {selectedWorkoutKind === 'planned' && routineDays.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {routineDays.map((routineDay) => (
                 <button
@@ -398,7 +398,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             </div>
           ) : null}
 
-          {recentRoutineWorkouts.length > 0 ? (
+          {selectedWorkoutKind === 'planned' && recentRoutineWorkouts.length > 0 ? (
             <div className="rounded-2xl bg-[#F2F2F7] px-3 py-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-black text-primary">{locale === 'ko' ? '최근 루틴 빠른 시작' : 'Recent routine starts'}</p>

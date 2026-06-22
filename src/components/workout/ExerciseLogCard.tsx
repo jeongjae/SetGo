@@ -129,10 +129,15 @@ export function ExerciseLogCard({
                 </span>
               ) : null}
             </div>
-            <p className="text-xs font-bold text-accent-dark">
-              {completedCount} / {totalCount} Sets
+            <p className="text-xs font-bold text-accent-dark flex flex-wrap items-center gap-1.5">
+              <span>{completedCount} / {totalCount} Sets</span>
               {log.workoutExercise.totalVolumeKg > 0 ? (
-                <span className="font-mono font-semibold text-[#8E8E93]"> · {log.workoutExercise.totalVolumeKg.toLocaleString()}kg</span>
+                <span className="font-mono font-semibold text-[#8E8E93]">· {log.workoutExercise.totalVolumeKg.toLocaleString()}kg</span>
+              ) : null}
+              {targetRecommendation && targetSummary ? (
+                <span className="rounded-md border border-[#2EC4B6]/30 bg-[#E8F3F3] px-1.5 py-0.5 text-[9px] font-black text-accent-dark tracking-tight leading-none shrink-0">
+                  🎯 {targetRecommendation.weightKg ? `${targetRecommendation.weightKg}kg ` : ''}{targetRecommendation.reps}{locale === 'ko' ? '회' : 'r'}
+                </span>
               ) : null}
             </p>
           </div>
@@ -154,87 +159,70 @@ export function ExerciseLogCard({
 
       {isExpanded ? (
         <div className={`border-t border-[#E5E5EA] bg-white px-3 ${isKeyboardOpen ? 'pb-2 pt-1.5' : 'pb-3 pt-2'}`}>
-          <div className={`transition-all ${isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0' : 'max-h-20 opacity-100'}`}>
-            <div className="flex items-center justify-end gap-1.5">
+          <div className={`flex items-center justify-between gap-2 border-b border-[#F2F2F7] pb-2 transition-all duration-300 ${
+            isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0 pb-0' : 'max-h-10 opacity-100'
+          }`}>
+            <span className="text-[11px] font-black text-[#8E8E93]">{locale === 'ko' ? '운동 관리' : 'Manage Exercise'}</span>
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => onToggleActions(workoutExerciseId)}
-                className={`flex min-h-8 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-all active:scale-95 ${
-                  isActionsOpen
+                onClick={() => onMoveExercise(workoutExerciseId, -1)}
+                disabled={index === 0}
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                title={locale === 'ko' ? '위로 이동' : 'Move Up'}
+              >
+                <ArrowUp size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onMoveExercise(workoutExerciseId, 1)}
+                disabled={index === totalExerciseCount - 1}
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                title={locale === 'ko' ? '아래로 이동' : 'Move Down'}
+              >
+                <ArrowDown size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onToggleMemo(workoutExerciseId)}
+                className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-all active:scale-95 ${
+                  isMemoOpen || hasExerciseMemo
                     ? 'border-transparent bg-[#E8F3F3] text-accent-dark'
                     : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
                 }`}
+                title={locale === 'ko' ? '메모' : 'Memo'}
               >
-                <MoreHorizontal aria-hidden="true" size={14} />
-                <span>{locale === 'ko' ? '관리' : 'Manage'}</span>
+                <ClipboardList size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onToggleReplace(workoutExerciseId)}
+                className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-all active:scale-95 ${
+                  isReplacing
+                    ? 'border-transparent bg-[#F2F2F7] text-[#6E6E73]'
+                    : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
+                }`}
+                title={locale === 'ko' ? '교체' : 'Replace'}
+              >
+                <RefreshCw size={13} className={isReplacing ? 'animate-spin' : ''} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onViewHistory(log.exercise.id)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E8F3F3] text-accent-dark transition-all hover:bg-[#D8EFEF] active:scale-95"
+                title={locale === 'ko' ? '기록' : 'History'}
+              >
+                <BarChart3 size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onDeleteExercise(log)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFECEC] text-danger transition-all hover:bg-[#FFD1D1] active:scale-95"
+                title={locale === 'ko' ? '삭제' : 'Delete'}
+              >
+                <Trash2 size={14} />
               </button>
             </div>
-
-            {isActionsOpen ? (
-              <div className="mt-1.5 grid grid-cols-3 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => onMoveExercise(workoutExerciseId, -1)}
-                  disabled={index === 0}
-                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] transition-all duration-200 hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
-                  aria-label={`Move ${log.exercise.nameKo} up`}
-                >
-                  <ArrowUp aria-hidden="true" size={14} />
-                  <span>{locale === 'ko' ? '위' : 'Up'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onMoveExercise(workoutExerciseId, 1)}
-                  disabled={index === totalExerciseCount - 1}
-                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] transition-all duration-200 hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
-                  aria-label={`Move ${log.exercise.nameKo} down`}
-                >
-                  <ArrowDown aria-hidden="true" size={14} />
-                  <span>{locale === 'ko' ? '아래' : 'Down'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDeleteExercise(log)}
-                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-[#FFECEC] px-2 text-xs font-bold text-danger transition-all duration-200 active:scale-95"
-                  aria-label={`Delete ${log.exercise.nameKo}`}
-                >
-                  <Trash2 aria-hidden="true" size={14} />
-                  <span>{locale === 'ko' ? '삭제' : 'Delete'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onToggleMemo(workoutExerciseId)}
-                  className={`flex min-h-9 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs font-bold transition-all duration-200 active:scale-95 ${
-                    isMemoOpen || hasExerciseMemo
-                      ? 'border-transparent bg-[#E8F3F3] text-accent-dark'
-                      : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
-                  }`}
-                >
-                  <ClipboardList aria-hidden="true" size={14} />
-                  <span>{locale === 'ko' ? '메모' : 'Memo'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onToggleReplace(workoutExerciseId)}
-                  className={`flex min-h-9 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs font-bold transition-all duration-200 active:scale-95 ${
-                    isReplacing
-                      ? 'border-transparent bg-[#F2F2F7] text-[#6E6E73]'
-                      : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
-                  }`}
-                >
-                  <RefreshCw aria-hidden="true" size={13} className={isReplacing ? 'animate-spin' : ''} />
-                  <span>{locale === 'ko' ? '교체' : 'Replace'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onViewHistory(log.exercise.id)}
-                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-[#E8F3F3] px-2 text-xs font-bold text-accent-dark transition-all hover:bg-[#D8EFEF] active:scale-95"
-                >
-                  <BarChart3 aria-hidden="true" size={14} />
-                  <span>{locale === 'ko' ? '기록' : 'History'}</span>
-                </button>
-              </div>
-            ) : null}
           </div>
 
           {isMemoOpen ? (
@@ -254,13 +242,16 @@ export function ExerciseLogCard({
           ) : null}
 
           {targetRecommendation && targetSummary ? (
-            <div className="mt-2 rounded-xl border border-[#2EC4B6]/20 bg-[#E8F3F3] px-3 py-2 text-xs font-bold text-accent-dark">
-              <p>
-                {locale === 'ko' ? '추천 목표' : 'Suggested target'}: <span className="font-mono">{targetSummary}</span>
-              </p>
-              <p className="mt-0.5 font-semibold text-[#6E6E73]">
-                {locale === 'ko' ? '최근 기록과 루틴 목표 기준' : targetRecommendation.reason}
-              </p>
+            <div className="mt-2 flex items-start gap-2.5 rounded-xl border border-[#2EC4B6]/20 bg-[#E8F3F3] px-3 py-2.5 text-xs font-bold text-accent-dark shadow-sm">
+              <span className="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-[#2EC4B6] text-[10px] text-white">🎯</span>
+              <div className="space-y-0.5 min-w-0">
+                <p className="leading-tight text-accent-dark">
+                  {locale === 'ko' ? '추천 목표' : 'Suggested target'}: <span className="font-mono font-black">{targetSummary}</span>
+                </p>
+                <p className="text-[11px] font-medium leading-tight text-[#6E6E73] truncate">
+                  {locale === 'ko' ? '최근 기록과 루틴 목표 기준' : targetRecommendation.reason}
+                </p>
+              </div>
             </div>
           ) : null}
 
@@ -280,6 +271,16 @@ export function ExerciseLogCard({
           ) : null}
 
           <div className={`${isKeyboardOpen ? 'mt-1' : 'mt-2'} flex flex-col ${isKeyboardOpen ? 'gap-1' : 'gap-1.5'}`}>
+            {log.sets.length > 0 && (
+              <div className="grid grid-cols-[1.8rem_3rem_minmax(0,1fr)_3.2rem_3rem_2.4rem] gap-1.5 px-[11px] text-center text-[10px] font-black uppercase text-[#8E8E93] pb-1 border-b border-[#F2F2F7]">
+                <div className="truncate">#</div>
+                <div className="truncate">{locale === 'ko' ? '구분' : 'Type'}</div>
+                <div className="truncate">kg</div>
+                <div className="truncate">{locale === 'ko' ? '횟수' : 'Reps'}</div>
+                <div className="truncate">RIR</div>
+                <div className="truncate">{locale === 'ko' ? '완료' : 'Done'}</div>
+              </div>
+            )}
             {log.sets.map((set, setIndex) => (
               <WorkoutSetRowV2
                 key={set.id}
