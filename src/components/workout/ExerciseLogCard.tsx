@@ -1,10 +1,10 @@
-import { ArrowDown, ArrowUp, BarChart3, ClipboardList, History, MoreHorizontal, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, BarChart3, ClipboardList, History, Plus, RefreshCw, Target, Trash2 } from 'lucide-react';
 import { ExerciseFinder, type ExerciseFinderState } from '../ExerciseFinder';
 import type { WorkoutExerciseLog } from '../../db/workouts';
 import { getExerciseName } from '../../domain/exercises';
 import type { ExerciseMaster, WorkoutSet } from '../../types';
 import { getExerciseIcon } from '../../utils/exerciseIcon';
-import { WorkoutSetRowV2 } from './WorkoutSetRowV2';
+import { WorkoutSetRowV2, WORKOUT_SET_GRID_CLASS } from './WorkoutSetRowV2';
 
 type ExerciseLogCardProps = {
   log: WorkoutExerciseLog;
@@ -48,13 +48,11 @@ export function ExerciseLogCard({
   isExpanded,
   isKeyboardOpen,
   isMemoOpen,
-  isActionsOpen,
   isReplacing,
   exerciseFinderState,
   replacementExercises,
   onToggleExpanded,
   onViewHistory,
-  onToggleActions,
   onMoveExercise,
   onDeleteExercise,
   onToggleMemo,
@@ -96,16 +94,16 @@ export function ExerciseLogCard({
         onClick={() => onToggleExpanded(workoutExerciseId)}
         className="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-[#F2F2F7] active:bg-[#E5E5EA]"
       >
-        <div className="flex items-center gap-3 pr-4">
+        <div className="flex min-w-0 items-center gap-3 pr-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F2F2F7] text-xl">
             {getExerciseIcon(log.exercise.defaultEmoji)}
           </div>
-          <div className="flex flex-col gap-0.5">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <h2 className="text-base font-extrabold leading-tight text-[#1C1C1E]">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+              <h2 className="min-w-0 truncate text-base font-extrabold leading-tight text-[#1C1C1E]">
                 {getExerciseName(log.exercise, locale)}
               </h2>
-              <div
+              <span
                 role="button"
                 tabIndex={0}
                 onClick={(event) => {
@@ -119,25 +117,26 @@ export function ExerciseLogCard({
                     onViewHistory(log.exercise.id);
                   }
                 }}
-                className="flex h-5.5 w-5.5 shrink-0 cursor-pointer items-center justify-center rounded-md bg-[#F2F2F7] text-accent-dark transition-all active:scale-90"
-                aria-label={locale === 'ko' ? '운동 히스토리 보기' : 'View exercise history'}
+                className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md bg-[#F2F2F7] text-accent-dark transition-all active:scale-90"
+                aria-label={locale === 'ko' ? '\uC6B4\uB3D9 \uD788\uC2A4\uD1A0\uB9AC \uBCF4\uAE30' : 'View exercise history'}
               >
-                <History aria-hidden="true" size={11} />
-              </div>
+                <History aria-hidden="true" size={12} />
+              </span>
               {allCompleted ? (
                 <span className="shrink-0 rounded-full bg-[#E8F3F3] px-2 py-0.5 text-[11px] font-black text-accent-dark">
-                  {locale === 'ko' ? '완료' : 'Done'}
+                  {locale === 'ko' ? '\uC644\uB8CC' : 'Done'}
                 </span>
               ) : null}
             </div>
-            <p className="text-xs font-bold text-accent-dark flex flex-wrap items-center gap-1.5">
+            <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-accent-dark">
               <span>{completedCount} / {totalCount} Sets</span>
               {log.workoutExercise.totalVolumeKg > 0 ? (
-                <span className="font-mono font-semibold text-[#8E8E93]">· {log.workoutExercise.totalVolumeKg.toLocaleString()}kg</span>
+                <span className="font-mono font-semibold text-[#8E8E93]">| {log.workoutExercise.totalVolumeKg.toLocaleString()}kg</span>
               ) : null}
               {targetRecommendation && targetSummary ? (
-                <span className="rounded-md border border-[#2EC4B6]/30 bg-[#E8F3F3] px-1.5 py-0.5 text-[9px] font-black text-accent-dark tracking-tight leading-none shrink-0">
-                  🎯 {targetRecommendation.weightKg ? `${targetRecommendation.weightKg}kg ` : ''}{targetRecommendation.reps}{locale === 'ko' ? '회' : 'r'}
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-[#2EC4B6]/30 bg-[#E8F3F3] px-1.5 py-0.5 text-[9px] font-black leading-none tracking-tight text-accent-dark">
+                  <Target aria-hidden="true" size={10} />
+                  {targetRecommendation.weightKg ? `${targetRecommendation.weightKg}kg ` : ''}{targetRecommendation.reps}{locale === 'ko' ? '\uD68C' : 'r'}
                 </span>
               ) : null}
             </p>
@@ -145,7 +144,7 @@ export function ExerciseLogCard({
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <span className="text-xs font-bold uppercase text-[#6E6E73]">
-            {isExpanded ? (locale === 'ko' ? '접기' : 'Hide') : (locale === 'ko' ? '열기' : 'Show')}
+            {isExpanded ? (locale === 'ko' ? '\uC811\uAE30' : 'Hide') : (locale === 'ko' ? '\uC5F4\uAE30' : 'Show')}
           </span>
           <svg
             className={`h-4 w-4 text-[#8E8E93] transition-transform duration-200 ${isExpanded ? 'rotate-180 text-accent-dark' : ''}`}
@@ -161,67 +160,67 @@ export function ExerciseLogCard({
       {isExpanded ? (
         <div className={`border-t border-[#E5E5EA] bg-white px-3 ${isKeyboardOpen ? 'pb-2 pt-1.5' : 'pb-3 pt-2'}`}>
           <div className={`flex items-center justify-between gap-2 border-b border-[#F2F2F7] pb-2 transition-all duration-300 ${
-            isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0 pb-0' : 'max-h-10 opacity-100'
+            isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0 pb-0' : 'max-h-12 opacity-100'
           }`}>
-            <span className="text-[11px] font-black text-[#8E8E93]">{locale === 'ko' ? '운동 관리' : 'Manage Exercise'}</span>
-            <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-black text-[#8E8E93]">{locale === 'ko' ? '\uC6B4\uB3D9 \uAD00\uB9AC' : 'Manage Exercise'}</span>
+            <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => onMoveExercise(workoutExerciseId, -1)}
                 disabled={index === 0}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
-                title={locale === 'ko' ? '위로 이동' : 'Move Up'}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                title={locale === 'ko' ? '\uC704\uB85C \uC774\uB3D9' : 'Move Up'}
               >
-                <ArrowUp size={14} />
+                <ArrowUp size={15} />
               </button>
               <button
                 type="button"
                 onClick={() => onMoveExercise(workoutExerciseId, 1)}
                 disabled={index === totalExerciseCount - 1}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
-                title={locale === 'ko' ? '아래로 이동' : 'Move Down'}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                title={locale === 'ko' ? '\uC544\uB798\uB85C \uC774\uB3D9' : 'Move Down'}
               >
-                <ArrowDown size={14} />
+                <ArrowDown size={15} />
               </button>
               <button
                 type="button"
                 onClick={() => onToggleMemo(workoutExerciseId)}
-                className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-all active:scale-95 ${
+                className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all active:scale-95 ${
                   isMemoOpen || hasExerciseMemo
                     ? 'border-transparent bg-[#E8F3F3] text-accent-dark'
                     : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
                 }`}
-                title={locale === 'ko' ? '메모' : 'Memo'}
+                title={locale === 'ko' ? '\uBA54\uBAA8' : 'Memo'}
               >
-                <ClipboardList size={14} />
+                <ClipboardList size={15} />
               </button>
               <button
                 type="button"
                 onClick={() => onToggleReplace(workoutExerciseId)}
-                className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-all active:scale-95 ${
+                className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all active:scale-95 ${
                   isReplacing
                     ? 'border-transparent bg-[#F2F2F7] text-[#6E6E73]'
                     : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
                 }`}
-                title={locale === 'ko' ? '교체' : 'Replace'}
+                title={locale === 'ko' ? '\uAD50\uCCB4' : 'Replace'}
               >
-                <RefreshCw size={13} className={isReplacing ? 'animate-spin' : ''} />
+                <RefreshCw size={14} className={isReplacing ? 'animate-spin' : ''} />
               </button>
               <button
                 type="button"
                 onClick={() => onViewHistory(log.exercise.id)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E8F3F3] text-accent-dark transition-all hover:bg-[#D8EFEF] active:scale-95"
-                title={locale === 'ko' ? '기록' : 'History'}
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E8F3F3] text-accent-dark transition-all hover:bg-[#D8EFEF] active:scale-95"
+                title={locale === 'ko' ? '\uAE30\uB85D' : 'History'}
               >
-                <BarChart3 size={14} />
+                <BarChart3 size={15} />
               </button>
               <button
                 type="button"
                 onClick={() => onDeleteExercise(log)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFECEC] text-danger transition-all hover:bg-[#FFD1D1] active:scale-95"
-                title={locale === 'ko' ? '삭제' : 'Delete'}
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FFECEC] text-danger transition-all hover:bg-[#FFD1D1] active:scale-95"
+                title={locale === 'ko' ? '\uC0AD\uC81C' : 'Delete'}
               >
-                <Trash2 size={14} />
+                <Trash2 size={15} />
               </button>
             </div>
           </div>
@@ -229,25 +228,27 @@ export function ExerciseLogCard({
           {isMemoOpen ? (
             <label className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-1.5 text-xs font-black uppercase text-[#1C1C1E]">
               <span className="flex min-h-8 min-w-12 items-center justify-center rounded-md border border-violet-300 bg-violet-100 px-2.5 text-violet-950 shadow-sm">
-                {locale === 'ko' ? '메모' : 'Memo'}
+                {locale === 'ko' ? '\uBA54\uBAA8' : 'Memo'}
               </span>
               <input
                 aria-label={`${log.exercise.nameKo} memo`}
                 type="text"
                 defaultValue={log.workoutExercise.memo ?? ''}
                 onBlur={(event) => onUpdateExerciseMemo(workoutExerciseId, event.target.value)}
-                className="h-8 min-w-0 rounded-xl border border-[#D1D1D6] bg-[#F2F2F7] px-2 text-sm font-bold text-[#1C1C1E] outline-none transition-all placeholder:text-[#8E8E93] focus:border-accent focus:ring-1 focus:ring-accent"
-                placeholder={locale === 'ko' ? '그립, 자세, 세팅' : 'Grip, setup, cues'}
+                className="h-9 min-w-0 rounded-xl border border-[#D1D1D6] bg-[#F2F2F7] px-2 text-sm font-bold text-[#1C1C1E] outline-none transition-all placeholder:text-[#8E8E93] focus:border-accent focus:ring-1 focus:ring-accent"
+                placeholder={locale === 'ko' ? '\uADF8\uB9BD, \uC790\uC138, \uC14B\uD305' : 'Grip, setup, cues'}
               />
             </label>
           ) : null}
 
           {targetRecommendation && targetSummary ? (
             <div className="mt-2 flex items-start gap-2.5 rounded-xl border border-[#2EC4B6]/20 bg-[#E8F3F3] px-3 py-2.5 text-xs font-bold text-accent-dark shadow-sm">
-              <span className="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-[#2EC4B6] text-[10px] text-white">🎯</span>
-              <div className="space-y-0.5 min-w-0">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2EC4B6] text-white">
+                <Target aria-hidden="true" size={12} />
+              </span>
+              <div className="min-w-0 space-y-0.5">
                 <p className="leading-tight text-accent-dark">
-                  {locale === 'ko' ? '추천 목표' : 'Suggested target'}: <span className="font-mono font-black">{targetSummary}</span>
+                  {locale === 'ko' ? '\uCD94\uCC9C \uBAA9\uD45C' : 'Suggested target'}: <span className="font-mono font-black">{targetSummary}</span>
                 </p>
               </div>
             </div>
@@ -263,20 +264,20 @@ export function ExerciseLogCard({
                 onChange={onExerciseFinderChange}
                 onSelect={(exercise) => onReplaceExercise(workoutExerciseId, exercise.id)}
                 limit={24}
-                title={locale === 'ko' ? '교체 운동 찾기' : 'Find replacement'}
+                title={locale === 'ko' ? '\uAD50\uCCB4 \uC6B4\uB3D9 \uCC3E\uAE30' : 'Find replacement'}
               />
             </div>
           ) : null}
 
           <div className={`${isKeyboardOpen ? 'mt-1' : 'mt-2'} flex flex-col ${isKeyboardOpen ? 'gap-1' : 'gap-1.5'}`}>
             {log.sets.length > 0 && (
-              <div className="grid grid-cols-[1.8rem_3rem_minmax(0,1fr)_3.2rem_3rem_2.4rem] gap-1.5 px-[11px] text-center text-[10px] font-black uppercase text-[#8E8E93] pb-1 border-b border-[#F2F2F7]">
+              <div className={`grid ${WORKOUT_SET_GRID_CLASS} gap-1 px-2.5 pb-1 text-center text-[10px] font-black uppercase text-[#8E8E93]`}>
                 <div className="truncate">#</div>
-                <div className="truncate">{locale === 'ko' ? '구분' : 'Type'}</div>
+                <div className="truncate">{locale === 'ko' ? '\uAD6C\uBD84' : 'Type'}</div>
                 <div className="truncate">kg</div>
-                <div className="truncate">{locale === 'ko' ? '횟수' : 'Reps'}</div>
+                <div className="truncate">{locale === 'ko' ? '\uD69F\uC218' : 'Reps'}</div>
                 <div className="truncate">RIR</div>
-                <div className="truncate">{locale === 'ko' ? '완료' : 'Done'}</div>
+                <div className="truncate">{locale === 'ko' ? '\uC644\uB8CC' : 'Done'}</div>
               </div>
             )}
             {log.sets.map((set, setIndex) => (
@@ -301,10 +302,10 @@ export function ExerciseLogCard({
           <button
             type="button"
             onClick={() => onAddSet(workoutExerciseId)}
-            className="ios-button-secondary mt-2 flex min-h-9 w-full items-center justify-center gap-2 px-3 text-sm"
+            className="ios-button-secondary mt-2 flex min-h-11 w-full items-center justify-center gap-2 px-3 text-sm"
           >
             <Plus aria-hidden="true" size={15} />
-            <span>{locale === 'ko' ? '세트 추가' : 'Add Set'}</span>
+            <span>{locale === 'ko' ? '\uC138\uD2B8 \uCD94\uAC00' : 'Add Set'}</span>
           </button>
         </div>
       ) : null}
