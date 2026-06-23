@@ -157,16 +157,16 @@ export function WorkoutSetRowV2({
   const rowShadow = isCurrentSet ? '' : 'shadow-[0_1px_5px_rgba(0,0,0,0.03)]';
 
   return (
-    <div className={`rounded-xl border ${rowTone} px-2.5 ${rowShadow} ${compactInputMode ? 'py-1' : 'py-2'}`}>
-      <div className="grid grid-cols-[1.8rem_3rem_minmax(0,1fr)_3.2rem_3rem_2.4rem] items-center gap-1.5">
-        <div className={`flex h-10 w-full items-center justify-center text-sm font-black ${isCurrentSet ? 'text-[#007AFF]' : 'text-[#8E8E93]'}`}>
+    <div className={`rounded-xl border ${rowTone} px-2.5 ${rowShadow} ${compactInputMode ? 'py-1.5' : 'py-2'}`}>
+      <div className="grid grid-cols-[1.65rem_2.75rem_minmax(4.5rem,1fr)_3rem_2.75rem_2.75rem] items-center gap-1">
+        <div className={`flex h-11 w-full items-center justify-center text-sm font-black ${isCurrentSet ? 'text-[#007AFF]' : 'text-[#8E8E93]'}`}>
           {set.setNo}
         </div>
 
         <button
           type="button"
           onClick={() => void handleToggleSetType()}
-          className={`flex h-10 w-full items-center justify-center rounded-lg text-[10px] font-black leading-none transition-all active:scale-95 ${
+          className={`flex h-11 w-full items-center justify-center rounded-lg text-[10px] font-black leading-none transition-all active:scale-95 ${
             currentType === 'warmup'
               ? 'bg-yellow-50 text-yellow-805 border border-yellow-200'
               : currentType === 'failure'
@@ -196,7 +196,7 @@ export function WorkoutSetRowV2({
             const nextWeight = parseWorkoutSetDecimalInput(weight) ?? 0;
             if (nextWeight !== set.weightKg) void handleSetChange(set, { weightKg: nextWeight });
           }}
-          className="h-10 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-sm font-black text-[#1C1C1E] outline-none focus:border-accent"
+          className="h-11 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-base font-black text-[#1C1C1E] outline-none focus:border-accent"
           placeholder="kg"
         />
 
@@ -216,7 +216,7 @@ export function WorkoutSetRowV2({
             const nextReps = Math.round(Number(reps)) || 0;
             if (nextReps !== set.reps) void handleSetChange(set, { reps: nextReps });
           }}
-          className="h-10 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-sm font-black text-[#1C1C1E] outline-none focus:border-accent"
+          className="h-11 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-base font-black text-[#1C1C1E] outline-none focus:border-accent"
           placeholder="0"
         />
 
@@ -236,14 +236,14 @@ export function WorkoutSetRowV2({
             const nextRir = rir === '' ? undefined : Number(rir) || 0;
             if (nextRir !== set.rir) void handleSetChange(set, { rir: nextRir });
           }}
-          className="h-10 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-sm font-black text-[#1C1C1E] outline-none focus:border-accent"
+          className="h-11 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-base font-black text-[#1C1C1E] outline-none focus:border-accent"
           placeholder="-"
         />
 
         <button
           type="button"
           onClick={() => void handleSetChange(set, { isCompleted: !set.isCompleted })}
-          className={`flex h-10 items-center justify-center rounded-lg transition-all active:scale-95 ${
+          className={`flex h-11 min-w-11 items-center justify-center rounded-lg transition-all active:scale-95 ${
             set.isCompleted
               ? 'bg-accent text-white'
               : 'border border-[#D1D1D6] bg-white text-[#1C1C1E]'
