@@ -122,11 +122,7 @@ export function WorkoutSetRowV2({
   }, [currentType, log.previousSets, log.sets, set, setIndex]);
 
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
-    const target = event.currentTarget;
-    target.select();
-    window.setTimeout(() => {
-      target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
-    }, 80);
+    event.currentTarget.select();
   };
 
   const handleEnterKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
