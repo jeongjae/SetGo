@@ -45,17 +45,17 @@ function updateCardioMinutes(cardioRecord: CardioRecord, minutes: number): strin
 
 function getCardioDisplayName(cardioRecord: CardioRecord, locale: 'ko' | 'en'): string {
   const machineLabels: Record<string, string> = {
-    treadmill: locale === 'ko' ? '트레드밀' : 'Treadmill',
-    indoor_bike: locale === 'ko' ? '실내 자전거' : 'Indoor Bike',
-    stair_climber: locale === 'ko' ? '천국의 계단' : 'Stair Climber',
-    elliptical: locale === 'ko' ? '일립티컬' : 'Elliptical',
+    treadmill: locale === 'ko' ? '\uD2B8\uB808\uB4DC\uBC00' : 'Treadmill',
+    indoor_bike: locale === 'ko' ? '\uC2E4\uB0B4 \uC790\uC804\uAC70' : 'Indoor Bike',
+    stair_climber: locale === 'ko' ? '\uCC9C\uAD6D\uC758 \uACC4\uB2E8' : 'Stair Climber',
+    elliptical: locale === 'ko' ? '\uC77C\uB9BD\uD2F0\uCEEC' : 'Elliptical',
   };
 
   if (cardioRecord.environment === 'outdoor') {
-    return cardioRecord.location || (locale === 'ko' ? '야외 러닝/트랙' : 'Outdoor Running');
+    return cardioRecord.location || (locale === 'ko' ? '\uC57C\uC678 \uB7EC\uB2DD/\uD2B8\uB799' : 'Outdoor Running');
   }
 
-  return machineLabels[cardioRecord.machineType || ''] || (locale === 'ko' ? '실내 러닝' : 'Indoor Running');
+  return machineLabels[cardioRecord.machineType || ''] || (locale === 'ko' ? '\uC2E4\uB0B4 \uB7EC\uB2DD' : 'Indoor Running');
 }
 
 export function WorkoutCardioSection({
@@ -91,12 +91,12 @@ export function WorkoutCardioSection({
   }
 
   return (
-    <section className="shrink-0 ios-card p-3.5 space-y-3">
+    <section className="shrink-0 space-y-3 ios-card p-3.5">
       <div className="flex items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{cardioLabel}</p>
-          <h2 className="mt-0.5 text-base font-black text-[#1C1C1E]">
-            {cardioRecords.length === 0 ? (locale === 'ko' ? '러닝' : 'Optional Running') : `${cardioRecords.length} ${cardioLabel}`}
+          <h2 className="mt-0.5 truncate text-base font-black text-[#1C1C1E]">
+            {cardioRecords.length === 0 ? (locale === 'ko' ? '\uB7EC\uB2DD' : 'Optional Running') : `${cardioRecords.length} ${cardioLabel}`}
           </h2>
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -106,28 +106,28 @@ export function WorkoutCardioSection({
                 type="button"
                 onClick={() => onMoveCardio?.(-1)}
                 disabled={!canMoveUp}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
-                aria-label={locale === 'ko' ? '러닝 위로 이동' : 'Move running up'}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                aria-label={locale === 'ko' ? '\uB7EC\uB2DD \uC704\uB85C \uC774\uB3D9' : 'Move running up'}
               >
-                <ArrowUp aria-hidden="true" size={14} />
+                <ArrowUp aria-hidden="true" size={16} />
               </button>
               <button
                 type="button"
                 onClick={() => onMoveCardio?.(1)}
                 disabled={!canMoveDown}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
-                aria-label={locale === 'ko' ? '러닝 아래로 이동' : 'Move running down'}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                aria-label={locale === 'ko' ? '\uB7EC\uB2DD \uC544\uB798\uB85C \uC774\uB3D9' : 'Move running down'}
               >
-                <ArrowDown aria-hidden="true" size={14} />
+                <ArrowDown aria-hidden="true" size={16} />
               </button>
             </>
           ) : null}
           <button
             type="button"
             onClick={handleHeaderAction}
-            className={`flex h-10 shrink-0 items-center justify-center transition-all active:scale-95 ${
+            className={`flex h-11 shrink-0 items-center justify-center transition-all active:scale-95 ${
               cardioRecords.length === 0
-                ? 'ios-button-primary w-10'
+                ? 'ios-button-primary w-11'
                 : 'rounded-xl px-2 text-xs font-bold uppercase text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
             }`}
             aria-expanded={cardioRecords.length > 0 ? isExpanded : undefined}
@@ -137,7 +137,7 @@ export function WorkoutCardioSection({
               <Plus aria-hidden="true" size={20} />
             ) : (
               <>
-                <span>{isExpanded ? (locale === 'ko' ? '접기' : 'Hide') : (locale === 'ko' ? '열기' : 'Show')}</span>
+                <span>{isExpanded ? (locale === 'ko' ? '\uC811\uAE30' : 'Hide') : (locale === 'ko' ? '\uC5F4\uAE30' : 'Show')}</span>
                 <ChevronDown aria-hidden="true" size={16} className={`ml-1 transition-transform ${isExpanded ? 'rotate-180 text-accent-dark' : ''}`} />
               </>
             )}
@@ -146,267 +146,267 @@ export function WorkoutCardioSection({
       </div>
 
       {isExpanded ? (
-      <div className="mt-3 flex flex-col gap-3">
-        {loggedCardioCount > 0 ? (
-          <div className="flex items-center justify-between rounded-xl bg-[#F2F2F7] border border-black/5 px-3.5 py-2.5 text-xs font-bold text-[#1C1C1E]">
-            <span>{locale === 'ko' ? '오늘 러닝 요약' : 'Running Summary'}</span>
-            <span className="font-mono">
-              {totalCardioDistance.toFixed(1)} km / {totalCardioMinutes} {locale === 'ko' ? '분' : 'min'}
-            </span>
-          </div>
-        ) : null}
+        <div className="mt-3 flex flex-col gap-3">
+          {loggedCardioCount > 0 ? (
+            <div className="flex items-center justify-between rounded-xl border border-black/5 bg-[#F2F2F7] px-3.5 py-2.5 text-xs font-bold text-[#1C1C1E]">
+              <span>{locale === 'ko' ? '\uC624\uB298 \uB7EC\uB2DD \uC694\uC57D' : 'Running Summary'}</span>
+              <span className="font-mono">
+                {totalCardioDistance.toFixed(1)} km / {totalCardioMinutes} {locale === 'ko' ? '\uBD84' : 'min'}
+              </span>
+            </div>
+          ) : null}
 
-        {cardioRecords.map((cardioRecord) => {
-          const minutes = getCardioMinutes(cardioRecord);
+          {cardioRecords.map((cardioRecord) => {
+            const minutes = getCardioMinutes(cardioRecord);
 
-          return (
-            <div key={cardioRecord.id} className="rounded-xl border border-black/5 bg-[#F2F2F7] p-3">
-              <div className="mb-2.5 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm">
-                    {cardioRecord.environment === 'indoor' ? '실내' : '야외'}
-                  </span>
-                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <p className="text-sm font-bold text-[#1C1C1E]">
-                      {getCardioDisplayName(cardioRecord, locale)}
-                    </p>
-                    {cardioRecord.isDraft ? (
-                      <span className="inline-flex rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-bold leading-none text-amber-750">
-                        {locale === 'ko' ? '입력 중' : 'Draft'}
-                      </span>
-                    ) : null}
+            return (
+              <div key={cardioRecord.id} className="rounded-xl border border-black/5 bg-[#F2F2F7] p-3">
+                <div className="mb-2.5 flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <span className="text-sm">
+                      {cardioRecord.environment === 'indoor' ? '\uC2E4\uB0B4' : '\uC57C\uC678'}
+                    </span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                      <p className="min-w-0 truncate text-sm font-bold text-[#1C1C1E]">
+                        {getCardioDisplayName(cardioRecord, locale)}
+                      </p>
+                      {cardioRecord.isDraft ? (
+                        <span className="inline-flex rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-bold leading-none text-amber-700">
+                          {locale === 'ko' ? '\uC785\uB825 \uC911' : 'Draft'}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteCardio(cardioRecord)}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-600 transition-all duration-200 active:scale-95"
+                    aria-label="Delete cardio"
+                  >
+                    <Trash2 aria-hidden="true" size={16} />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onDeleteCardio(cardioRecord)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 transition-all active:scale-95 duration-200"
-                  aria-label="Delete cardio"
-                >
-                  <Trash2 aria-hidden="true" size={14} />
-                </button>
-              </div>
 
-              <div className="mb-2.5 flex rounded-xl bg-white p-0.5 border border-black/5">
-                <button
-                  type="button"
-                  onClick={() => onUpdateCardio(cardioRecord, { environment: 'indoor', machineType: 'treadmill' })}
-                  className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-all active:scale-95 ${
-                    cardioRecord.environment === 'indoor'
-                      ? 'bg-[#F2F2F7] text-[#1C1C1E] shadow-sm'
-                      : 'text-[#6E6E73] hover:text-[#1C1C1E]'
-                  }`}
-                >
-                  {locale === 'ko' ? '실내 러닝' : 'Indoor'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onUpdateCardio(cardioRecord, { environment: 'outdoor', location: '' })}
-                  className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-all active:scale-95 ${
-                    cardioRecord.environment === 'outdoor'
-                      ? 'bg-[#F2F2F7] text-[#1C1C1E] shadow-sm'
-                      : 'text-[#6E6E73] hover:text-[#1C1C1E]'
-                  }`}
-                >
-                  {locale === 'ko' ? '야외 러닝' : 'Outdoor'}
-                </button>
-              </div>
+                <div className="mb-2.5 flex rounded-xl border border-black/5 bg-white p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => onUpdateCardio(cardioRecord, { environment: 'indoor', machineType: 'treadmill' })}
+                    className={`flex min-h-10 flex-1 items-center justify-center rounded-lg text-xs font-bold transition-all active:scale-95 ${
+                      cardioRecord.environment === 'indoor'
+                        ? 'bg-[#F2F2F7] text-[#1C1C1E] shadow-sm'
+                        : 'text-[#6E6E73] hover:text-[#1C1C1E]'
+                    }`}
+                  >
+                    {locale === 'ko' ? '\uC2E4\uB0B4 \uB7EC\uB2DD' : 'Indoor'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onUpdateCardio(cardioRecord, { environment: 'outdoor', location: '' })}
+                    className={`flex min-h-10 flex-1 items-center justify-center rounded-lg text-xs font-bold transition-all active:scale-95 ${
+                      cardioRecord.environment === 'outdoor'
+                        ? 'bg-[#F2F2F7] text-[#1C1C1E] shadow-sm'
+                        : 'text-[#6E6E73] hover:text-[#1C1C1E]'
+                    }`}
+                  >
+                    {locale === 'ko' ? '\uC57C\uC678 \uB7EC\uB2DD' : 'Outdoor'}
+                  </button>
+                </div>
 
-              <div className="grid gap-3">
-                {cardioRecord.environment === 'indoor' ? (
-                  <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                    {locale === 'ko' ? '기구 선택' : 'Machine Select'}
-                    <select
-                      aria-label="Cardio machine select"
-                      value={cardioRecord.machineType || 'treadmill'}
-                      onChange={(event) => onUpdateCardio(cardioRecord, {
-                        machineType: event.target.value as CardioRecord['machineType'],
-                      })}
-                      className="mt-1 min-h-10 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
-                    >
-                      <option value="treadmill">{locale === 'ko' ? '트레드밀' : 'Treadmill'}</option>
-                      <option value="indoor_bike">{locale === 'ko' ? '실내 자전거' : 'Indoor Bike'}</option>
-                      <option value="stair_climber">{locale === 'ko' ? '천국의 계단' : 'Stair Climber'}</option>
-                      <option value="elliptical">{locale === 'ko' ? '일립티컬' : 'Elliptical'}</option>
-                    </select>
-                  </label>
-                ) : (
-                  <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                    {locale === 'ko' ? '장소 입력' : 'Place'}
-                    <input
-                      aria-label="Cardio place input"
-                      type="text"
-                      defaultValue={cardioRecord.location ?? ''}
-                      onBlur={(event) => onUpdateCardio(cardioRecord, { location: event.target.value.trim() })}
-                      placeholder={locale === 'ko' ? '예: 동네 공원, 러닝 트랙' : 'e.g. Park, track, river'}
-                      className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
-                    />
-                  </label>
-                )}
-
-                <div className={`grid gap-2.5 ${cardioRecord.environment === 'indoor' ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                  <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                    Km
-                    <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextVal = Math.max(0, Number(((cardioRecord.distanceKm || 0) - 0.5).toFixed(1)));
-                          onUpdateCardio(cardioRecord, { distanceKm: nextVal || undefined });
-                        }}
-                        className="min-h-10 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
-                      >
-                        -
-                      </button>
-                      <input
-                        aria-label="Cardio distance"
-                        type="text"
-                        inputMode="decimal"
-                        enterKeyHint="done"
-                        defaultValue={cardioRecord.distanceKm ?? ''}
-                        onBlur={(event) => onUpdateCardio(cardioRecord, {
-                          distanceKm: parseOptionalDecimalInput(event.target.value),
-                        })}
-                        placeholder="0.0"
-                        className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextVal = Number(((cardioRecord.distanceKm || 0) + 0.5).toFixed(1));
-                          onUpdateCardio(cardioRecord, { distanceKm: nextVal });
-                        }}
-                        className="min-h-10 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </label>
-
-                  <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                    {locale === 'ko' ? '분' : 'Min'}
-                    <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextVal = Math.max(1, minutes - 5);
-                          onUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
-                        }}
-                        className="min-h-10 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
-                      >
-                        -
-                      </button>
-                      <input
-                        aria-label="Cardio minutes"
-                        type="text"
-                        inputMode="numeric"
-                        enterKeyHint="done"
-                        value={minutes}
-                        onChange={(event) => {
-                          const value = Math.max(1, Math.round(Number(event.target.value)) || 1);
-                          onUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, value) });
-                        }}
-                        placeholder="min"
-                        className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextVal = minutes + 5;
-                          onUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
-                        }}
-                        className="min-h-10 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </label>
-
+                <div className="grid gap-3">
                   {cardioRecord.environment === 'indoor' ? (
                     <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                      {locale === 'ko' ? '경사 (%)' : 'Inc (%)'}
+                      {locale === 'ko' ? '\uAE30\uAD6C \uC120\uD0DD' : 'Machine Select'}
+                      <select
+                        aria-label="Cardio machine select"
+                        value={cardioRecord.machineType || 'treadmill'}
+                        onChange={(event) => onUpdateCardio(cardioRecord, {
+                          machineType: event.target.value as CardioRecord['machineType'],
+                        })}
+                        className="mt-1 min-h-11 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                      >
+                        <option value="treadmill">{locale === 'ko' ? '\uD2B8\uB808\uB4DC\uBC00' : 'Treadmill'}</option>
+                        <option value="indoor_bike">{locale === 'ko' ? '\uC2E4\uB0B4 \uC790\uC804\uAC70' : 'Indoor Bike'}</option>
+                        <option value="stair_climber">{locale === 'ko' ? '\uCC9C\uAD6D\uC758 \uACC4\uB2E8' : 'Stair Climber'}</option>
+                        <option value="elliptical">{locale === 'ko' ? '\uC77C\uB9BD\uD2F0\uCEEC' : 'Elliptical'}</option>
+                      </select>
+                    </label>
+                  ) : (
+                    <label className="text-xs font-bold uppercase text-[#6E6E73]">
+                      {locale === 'ko' ? '\uC7A5\uC18C \uC785\uB825' : 'Place'}
+                      <input
+                        aria-label="Cardio place input"
+                        type="text"
+                        defaultValue={cardioRecord.location ?? ''}
+                        onBlur={(event) => onUpdateCardio(cardioRecord, { location: event.target.value.trim() })}
+                        placeholder={locale === 'ko' ? '\uC608: \uB3D9\uB124 \uACF5\uC6D0, \uB7EC\uB2DD \uD2B8\uB799' : 'e.g. Park, track, river'}
+                        className="mt-1 min-h-11 w-full rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                      />
+                    </label>
+                  )}
+
+                  <div className={`grid gap-2.5 ${cardioRecord.environment === 'indoor' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                    <label className="text-xs font-bold uppercase text-[#6E6E73]">
+                      Km
                       <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
                         <button
                           type="button"
                           onClick={() => {
-                            const nextVal = Math.max(0, (cardioRecord.inclinePercent || 0) - 1);
-                            onUpdateCardio(cardioRecord, { inclinePercent: nextVal });
+                            const nextVal = Math.max(0, Number(((cardioRecord.distanceKm || 0) - 0.5).toFixed(1)));
+                            onUpdateCardio(cardioRecord, { distanceKm: nextVal || undefined });
                           }}
-                          className="min-h-10 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
+                          className="min-h-11 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
                         >
                           -
                         </button>
                         <input
-                          aria-label="Cardio incline"
+                          aria-label="Cardio distance"
                           type="text"
-                          inputMode="numeric"
+                          inputMode="decimal"
                           enterKeyHint="done"
-                          value={cardioRecord.inclinePercent ?? ''}
-                          onChange={(event) => {
-                            const value = event.target.value === '' ? undefined : Number(event.target.value) || 0;
-                            onUpdateCardio(cardioRecord, { inclinePercent: value });
-                          }}
-                          placeholder="%"
+                          defaultValue={cardioRecord.distanceKm ?? ''}
+                          onBlur={(event) => onUpdateCardio(cardioRecord, {
+                            distanceKm: parseOptionalDecimalInput(event.target.value),
+                          })}
+                          placeholder="0.0"
                           className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => {
-                            const nextVal = (cardioRecord.inclinePercent || 0) + 1;
-                            onUpdateCardio(cardioRecord, { inclinePercent: nextVal });
+                            const nextVal = Number(((cardioRecord.distanceKm || 0) + 0.5).toFixed(1));
+                            onUpdateCardio(cardioRecord, { distanceKm: nextVal });
                           }}
-                          className="min-h-10 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
+                          className="min-h-11 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
                         >
                           +
                         </button>
                       </div>
                     </label>
-                  ) : null}
+
+                    <label className="text-xs font-bold uppercase text-[#6E6E73]">
+                      {locale === 'ko' ? '\uBD84' : 'Min'}
+                      <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextVal = Math.max(1, minutes - 5);
+                            onUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
+                          }}
+                          className="min-h-11 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
+                        >
+                          -
+                        </button>
+                        <input
+                          aria-label="Cardio minutes"
+                          type="text"
+                          inputMode="numeric"
+                          enterKeyHint="done"
+                          value={minutes}
+                          onChange={(event) => {
+                            const value = Math.max(1, Math.round(Number(event.target.value)) || 1);
+                            onUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, value) });
+                          }}
+                          placeholder="min"
+                          className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextVal = minutes + 5;
+                            onUpdateCardio(cardioRecord, { endedAt: updateCardioMinutes(cardioRecord, nextVal) });
+                          }}
+                          className="min-h-11 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </label>
+
+                    {cardioRecord.environment === 'indoor' ? (
+                      <label className="text-xs font-bold uppercase text-[#6E6E73]">
+                        {locale === 'ko' ? '\uACBD\uC0AC (%)' : 'Inc (%)'}
+                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextVal = Math.max(0, (cardioRecord.inclinePercent || 0) - 1);
+                              onUpdateCardio(cardioRecord, { inclinePercent: nextVal });
+                            }}
+                            className="min-h-11 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
+                          >
+                            -
+                          </button>
+                          <input
+                            aria-label="Cardio incline"
+                            type="text"
+                            inputMode="numeric"
+                            enterKeyHint="done"
+                            value={cardioRecord.inclinePercent ?? ''}
+                            onChange={(event) => {
+                              const value = event.target.value === '' ? undefined : Number(event.target.value) || 0;
+                              onUpdateCardio(cardioRecord, { inclinePercent: value });
+                            }}
+                            placeholder="%"
+                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextVal = (cardioRecord.inclinePercent || 0) + 1;
+                              onUpdateCardio(cardioRecord, { inclinePercent: nextVal });
+                            }}
+                            className="min-h-11 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </label>
+                    ) : null}
+                  </div>
                 </div>
+
+                <label className="mt-2.5 block text-xs font-bold uppercase text-[#6E6E73]">
+                  {locale === 'ko' ? '\uBA54\uBAA8' : 'Memo'}
+                  <input
+                    aria-label="Cardio memo"
+                    type="text"
+                    defaultValue={cardioRecord.memo ?? ''}
+                    onBlur={(event) => onUpdateCardio(cardioRecord, { memo: event.target.value.trim() || undefined })}
+                    placeholder={locale === 'ko' ? '\uC18D\uB3C4 \uBCC0\uD654, \uCEE8\uB514\uC158 \uD53C\uB4DC\uBC31' : 'e.g. Speed changes, energy feedback'}
+                    className="mt-1 min-h-11 w-full rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => onSaveCardioAndContinue(cardioRecord)}
+                  className="ios-button-primary mt-2.5 flex min-h-11 w-full items-center justify-center gap-1.5 px-3 text-sm"
+                >
+                  <Check aria-hidden="true" size={15} />
+                  <span>
+                    {cardioRecord.isDraft
+                      ? isIndependentRunningWorkout
+                        ? locale === 'ko' ? '\uB7EC\uB2DD \uC800\uC7A5' : 'Save running'
+                        : locale === 'ko' ? '\uC800\uC7A5' : 'Save'
+                      : isIndependentRunningWorkout
+                        ? locale === 'ko' ? '\uB7EC\uB2DD \uC800\uC7A5\uB428' : 'Running saved'
+                        : locale === 'ko' ? '\uC800\uC7A5' : 'Save'}
+                  </span>
+                </button>
+
+                {cardioRecord.averageSpeedKmh ? (
+                  <p className="mt-3 inline-block rounded-lg border border-[#2EC4B6]/20 bg-[#E8F3F3] px-2.5 py-1.5 text-xs font-bold text-[#159A91]">
+                    {locale === 'ko' ? '\uD3C9\uADE0 \uC18D\uB3C4' : 'Average speed'}: <span className="font-mono">{cardioRecord.averageSpeedKmh.toFixed(1)} km/h</span>
+                  </p>
+                ) : (
+                  <p className="mt-3 text-xs font-medium text-[#6E6E73]">
+                    {locale === 'ko' ? '\uAC70\uB9AC\uB97C \uC785\uB825\uD558\uBA74 \uD3C9\uADE0 \uC18D\uB3C4\uAC00 \uACC4\uC0B0\uB429\uB2C8\uB2E4.' : 'Enter distance to calculate average speed.'}
+                  </p>
+                )}
               </div>
-
-              <label className="mt-2.5 block text-xs font-bold uppercase text-[#6E6E73]">
-                {locale === 'ko' ? '메모' : 'Memo'}
-                <input
-                  aria-label="Cardio memo"
-                  type="text"
-                  defaultValue={cardioRecord.memo ?? ''}
-                  onBlur={(event) => onUpdateCardio(cardioRecord, { memo: event.target.value.trim() || undefined })}
-                  placeholder={locale === 'ko' ? '속도 변화, 컨디션 피드백' : 'e.g. Speed changes, energy feedback'}
-                  className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
-                />
-              </label>
-
-              <button
-                type="button"
-                onClick={() => onSaveCardioAndContinue(cardioRecord)}
-                className="ios-button-primary flex min-h-11 w-full items-center justify-center gap-1.5 px-3 text-sm mt-2.5"
-              >
-                <Check aria-hidden="true" size={15} />
-                <span>
-                  {cardioRecord.isDraft
-                    ? isIndependentRunningWorkout
-                      ? locale === 'ko' ? '러닝 저장' : 'Save running'
-                      : locale === 'ko' ? '저장' : 'Save'
-                    : isIndependentRunningWorkout
-                      ? locale === 'ko' ? '러닝 저장됨' : 'Running saved'
-                      : locale === 'ko' ? '운동 기록 계속' : 'Continue workout log'}
-                </span>
-              </button>
-
-              {cardioRecord.averageSpeedKmh ? (
-                <p className="mt-3 text-xs font-bold text-[#159A91] bg-[#E8F3F3] border border-[#2EC4B6]/20 rounded-lg px-2.5 py-1.5 inline-block">
-                  {locale === 'ko' ? '평균 속도' : 'Average speed'}: <span className="font-mono">{cardioRecord.averageSpeedKmh.toFixed(1)} km/h</span>
-                </p>
-              ) : (
-                <p className="mt-3 text-xs font-medium text-[#6E6E73]">
-                  {locale === 'ko' ? '거리를 입력하면 평균 속도가 계산됩니다.' : 'Enter distance to calculate average speed.'}
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
       ) : null}
     </section>
   );

@@ -54,7 +54,7 @@ export function WorkoutFooterActions({
               className="ios-button-secondary flex min-h-11 items-center justify-center gap-2 px-2 text-xs"
             >
               <Plus aria-hidden="true" size={16} />
-              {locale === 'ko' ? '운동 추가' : 'Add exercise'}
+              {locale === 'ko' ? '\uC6B4\uB3D9 \uCD94\uAC00' : 'Add exercise'}
             </button>
             <button
               type="button"
@@ -62,7 +62,7 @@ export function WorkoutFooterActions({
               className="ios-button-primary flex min-h-11 items-center justify-center gap-2 px-2 text-xs"
             >
               <ClipboardList aria-hidden="true" size={15} />
-              {locale === 'ko' ? '루틴 저장' : 'Save routine'}
+              {locale === 'ko' ? '\uB8E8\uD2F4 \uC800\uC7A5' : 'Save routine'}
             </button>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -71,7 +71,7 @@ export function WorkoutFooterActions({
               onClick={onCancelHistoricalEdit}
               className="ios-button-secondary flex min-h-12 items-center justify-center px-4 text-sm"
             >
-              {locale === 'ko' ? '취소' : 'Cancel'}
+              {locale === 'ko' ? '\uCDE8\uC18C' : 'Cancel'}
             </button>
             <button
               type="button"
@@ -90,10 +90,10 @@ export function WorkoutFooterActions({
             className="ios-button-secondary flex min-h-12 items-center justify-center gap-1.5 px-3 text-xs"
           >
             <ClipboardList aria-hidden="true" size={15} />
-            <span>{locale === 'ko' ? '루틴 저장' : 'Save routine'}</span>
+            <span>{locale === 'ko' ? '\uB8E8\uD2F4 \uC800\uC7A5' : 'Save routine'}</span>
           </button>
           <button type="button" onClick={onDoneEditing} className="ios-button-primary flex min-h-12 items-center justify-center px-4 text-sm">
-            {locale === 'ko' ? '편집 완료' : 'Done Editing'}
+            {locale === 'ko' ? '\uD3B8\uC9D1 \uC644\uB8CC' : 'Done Editing'}
           </button>
         </div>
       ) : (
@@ -108,7 +108,7 @@ export function WorkoutFooterActions({
               : 'bg-[#FFF6DF]'
           }`}>
             <p className={`text-[11px] font-black uppercase ${canCompleteWorkout ? 'text-accent-dark' : 'text-[#1C1C1E]'}`}>
-              {locale === 'ko' ? '완료 전 요약' : 'Finish summary'}
+              {locale === 'ko' ? '\uC644\uB8CC \uC804 \uC694\uC57D' : 'Finish summary'}
             </p>
             <p className="mt-0.5 text-xs font-black leading-snug text-[#1C1C1E]">{finishSummary}</p>
             <p className={`mt-1 text-[11px] font-bold leading-snug ${canCompleteWorkout ? 'text-muted' : 'text-danger'}`}>
@@ -120,23 +120,23 @@ export function WorkoutFooterActions({
               <button
                 type="button"
                 onClick={onAddCardio}
-                className={`flex ${isKeyboardOpen ? 'h-10 px-3' : 'h-12 px-3.5'} items-center justify-center gap-1.5 rounded-xl text-xs font-extrabold transition-all active:scale-95 shrink-0 border border-accent-dark bg-[#E8F3F3] text-accent-dark`}
+                className={`flex ${isKeyboardOpen ? 'h-10 px-3' : 'h-12 px-3.5'} shrink-0 items-center justify-center gap-1.5 rounded-xl border border-accent-dark bg-[#E8F3F3] text-xs font-extrabold text-accent-dark transition-all active:scale-95`}
               >
                 <Plus size={16} />
-                <span>{locale === 'ko' ? '러닝 추가' : 'Add Run'}</span>
+                <span>{locale === 'ko' ? '\uB7EC\uB2DD \uCD94\uAC00' : 'Add Run'}</span>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={onToggleAddExercise}
-                className={`flex ${isKeyboardOpen ? 'h-10 px-3' : 'h-12 px-3.5'} items-center justify-center gap-1.5 rounded-xl text-xs font-extrabold transition-all active:scale-95 shrink-0 border ${
+                className={`flex ${isKeyboardOpen ? 'h-10 px-3' : 'h-12 px-3.5'} shrink-0 items-center justify-center gap-1.5 rounded-xl border text-xs font-extrabold transition-all active:scale-95 ${
                   isAdding
                     ? 'border-transparent bg-[#E5E5EA] text-[#1C1C1E]'
                     : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
                 }`}
               >
                 <Plus size={16} className={`transition-transform duration-300 ${isAdding ? 'rotate-45' : ''}`} />
-                <span>{locale === 'ko' ? '운동 추가' : 'Add'}</span>
+                <span>{locale === 'ko' ? '\uC6B4\uB3D9 \uCD94\uAC00' : 'Add'}</span>
               </button>
             )}
 
@@ -147,7 +147,7 @@ export function WorkoutFooterActions({
               className={`ios-button-primary flex ${isKeyboardOpen ? 'min-h-10' : 'min-h-12'} flex-1 items-center justify-center gap-1.5 px-4 text-sm disabled:bg-[#E5E5EA] disabled:text-[#8E8E93] disabled:shadow-none`}
             >
               <Check aria-hidden="true" size={16} />
-              <span>{locale === 'ko' ? '운동 완료' : 'Complete'}</span>
+              <span>{locale === 'ko' ? '\uC6B4\uB3D9 \uC644\uB8CC' : 'Complete'}</span>
             </button>
 
             <button
@@ -156,7 +156,7 @@ export function WorkoutFooterActions({
               disabled={!hasWorkout}
               className={`flex ${isKeyboardOpen ? 'h-10' : 'h-12'} shrink-0 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-extrabold text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95`}
             >
-              {locale === 'ko' ? '패스' : 'Skip'}
+              {locale === 'ko' ? '\uD328\uC2A4' : 'Skip'}
             </button>
           </div>
         </div>
