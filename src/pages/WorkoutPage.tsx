@@ -310,19 +310,25 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   useEffect(() => {
     const baselineHeight = window.innerHeight;
     const updateKeyboardState = () => {
+      const activeElement = document.activeElement;
+      const isEditingField = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement;
       const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
-      setIsKeyboardOpen(baselineHeight - visibleHeight > 140);
+      setIsKeyboardOpen(isEditingField || baselineHeight - visibleHeight > 140);
     };
 
     updateKeyboardState();
     window.visualViewport?.addEventListener('resize', updateKeyboardState);
     window.visualViewport?.addEventListener('scroll', updateKeyboardState);
     window.addEventListener('resize', updateKeyboardState);
+    window.addEventListener('focusin', updateKeyboardState);
+    window.addEventListener('focusout', updateKeyboardState);
 
     return () => {
       window.visualViewport?.removeEventListener('resize', updateKeyboardState);
       window.visualViewport?.removeEventListener('scroll', updateKeyboardState);
       window.removeEventListener('resize', updateKeyboardState);
+      window.removeEventListener('focusin', updateKeyboardState);
+      window.removeEventListener('focusout', updateKeyboardState);
     };
   }, []);
 
@@ -894,7 +900,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       {false && logs.length > 0 && null}
 
       {/* Main scroll area */}
-      <div className="inner-scroll -mx-2 flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-2 py-2.5 scrollbar-none">
+      <div className={`inner-scroll -mx-2 flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-2 pt-2.5 scrollbar-none ${isKeyboardOpen ? 'pb-8' : 'pb-36'}`}>
 
         {isCompletedEditMode ? (
           <section className="shrink-0 ios-card p-3 border-[#2EC4B6]/20 bg-[#2EC4B6]/5 shadow-sm animate-fade-in">
