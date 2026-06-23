@@ -256,7 +256,7 @@ export function ActualsPage({
   const selectedWeekCardioDistance = cardioRecords
     .filter((record) => selectedWeekSessionIds.has(record.sessionId) && record.isDraft !== true)
     .reduce((sum, record) => sum + (record.distanceKm ?? 0), 0);
-  const hardSets = selectedWeekSets.filter((set) => set.rir !== undefined && set.rir <= 3 && set.type !== 'warmup' && !set.isWarmup).length;
+  const hardSets = selectedWeekSets.filter((set) => set.isHard === true && set.type !== 'warmup' && !set.isWarmup).length;
   const totalVolume = selectedWeekSummaries.reduce((sum, summary) => sum + summary.session.totalStrengthVolumeKg, 0);
   const exerciseById = new Map(exercises.map((exercise) => [exercise.id, exercise]));
   const categoryCounts = new Map<string, number>();

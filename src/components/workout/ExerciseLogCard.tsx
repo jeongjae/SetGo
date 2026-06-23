@@ -32,7 +32,7 @@ type ExerciseLogCardProps = {
   handleQuickAdjustSet: (set: WorkoutSet, field: 'weightKg' | 'reps' | 'rir', delta: number) => Promise<void>;
   handleSetChange: (
     set: WorkoutSet,
-    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'type'>>,
+    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type'>>,
   ) => Promise<void>;
   handleToggleWarmup: (set: WorkoutSet) => Promise<void>;
   handleToggleHardSet: (set: WorkoutSet) => Promise<void>;
@@ -162,7 +162,12 @@ export function ExerciseLogCard({
           <div className={`flex items-center justify-between gap-2 border-b border-[#F2F2F7] pb-2 transition-all duration-300 ${
             isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0 pb-0' : 'max-h-12 opacity-100'
           }`}>
-            <span className="text-[11px] font-black text-[#8E8E93]">{locale === 'ko' ? '\uC6B4\uB3D9 \uAD00\uB9AC' : 'Manage Exercise'}</span>
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-black text-[#8E8E93]">{locale === 'ko' ? '\uC6B4\uB3D9 \uAD00\uB9AC' : 'Manage Exercise'}</span>
+              <span className="rounded-md bg-[#F2F2F7] px-1.5 py-0.5 text-[10px] font-black text-[#6E6E73]">
+                {locale === 'ko' ? '\uC911\uB7C9\uB2E8\uC704: 2.5kg' : 'Weight step: 2.5kg'}
+              </span>
+            </div>
             <div className="flex items-center gap-1">
               <button
                 type="button"
