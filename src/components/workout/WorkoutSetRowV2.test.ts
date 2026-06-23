@@ -15,12 +15,12 @@ describe('WorkoutSetRowV2 presentation helpers', () => {
     expect(parseWorkoutSetDecimalInput('bad')).toBeUndefined();
   });
 
-  it('cycles set types in a predictable order', () => {
+  it('toggles between normal and warmup set types', () => {
     expect(getNextSetType(undefined, false)).toBe('warmup');
     expect(getNextSetType('normal', false)).toBe('warmup');
-    expect(getNextSetType('warmup', true)).toBe('drop');
-    expect(getNextSetType('drop', false)).toBe('failure');
-    expect(getNextSetType('failure', false)).toBe('normal');
+    expect(getNextSetType('warmup', true)).toBe('normal');
+    expect(getNextSetType('drop', false)).toBe('warmup');
+    expect(getNextSetType('failure', false)).toBe('warmup');
   });
 
   it('labels set types for Korean and English workout rows', () => {
@@ -28,8 +28,8 @@ describe('WorkoutSetRowV2 presentation helpers', () => {
     expect(getSetKindLabel('warmup', true, 'en')).toBe('Warm');
     expect(getSetKindLabel('drop', false, 'en')).toBe('Drop');
     expect(getSetKindLabel('failure', false, 'en')).toBe('Fail');
-    expect(getSetKindLabel('normal', false, 'ko')).toBe('일반');
-    expect(getSetKindLabel('warmup', true, 'ko')).toBe('준비');
+    expect(getSetKindLabel('normal', false, 'ko')).toBe('\uC77C\uBC18');
+    expect(getSetKindLabel('warmup', true, 'ko')).toBe('\uC900\uBE44');
   });
 
   it('shows progress labels only for completed PR-level sets', () => {

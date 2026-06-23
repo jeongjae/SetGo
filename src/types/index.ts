@@ -190,6 +190,7 @@ export type WorkoutSet = {
   rir?: number;
   isCompleted: boolean;
   isWarmup?: boolean;
+  isHard?: boolean;
   type?: WorkoutSetType;
 };
 

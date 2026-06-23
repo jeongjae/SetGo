@@ -950,7 +950,7 @@ export async function moveWorkoutCardioBlock(sessionId: string, direction: -1 | 
 
 export async function updateWorkoutSet(
   setId: string,
-  values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'type'>>,
+  values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type'>>,
 ): Promise<void> {
   const existingSet = await db.workoutSets.get(setId);
   if (!existingSet) return;

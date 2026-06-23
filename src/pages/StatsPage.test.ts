@@ -66,6 +66,7 @@ describe('stats builder', () => {
         rir: 2,
         isCompleted: true,
         isWarmup: false,
+        isHard: true,
       },
       {
         id: 'warmup_set_1',
@@ -165,6 +166,7 @@ describe('stats builder', () => {
         rir: 2,
         isCompleted: true,
         type: 'normal',
+        isHard: true,
       },
       {
         id: 'set_drop_type',
@@ -175,6 +177,7 @@ describe('stats builder', () => {
         rir: 1,
         isCompleted: true,
         type: 'drop',
+        isHard: true,
       },
       {
         id: 'set_failure_type',
@@ -185,6 +188,7 @@ describe('stats builder', () => {
         rir: 0,
         isCompleted: true,
         type: 'failure',
+        isHard: true,
       },
       {
         id: 'set_legacy_warmup',

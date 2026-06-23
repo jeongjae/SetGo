@@ -194,7 +194,7 @@ function getWorkoutFinishSummary(
   locale: 'ko' | 'en',
 ): string {
   const completedSets = logs.flatMap((log) => log.sets).filter((set) => set.isCompleted);
-  const hardSets = completedSets.filter((set) => !set.isWarmup && set.rir !== undefined && set.rir <= 3).length;
+  const hardSets = completedSets.filter((set) => !set.isWarmup && set.isHard === true).length;
   const completedExercises = countFullyCompletedExercises(logs);
   const cardioCount = countLoggedCardioRecords(cardioRecords);
 
@@ -484,7 +484,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
   async function handleSetChange(
     set: WorkoutSet,
-    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'type'>>,
+    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type'>>,
   ) {
     setSaveMessage(locale === 'ko' ? '\uC800\uC7A5 \uC911...' : 'Saving...');
     const wasCompleted = set.isCompleted;
@@ -523,7 +523,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           const inputEl = document.getElementById(nextFocusTarget.inputId) as HTMLInputElement | null;
           inputEl?.focus();
           inputEl?.select();
-          inputEl?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+          inputEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
         }, 240);
       } else {
         autoTransitionAccordion(set.workoutExerciseId);
@@ -539,6 +539,8 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       reps: previousSet.reps,
       rir: previousSet.rir,
       isWarmup: previousSet.isWarmup ?? false,
+      isHard: previousSet.isHard ?? false,
+      type: previousSet.type ?? (previousSet.isWarmup ? 'warmup' : 'normal'),
     });
     await loadWorkout();
     setSaveMessage(locale === 'ko' ? '\uCD5C\uADFC \uC6B4\uB3D9 \uC138\uD2B8\uB97C \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4' : 'Recent workout set copied');
@@ -556,6 +558,8 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       reps: previousSet.reps,
       rir: previousSet.rir,
       isWarmup: previousSet.isWarmup ?? false,
+      isHard: previousSet.isHard ?? false,
+      type: previousSet.type ?? (previousSet.isWarmup ? 'warmup' : 'normal'),
     })));
     await loadWorkout();
     setSaveMessage(locale === 'ko' ? '\uCD5C\uADFC \uC6B4\uB3D9 \uC138\uD2B8\uB97C \uBAA8\uB450 \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4' : 'All recent sets copied');
@@ -579,17 +583,17 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     await handleSetChange(set, {
       isWarmup: nextWarmup,
       type: nextWarmup ? 'warmup' : 'normal',
+      isHard: nextWarmup ? false : set.isHard,
       isCompleted: nextWarmup ? true : set.isCompleted,
     });
   }
 
   async function handleToggleHardSet(set: WorkoutSet) {
-    const isHardSet = !set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3;
     await handleSetChange(set, {
       isWarmup: false,
       type: 'normal',
       isCompleted: true,
-      rir: isHardSet ? 4 : Math.min(set.rir ?? 3, 3),
+      isHard: !set.isHard,
     });
   }
 

@@ -1,4 +1,4 @@
-import { Check, Copy, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Check, Copy, Minus, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState, type FocusEvent } from 'react';
 import type { WorkoutExerciseLog } from '../../db/workouts';
 import type { WorkoutSet, WorkoutSetType } from '../../types';
@@ -29,7 +29,7 @@ type WorkoutSetRowV2Props = {
   handleQuickAdjustSet: (set: WorkoutSet, field: 'weightKg' | 'reps' | 'rir', delta: number) => Promise<void>;
   handleSetChange: (
     set: WorkoutSet,
-    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'type'>>,
+    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type'>>,
   ) => Promise<void>;
   handleToggleWarmup: (set: WorkoutSet) => Promise<void>;
   handleToggleHardSet: (set: WorkoutSet) => Promise<void>;
@@ -52,14 +52,7 @@ export function getSetKindLabel(type: WorkoutSetType | undefined, isWarmup: bool
 
 export function getNextSetType(type: WorkoutSetType | undefined, isWarmup: boolean | undefined): WorkoutSetType {
   const current = type || (isWarmup ? 'warmup' : 'normal');
-  const nextTypes: Record<WorkoutSetType, WorkoutSetType> = {
-    normal: 'warmup',
-    warmup: 'drop',
-    drop: 'failure',
-    failure: 'normal',
-  };
-
-  return nextTypes[current];
+  return current === 'warmup' ? 'normal' : 'warmup';
 }
 
 export function getProgressLabel(
@@ -94,9 +87,9 @@ export function WorkoutSetRowV2({
   const [weight, setWeight] = useState(set.weightKg ? String(set.weightKg) : '');
   const [reps, setReps] = useState(set.reps ? String(set.reps) : '');
   const [rir, setRir] = useState(set.rir !== undefined ? String(set.rir) : '');
-  const [isActionsOpen, setIsActionsOpen] = useState(false);
   const currentType = set.type || (set.isWarmup ? 'warmup' : 'normal');
   const progressLabel = getProgressLabel(set, log.pastBestWeight, log.pastBestVolume);
+  const isHard = set.isHard === true;
 
   useEffect(() => {
     setWeight(set.weightKg ? String(set.weightKg) : '');
@@ -177,25 +170,43 @@ export function WorkoutSetRowV2({
           {getSetKindLabel(set.type, set.isWarmup, locale)}
         </button>
 
-        <input
-          id={`weight_input_${set.id}`}
-          data-we-id={log.workoutExercise.id}
-          aria-label={`${log.exercise.nameKo} set ${set.setNo} weight`}
-          type="text"
-          inputMode="decimal"
-          enterKeyHint="next"
-          tabIndex={setIndex * 3 + 1}
-          value={weight}
-          onChange={(event) => setWeight(event.target.value)}
-          onFocus={handleFocus}
-          onKeyDown={handleEnterKey}
-          onBlur={() => {
-            const nextWeight = parseWorkoutSetDecimalInput(weight) ?? 0;
-            if (nextWeight !== set.weightKg) void handleSetChange(set, { weightKg: nextWeight });
-          }}
-          className="h-11 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-base font-black text-[#1C1C1E] outline-none focus:border-accent"
-          placeholder="kg"
-        />
+        <div className="grid h-11 grid-cols-[1.75rem_minmax(0,1fr)_1.75rem] overflow-hidden rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] focus-within:border-accent">
+          <button
+            type="button"
+            onClick={() => void handleQuickAdjustSet(set, 'weightKg', -2.5)}
+            className="flex items-center justify-center border-r border-[#D1D1D6] text-[#6E6E73] active:bg-[#E5E5EA]"
+            aria-label="Decrease weight"
+          >
+            <Minus aria-hidden="true" size={13} />
+          </button>
+          <input
+            id={`weight_input_${set.id}`}
+            data-we-id={log.workoutExercise.id}
+            aria-label={`${log.exercise.nameKo} set ${set.setNo} weight`}
+            type="text"
+            inputMode="decimal"
+            enterKeyHint="next"
+            tabIndex={setIndex * 3 + 1}
+            value={weight}
+            onChange={(event) => setWeight(event.target.value)}
+            onFocus={handleFocus}
+            onKeyDown={handleEnterKey}
+            onBlur={() => {
+              const nextWeight = parseWorkoutSetDecimalInput(weight) ?? 0;
+              if (nextWeight !== set.weightKg) void handleSetChange(set, { weightKg: nextWeight });
+            }}
+            className="min-w-0 bg-transparent px-0.5 text-center text-base font-black text-[#1C1C1E] outline-none"
+            placeholder="kg"
+          />
+          <button
+            type="button"
+            onClick={() => void handleQuickAdjustSet(set, 'weightKg', 2.5)}
+            className="flex items-center justify-center border-l border-[#D1D1D6] text-accent-dark active:bg-[#E5E5EA]"
+            aria-label="Increase weight"
+          >
+            <Plus aria-hidden="true" size={13} />
+          </button>
+        </div>
 
         <input
           id={`reps_input_${set.id}`}
@@ -251,99 +262,63 @@ export function WorkoutSetRowV2({
         </button>
       </div>
 
-      <div className="mt-1.5 flex items-center justify-between gap-2">
+      <div className="mt-1.5 flex items-center justify-between gap-1.5">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           {previousSet ? (
-            <button
-              type="button"
-              onClick={() => void handleCopyPreviousSet(set, previousSet)}
-              className="flex min-h-7 items-center gap-1 rounded-md border border-black/5 bg-[#F2F2F7] px-2 text-[10px] font-black text-[#6E6E73] transition-all hover:border-accent-dark/30 hover:bg-[#E8F3F3] hover:text-accent-dark active:scale-[0.98]"
-              title={locale === 'ko' ? '\uC774\uC804 \uAE30\uB85D \uBCF5\uC0AC' : 'Copy previous values'}
-            >
-              <span>{locale === 'ko' ? '\uC774\uC804' : 'Prev'}:</span>
-              <span className="font-mono">{previousSet.weightKg}kg x {previousSet.reps}</span>
-            </button>
+            <span className="inline-flex min-h-8 items-center overflow-hidden rounded-md border border-black/5 bg-[#F2F2F7] text-[10px] font-black text-[#6E6E73]">
+              <button
+                type="button"
+                onClick={() => void handleCopyPreviousSet(set, previousSet)}
+                className="flex min-h-8 items-center gap-1 px-2 transition-all hover:bg-[#E8F3F3] hover:text-accent-dark active:scale-[0.98]"
+                title={locale === 'ko' ? '\uC774\uC804 \uAE30\uB85D \uBCF5\uC0AC' : 'Copy previous values'}
+              >
+                <span>{locale === 'ko' ? '\uC774\uC804' : 'Prev'}:</span>
+                <span className="font-mono">{previousSet.weightKg}kg x {previousSet.reps}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleCopyPreviousSet(set, previousSet)}
+                className="flex h-8 w-8 items-center justify-center border-l border-black/5 bg-white text-[#6E6E73] hover:text-accent-dark active:bg-[#E5E5EA]"
+                aria-label={locale === 'ko' ? '\uC774\uC804 \uAC12 \uBCF5\uC0AC' : 'Copy previous values'}
+              >
+                <Copy aria-hidden="true" size={12} />
+              </button>
+            </span>
           ) : (
-            <span className="rounded-md border border-black/[0.02] bg-[#F2F2F7]/50 px-2 py-1 text-[10px] font-bold text-[#C7C7CC]">
+            <span className="flex min-h-8 items-center rounded-md border border-black/[0.02] bg-[#F2F2F7]/50 px-2 text-[10px] font-bold text-[#C7C7CC]">
               {locale === 'ko' ? '\uC774\uC804 \uC5C6\uC74C' : 'No prev'}
             </span>
           )}
           {progressLabel ? (
-            <span className="rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-black leading-none text-amber-700">
+            <span className="flex min-h-8 items-center rounded-md border border-amber-200 bg-amber-50 px-2 text-[9px] font-black leading-none text-amber-700">
               {progressLabel}
             </span>
           ) : null}
-          {!set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3 ? (
-            <span className="rounded-md border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-black leading-none text-rose-600">
-              Hard
-            </span>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => setIsActionsOpen((current) => !current)}
-            className="flex min-h-7 items-center gap-0.5 rounded-lg border border-[#D1D1D6] bg-white px-2 text-[9px] font-black text-[#1C1C1E]"
-            aria-expanded={isActionsOpen}
-            aria-label={locale === 'ko' ? '\uC138\uD2B8 \uCD94\uAC00 \uC791\uC5C5' : 'More set actions'}
-          >
-            <MoreHorizontal aria-hidden="true" size={11} />
-            {locale === 'ko' ? '\uB354\uBCF4\uAE30' : 'More'}
-          </button>
-        </div>
-
-        <div className="flex h-7 shrink-0 items-center overflow-hidden rounded-lg border border-[#D1D1D6] bg-white shadow-sm">
-          <button
-            type="button"
-            onClick={() => void handleQuickAdjustSet(set, 'weightKg', -2.5)}
-            className="flex h-full items-center justify-center border-r border-[#D1D1D6] px-2 text-[10px] font-black text-[#6E6E73] transition-all hover:bg-[#F2F2F7] active:bg-[#E5E5EA]"
-          >
-            -2.5
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleQuickAdjustSet(set, 'weightKg', 2.5)}
-            className="flex h-full items-center justify-center px-2 text-[10px] font-black text-accent-dark transition-all hover:bg-[#F2F2F7] active:bg-[#E5E5EA]"
-          >
-            +2.5
-          </button>
-        </div>
-      </div>
-
-      {isActionsOpen ? (
-        <div className="mt-1.5 grid grid-cols-4 gap-1">
-          <button
-            type="button"
-            onClick={() => void handleToggleWarmup(set)}
-            className="min-h-9 rounded-lg border border-[#D1D1D6] bg-white px-2 text-[11px] font-black text-[#1C1C1E]"
-          >
-            {locale === 'ko' ? '\uC900\uBE44' : 'Warm'}
-          </button>
           <button
             type="button"
             onClick={() => void handleToggleHardSet(set)}
-            className="min-h-9 rounded-lg border border-[#D1D1D6] bg-white px-2 text-[11px] font-black text-[#1C1C1E]"
+            className={`flex min-h-8 items-center rounded-md border px-2 text-[9px] font-black leading-none transition-all active:scale-95 ${
+              isHard
+                ? 'border-rose-200 bg-rose-500 text-white shadow-[0_5px_12px_rgba(244,63,94,0.22)]'
+                : 'border-[#D1D1D6] bg-white text-[#6E6E73]'
+            }`}
+            aria-pressed={isHard}
+            aria-label={isHard ? 'Unset hard set' : 'Mark hard set'}
           >
             Hard
           </button>
-          <button
-            type="button"
-            onClick={() => void handleCopyPreviousSet(set, previousSet)}
-            disabled={!previousSet}
-            className="flex min-h-9 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] disabled:text-[#C7C7CC]"
-            aria-label={locale === 'ko' ? '\uC774\uC804 \uAC12 \uBCF5\uC0AC' : 'Copy previous values'}
-          >
-            <Copy aria-hidden="true" size={13} />
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleDeleteSet(set)}
-            disabled={log.sets.length === 1}
-            className="flex min-h-9 items-center justify-center rounded-lg bg-[#FFECEC] text-danger disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC]"
-            aria-label={locale === 'ko' ? '\uC138\uD2B8 \uC0AD\uC81C' : 'Delete set'}
-          >
-            <Trash2 aria-hidden="true" size={13} />
-          </button>
         </div>
-      ) : null}
+
+        <button
+          type="button"
+          onClick={() => void handleDeleteSet(set)}
+          disabled={log.sets.length === 1}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FFECEC] text-danger disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC]"
+          aria-label={locale === 'ko' ? '\uC138\uD2B8 \uC0AD\uC81C' : 'Delete set'}
+        >
+          <Trash2 aria-hidden="true" size={13} />
+        </button>
+      </div>
     </div>
   );
 }

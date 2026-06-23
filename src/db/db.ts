@@ -95,6 +95,26 @@ export class SetGoDatabase extends Dexie {
       workoutSets: 'id, workoutExerciseId, setNo',
       cardioRecords: 'id, sessionId, environment, order',
     });
+
+    this.version(6).stores({
+      exercises: 'id, category, stage, isDefault, isActive',
+      routines: 'id, splitType, isActive, startDate',
+      routineDays: 'id, routineId, sequence',
+      weeklySchedules: 'id, routineId, weekday, routineDayId',
+      routineCyclePlanItems: 'id, routineId, order, routineDayId, kind',
+      calendarPlanOverrides: 'id, date, routineId, routineDayId, kind',
+      routineExercisePlans: 'id, routineDayId, exerciseId, order',
+      workoutSessions: 'id, date, routineId, routineDayId, status',
+      workoutExercises: 'id, sessionId, exerciseId, order, status',
+      workoutSets: 'id, workoutExerciseId, setNo',
+      cardioRecords: 'id, sessionId, environment, order',
+    }).upgrade((tx) => (
+      tx.table('workoutSets').toCollection().modify((set) => {
+        if (set.isHard === undefined && !set.isWarmup && set.isCompleted && set.rir !== undefined && set.rir <= 3) {
+          set.isHard = true;
+        }
+      })
+    ));
   }
 }
 
