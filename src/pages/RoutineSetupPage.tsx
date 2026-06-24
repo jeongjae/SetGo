@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, CalendarDays, Check, ChevronLeft, Copy, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, ChevronLeft, Copy, Play, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ExerciseFinder, emptyExerciseFinderState, type ExerciseFinderState } from '../components/ExerciseFinder';
 import { db } from '../db/db';
@@ -49,6 +49,7 @@ type RoutineSetupPageProps = {
   onBack?: () => void;
   onRoutineSaved: () => void;
   onReviewCalendar: (dateKey: string) => void;
+  onStartRoutineDay: (routineDayId: string) => void;
 };
 
 const weekdayLabels = {
@@ -75,7 +76,13 @@ type RoutinePlanSnapshot = {
   plans: RoutineExercisePlan[];
 };
 
-export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onReviewCalendar }: RoutineSetupPageProps) {
+export function RoutineSetupPage({
+  initialSection,
+  onBack,
+  onRoutineSaved,
+  onReviewCalendar,
+  onStartRoutineDay,
+}: RoutineSetupPageProps) {
   const [activeRoutine, setActiveRoutine] = useState<Routine | undefined>();
   const [savedRoutines, setSavedRoutines] = useState<Routine[]>([]);
   const [showRoutineCreator, setShowRoutineCreator] = useState(false);
@@ -603,6 +610,9 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
     : exerciseLibrary.find((exercise) => exercise.id === editingExerciseId);
   const exerciseEditorOpen = exerciseLibraryMode === 'add' || isEditingExercise;
   const activeRoutineName = activeRoutine?.name;
+  const selectedDayLabel = selectedDay ? getRoutineDayDisplayName(selectedDay.routineDay, locale) : undefined;
+  const selectedDayExerciseCount = selectedDay?.plans.length ?? 0;
+  const routineSummary = getRoutineSummaryInfo();
 
   return (
     <section className="viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col gap-0 overflow-hidden px-3.5 py-3 text-[#1C1C1E]">
@@ -652,51 +662,101 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
         {/* 루틴 설정 */}
         {setupTab === 'routine' && (
           <div className="flex flex-col gap-2.5">
-            <section className="ios-card shrink-0 space-y-3 p-4">
-              <p className="text-xs font-extrabold uppercase text-[#8E8E93]">{t(locale, 'activeRoutine')}</p>
-              {savedRoutines.length > 0 ? (
-                <div className="grid grid-cols-[1fr_auto] gap-2">
+            <section className="ios-card shrink-0 space-y-3.5 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-extrabold uppercase text-[#8E8E93]">{t(locale, 'activeRoutine')}</p>
+                  <h2 className="mt-1 truncate text-xl font-black leading-tight text-[#1C1C1E]">
+                    {activeRoutineName ?? t(locale, 'noActiveRoutine')}
+                  </h2>
+                  {selectedDayLabel ? (
+                    <p className="mt-1 text-xs font-bold text-[#159A91]">
+                      {locale === 'ko'
+                        ? `선택한 운동: ${selectedDayLabel}`
+                        : `Selected day: ${selectedDayLabel}`}
+                    </p>
+                  ) : null}
+                </div>
+                {savedRoutines.length > 0 ? (
                   <select
                     aria-label={locale === 'ko' ? '활성 루틴 선택' : 'Select active routine'}
                     value={activeRoutine?.id ?? ''}
                     onChange={(event) => void handleSelectStoredRoutine(event.target.value)}
-                    className="min-h-10 min-w-0 rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                    className="min-h-9 max-w-[8rem] shrink-0 rounded-xl border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                   >
                     {savedRoutines.map((routine) => (
                       <option key={routine.id} value={routine.id}>{routine.name}</option>
                     ))}
                   </select>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setShowRoutineRename((current) => !current)}
-                      className="min-h-10 rounded-xl border border-black/5 bg-[#F2F2F7] px-1 text-[11px] font-bold text-[#1C1C1E] transition-all active:scale-95"
-                    >
-                      {locale === 'ko' ? '이름' : 'Rename'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleDuplicateActiveRoutine()}
-                      disabled={!activeRoutine}
-                      className="flex min-h-10 items-center justify-center gap-0.5 rounded-xl border border-[#2EC4B6]/20 bg-[#2EC4B6]/10 px-1 text-[11px] font-black text-[#159A91] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
-                    >
-                      <Copy aria-hidden="true" size={11} />
-                      <span>{locale === 'ko' ? '복제' : 'Copy'}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleDeleteActiveRoutine()}
-                      disabled={!activeRoutine}
-                      className="flex min-h-10 items-center justify-center gap-0.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-1 text-[11px] font-black text-rose-600 transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
-                    >
-                      <Trash2 aria-hidden="true" size={11} />
-                      <span>{locale === 'ko' ? '삭제' : 'Delete'}</span>
-                    </button>
+                ) : null}
+              </div>
+
+              {activeRoutine ? (
+                <div className="grid grid-cols-3 gap-2 rounded-xl border border-black/5 bg-[#F2F2F7] p-2.5 text-center">
+                  <div>
+                    <span className="block text-[10px] font-bold uppercase text-[#8E8E93]">
+                      {locale === 'ko' ? '분할' : 'Days'}
+                    </span>
+                    <span className="mt-0.5 block text-sm font-black text-[#1C1C1E]">{routineSummary?.dayCount ?? 0}</span>
+                  </div>
+                  <div className="border-x border-[#E5E5EA]">
+                    <span className="block text-[10px] font-bold uppercase text-[#8E8E93]">
+                      {locale === 'ko' ? '운동' : 'Exercises'}
+                    </span>
+                    <span className="mt-0.5 block text-sm font-black text-[#1C1C1E]">{routineSummary?.totalExercises ?? 0}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[10px] font-bold uppercase text-[#8E8E93]">
+                      {locale === 'ko' ? '일정' : 'Schedule'}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs font-black text-[#1C1C1E]" title={routineSummary?.scheduleSummary ?? ''}>
+                      {routineSummary?.scheduleSummary ?? '-'}
+                    </span>
                   </div>
                 </div>
-              ) : (
-                <h2 className="text-sm font-bold text-[#8E8E93]">{t(locale, 'noActiveRoutine')}</h2>
-              )}
+              ) : null}
+
+              {dayPlans.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {dayPlans.map((dayPlan) => (
+                      <button
+                        key={dayPlan.routineDay.id}
+                        type="button"
+                        onClick={() => setSelectedDayId(dayPlan.routineDay.id)}
+                        className={`min-h-9 shrink-0 rounded-full border px-3.5 text-xs font-black transition-all active:scale-95 ${
+                          selectedDay?.routineDay.id === dayPlan.routineDay.id
+                            ? 'border-transparent bg-[#2EC4B6] text-white shadow-sm'
+                            : 'border-[#D1D1D6] bg-white text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
+                        }`}
+                      >
+                        {getRoutineDayDisplayName(dayPlan.routineDay, locale)}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => selectedDay && onStartRoutineDay(selectedDay.routineDay.id)}
+                    disabled={!selectedDay}
+                    className="ios-button-primary flex min-h-12 w-full items-center justify-center gap-2 px-4 text-sm disabled:pointer-events-none disabled:bg-[#E5E5EA] disabled:text-[#8E8E93] disabled:shadow-none"
+                  >
+                    <Play aria-hidden="true" size={16} />
+                    <span>
+                      {selectedDayLabel
+                        ? locale === 'ko'
+                          ? `${selectedDayLabel} 시작`
+                          : `Start ${selectedDayLabel}`
+                        : t(locale, 'startWorkout')}
+                    </span>
+                  </button>
+                  <p className="text-center text-[11px] font-semibold text-[#8E8E93]">
+                    {locale === 'ko'
+                      ? `${selectedDayExerciseCount}개 운동으로 바로 기록을 시작합니다.`
+                      : `Starts logging with ${selectedDayExerciseCount} exercises.`}
+                  </p>
+                </div>
+              ) : null}
+
               {activeRoutine && showRoutineRename ? (
                 <label className="block text-xs font-bold text-[#6E6E73]">
                   {locale === 'ko' ? '새 이름' : 'New name'}
@@ -726,43 +786,39 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                     : 'You are editing a copied routine. Please set a name for this routine.'}
                 </div>
               )}
-              {/* Routine Summary */}
-              {activeRoutine && (
-                <div className="rounded-xl border border-black/5 bg-[#F2F2F7] p-3 text-xs space-y-1 text-[#6E6E73]">
-                  <p className="font-extrabold text-[#159A91] uppercase tracking-wider text-[10px]">
-                    {locale === 'ko' ? '루틴 요약' : 'Routine Summary'}
-                  </p>
-                  <div className="grid grid-cols-3 gap-2 pt-1 text-center font-bold">
-                    <div className="border-r border-[#E5E5EA]">
-                      <span className="block text-[#8E8E93] text-[10px] uppercase font-bold">
-                        {locale === 'ko' ? '분할 수' : 'Days'}
-                      </span>
-                      <span className="text-[#1C1C1E] text-sm font-black">{dayPlans.length}</span>
-                    </div>
-                    <div className="border-r border-[#E5E5EA]">
-                      <span className="block text-[#8E8E93] text-[10px] uppercase font-bold">
-                        {locale === 'ko' ? '총 운동 수' : 'Exercises'}
-                      </span>
-                      <span className="text-[#1C1C1E] text-sm font-black">
-                        {dayPlans.reduce((sum, d) => sum + d.plans.length, 0)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="block text-[#8E8E93] text-[10px] uppercase font-bold">
-                        {locale === 'ko' ? '일정' : 'Schedule'}
-                      </span>
-                      <span className="text-[#1C1C1E] text-xs truncate block mt-0.5" title={getRoutineSummaryInfo()?.scheduleSummary ?? ''}>
-                        {getRoutineSummaryInfo()?.scheduleSummary}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className="grid grid-cols-3 gap-1.5 border-t border-[#E5E5EA] pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowRoutineRename((current) => !current)}
+                  disabled={!activeRoutine}
+                  className="min-h-9 rounded-xl border border-black/5 bg-[#F2F2F7] px-1 text-[11px] font-bold text-[#1C1C1E] transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  {locale === 'ko' ? '이름' : 'Rename'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleDuplicateActiveRoutine()}
+                  disabled={!activeRoutine}
+                  className="flex min-h-9 items-center justify-center gap-0.5 rounded-xl border border-[#2EC4B6]/20 bg-[#2EC4B6]/10 px-1 text-[11px] font-black text-[#159A91] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                >
+                  <Copy aria-hidden="true" size={11} />
+                  <span>{locale === 'ko' ? '복제' : 'Copy'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleDeleteActiveRoutine()}
+                  disabled={!activeRoutine}
+                  className="flex min-h-9 items-center justify-center gap-0.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-1 text-[11px] font-black text-rose-600 transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                >
+                  <Trash2 aria-hidden="true" size={11} />
+                  <span>{locale === 'ko' ? '삭제' : 'Delete'}</span>
+                </button>
+              </div>
               <button
                 type="button"
                 aria-expanded={showRoutineCreator}
                 onClick={() => setShowRoutineCreator((current) => !current)}
-                className="flex min-h-10 w-full items-between justify-between rounded-xl border border-black/5 bg-[#F2F2F7] px-3 text-sm font-bold text-[#1C1C1E] transition-all active:scale-[0.98]"
+                className="flex min-h-10 w-full items-center justify-between rounded-xl border border-black/5 bg-[#F2F2F7] px-3 text-sm font-bold text-[#1C1C1E] transition-all active:scale-[0.98]"
               >
                 <span>{locale === 'ko' ? '새 루틴 만들기' : 'Create new routine'}</span>
                 <span className="text-[#159A91]">{showRoutineCreator ? '-' : '+'}</span>
@@ -1202,7 +1258,12 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
         {dayPlans.length > 0 && setupTab === 'routine' && (
           <section className="ios-card shrink-0 space-y-3 p-3.5">
             <div className="flex items-center justify-between gap-3 border-b border-[#D1D1D6] pb-2.5">
-              <p className="text-xs font-bold uppercase text-[#6E6E73]">{t(locale, 'routineDays')}</p>
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase text-[#6E6E73]">{t(locale, 'routineDays')}</p>
+                <p className="mt-0.5 truncate text-sm font-black text-[#1C1C1E]">
+                  {selectedDayLabel ?? t(locale, 'noRoutineDayPlanned')}
+                </p>
+              </div>
               <div className="flex gap-1.5">
                 <button
                   type="button"
@@ -1226,24 +1287,6 @@ export function RoutineSetupPage({ initialSection, onBack, onRoutineSaved, onRev
                 {resetStatus}
               </p>
             )}
-
-            {/* Routine day horizontal chips */}
-            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {dayPlans.map((dayPlan) => (
-                <button
-                  key={dayPlan.routineDay.id}
-                  type="button"
-                  onClick={() => setSelectedDayId(dayPlan.routineDay.id)}
-                  className={`min-h-8 shrink-0 rounded-full px-3.5 text-xs font-bold transition-all active:scale-95 border ${
-                    selectedDay?.routineDay.id === dayPlan.routineDay.id
-                      ? 'bg-[#2EC4B6] border-transparent text-white shadow-sm'
-                      : 'border-[#D1D1D6] bg-white text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
-                  }`}
-                >
-                  {getRoutineDayDisplayName(dayPlan.routineDay, locale)}
-                </button>
-              ))}
-            </div>
 
             {selectedDay && (
               <div className="space-y-3.5">
