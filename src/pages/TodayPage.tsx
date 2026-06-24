@@ -300,6 +300,38 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
       </header>
 
       <div className="inner-scroll space-y-2.5 py-0.5 pr-0.5 [@media(max-height:820px)]:space-y-2">
+        {todayInProgressWorkouts.length > 0 ? (
+          <section className="ios-card space-y-2 p-3.5 [@media(max-height:820px)]:p-3">
+            <p className="text-sm font-black text-[#1C1C1E]">
+              {locale === 'ko' ? '오늘 진행 중인 운동' : 'In-progress workouts today'}
+            </p>
+            {todayInProgressWorkouts.map((summary) => (
+              <div key={summary.session.id} className="flex items-center gap-2 rounded-2xl bg-[#F2F2F7] px-3 py-2">
+                <button
+                  type="button"
+                  onClick={() => onStartWorkout(summary.session.routineDayId, summary.session.id)}
+                  className="min-w-0 flex-1 text-left"
+                >
+                  <span className="block truncate text-sm font-black text-[#1C1C1E]">
+                    {todayWorkoutSummaryLabel(summary, locale)}
+                  </span>
+                  <span className="mt-0.5 block text-xs font-bold text-[#6E6E73]">
+                    {locale === 'ko' ? '이어 기록하기' : 'Continue logging'}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleDeleteTodayWorkout(summary.session.id)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFECEC] text-danger transition-all active:scale-95"
+                  aria-label={locale === 'ko' ? '운동 기록 삭제' : 'Delete workout record'}
+                >
+                  <Trash2 aria-hidden="true" size={16} />
+                </button>
+              </div>
+            ))}
+          </section>
+        ) : null}
+
         <section className="ios-card flex flex-col gap-2.5 p-3.5 [@media(max-height:820px)]:gap-2 [@media(max-height:820px)]:p-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -376,25 +408,17 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             ]}
           />
 
-          {selectedWorkoutKind === 'planned' && routineDays.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {routineDays.map((routineDay) => (
-                <button
-                  key={routineDay.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedWorkoutKind('planned');
-                    setSelectedRoutineDayId(routineDay.id);
-                  }}
-                  className={`min-h-10 rounded-full border px-4 text-sm font-bold transition-all active:scale-95 ${
-                    selectedWorkoutKind === 'planned' && selectedRoutineDayId === routineDay.id
-                      ? 'border-transparent bg-accent-dark text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)]'
-                      : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
-                  }`}
-                >
-                  {getRoutineDayDisplayName(routineDay, locale)}
-                </button>
-              ))}
+          {selectedWorkoutKind === 'planned' && selectedRoutineDay ? (
+            <div className="rounded-xl border border-[#2EC4B6]/20 bg-[#E8F3F3] px-3 py-2">
+              <p className="text-[11px] font-black uppercase tracking-wide text-[#159A91]">
+                {locale === 'ko' ? '선택한 루틴' : 'Selected routine'}
+              </p>
+              <p className="mt-0.5 truncate text-sm font-black text-[#1C1C1E]">{selectedRoutineDayLabel}</p>
+              <p className="mt-0.5 text-xs font-semibold text-[#6E6E73]">
+                {locale === 'ko'
+                  ? '다른 루틴 데이는 루틴 탭에서 선택해 시작할 수 있습니다.'
+                  : 'Use Routines to start a different routine day.'}
+              </p>
             </div>
           ) : null}
 
@@ -425,37 +449,6 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
           ) : null}
         </section>
 
-        {todayInProgressWorkouts.length > 0 ? (
-          <section className="ios-card space-y-2 p-3.5 [@media(max-height:820px)]:p-3">
-            <p className="text-sm font-black text-[#1C1C1E]">
-              {locale === 'ko' ? '오늘 진행 중인 운동' : 'In-progress workouts today'}
-            </p>
-            {todayInProgressWorkouts.map((summary) => (
-              <div key={summary.session.id} className="flex items-center gap-2 rounded-2xl bg-[#F2F2F7] px-3 py-2">
-                <button
-                  type="button"
-                  onClick={() => onStartWorkout(summary.session.routineDayId, summary.session.id)}
-                  className="min-w-0 flex-1 text-left"
-                >
-                  <span className="block truncate text-sm font-black text-[#1C1C1E]">
-                    {todayWorkoutSummaryLabel(summary, locale)}
-                  </span>
-                  <span className="mt-0.5 block text-xs font-bold text-[#6E6E73]">
-                    {locale === 'ko' ? '이어 기록하기' : 'Continue logging'}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleDeleteTodayWorkout(summary.session.id)}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFECEC] text-danger transition-all active:scale-95"
-                  aria-label={locale === 'ko' ? '운동 기록 삭제' : 'Delete workout record'}
-                >
-                  <Trash2 aria-hidden="true" size={16} />
-                </button>
-              </div>
-            ))}
-          </section>
-        ) : null}
       </div>
 
       <footer className="shrink-0 pt-1">
