@@ -12,6 +12,16 @@ import { db } from '../db/db';
 import { createRoutineFromWorkoutSession, getAllRoutines, getRoutineDayDisplayName, getRoutineDays } from '../db/routines';
 import { formatDateKey } from '../utils/date';
 import {
+  disableWakeLock,
+  enableWakeLock,
+  isNotificationSupported,
+  loadRestNotifyPref,
+  notifyRestComplete,
+  requestRestNotifyPermission,
+  saveRestNotifyPref,
+  vibrate,
+} from '../utils/deviceTimer';
+import {
   getExerciseCategories,
 } from '../domain/exercises';
 import { exerciseCountLabel, getStoredLocale, routineNameLabel, t, timeBandLabel, workoutStatusLabel } from '../i18n/i18n';
@@ -278,6 +288,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
   const [restDuration, setRestDuration] = useState(90);
   const [restRemaining, setRestRemaining] = useState(0);
   const [isRestTimerActive, setIsRestTimerActive] = useState(false);
+  const [restNotifyEnabled, setRestNotifyEnabled] = useState(() => loadRestNotifyPref());
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
   const [memoOpenExercises, setMemoOpenExercises] = useState<Record<string, boolean>>({});
@@ -500,16 +511,43 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         setRestRemaining(remaining);
         if (remaining <= 0) {
           setIsRestTimerActive(false);
-          if (typeof navigator !== 'undefined' && navigator.vibrate) {
-            navigator.vibrate([200, 100, 200]);
-          }
+          vibrate([200, 100, 200]);
+          notifyRestComplete(t(locale, 'timerFinished'), t(locale, 'restAlertBody'));
         }
       }, 500);
     }
     return () => {
       if (interval) window.clearInterval(interval);
     };
-  }, [isRestTimerActive, restTimerStartedAt, restDuration]);
+  }, [isRestTimerActive, restTimerStartedAt, restDuration, locale]);
+
+  // Keep the screen awake while a workout is in progress (no-op where unsupported).
+  useEffect(() => {
+    if (workout?.session.status !== 'in_progress') return undefined;
+    enableWakeLock();
+    return () => {
+      void disableWakeLock();
+    };
+  }, [workout?.session.status]);
+
+  async function handleToggleRestNotify() {
+    if (restNotifyEnabled) {
+      setRestNotifyEnabled(false);
+      saveRestNotifyPref(false);
+      return;
+    }
+    if (!isNotificationSupported()) {
+      setSaveMessage(t(locale, 'restNotifyUnsupported'));
+      return;
+    }
+    const permission = await requestRestNotifyPermission();
+    if (permission === 'granted') {
+      setRestNotifyEnabled(true);
+      saveRestNotifyPref(true);
+      return;
+    }
+    setSaveMessage(t(locale, permission === 'denied' ? 'restNotifyBlocked' : 'restNotifyUnsupported'));
+  }
 
   async function handleAddExercise(exerciseId: string) {
     if (!workout) return;
@@ -1232,6 +1270,10 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           remainingSeconds={restRemaining}
           durationSeconds={restDuration}
           formatCountdownSeconds={formatCountdownSeconds}
+          notifySupported={isNotificationSupported()}
+          notifyEnabled={restNotifyEnabled}
+          notifyLabel={t(locale, restNotifyEnabled ? 'restNotifyOn' : 'restNotifyOff')}
+          onToggleNotify={() => void handleToggleRestNotify()}
           onIncreaseDuration={() => {
             setRestDuration((prev) => prev + 30);
           }}

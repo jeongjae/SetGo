@@ -1,4 +1,4 @@
-import { Clock3 } from 'lucide-react';
+import { Bell, BellOff, Clock3 } from 'lucide-react';
 
 type FloatingRestTimerProps = {
   label: string;
@@ -6,6 +6,10 @@ type FloatingRestTimerProps = {
   remainingSeconds: number;
   durationSeconds: number;
   formatCountdownSeconds: (seconds: number) => string;
+  notifySupported: boolean;
+  notifyEnabled: boolean;
+  notifyLabel: string;
+  onToggleNotify: () => void;
   onIncreaseDuration: () => void;
   onDecreaseDuration: () => void;
   onSkip: () => void;
@@ -17,6 +21,10 @@ export function FloatingRestTimer({
   remainingSeconds,
   durationSeconds,
   formatCountdownSeconds,
+  notifySupported,
+  notifyEnabled,
+  notifyLabel,
+  onToggleNotify,
   onIncreaseDuration,
   onDecreaseDuration,
   onSkip,
@@ -40,6 +48,22 @@ export function FloatingRestTimer({
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          {notifySupported ? (
+            <button
+              type="button"
+              onClick={onToggleNotify}
+              aria-pressed={notifyEnabled}
+              aria-label={notifyLabel}
+              title={notifyLabel}
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all active:scale-95 ${
+                notifyEnabled
+                  ? 'border-yellow-600 bg-yellow-300 text-yellow-950'
+                  : 'border-yellow-500 bg-yellow-50 text-yellow-700'
+              }`}
+            >
+              {notifyEnabled ? <Bell size={15} /> : <BellOff size={15} />}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onIncreaseDuration}
