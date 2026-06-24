@@ -105,6 +105,11 @@ const en = {
   restTime: 'Rest Time',
   skip: 'Skip',
   timerFinished: 'Rest Finished!',
+  restAlertBody: 'Time for your next set.',
+  restNotifyOn: 'Rest alerts on',
+  restNotifyOff: 'Rest alerts off',
+  restNotifyBlocked: 'Notifications are blocked in browser settings.',
+  restNotifyUnsupported: 'This browser keeps the timer on screen; background alerts are unavailable.',
   statsTitle: 'Records Analysis',
   statsEmptyTitle: 'No workout records to analyze yet',
   statsEmptyBody: 'Weekly volume, hard sets, and muscle-group load will be calculated after workouts are completed.',
@@ -112,6 +117,11 @@ const en = {
   statsTotalVolume: 'Total volume',
   statsTotalSets: 'Total sets',
   statsWeekOverWeek: 'Week over week',
+  statsPeriodOverPeriod: 'vs prev period',
+  statsWindow7: '7 days',
+  statsWindow28: '4 weeks',
+  statsWindow84: '3 months',
+  statsWindowRange: 'Last {days} days',
   statsRecentTrend: 'Recent 8-week trend',
   statsDailyTrend: 'Daily trend',
   statsMuscleAnalysis: 'Muscle-group analysis',
@@ -171,6 +181,7 @@ const en = {
   todayRecommendationRestDay: 'Today is planned as a rest day.',
   todayRecommendationNextRoutine: 'Rest day today. This is the next routine if you choose to train.',
   todayRecommendationNoRoutine: 'No active routine yet, so free workout is the best start.',
+  todayRecoveryWarning: '{groups} recovery is still low ({percent}%). Ease the load or train another area first.',
 };
 
 const ko: typeof en = {
@@ -264,6 +275,11 @@ const ko: typeof en = {
   restTime: '휴식 시간',
   skip: '건너뛰기',
   timerFinished: '휴식 완료!',
+  restAlertBody: '다음 세트를 시작할 시간입니다.',
+  restNotifyOn: '휴식 알림 켜짐',
+  restNotifyOff: '휴식 알림 꺼짐',
+  restNotifyBlocked: '브라우저 설정에서 알림이 차단되어 있습니다.',
+  restNotifyUnsupported: '이 브라우저는 화면 타이머만 지원하며 백그라운드 알림은 제공되지 않습니다.',
   statsTitle: '기록 분석',
   statsEmptyTitle: '아직 분석할 운동 기록이 없습니다',
   statsEmptyBody: '운동을 완료하면 주간 볼륨, Hard Set, 근육군별 부하가 자동으로 계산됩니다.',
@@ -271,6 +287,11 @@ const ko: typeof en = {
   statsTotalVolume: '총 볼륨',
   statsTotalSets: '총 세트',
   statsWeekOverWeek: '전주 대비 변화율',
+  statsPeriodOverPeriod: '이전 기간 대비',
+  statsWindow7: '7일',
+  statsWindow28: '4주',
+  statsWindow84: '3개월',
+  statsWindowRange: '최근 {days}일',
   statsRecentTrend: '최근 8주 추세',
   statsDailyTrend: '일간 추세',
   statsMuscleAnalysis: '근육군별 분석',
@@ -330,6 +351,7 @@ const ko: typeof en = {
   todayRecommendationRestDay: '오늘은 휴식일로 계획되어 있습니다.',
   todayRecommendationNextRoutine: '휴식일이지만 운동한다면 다음 루틴을 추천합니다.',
   todayRecommendationNoRoutine: '활성 루틴이 없어 자유 운동으로 시작하는 것이 적절합니다.',
+  todayRecoveryWarning: '{groups} 회복이 아직 낮습니다 ({percent}%). 부하를 줄이거나 다른 부위를 먼저 훈련하세요.',
 };
 
 const messages = { ko, en } satisfies Record<AppLocale, Record<string, string>>;

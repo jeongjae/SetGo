@@ -1,4 +1,4 @@
-import { Dumbbell, Footprints, Play, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Dumbbell, Footprints, Play, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { IOSSegmentedControl } from '../components/IosPrimitives';
 import { db } from '../db/db';
@@ -22,7 +22,13 @@ import {
   type DailyWorkoutRecommendationReason,
 } from '../domain/dailyRecommendation';
 import { getExerciseName } from '../domain/exercises';
-import { getStoredLocale, t, type AppLocale } from '../i18n/i18n';
+import {
+  exerciseRecoveryMuscleGroups,
+  loadRecoverySnapshot,
+  recoveryGroupLabel,
+  recoveryWarningGroups,
+} from '../domain/recoveryInputs';
+import { getStoredLocale, t, tf, type AppLocale } from '../i18n/i18n';
 import type { CardioRecord, Routine, RoutineDay, WorkoutRecommendationSnapshot, WorkoutSession, WorkoutSessionKind } from '../types';
 import { formatDateKey } from '../utils/date';
 
@@ -104,6 +110,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const [todayRoutineDay, setTodayRoutineDay] = useState<RoutineDay | undefined>();
   const [nextRoutineDay, setNextRoutineDay] = useState<RoutineDay | undefined>();
   const [plannedExerciseNames, setPlannedExerciseNames] = useState<string[]>([]);
+  const [recoveryWarning, setRecoveryWarning] = useState<string | undefined>();
   const [recentRoutineWorkouts, setRecentRoutineWorkouts] = useState<WorkoutSummary[]>([]);
   const [dailyRecommendation, setDailyRecommendation] = useState<DailyWorkoutRecommendation | undefined>();
   const [isTodayRestDay, setIsTodayRestDay] = useState(false);
@@ -204,20 +211,33 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
     async function loadPlannedExercises() {
       if (selectedWorkoutKind !== 'planned' || !selectedRoutineDayId) {
         setPlannedExerciseNames([]);
+        setRecoveryWarning(undefined);
         return;
       }
 
       const plans = await db.routineExercisePlans.where('routineDayId').equals(selectedRoutineDayId).sortBy('order');
-      const exercises = await Promise.all(plans.map((plan) => db.exercises.get(plan.exerciseId)));
-      setPlannedExerciseNames(
-        exercises
-          .filter((exercise): exercise is NonNullable<typeof exercise> => exercise !== undefined)
-          .map((exercise) => getExerciseName(exercise, locale)),
-      );
+      const exercises = (await Promise.all(plans.map((plan) => db.exercises.get(plan.exerciseId))))
+        .filter((exercise): exercise is NonNullable<typeof exercise> => exercise !== undefined);
+      setPlannedExerciseNames(exercises.map((exercise) => getExerciseName(exercise, locale)));
+
+      // Warn when the planned day targets muscle groups that are still fatigued.
+      const plannedGroups = Array.from(new Set(exercises.flatMap((exercise) => exerciseRecoveryMuscleGroups(exercise))));
+      if (plannedGroups.length === 0) {
+        setRecoveryWarning(undefined);
+        return;
+      }
+      const snapshot = await loadRecoverySnapshot();
+      const fatigued = recoveryWarningGroups(snapshot, plannedGroups);
+      if (fatigued.length === 0) {
+        setRecoveryWarning(undefined);
+        return;
+      }
+      const groupLabels = fatigued.slice(0, 2).map((stat) => recoveryGroupLabel(stat.group, locale)).join(', ');
+      setRecoveryWarning(tf(locale, 'todayRecoveryWarning', { groups: groupLabels, percent: fatigued[0].recoveryPercent }));
     }
 
     void loadPlannedExercises();
-  }, [locale, selectedRoutineDayId, selectedWorkoutKind]);
+  }, [locale, selectedRoutineDayId, selectedWorkoutKind, refreshKey, reloadKey]);
 
   const selectedRoutineDay = routineDays.find((routineDay) => routineDay.id === selectedRoutineDayId);
   const selectedKindLabel = selectedWorkoutKind === 'running'
@@ -356,6 +376,12 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             {dailyRecommendation ? (
               <p className="mt-2 text-sm font-semibold leading-5 text-white/72">
                 {dailyRecommendationReasonLabel(dailyRecommendation.reason, locale)}
+              </p>
+            ) : null}
+            {recoveryWarning ? (
+              <p className="mt-2 flex items-start gap-1.5 rounded-xl bg-[#FF9500]/15 px-2.5 py-2 text-[13px] font-semibold leading-4 text-[#FFCC66]">
+                <AlertTriangle aria-hidden="true" size={15} className="mt-px shrink-0" />
+                <span>{recoveryWarning}</span>
               </p>
             ) : null}
             {plannedExerciseNames.length > 0 ? (
