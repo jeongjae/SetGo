@@ -271,7 +271,7 @@ export function RoutineSetupPage({
 
   async function handleUpdatePlan(
     planId: string,
-    values: Partial<Pick<RoutineExercisePlan, 'plannedSets' | 'plannedWeightKg' | 'plannedReps' | 'plannedRir' | 'plannedRestSeconds'>>,
+    values: Partial<Pick<RoutineExercisePlan, 'plannedSets' | 'plannedWeightKg' | 'plannedReps' | 'plannedRir' | 'plannedRestSeconds' | 'preferredWeightIncrementKg'>>,
   ) {
     await updateRoutineExercisePlan(planId, values);
     await loadSetup();
@@ -1383,7 +1383,7 @@ export function RoutineSetupPage({
                         </div>
 
                         {/* Planned set, weight, rep, RIR, and rest controls */}
-                        <div className="grid grid-cols-5 gap-1.5 pt-2 border-t border-[#E5E5EA]">
+                        <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-[#E5E5EA]">
                           <label className="block text-center">
                             <span className="mb-1 block text-xs font-bold uppercase text-[#6E6E73]">Sets</span>
                             <input
@@ -1449,6 +1449,24 @@ export function RoutineSetupPage({
                               onBlur={(event) => void handleUpdatePlan(plan.id, {
                                 plannedRestSeconds: Math.max(15, Number(event.target.value) || 90),
                               })}
+                              className="w-full rounded-xl border border-[#D1D1D6] bg-white py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none transition-all focus:border-[#2EC4B6]"
+                            />
+                          </label>
+                          <label className="block text-center">
+                            <span className="mb-1 block text-xs font-bold uppercase text-[#6E6E73]">
+                              {locale === 'ko' ? '단위' : 'Step'}
+                            </span>
+                            <input
+                              aria-label={`${getExerciseName(exercise, locale)} weight increment`}
+                              type="text"
+                              inputMode="decimal"
+                              defaultValue={plan.preferredWeightIncrementKg ?? 2.5}
+                              onBlur={(event) => {
+                                const value = Number(event.target.value);
+                                void handleUpdatePlan(plan.id, {
+                                  preferredWeightIncrementKg: Number.isFinite(value) && value > 0 ? value : undefined,
+                                });
+                              }}
                               className="w-full rounded-xl border border-[#D1D1D6] bg-white py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none transition-all focus:border-[#2EC4B6]"
                             />
                           </label>

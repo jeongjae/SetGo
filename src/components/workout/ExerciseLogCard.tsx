@@ -75,6 +75,7 @@ export function ExerciseLogCard({
   const workoutExerciseId = log.workoutExercise.id;
   const currentSetId = log.sets.find((set) => !set.isCompleted)?.id;
   const targetRecommendation = log.targetRecommendation;
+  const weightIncrementKg = log.weightIncrementKg;
   const targetSummary = targetRecommendation
     ? [
         targetRecommendation.weightKg ? `${targetRecommendation.weightKg}kg` : undefined,
@@ -165,7 +166,7 @@ export function ExerciseLogCard({
             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
               <span className="text-[11px] font-black text-[#8E8E93]">{locale === 'ko' ? '\uC6B4\uB3D9 \uAD00\uB9AC' : 'Manage Exercise'}</span>
               <span className="rounded-md bg-[#F2F2F7] px-1.5 py-0.5 text-[10px] font-black text-[#6E6E73]">
-                {locale === 'ko' ? '\uC911\uB7C9\uB2E8\uC704: 2.5kg' : 'Weight step: 2.5kg'}
+                {locale === 'ko' ? `\uC911\uB7C9\uB2E8\uC704: ${weightIncrementKg}kg` : `Weight step: ${weightIncrementKg}kg`}
               </span>
             </div>
             <div className="flex items-center gap-1">
@@ -294,6 +295,7 @@ export function ExerciseLogCard({
                 locale={locale}
                 compactInputMode={isKeyboardOpen}
                 isCurrentSet={set.id === currentSetId}
+                weightIncrementKg={weightIncrementKg}
                 handleQuickAdjustSet={handleQuickAdjustSet}
                 handleSetChange={handleSetChange}
                 handleToggleWarmup={handleToggleWarmup}

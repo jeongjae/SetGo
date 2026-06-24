@@ -26,6 +26,7 @@ type WorkoutSetRowV2Props = {
   locale: 'ko' | 'en';
   compactInputMode?: boolean;
   isCurrentSet?: boolean;
+  weightIncrementKg: number;
   handleQuickAdjustSet: (set: WorkoutSet, field: 'weightKg' | 'reps' | 'rir', delta: number) => Promise<void>;
   handleSetChange: (
     set: WorkoutSet,
@@ -77,6 +78,7 @@ export function WorkoutSetRowV2({
   locale,
   compactInputMode = false,
   isCurrentSet = false,
+  weightIncrementKg,
   handleQuickAdjustSet,
   handleSetChange,
   handleToggleWarmup,
@@ -173,9 +175,9 @@ export function WorkoutSetRowV2({
         <div className="grid h-11 grid-cols-[1.75rem_minmax(0,1fr)_1.75rem] overflow-hidden rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] focus-within:border-accent">
           <button
             type="button"
-            onClick={() => void handleQuickAdjustSet(set, 'weightKg', -2.5)}
+            onClick={() => void handleQuickAdjustSet(set, 'weightKg', -weightIncrementKg)}
             className="flex items-center justify-center border-r border-[#D1D1D6] text-[#6E6E73] active:bg-[#E5E5EA]"
-            aria-label="Decrease weight"
+            aria-label={`Decrease weight by ${weightIncrementKg}kg`}
           >
             <Minus aria-hidden="true" size={13} />
           </button>
@@ -200,9 +202,9 @@ export function WorkoutSetRowV2({
           />
           <button
             type="button"
-            onClick={() => void handleQuickAdjustSet(set, 'weightKg', 2.5)}
+            onClick={() => void handleQuickAdjustSet(set, 'weightKg', weightIncrementKg)}
             className="flex items-center justify-center border-l border-[#D1D1D6] text-accent-dark active:bg-[#E5E5EA]"
-            aria-label="Increase weight"
+            aria-label={`Increase weight by ${weightIncrementKg}kg`}
           >
             <Plus aria-hidden="true" size={13} />
           </button>

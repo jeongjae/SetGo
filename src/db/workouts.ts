@@ -26,9 +26,17 @@ export type WorkoutExerciseLog = {
   pastBestWeight?: number;
   pastBestVolume?: number;
   targetRecommendation?: ExerciseTargetRecommendation;
+  weightIncrementKg: number;
 };
 
 export type WorkoutStartKind = WorkoutSessionKind;
+
+export const DEFAULT_WEIGHT_INCREMENT_KG = 2.5;
+
+export function resolveWeightIncrementKg(plan?: Pick<RoutineExercisePlan, 'preferredWeightIncrementKg'>): number {
+  const value = plan?.preferredWeightIncrementKg;
+  return value !== undefined && Number.isFinite(value) && value > 0 ? value : DEFAULT_WEIGHT_INCREMENT_KG;
+}
 
 export type WorkoutStartOptions = {
   createNew?: boolean;
@@ -384,14 +392,8 @@ async function getTargetRecommendationForWorkoutExercise(
   workoutExercise: WorkoutExercise,
   exercise: ExerciseMaster,
   currentSets: WorkoutSet[],
+  routinePlan?: RoutineExercisePlan,
 ): Promise<ExerciseTargetRecommendation> {
-  const routinePlan = session.routineDayId
-    ? await db.routineExercisePlans
-      .where('routineDayId')
-      .equals(session.routineDayId)
-      .filter((plan) => plan.exerciseId === workoutExercise.exerciseId)
-      .first()
-    : undefined;
   const firstSet = currentSets[0];
   const fallbackPlan: RoutineExercisePlan = {
     id: `${workoutExercise.id}_target_plan`,
@@ -475,9 +477,16 @@ export async function getWorkoutExerciseLogs(sessionId: string): Promise<Workout
 
   return Promise.all(
     workoutExercises.map(async (workoutExercise) => {
-      const [exercise, sets] = await Promise.all([
+      const [exercise, sets, routinePlan] = await Promise.all([
         db.exercises.get(workoutExercise.exerciseId),
         db.workoutSets.where('workoutExerciseId').equals(workoutExercise.id).sortBy('setNo'),
+        session?.routineDayId
+          ? db.routineExercisePlans
+            .where('routineDayId')
+            .equals(session.routineDayId)
+            .filter((plan) => plan.exerciseId === workoutExercise.exerciseId)
+            .first()
+          : undefined,
       ]);
 
       if (!exercise) {
@@ -487,7 +496,7 @@ export async function getWorkoutExerciseLogs(sessionId: string): Promise<Workout
       const prevRecord = await getPreviousExerciseRecord(workoutExercise.sessionId, workoutExercise.exerciseId);
       const pastBests = await getExercisePastBests(workoutExercise.sessionId, workoutExercise.exerciseId);
       const targetRecommendation = session
-        ? await getTargetRecommendationForWorkoutExercise(session, workoutExercise, exercise, sets)
+        ? await getTargetRecommendationForWorkoutExercise(session, workoutExercise, exercise, sets, routinePlan)
         : undefined;
 
       return {
@@ -498,6 +507,7 @@ export async function getWorkoutExerciseLogs(sessionId: string): Promise<Workout
         pastBestWeight: pastBests.bestWeight,
         pastBestVolume: pastBests.bestVolume,
         targetRecommendation,
+        weightIncrementKg: resolveWeightIncrementKg(routinePlan),
       };
     }),
   );
