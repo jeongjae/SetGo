@@ -1,6 +1,6 @@
 import { ChevronLeft, Copy, Download, Info, Upload } from 'lucide-react';
 import { type ChangeEvent, useEffect, useState } from 'react';
-import { createBackup, createSettingsBackup, restoreBackup, restoreSettingsBackup } from '../db/backup';
+import { createBackup, createSettingsBackup, previewSetGoBackup, restoreBackup, restoreSettingsBackup, type SetGoBackupPreview } from '../db/backup';
 import { createExerciseCsv, ExerciseCsvImportError, importExerciseCsv } from '../db/exerciseCsv';
 import { isStoragePersisted } from '../db/db';
 import {
@@ -101,6 +101,23 @@ function formatBackupDate(value: string | null, locale: 'ko' | 'en'): string | u
   }).format(date);
 }
 
+function formatBackupPreview(preview: SetGoBackupPreview, locale: 'ko' | 'en'): string {
+  const exportedAt = formatBackupDate(preview.exportedAt ?? null, locale);
+  const version = preview.version ?? '-';
+  const kindLabel = preview.kind === 'settings'
+    ? locale === 'ko' ? '설정 백업' : 'settings backup'
+    : preview.kind === 'full'
+      ? locale === 'ko' ? '전체 백업' : 'full backup'
+      : locale === 'ko' ? '잘못된 백업' : 'invalid backup';
+  const counts = locale === 'ko'
+    ? `${preview.sessionCount}개 세션, ${preview.exerciseCount}개 운동, ${preview.routineCount}개 루틴, ${preview.routinePlanCount}개 계획, 러닝 ${preview.cardioCount}건`
+    : `${preview.sessionCount} sessions, ${preview.exerciseCount} exercises, ${preview.routineCount} routines, ${preview.routinePlanCount} plans, ${preview.cardioCount} cardio`;
+  const meta = locale === 'ko'
+    ? `종류: ${kindLabel} / 버전: ${version}${exportedAt ? ` / 내보낸 시간: ${exportedAt}` : ''}`
+    : `Kind: ${kindLabel} / Version: ${version}${exportedAt ? ` / Exported: ${exportedAt}` : ''}`;
+  return `${meta}\n${counts}`;
+}
+
 export function ExportPage({ onBack }: ExportPageProps) {
   const [summaries, setSummaries] = useState<WorkoutSummary[]>([]);
   const [summary, setSummary] = useState<WorkoutSummary | undefined>();
@@ -199,23 +216,34 @@ export function ExportPage({ onBack }: ExportPageProps) {
 
     try {
       const parsedBackup = JSON.parse(await file.text());
-      const sessionCount = parsedBackup?.data?.workoutSessions?.length ?? 0;
-      const exerciseCount = parsedBackup?.data?.exercises?.length ?? 0;
+      const preview = previewSetGoBackup(parsedBackup);
+      if (preview.kind !== 'full') {
+        setRestoreStatus('failed');
+        setBackupSummary(
+          locale === 'ko'
+            ? `복원할 수 없는 파일입니다. ${preview.issues.join(' ')}`
+            : `This file cannot be restored as a full backup. ${preview.issues.join(' ')}`,
+        );
+        window.setTimeout(() => setRestoreStatus('idle'), 1600);
+        return;
+      }
+
       const shouldRestore = window.confirm(
         locale === 'ko'
-          ? `SetGo 백업을 복원할까요?\n\n현재 로컬 데이터가 ${file.name}의 ${sessionCount}개 세션, ${exerciseCount}개 운동으로 교체됩니다.`
-          : `Restore this SetGo backup?\n\nThis replaces current local data with ${sessionCount} sessions and ${exerciseCount} exercises from ${file.name}.`,
+          ? `SetGo 전체 백업을 복원할까요?\n\n${formatBackupPreview(preview, locale)}\n\n현재 로컬 데이터는 ${file.name}의 내용으로 교체됩니다.`
+          : `Restore this SetGo full backup?\n\n${formatBackupPreview(preview, locale)}\n\nThis replaces current local data with ${file.name}.`,
       );
 
       if (!shouldRestore) {
         setRestoreStatus('cancelled');
+        setBackupSummary(locale === 'ko' ? `복원을 취소했습니다.\n${formatBackupPreview(preview, locale)}` : `Restore cancelled.\n${formatBackupPreview(preview, locale)}`);
         window.setTimeout(() => setRestoreStatus('idle'), 1200);
         return;
       }
 
       await restoreBackup(parsedBackup);
       await loadSummaries();
-      setBackupSummary(locale === 'ko' ? '선택한 JSON 백업에서 로컬 데이터를 복원했습니다.' : 'Local data was restored from the selected JSON backup.');
+      setBackupSummary(locale === 'ko' ? `선택한 JSON 백업에서 로컬 데이터를 복원했습니다.\n${formatBackupPreview(preview, locale)}` : `Local data was restored from the selected JSON backup.\n${formatBackupPreview(preview, locale)}`);
       setRestoreStatus('restored');
       window.setTimeout(() => setRestoreStatus('idle'), 1200);
       window.setTimeout(() => {
@@ -249,22 +277,31 @@ export function ExportPage({ onBack }: ExportPageProps) {
 
     try {
       const parsedBackup = JSON.parse(await file.text());
-      const routineCount = parsedBackup?.data?.routines?.length ?? 0;
-      const exerciseCount = parsedBackup?.data?.exercises?.length ?? 0;
+      const preview = previewSetGoBackup(parsedBackup);
+      if (preview.kind !== 'settings') {
+        setSettingsBackupStatus(
+          locale === 'ko'
+            ? `설정 백업 파일이 아닙니다. ${preview.issues.join(' ')}`
+            : `This is not a settings backup. ${preview.issues.join(' ')}`,
+        );
+        window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
+        return;
+      }
+
       const shouldRestore = window.confirm(
         locale === 'ko'
-          ? `SetGo 설정 백업을 복원할까요?\n\n현재 루틴, 운동 라이브러리, 주간계획이 ${file.name}의 ${routineCount}개 루틴과 ${exerciseCount}개 운동으로 교체됩니다. 운동 기록은 유지됩니다.`
-          : `Restore SetGo settings?\n\nCurrent routines, exercise library, and weekly plan will be replaced with ${routineCount} routines and ${exerciseCount} exercises from ${file.name}. Workout logs stay untouched.`,
+          ? `SetGo 설정 백업을 복원할까요?\n\n${formatBackupPreview(preview, locale)}\n\n현재 루틴, 운동 라이브러리, 주간 계획이 교체됩니다. 운동 기록은 유지됩니다.`
+          : `Restore SetGo settings?\n\n${formatBackupPreview(preview, locale)}\n\nCurrent routines, exercise library, and weekly plan will be replaced. Workout logs stay untouched.`,
       );
 
       if (!shouldRestore) {
-        setSettingsBackupStatus(locale === 'ko' ? '설정 복원을 취소했습니다.' : 'Settings restore cancelled.');
+        setSettingsBackupStatus(locale === 'ko' ? `설정 복원을 취소했습니다.\n${formatBackupPreview(preview, locale)}` : `Settings restore cancelled.\n${formatBackupPreview(preview, locale)}`);
         window.setTimeout(() => setSettingsBackupStatus(undefined), 1600);
         return;
       }
 
       await restoreSettingsBackup(parsedBackup);
-      setSettingsBackupStatus(locale === 'ko' ? '설정 백업을 복원했습니다.' : 'Settings backup restored.');
+      setSettingsBackupStatus(locale === 'ko' ? `설정 백업을 복원했습니다.\n${formatBackupPreview(preview, locale)}` : `Settings backup restored.\n${formatBackupPreview(preview, locale)}`);
       window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
       window.setTimeout(() => {
         window.location.reload();
@@ -444,6 +481,18 @@ export function ExportPage({ onBack }: ExportPageProps) {
                 ? '아직 이 기기에서 전체 백업을 만든 기록이 없습니다. 중요한 운동 기록은 JSON 백업으로 보관하세요.'
                 : 'No full backup has been created on this device yet. Keep important workout logs in a JSON backup.'}
           </p>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              [locale === 'ko' ? '백업 버전' : 'Backup version', 'v1'],
+              [locale === 'ko' ? '복원 방식' : 'Restore mode', locale === 'ko' ? '교체' : 'Replace'],
+              [locale === 'ko' ? '저장 위치' : 'Storage', isPersisted ? 'Persistent' : 'Best-effort'],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl border border-black/5 bg-white px-2 py-2 text-center">
+                <p className="truncate text-[10px] font-black uppercase text-[#8E8E93]">{label}</p>
+                <p className="mt-0.5 truncate text-xs font-black text-[#1C1C1E]">{value}</p>
+              </div>
+            ))}
+          </div>
           {showPersistenceInfo && (
             <p className="rounded-xl bg-[#FFF9E6] border border-[#FFCC00]/30 px-3.5 py-3 text-xs font-medium leading-relaxed text-[#806000]">
               {isPersisted
