@@ -6,7 +6,7 @@ import { buildRecoverySnapshot, type RecoveryMuscleGroup, type RecoverySnapshot,
 import { getStoredLocale, t, tf } from '../i18n/i18n';
 import { formatDateKey } from '../utils/date';
 import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
-import { IOSPageHeader } from '../components/IosPrimitives';
+import { IOSPageHeader, IOSSegmentedControl } from '../components/IosPrimitives';
 
 type Locale = 'ko' | 'en';
 type MuscleGroup = Exclude<RecoveryMuscleGroup, 'cardio'>;
@@ -27,6 +27,7 @@ type MuscleStat = {
   group: MuscleGroup;
   volumeKg: number;
   sets: number;
+  setsPerWeek: number;
   hardSets: number;
   recommendedMin: number;
   recommendedMax: number;
@@ -66,6 +67,9 @@ type DailyTrendStat = {
 };
 
 type StatsView = {
+  windowDays: number;
+  weeksInPeriod: number;
+  trendGranularity: 'daily' | 'weekly';
   workoutDays: number;
   totalVolumeKg: number;
   totalSets: number;
@@ -137,6 +141,33 @@ const recommendedSets: Record<MuscleGroup, { min: number; max: number }> = {
 };
 
 const trackedMuscles: MuscleGroup[] = ['chest', 'back', 'legs', 'shoulder', 'biceps', 'triceps', 'core'];
+
+// Today-anchored rolling analysis windows. `days` drives every period metric so the
+// whole screen reads against the same range (no mixed calendar-week vs rolling logic).
+export type AnalysisWindowId = 'p7' | 'p28' | 'p84';
+export type AnalysisWindow = { id: AnalysisWindowId; days: number };
+export const analysisWindows: AnalysisWindow[] = [
+  { id: 'p7', days: 7 },
+  { id: 'p28', days: 28 },
+  { id: 'p84', days: 84 },
+];
+export const defaultAnalysisWindow: AnalysisWindowId = 'p7';
+const ANALYSIS_WINDOW_KEY = 'setgo.statsWindow';
+
+export function loadAnalysisWindow(): AnalysisWindowId {
+  if (typeof localStorage === 'undefined') return defaultAnalysisWindow;
+  const stored = localStorage.getItem(ANALYSIS_WINDOW_KEY);
+  return analysisWindows.some((window) => window.id === stored) ? (stored as AnalysisWindowId) : defaultAnalysisWindow;
+}
+
+export function saveAnalysisWindow(id: AnalysisWindowId): void {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.setItem(ANALYSIS_WINDOW_KEY, id);
+}
+
+export function analysisWindowDays(id: AnalysisWindowId): number {
+  return analysisWindows.find((window) => window.id === id)?.days ?? 7;
+}
 
 export function buildAiPrompt(stats: StatsView, locale: Locale): string {
   if (locale === 'ko') {
@@ -226,15 +257,6 @@ Please evaluate my data and:
 2. Provide recovery tips to address any warnings (consecutive training days, muscle overlaps, rapid volume surges).
 3. Offer a concrete guide on how to adjust my sets and volume next week for safe, progressive overload.`;
   }
-}
-
-function startOfWeek(date: Date): Date {
-  const copyDate = new Date(date);
-  copyDate.setHours(0, 0, 0, 0);
-  const day = copyDate.getDay();
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  copyDate.setDate(copyDate.getDate() + mondayOffset);
-  return copyDate;
 }
 
 function addDays(date: Date, days: number): Date {
@@ -359,18 +381,28 @@ function insightMessage(stats: StatsView, locale: Locale): string {
   return locale === 'ko' ? '이번 주 부하는 안정적인 범위입니다.' : 'This week is inside a stable load range.';
 }
 
-function decorateMuscleStat(stat: Omit<MuscleStat, 'status' | 'targetPct' | 'deficitSets' | 'excessSets'>): MuscleStat {
+function decorateMuscleStat(
+  stat: Omit<MuscleStat, 'status' | 'targetPct' | 'deficitSets' | 'excessSets' | 'setsPerWeek'>,
+  weeksInPeriod: number,
+): MuscleStat {
+  // Targets are defined per week, so normalize the period set count before comparing.
+  const setsPerWeek = Math.round(stat.sets / Math.max(1, weeksInPeriod));
   return {
     ...stat,
-    status: statusForSets(stat.sets, stat.recommendedMin, stat.recommendedMax),
-    targetPct: Math.min(100, Math.round((stat.sets / Math.max(1, stat.recommendedMax)) * 100)),
-    deficitSets: Math.max(0, stat.recommendedMin - stat.sets),
-    excessSets: Math.max(0, stat.sets - stat.recommendedMax),
+    setsPerWeek,
+    status: statusForSets(setsPerWeek, stat.recommendedMin, stat.recommendedMax),
+    targetPct: Math.min(100, Math.round((setsPerWeek / Math.max(1, stat.recommendedMax)) * 100)),
+    deficitSets: Math.max(0, stat.recommendedMin - setsPerWeek),
+    excessSets: Math.max(0, setsPerWeek - stat.recommendedMax),
   };
 }
 
-export function buildEmptyStats(locale: Locale): StatsView {
+export function buildEmptyStats(locale: Locale, windowDays = analysisWindowDays(defaultAnalysisWindow)): StatsView {
+  const weeksInPeriod = windowDays / 7;
   return {
+    windowDays,
+    weeksInPeriod,
+    trendGranularity: windowDays <= 7 ? 'daily' : 'weekly',
     workoutDays: 0,
     totalVolumeKg: 0,
     totalSets: 0,
@@ -383,6 +415,7 @@ export function buildEmptyStats(locale: Locale): StatsView {
       group,
       volumeKg: 0,
       sets: 0,
+      setsPerWeek: 0,
       hardSets: 0,
       recommendedMin: recommendedSets[group].min,
       recommendedMax: recommendedSets[group].max,
@@ -406,14 +439,17 @@ export function buildStats(
   exercises: ExerciseMaster[],
   locale: Locale,
   cardioRecords: CardioRecord[] = [],
+  windowDays: number = analysisWindowDays(defaultAnalysisWindow),
 ): StatsView {
   const today = new Date();
-  const thisWeekStart = startOfWeek(today);
-  const previousWeekStart = addDays(thisWeekStart, -7);
-  const eightWeekStart = addDays(thisWeekStart, -49);
-  const fourWeekStartKey = formatDateKey(addDays(today, -27));
-  const previousFourWeekStartKey = formatDateKey(addDays(today, -55));
-  const previousFourWeekEndKey = formatDateKey(addDays(today, -28));
+  const weeksInPeriod = windowDays / 7;
+  const trendGranularity: 'daily' | 'weekly' = windowDays <= 7 ? 'daily' : 'weekly';
+  // Current period is [today-(windowDays-1) .. today]; the previous period is the
+  // equally long block immediately before it, so every comparison is like-for-like.
+  const todayKey = formatDateKey(today);
+  const currentPeriodStartKey = formatDateKey(addDays(today, -(windowDays - 1)));
+  const previousPeriodStartKey = formatDateKey(addDays(today, -(2 * windowDays - 1)));
+  const previousPeriodEndKey = formatDateKey(addDays(today, -windowDays));
 
   const sessionById = new Map(sessions.map((session) => [session.id, session]));
   const exerciseById = new Map(exercises.map((exercise) => [exercise.id, exercise]));
@@ -431,17 +467,20 @@ export function buildStats(
     .sort((a, b) => a.date.localeCompare(b.date));
   const completedSessionIds = new Set(completedSessions.map((session) => session.id));
   const completedWorkoutExercises = workoutExercises.filter((item) => completedSessionIds.has(item.sessionId));
-  const currentWeekSessions = completedSessions.filter((session) => session.date >= formatDateKey(thisWeekStart));
-  const currentWeekSessionIds = new Set(currentWeekSessions.map((session) => session.id));
-  const previousWeekSessionIds = new Set(
+  const currentPeriodSessions = completedSessions.filter(
+    (session) => session.date >= currentPeriodStartKey && session.date <= todayKey,
+  );
+  const currentPeriodSessionIds = new Set(currentPeriodSessions.map((session) => session.id));
+  const previousPeriodSessionIds = new Set(
     completedSessions
-      .filter((session) => session.date >= formatDateKey(previousWeekStart) && session.date < formatDateKey(thisWeekStart))
+      .filter((session) => session.date >= previousPeriodStartKey && session.date <= previousPeriodEndKey)
       .map((session) => session.id),
   );
 
-  const weekStats = Array.from({ length: 8 }, (_, index): WeekStat => {
-    const start = addDays(eightWeekStart, index * 7);
-    const end = addDays(start, 6);
+  // Rolling weekly buckets ending today; the trend rail and 4-week average read from these.
+  const weekStats = Array.from({ length: 12 }, (_, index): WeekStat => {
+    const end = addDays(today, -7 * (11 - index));
+    const start = addDays(end, -6);
     const startKey = formatDateKey(start);
     const endKey = formatDateKey(end);
     const weekSessions = completedSessions.filter((session) => session.date >= startKey && session.date <= endKey);
@@ -472,24 +511,25 @@ export function buildStats(
     return workoutSets.filter((set) => ids.has(set.workoutExerciseId) && set.isCompleted);
   }
 
-  const currentWeekSets = setsForSessionIds(currentWeekSessionIds);
-  const previousWeekSets = setsForSessionIds(previousWeekSessionIds);
-  const totalVolumeKg = currentWeekSets.reduce((sum, set) => sum + setVolume(set), 0);
-  const previousWeekVolumeKg = previousWeekSets.reduce((sum, set) => sum + setVolume(set), 0);
+  const currentPeriodSets = setsForSessionIds(currentPeriodSessionIds);
+  const previousPeriodSets = setsForSessionIds(previousPeriodSessionIds);
+  const totalVolumeKg = currentPeriodSets.reduce((sum, set) => sum + setVolume(set), 0);
+  const previousPeriodVolumeKg = previousPeriodSets.reduce((sum, set) => sum + setVolume(set), 0);
   const isWarmupSetForStats = (set: WorkoutSet) => {
     const workoutExercise = workoutExerciseById.get(set.workoutExerciseId);
     const exercise = workoutExercise ? exerciseById.get(workoutExercise.exerciseId) : undefined;
     const isWarmup = set.type ? set.type === 'warmup' : set.isWarmup;
     return Boolean(isWarmup) || isWarmupOnlyExercise(exercise);
   };
-  const currentWeekTrainingSets = currentWeekSets.filter((set) => !isWarmupSetForStats(set));
-  const hardSets = currentWeekSets.filter((set) => {
+  const currentPeriodTrainingSets = currentPeriodSets.filter((set) => !isWarmupSetForStats(set));
+  const hardSets = currentPeriodSets.filter((set) => {
     const workoutExercise = workoutExerciseById.get(set.workoutExerciseId);
     const exercise = workoutExercise ? exerciseById.get(workoutExercise.exerciseId) : undefined;
     return exercise ? isHardSet(set, exercise) : false;
   }).length;
 
-  const muscleMap = new Map<MuscleGroup, MuscleStat>(
+  type MuscleAccumulator = Omit<MuscleStat, 'status' | 'targetPct' | 'deficitSets' | 'excessSets' | 'setsPerWeek'>;
+  const muscleMap = new Map<MuscleGroup, MuscleAccumulator>(
     trackedMuscles.map((group) => [group, {
       group,
       volumeKg: 0,
@@ -497,15 +537,11 @@ export function buildStats(
       hardSets: 0,
       recommendedMin: recommendedSets[group].min,
       recommendedMax: recommendedSets[group].max,
-      status: 'low',
-      targetPct: 0,
-      deficitSets: recommendedSets[group].min,
-      excessSets: 0,
     }]),
   );
 
   completedWorkoutExercises
-    .filter((item) => currentWeekSessionIds.has(item.sessionId))
+    .filter((item) => currentPeriodSessionIds.has(item.sessionId))
     .forEach((workoutExercise) => {
       const exercise = exerciseById.get(workoutExercise.exerciseId);
       if (!exercise) return;
@@ -522,7 +558,7 @@ export function buildStats(
       });
     });
 
-  const muscleStats = Array.from(muscleMap.values()).map(decorateMuscleStat);
+  const muscleStats = Array.from(muscleMap.values()).map((stat) => decorateMuscleStat(stat, weeksInPeriod));
 
   const performances = Array.from(
     completedWorkoutExercises.reduce<Map<string, WorkoutExercise[]>>((map, item) => {
@@ -551,14 +587,17 @@ export function buildStats(
       })
       .filter((item) => item.valueKg > 0)
       .reverse();
-    const currentFourWeekVolume = items
-      .filter((item) => (sessionById.get(item.sessionId)?.date ?? '') >= fourWeekStartKey)
-      .flatMap((item) => setsByWorkoutExercise.get(item.id) ?? [])
-      .reduce((sum, set) => sum + setVolume(set), 0);
-    const previousFourWeekVolume = items
+    const currentPeriodVolume = items
       .filter((item) => {
         const date = sessionById.get(item.sessionId)?.date ?? '';
-        return date >= previousFourWeekStartKey && date <= previousFourWeekEndKey;
+        return date >= currentPeriodStartKey && date <= todayKey;
+      })
+      .flatMap((item) => setsByWorkoutExercise.get(item.id) ?? [])
+      .reduce((sum, set) => sum + setVolume(set), 0);
+    const previousPeriodVolume = items
+      .filter((item) => {
+        const date = sessionById.get(item.sessionId)?.date ?? '';
+        return date >= previousPeriodStartKey && date <= previousPeriodEndKey;
       })
       .flatMap((item) => setsByWorkoutExercise.get(item.id) ?? [])
       .reduce((sum, set) => sum + setVolume(set), 0);
@@ -573,20 +612,22 @@ export function buildStats(
         (setsByWorkoutExercise.get(item.id) ?? []).reduce((sum, set) => sum + setVolume(set), 0)
       ))),
       estimatedOneRmKg: Math.max(0, ...allSets.map(estimatedOneRm)),
-      fourWeekChangePct: pctChange(currentFourWeekVolume, previousFourWeekVolume),
+      fourWeekChangePct: pctChange(currentPeriodVolume, previousPeriodVolume),
       oneRmHistory,
     };
   }).sort((a, b) => b.recentVolumeKg - a.recentVolumeKg).slice(0, 12);
 
-  const twoWeekStart = addDays(today, -13);
+  // Daily rail spans the selected window (capped at 14 bars for readability).
+  const dailyTrendLength = Math.min(Math.max(windowDays, 7), 14);
+  const dailyTrendStart = addDays(today, -(dailyTrendLength - 1));
   const cardioBySessionId = cardioRecords.reduce<Map<string, CardioRecord[]>>((map, record) => {
     const list = map.get(record.sessionId) ?? [];
     list.push(record);
     map.set(record.sessionId, list);
     return map;
   }, new Map());
-  const dailyTrend = Array.from({ length: 14 }, (_, index): DailyTrendStat => {
-    const date = addDays(twoWeekStart, index);
+  const dailyTrend = Array.from({ length: dailyTrendLength }, (_, index): DailyTrendStat => {
+    const date = addDays(dailyTrendStart, index);
     const dateKey = formatDateKey(date);
     const daySessions = completedSessions.filter((session) => session.date === dateKey);
     const daySessionIds = new Set(daySessions.map((session) => session.id));
@@ -693,7 +734,7 @@ export function buildStats(
   completedWorkoutExercises.forEach((workoutExercise) => {
     const session = sessionById.get(workoutExercise.sessionId);
     const exercise = exerciseById.get(workoutExercise.exerciseId);
-    if (!session || !exercise || !currentWeekSessionIds.has(session.id)) return;
+    if (!session || !exercise || !currentPeriodSessionIds.has(session.id)) return;
     const timestamp = new Date(session.startedAt ?? `${session.date}T12:00:00`);
     toMuscleGroups(exercise).forEach((group) => muscleHistory.push({ group, date: timestamp }));
   });
@@ -708,27 +749,29 @@ export function buildStats(
     }
   });
 
-  const weekChange = pctChange(totalVolumeKg, previousWeekVolumeKg);
+  const weekChange = pctChange(totalVolumeKg, previousPeriodVolumeKg);
   if (weekChange !== undefined && weekChange >= 25) {
     warnings.push(tf(locale, 'statsWarningVolumeSpike', { change: weekChange.toFixed(0) }));
   }
-  const hardSetRatio = currentWeekTrainingSets.length > 0 ? (hardSets / currentWeekTrainingSets.length) * 100 : 0;
+  const hardSetRatio = currentPeriodTrainingSets.length > 0 ? (hardSets / currentPeriodTrainingSets.length) * 100 : 0;
   if (hardSetRatio > 70) {
     warnings.push(tf(locale, 'statsWarningHardSetRatio', { ratio: hardSetRatio.toFixed(0) }));
   }
 
   const lowMuscles = muscleStats.filter((stat) => stat.status === 'low').map((stat) => muscleLabels[locale][stat.group]);
   const highMuscles = muscleStats.filter((stat) => stat.status === 'high' || stat.status === 'caution').map((stat) => muscleLabels[locale][stat.group]);
+  // Normalize to a weekly rate so the period volume is comparable to the trailing weekly average.
   const fourWeekAverageVolume = weekStats.slice(-4).reduce((sum, week) => sum + week.volumeKg, 0) / 4;
-  const currentWeekVolumeVsAverage = pctChange(totalVolumeKg, fourWeekAverageVolume);
+  const periodWeeklyVolume = totalVolumeKg / Math.max(1, weeksInPeriod);
+  const periodVolumeVsAverage = pctChange(periodWeeklyVolume, fourWeekAverageVolume);
   const analysisComment = [
     tf(locale, 'statsAnalysisWeekSummary', {
-      days: currentWeekSessions.length,
+      days: currentPeriodSessions.length,
       volume: Math.round(totalVolumeKg).toLocaleString(),
-      sets: currentWeekSets.length,
+      sets: currentPeriodSets.length,
     }),
-    currentWeekVolumeVsAverage !== undefined
-      ? tf(locale, 'statsAnalysisVolumeVsAverage', { change: formatPct(currentWeekVolumeVsAverage) })
+    periodVolumeVsAverage !== undefined
+      ? tf(locale, 'statsAnalysisVolumeVsAverage', { change: formatPct(periodVolumeVsAverage) })
       : t(locale, 'statsAnalysisVolumeAveragePending'),
     tf(locale, 'statsAnalysisHardSetRatio', { ratio: hardSetRatio.toFixed(0) }),
     lowMuscles.length > 0
@@ -756,9 +799,12 @@ export function buildStats(
   ].filter((item): item is string => Boolean(item));
 
   return {
-    workoutDays: currentWeekSessions.length,
+    windowDays,
+    weeksInPeriod,
+    trendGranularity,
+    workoutDays: currentPeriodSessions.length,
     totalVolumeKg,
-    totalSets: currentWeekSets.length,
+    totalSets: currentPeriodSets.length,
     hardSets,
     weekOverWeekPct: weekChange,
     hardSetRatio,
@@ -921,7 +967,9 @@ function WeeklyLoadStrip({ weeks, locale }: { weeks: WeekStat[]; locale: Locale 
     <section className="ios-card p-3">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '8주 부하' : '8-week load'}</h2>
+          <h2 className="text-sm font-black text-[#1C1C1E]">
+            {locale === 'ko' ? `${weeks.length}주 부하` : `${weeks.length}-week load`}
+          </h2>
           <p className="mt-0.5 text-[11px] font-bold text-[#8E8E93]">
             {latest ? `${latest.label} ${formatKg(latest.volumeKg)}` : '0kg'}
           </p>
@@ -954,13 +1002,13 @@ function DailyLoadRail({ days, locale }: { days: DailyTrendStat[]; locale: Local
   return (
     <section className="ios-card p-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '최근 14일' : 'Last 14 days'}</h2>
+        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '일별 부하' : 'Daily load'}</h2>
         <div className="flex items-center gap-2 text-[10px] font-black uppercase text-[#8E8E93]">
           <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#34C759]" />kg</span>
           <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#007AFF]" />km</span>
         </div>
       </div>
-      <div className="mt-2 grid grid-cols-[repeat(14,minmax(0,1fr))] gap-1">
+      <div className="mt-2 grid gap-1" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}>
         {days.map((day) => {
           const strengthHeight = day.strengthVolumeKg > 0 ? Math.max(8, (day.strengthVolumeKg / maxStrength) * 38) : 0;
           const cardioHeight = day.cardioDistanceKm > 0 ? Math.max(5, (day.cardioDistanceKm / maxCardio) * 22) : 0;
@@ -986,7 +1034,7 @@ function MuscleBalancePanel({ muscles, locale }: { muscles: MuscleStat[]; locale
     .slice()
     .sort((a, b) => {
       const statusRank = { high: 0, caution: 1, low: 2, normal: 3 } satisfies Record<LoadStatus, number>;
-      return statusRank[a.status] - statusRank[b.status] || b.sets - a.sets;
+      return statusRank[a.status] - statusRank[b.status] || b.setsPerWeek - a.setsPerWeek;
     });
 
   return (
@@ -998,8 +1046,8 @@ function MuscleBalancePanel({ muscles, locale }: { muscles: MuscleStat[]; locale
       <div className="mt-2.5 grid gap-2">
         {sorted.map((muscle) => {
           const minPct = Math.min(100, Math.round((muscle.recommendedMin / Math.max(1, muscle.recommendedMax)) * 100));
-          const fillPct = muscle.sets > 0 ? Math.max(3, muscle.targetPct) : 0;
-          const targetLabel = `${muscle.sets}/${muscle.recommendedMin}-${muscle.recommendedMax}`;
+          const fillPct = muscle.setsPerWeek > 0 ? Math.max(3, muscle.targetPct) : 0;
+          const targetLabel = `${muscle.setsPerWeek}/${muscle.recommendedMin}-${muscle.recommendedMax}`;
 
           return (
             <div key={muscle.group} className="grid grid-cols-[4.3rem_1fr_4.2rem] items-center gap-2">
@@ -1272,8 +1320,9 @@ type StatsPageProps = {
 
 export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) {
   const [locale] = useState<Locale>(() => getStoredLocale());
-  const [stats, setStats] = useState<StatsView>(() => buildEmptyStats(locale));
-  
+  const [windowId, setWindowId] = useState<AnalysisWindowId>(() => loadAnalysisWindow());
+  const [stats, setStats] = useState<StatsView>(() => buildEmptyStats(locale, analysisWindowDays(loadAnalysisWindow())));
+
   const c = useMemo(() => ({
     title: t(locale, 'statsTitle'),
     emptyTitle: t(locale, 'statsEmptyTitle'),
@@ -1281,7 +1330,6 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
     workoutDays: t(locale, 'statsWorkoutDays'),
     totalVolume: t(locale, 'statsTotalVolume'),
     totalSets: t(locale, 'statsTotalSets'),
-    weekOverWeek: t(locale, 'statsWeekOverWeek'),
     recentTrend: t(locale, 'statsRecentTrend'),
     dailyTrend: t(locale, 'statsDailyTrend'),
     muscleAnalysis: t(locale, 'statsMuscleAnalysis'),
@@ -1332,11 +1380,21 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
         db.cardioRecords.toArray(),
       ]);
 
-      setStats(buildStats(sessions, workoutExercises, workoutSets, exercises, locale, cardioRecords));
+      setStats(buildStats(sessions, workoutExercises, workoutSets, exercises, locale, cardioRecords, analysisWindowDays(windowId)));
     }
 
     void loadStats();
-  }, [locale]);
+  }, [locale, windowId]);
+
+  const handleWindowChange = (next: AnalysisWindowId) => {
+    setWindowId(next);
+    saveAnalysisWindow(next);
+  };
+
+  const windowOptions = analysisWindows.map((window) => ({
+    value: window.id,
+    label: t(locale, window.id === 'p7' ? 'statsWindow7' : window.id === 'p28' ? 'statsWindow28' : 'statsWindow84'),
+  }));
 
   const hasData = stats.totalSets > 0
     || stats.workoutDays > 0
@@ -1363,6 +1421,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
           ) : null}
         />
         {recordModeControl}
+        <IOSSegmentedControl value={windowId} options={windowOptions} onChange={handleWindowChange} />
       </header>
 
       {!hasData ? (
@@ -1382,6 +1441,9 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
           <ReadinessPanel stats={stats} locale={locale} />
           <RecoveryDashboardPanel recovery={stats.recovery} locale={locale} />
 
+          <p className="px-1 text-[11px] font-bold uppercase tracking-wide text-[#8E8E93]">
+            {tf(locale, 'statsWindowRange', { days: stats.windowDays })}
+          </p>
           <div className="grid grid-cols-3 gap-2">
             <StatTile
               label={c.totalSets}
@@ -1396,15 +1458,18 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
               tone={stats.hardSetRatio > 70 ? 'text-[#FF9500]' : 'text-[#1C1C1E]'}
             />
             <StatTile
-              label={c.weekOverWeek}
+              label={t(locale, 'statsPeriodOverPeriod')}
               value={formatPct(stats.weekOverWeekPct)}
               icon={<TrendingUp aria-hidden="true" size={15} />}
               tone={signedTone(stats.weekOverWeekPct)}
             />
           </div>
 
-          <DailyLoadRail days={stats.dailyTrend} locale={locale} />
-          <WeeklyLoadStrip weeks={stats.weeks} locale={locale} />
+          {stats.trendGranularity === 'daily' ? (
+            <DailyLoadRail days={stats.dailyTrend} locale={locale} />
+          ) : (
+            <WeeklyLoadStrip weeks={stats.weeks.slice(-Math.round(stats.weeksInPeriod))} locale={locale} />
+          )}
           <MuscleBalancePanel muscles={stats.muscleStats} locale={locale} />
           <ActionPanel stats={stats} locale={locale} />
           <PerformanceCompactList
@@ -1465,7 +1530,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs font-bold text-[#6E6E73]">
                       <span>{c.weeklyTarget}</span>
-                      <span className="font-black text-[#1C1C1E]">{muscle.sets} / {muscle.recommendedMax} {c.perWeek}</span>
+                      <span className="font-black text-[#1C1C1E]">{muscle.setsPerWeek} / {muscle.recommendedMax} {c.perWeek}</span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-[#E5E5EA]">
                       <div
