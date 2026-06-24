@@ -215,6 +215,51 @@ describe('stats builder', () => {
     expect(stats.muscleStats.find((item) => item.group === 'back')?.sets).toBe(3);
   });
 
+  it('exposes recovery readiness from recent hard muscle load', () => {
+    const date = formatDateKey(new Date());
+    const session: WorkoutSession = {
+      id: 'session_recovery',
+      date,
+      startedAt: `${date}T12:00:00.000`,
+      endedAt: `${date}T13:00:00.000`,
+      timeBand: 'afternoon',
+      status: 'completed',
+      totalStrengthVolumeKg: 0,
+      createdAt: `${date}T12:00:00.000`,
+      updatedAt: `${date}T13:00:00.000`,
+    };
+    const workoutExercises: WorkoutExercise[] = [{
+      id: 'session_recovery_squat',
+      sessionId: session.id,
+      exerciseId: 'squat',
+      order: 1,
+      status: 'completed',
+      totalVolumeKg: 7200,
+    }];
+    const sets: WorkoutSet[] = [{
+      id: 'recovery_set_1',
+      workoutExerciseId: 'session_recovery_squat',
+      setNo: 1,
+      weightKg: 180,
+      reps: 40,
+      isCompleted: true,
+      isWarmup: false,
+      isHard: true,
+    }];
+
+    const stats = buildStats(
+      [session],
+      workoutExercises,
+      sets,
+      [exercise('squat', 'main', ['main'], 'legs')],
+      'en',
+    );
+
+    expect(stats.recovery.readinessStatus).toBe('fatigued');
+    expect(stats.recovery.mostFatiguedGroups[0]?.group).toBe('legs');
+    expect(stats.nextWeekSuggestions[0]).toContain('Legs');
+  });
+
   it('builds a 14-day daily trend with strength volume and running distance', () => {
     const date = formatDateKey(new Date());
     const session: WorkoutSession = {
