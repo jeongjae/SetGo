@@ -580,3 +580,14 @@ SetGo v3는 다음 조건을 만족할 때 완료로 본다.
 - 로컬 데이터, 백업, 복원, 가져오기 흐름을 신뢰할 수 있다.
 - iPhone 크기 브라우저와 홈 화면 PWA에서 검증된다.
 - 문서, 테스트, 빌드, 배포 상태가 실제 산출물과 일치한다.
+
+---
+
+## 2026-06-24 v3 Finish Notes
+
+- Added a first productized activity CSV import path under More -> Export/Import.
+- Supported columns: startedAt, endedAt, durationSeconds, distanceKm, externalId, sourceName, activityType, memo.
+- Imported activities are normalized into CardioRecord rows and grouped into completed running sessions when no matching session exists.
+- Duplicate imported activities are skipped by source/externalId first, then by start/type/distance/duration.
+- Remaining external-data limitation: direct HealthKit/Apple Watch sync is still out of scope for the PWA; users must use CSV-style export/import.
+- Verification passed: focused activity import tests, full Vitest suite, production build, e2e workout logging checks, and browser smoke check for the Export/Import UI.

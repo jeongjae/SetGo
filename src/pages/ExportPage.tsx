@@ -1,5 +1,6 @@
 import { ChevronLeft, Copy, Download, Info, Upload } from 'lucide-react';
 import { type ChangeEvent, useEffect, useState } from 'react';
+import { ActivityCsvImportError, importActivityCsv, type ActivityCsvImportSummary } from '../db/activityCsv';
 import { createBackup, createSettingsBackup, previewSetGoBackup, restoreBackup, restoreSettingsBackup, type SetGoBackupPreview } from '../db/backup';
 import { createExerciseCsv, ExerciseCsvImportError, importExerciseCsv } from '../db/exerciseCsv';
 import { isStoragePersisted } from '../db/db';
@@ -129,6 +130,8 @@ export function ExportPage({ onBack }: ExportPageProps) {
   const [backupSummary, setBackupSummary] = useState<string | undefined>();
   const [exerciseCsvStatus, setExerciseCsvStatus] = useState<string | undefined>();
   const [exerciseCsvIssues, setExerciseCsvIssues] = useState<string[]>([]);
+  const [activityCsvStatus, setActivityCsvStatus] = useState<string | undefined>();
+  const [activityCsvIssues, setActivityCsvIssues] = useState<string[]>([]);
   const [settingsBackupStatus, setSettingsBackupStatus] = useState<string | undefined>();
   const [isPersisted, setIsPersisted] = useState(false);
   const [showPersistenceInfo, setShowPersistenceInfo] = useState(false);
@@ -359,6 +362,42 @@ export function ExportPage({ onBack }: ExportPageProps) {
         setExerciseCsvStatus(locale === 'ko' ? 'CSV 가져오기에 실패했습니다.' : 'CSV import failed.');
       }
       window.setTimeout(() => setExerciseCsvStatus(undefined), 1800);
+    } finally {
+      event.target.value = '';
+    }
+  }
+
+  function formatActivityImportSummary(summary: ActivityCsvImportSummary): string {
+    const duplicateText = summary.skippedDuplicateCount > 0
+      ? `, ${summary.skippedDuplicateCount} duplicates skipped`
+      : '';
+    const failedText = summary.failedCount > 0
+      ? `, ${summary.failedCount} rows need fixes`
+      : '';
+    return `${summary.importedCount} activities imported into ${summary.sessionCount} new sessions${duplicateText}${failedText}.`;
+  }
+
+  async function handleActivityCsvImport(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const summary = await importActivityCsv(await file.text());
+      setActivityCsvIssues(summary.issues);
+      setActivityCsvStatus(formatActivityImportSummary(summary));
+      window.setTimeout(() => setActivityCsvStatus(undefined), 2400);
+      if (summary.importedCount > 0) {
+        await loadSummaries();
+      }
+    } catch (error) {
+      console.error('Failed to import activity CSV', error);
+      if (error instanceof ActivityCsvImportError) {
+        setActivityCsvIssues(error.issues);
+        setActivityCsvStatus(`Activity CSV validation failed: ${error.issues.slice(0, 3).join(' / ')}`);
+      } else {
+        setActivityCsvStatus('Activity CSV import failed.');
+      }
+      window.setTimeout(() => setActivityCsvStatus(undefined), 2200);
     } finally {
       event.target.value = '';
     }
@@ -630,6 +669,59 @@ export function ExportPage({ onBack }: ExportPageProps) {
               />
             </label>
           </div>
+        </section>
+
+        <section className="space-y-3 ios-card p-3.5">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
+              Activity Import
+            </p>
+            <h2 className="mt-1 text-base font-black text-[#1C1C1E]">
+              Running / Cardio CSV
+            </h2>
+          </div>
+          <p className="text-sm font-semibold leading-relaxed text-[#6E6E73]">
+            {activityCsvStatus
+              ?? 'Import running, walking, cycling, elliptical, or other cardio rows. Required: startedAt plus endedAt or durationSeconds. Optional: distanceKm, externalId, sourceName, activityType, memo.'}
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              ['Required', 'startedAt'],
+              ['Time', 'endedAt or durationSeconds'],
+              ['Optional', 'distanceKm, sourceName'],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl border border-black/5 bg-[#F2F2F7] px-2 py-2 text-center">
+                <p className="truncate text-[10px] font-black uppercase text-[#8E8E93]">{label}</p>
+                <p className="mt-0.5 truncate text-[11px] font-black text-[#1C1C1E]">{value}</p>
+              </div>
+            ))}
+          </div>
+          {activityCsvIssues.length > 0 ? (
+            <div className="space-y-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3">
+              <p className="text-sm font-black text-[#FF3B30]">Rows to fix</p>
+              <ul className="grid gap-1 text-xs font-bold leading-relaxed text-[#FF3B30]">
+                {activityCsvIssues.slice(0, 8).map((issue) => (
+                  <li key={issue}>{issue}</li>
+                ))}
+              </ul>
+              {activityCsvIssues.length > 8 ? (
+                <p className="text-xs font-black text-[#FF3B30]">
+                  {activityCsvIssues.length - 8} more issues.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+          <label className="ios-button-secondary flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 px-3 text-xs">
+            <Upload aria-hidden="true" size={15} />
+            <span>Import Activity CSV</span>
+            <input
+              aria-label="Import running and cardio activity CSV"
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(event) => void handleActivityCsvImport(event)}
+              className="sr-only"
+            />
+          </label>
         </section>
 
         <pre className="min-h-72 overflow-auto whitespace-pre-wrap rounded-2xl border border-black/5 bg-white p-4 text-xs leading-relaxed font-mono text-[#1C1C1E] shadow-inner">
