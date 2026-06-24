@@ -1,4 +1,5 @@
 import { Check, ClipboardList, Plus } from 'lucide-react';
+import type { WorkoutFinishSummary } from '../../pages/WorkoutPage';
 
 type WorkoutFooterActionsProps = {
   locale: 'ko' | 'en';
@@ -8,7 +9,7 @@ type WorkoutFooterActionsProps = {
   isAdding: boolean;
   canCompleteWorkout: boolean;
   hasWorkout: boolean;
-  finishSummary: string;
+  finishSummary: WorkoutFinishSummary;
   completeHint: string;
   saveLabel: string;
   isRunningOnlyWorkout?: boolean;
@@ -110,7 +111,23 @@ export function WorkoutFooterActions({
             <p className={`text-[11px] font-black uppercase ${canCompleteWorkout ? 'text-accent-dark' : 'text-[#1C1C1E]'}`}>
               {locale === 'ko' ? '\uC644\uB8CC \uC804 \uC694\uC57D' : 'Finish summary'}
             </p>
-            <p className="mt-0.5 text-xs font-black leading-snug text-[#1C1C1E]">{finishSummary}</p>
+            <p className="mt-0.5 text-xs font-black leading-snug text-[#1C1C1E]">{finishSummary.primaryText}</p>
+            <div className="mt-2 grid grid-cols-5 gap-1">
+              {finishSummary.metrics.map((metric) => (
+                <div key={metric.label} className="min-w-0 rounded-lg bg-[#F2F2F7] px-1.5 py-1 text-center">
+                  <p className={`truncate text-[10px] font-black uppercase ${
+                    metric.tone === 'success'
+                      ? 'text-[#34C759]'
+                      : metric.tone === 'accent'
+                        ? 'text-[#159A91]'
+                        : metric.tone === 'danger'
+                          ? 'text-[#FF3B30]'
+                          : 'text-[#8E8E93]'
+                  }`}>{metric.label}</p>
+                  <p className="mt-0.5 truncate text-xs font-black tabular-nums text-[#1C1C1E]">{metric.value}</p>
+                </div>
+              ))}
+            </div>
             <p className={`mt-1 text-[11px] font-bold leading-snug ${canCompleteWorkout ? 'text-muted' : 'text-danger'}`}>
               {completeHint}
             </p>

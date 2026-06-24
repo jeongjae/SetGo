@@ -4,6 +4,7 @@ import {
   actualsDayCellLabel,
   actualsDayCellTextClass,
   actualsSelectedWeekIndexForDate,
+  actualsSessionCardClass,
   actualsSessionDetailLabel,
   actualsStatusLabel,
   buildActualsCalendarDays,
@@ -30,6 +31,13 @@ describe('actuals status label', () => {
 
   it('keeps today in-progress records as active progress', () => {
     expect(actualsStatusLabel('en', 'in_progress', '2026-06-04', '2026-06-04')).toBe('In progress');
+  });
+});
+
+describe('actuals session card style', () => {
+  it('visually distinguishes completed records from stale drafts', () => {
+    expect(actualsSessionCardClass('completed', '2026-06-04', '2026-06-04')).toContain('border-[#2EC4B6]/20');
+    expect(actualsSessionCardClass('in_progress', '2026-06-02', '2026-06-04')).toContain('bg-[#FFF6DF]');
   });
 });
 

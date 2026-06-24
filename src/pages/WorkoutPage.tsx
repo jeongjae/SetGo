@@ -7,6 +7,7 @@ import { ExerciseLogCard } from '../components/workout/ExerciseLogCard';
 import { WorkoutCardioSection } from '../components/workout/WorkoutCardioSection';
 import { WorkoutFooterActions } from '../components/workout/WorkoutFooterActions';
 import { WorkoutHeader } from '../components/workout/WorkoutHeader';
+import { getProgressLabel } from '../components/workout/WorkoutSetRowV2';
 import { db } from '../db/db';
 import { createRoutineFromWorkoutSession, getAllRoutines, getRoutineDayDisplayName, getRoutineDays } from '../db/routines';
 import { formatDateKey } from '../utils/date';
@@ -55,6 +56,17 @@ type HistoryEditSnapshot = {
   workoutExercises: WorkoutExercise[];
   workoutSets: WorkoutSet[];
   cardioRecords: CardioRecord[];
+};
+
+export type WorkoutFinishSummary = {
+  completedExercises: number;
+  completedSets: number;
+  hardSets: number;
+  prCount: number;
+  cardioCount: number;
+  totalVolumeKg: number;
+  primaryText: string;
+  metrics: Array<{ label: string; value: string; tone?: 'success' | 'accent' | 'danger' }>;
 };
 
 function formatElapsed(ms: number): string {
@@ -187,22 +199,57 @@ export function getNextIncompleteSetTarget(
     : undefined;
 }
 
-function getWorkoutFinishSummary(
+export function getWorkoutFinishSummary(
   logs: WorkoutExerciseLog[],
   cardioRecords: Array<Pick<CardioRecord, 'isDraft'>>,
   totalVolumeKg: number,
   locale: 'ko' | 'en',
-): string {
+): WorkoutFinishSummary {
   const completedSets = logs.flatMap((log) => log.sets).filter((set) => set.isCompleted);
   const hardSets = completedSets.filter((set) => !set.isWarmup && set.isHard === true).length;
+  const prCount = logs.reduce((sum, log) => (
+    sum + log.sets.filter((set) => getProgressLabel(set, log.pastBestWeight, log.pastBestVolume)).length
+  ), 0);
   const completedExercises = countFullyCompletedExercises(logs);
   const cardioCount = countLoggedCardioRecords(cardioRecords);
+  const primaryText = locale === 'ko'
+    ? `${completedExercises}개 운동 / ${completedSets.length}세트 / ${totalVolumeKg.toLocaleString()}kg`
+    : `${completedExercises} exercises / ${completedSets.length} sets / ${totalVolumeKg.toLocaleString()}kg`;
+  const metrics = [
+    {
+      label: locale === 'ko' ? '운동' : 'Exercises',
+      value: String(completedExercises),
+    },
+    {
+      label: locale === 'ko' ? '세트' : 'Sets',
+      value: String(completedSets.length),
+    },
+    {
+      label: 'Hard',
+      value: String(hardSets),
+      tone: hardSets > 0 ? 'accent' as const : undefined,
+    },
+    {
+      label: 'PR',
+      value: String(prCount),
+      tone: prCount > 0 ? 'success' as const : undefined,
+    },
+    {
+      label: locale === 'ko' ? '러닝' : 'Cardio',
+      value: String(cardioCount),
+    },
+  ];
 
-  if (locale === 'ko') {
-    return `${completedExercises}\uAC1C \uC6B4\uB3D9 / ${completedSets.length}\uC138\uD2B8 / Hard ${hardSets}\uC138\uD2B8 / ${totalVolumeKg.toLocaleString()}kg${cardioCount ? ` / \uB7EC\uB2DD ${cardioCount}\uAC74` : ''}`;
-  }
-
-  return `${completedExercises} exercises / ${completedSets.length} sets / ${hardSets} hard / ${totalVolumeKg.toLocaleString()}kg${cardioCount ? ` / ${cardioCount} cardio` : ''}`;
+  return {
+    completedExercises,
+    completedSets: completedSets.length,
+    hardSets,
+    prCount,
+    cardioCount,
+    totalVolumeKg,
+    primaryText,
+    metrics,
+  };
 }
 
 export function shouldConfirmCardioDelete(
