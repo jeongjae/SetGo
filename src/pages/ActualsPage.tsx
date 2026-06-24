@@ -131,6 +131,14 @@ export function actualsStatusLabel(locale: 'ko' | 'en', status: WorkoutStatus, d
   return workoutStatusLabel(locale, status);
 }
 
+export function actualsSessionCardClass(status: WorkoutStatus, dateKey: string, todayKey: string): string {
+  if (status === 'completed') return 'border-[#2EC4B6]/20 bg-[#F2FFFD]';
+  if (status === 'skipped') return 'border-[#FF3B30]/20 bg-[#FFF2F2]';
+  if (status === 'in_progress' && dateKey < todayKey) return 'border-[#FF9500]/20 bg-[#FFF6DF]';
+  if (status === 'in_progress') return 'border-[#007AFF]/20 bg-[#F0F7FF]';
+  return 'border-black/5 bg-[#F2F2F7]';
+}
+
 export function actualsDayCellClass({
   hasCompleted,
   hasInProgress,
@@ -502,9 +510,27 @@ export function ActualsPage({
                   workoutExercises,
                   workoutSets,
                 );
+                const sessionWorkoutExerciseIds = new Set(
+                  workoutExercises
+                    .filter((item) => item.sessionId === summary.session.id)
+                    .map((item) => item.id),
+                );
+                const sessionCompletedSets = workoutSets.filter((set) => (
+                  sessionWorkoutExerciseIds.has(set.workoutExerciseId) && set.isCompleted
+                ));
+                const sessionHardSets = sessionCompletedSets.filter((set) => (
+                  set.isHard === true && set.type !== 'warmup' && set.isWarmup !== true
+                ));
+                const sessionCardClass = actualsSessionCardClass(summary.session.status, summary.session.date, todayKey);
+                const metricItems = [
+                  [locale === 'ko' ? '볼륨' : 'Volume', `${Math.round(summary.session.totalStrengthVolumeKg).toLocaleString()}kg`],
+                  [locale === 'ko' ? '세트' : 'Sets', String(sessionCompletedSets.length)],
+                  ['Hard', String(sessionHardSets.length)],
+                  [locale === 'ko' ? '러닝' : 'Run', distance > 0 ? `${distance.toFixed(1)}km` : '-'],
+                ];
 
                 return (
-                  <div key={summary.session.id} className="space-y-2.5 rounded-2xl border border-black/5 bg-[#F2F2F7] p-3.5">
+                  <div key={summary.session.id} className={`space-y-2.5 rounded-2xl border p-3.5 ${sessionCardClass}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h3 className="text-sm font-black text-[#1C1C1E]">
@@ -527,6 +553,14 @@ export function ActualsPage({
                       <span className="rounded-lg border border-black/5 bg-white px-2.5 py-1 text-xs font-bold text-[#1C1C1E]">
                         {actualsStatusLabel(locale, summary.session.status, summary.session.date, todayKey)}
                       </span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {metricItems.map(([label, value]) => (
+                        <div key={label} className="min-w-0 rounded-lg border border-black/5 bg-white/80 px-1.5 py-1.5 text-center">
+                          <p className="truncate text-[10px] font-black uppercase text-[#8E8E93]">{label}</p>
+                          <p className="mt-0.5 truncate text-xs font-black tabular-nums text-[#1C1C1E]">{value}</p>
+                        </div>
+                      ))}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <button

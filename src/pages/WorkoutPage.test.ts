@@ -8,6 +8,7 @@ import {
   getElapsedMs,
   getLiveSessionElapsedMs,
   getNextIncompleteSetTarget,
+  getWorkoutFinishSummary,
   getWorkoutSetProgressBadges,
   parseOptionalDecimalInput,
   shouldConfirmCardioDelete,
@@ -139,6 +140,25 @@ describe('workout completion eligibility', () => {
       {},
       { isDraft: false },
     ])).toBe(2);
+  });
+
+  it('summarizes completed sets, hard sets, PRs, and cardio logs', () => {
+    const summary = getWorkoutFinishSummary([
+      {
+        pastBestWeight: 100,
+        pastBestVolume: 1000,
+        sets: [
+          { isCompleted: true, weightKg: 105, reps: 10, isWarmup: false, isHard: true },
+          { isCompleted: false, weightKg: 80, reps: 8, isWarmup: false },
+        ],
+      },
+    ] as any, [{ isDraft: false }, { isDraft: true }], 1050, 'en');
+
+    expect(summary.completedSets).toBe(1);
+    expect(summary.hardSets).toBe(1);
+    expect(summary.prCount).toBe(1);
+    expect(summary.cardioCount).toBe(1);
+    expect(summary.metrics.map((metric) => metric.label)).toEqual(['Exercises', 'Sets', 'Hard', 'PR', 'Cardio']);
   });
 });
 
