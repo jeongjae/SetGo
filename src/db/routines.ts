@@ -953,7 +953,7 @@ export async function deleteRoutineExercisePlan(planId: string): Promise<void> {
 
 export async function updateRoutineExercisePlan(
   planId: string,
-  values: Partial<Pick<RoutineExercisePlan, 'plannedSets' | 'plannedWeightKg' | 'plannedReps' | 'plannedRir' | 'plannedRestSeconds'>>,
+  values: Partial<Pick<RoutineExercisePlan, 'plannedSets' | 'plannedWeightKg' | 'plannedReps' | 'plannedRir' | 'plannedRestSeconds' | 'preferredWeightIncrementKg'>>,
 ): Promise<void> {
   await db.routineExercisePlans.update(planId, values);
 }
