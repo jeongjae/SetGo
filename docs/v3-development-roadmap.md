@@ -591,3 +591,20 @@ SetGo v3는 다음 조건을 만족할 때 완료로 본다.
 - Duplicate imported activities are skipped by source/externalId first, then by start/type/distance/duration.
 - Remaining external-data limitation: direct HealthKit/Apple Watch sync is still out of scope for the PWA; users must use CSV-style export/import.
 - Verification passed: focused activity import tests, full Vitest suite, production build, e2e workout logging checks, and browser smoke check for the Export/Import UI.
+
+## 2026-06-24 Recovery / Timer / Hardening Notes
+
+### Phase 5 + Phase 2 — Recovery model wired into Today
+- Extracted the recovery load pipeline into `src/domain/recoveryInputs.ts` (`buildRecoveryInputs`, `loadRecoverySnapshot`, `recoveryWarningGroups`, `recoveryGroupLabel`) so Today and Insights share the same muscle-group mapping and decay logic.
+- Today now loads a recovery snapshot for the selected planned routine day and shows a `todayRecoveryWarning` line when any targeted muscle group is still below 50% recovery, satisfying "오늘 화면에서 계획된 루틴에 대한 회복 경고를 만들 수 있다".
+- Tests: `src/domain/recoveryInputs.test.ts` covers input mapping, cardio load, threshold filtering, and localization.
+
+### Phase 8 — PWA timer / device UX
+- Added `src/utils/deviceTimer.ts`: notification support/permission helpers, background-only rest-complete notification, vibration, and a Screen Wake Lock manager that re-acquires on foreground.
+- WorkoutPage holds a screen wake lock while a session is in progress and fires a notification + vibration when the rest timer ends.
+- FloatingRestTimer gained a bell toggle that lazily requests notification permission; unsupported/blocked states surface `restNotifyUnsupported` / `restNotifyBlocked` messaging instead of looking broken.
+
+### Phase 10 — Automated hardening
+- `npm run test` (Vitest, 140 passing), `npm run build`, and `npm run test:e2e` all pass.
+- New `npm run test:viewport` (`scripts/viewport-smoke.mjs`) walks all five tabs at 375 / 390 / 427-class widths and asserts no horizontal overflow and no console errors. All widths pass.
+- Still pending: physical iPhone Safari UAT (safe-area, keyboard, Home Screen PWA, background notification delivery).
