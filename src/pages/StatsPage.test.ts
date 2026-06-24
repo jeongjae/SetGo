@@ -310,10 +310,26 @@ describe('stats builder', () => {
     );
     const todayTrend = stats.dailyTrend.find((item) => item.date === date);
 
-    expect(stats.dailyTrend).toHaveLength(14);
+    // Default window is 7 days, so the daily rail shows 7 bars.
+    expect(stats.dailyTrend).toHaveLength(7);
+    expect(stats.trendGranularity).toBe('daily');
     expect(todayTrend?.strengthVolumeKg).toBe(500);
     expect(todayTrend?.strengthSets).toBe(1);
     expect(todayTrend?.cardioDistanceKm).toBe(2.4);
+
+    // A 28-day window caps the daily rail at 14 bars and switches to weekly granularity.
+    const monthStats = buildStats(
+      [session],
+      workoutExercises,
+      sets,
+      [exercise('bench_press', 'main', ['main'], 'chest')],
+      'en',
+      cardioRecords,
+      28,
+    );
+    expect(monthStats.dailyTrend).toHaveLength(14);
+    expect(monthStats.trendGranularity).toBe('weekly');
+    expect(monthStats.windowDays).toBe(28);
   });
 
   it('does not warn about short muscle gaps from records outside the current week', () => {
@@ -374,5 +390,78 @@ describe('stats builder', () => {
     );
 
     expect(stats.warnings.some((warning) => warning.includes('Chest was repeated within 48 hours'))).toBe(false);
+  });
+
+  it('uses today-anchored rolling windows so recent work is always counted', () => {
+    const today = new Date();
+    const fiveDaysAgo = new Date(today);
+    fiveDaysAgo.setDate(today.getDate() - 5);
+    const dateKey = formatDateKey(fiveDaysAgo);
+    const session: WorkoutSession = {
+      id: 'rolling_session',
+      date: dateKey,
+      startedAt: `${dateKey}T12:00:00.000`,
+      timeBand: 'afternoon',
+      status: 'completed',
+      totalStrengthVolumeKg: 0,
+      createdAt: `${dateKey}T12:00:00.000`,
+      updatedAt: `${dateKey}T12:00:00.000`,
+    };
+    const workoutExercises: WorkoutExercise[] = [{
+      id: 'rolling_bench',
+      sessionId: session.id,
+      exerciseId: 'bench_press',
+      order: 1,
+      status: 'completed',
+      totalVolumeKg: 500,
+    }];
+    const sets: WorkoutSet[] = [{
+      id: 'rolling_set',
+      workoutExerciseId: 'rolling_bench',
+      setNo: 1,
+      weightKg: 50,
+      reps: 10,
+      isCompleted: true,
+    }];
+
+    // A session five days ago falls inside the rolling 7-day window regardless of weekday.
+    const stats = buildStats([session], workoutExercises, sets, [exercise('bench_press', 'main', ['main'], 'chest')], 'en', [], 7);
+    expect(stats.totalSets).toBe(1);
+    expect(stats.workoutDays).toBe(1);
+  });
+
+  it('normalizes muscle sets to a weekly rate for longer windows', () => {
+    const today = new Date();
+    const sessions: WorkoutSession[] = [];
+    const workoutExercises: WorkoutExercise[] = [];
+    const sets: WorkoutSet[] = [];
+    // 4 weekly chest sessions of 5 sets each across the last 28 days => 20 sets total, 5/week.
+    for (let week = 0; week < 4; week += 1) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - week * 7);
+      const dateKey = formatDateKey(date);
+      const sessionId = `wk_${week}`;
+      sessions.push({
+        id: sessionId,
+        date: dateKey,
+        startedAt: `${dateKey}T12:00:00.000`,
+        timeBand: 'afternoon',
+        status: 'completed',
+        totalStrengthVolumeKg: 0,
+        createdAt: `${dateKey}T12:00:00.000`,
+        updatedAt: `${dateKey}T12:00:00.000`,
+      });
+      const weId = `${sessionId}_bench`;
+      workoutExercises.push({ id: weId, sessionId, exerciseId: 'bench_press', order: 1, status: 'completed', totalVolumeKg: 500 });
+      for (let setNo = 1; setNo <= 5; setNo += 1) {
+        sets.push({ id: `${weId}_${setNo}`, workoutExerciseId: weId, setNo, weightKg: 50, reps: 10, isCompleted: true });
+      }
+    }
+
+    const stats = buildStats(sessions, workoutExercises, sets, [exercise('bench_press', 'main', ['main'], 'chest')], 'en', [], 28);
+    const chest = stats.muscleStats.find((item) => item.group === 'chest');
+    expect(chest?.sets).toBe(20); // period total
+    expect(chest?.setsPerWeek).toBe(5); // 20 / 4 weeks
+    expect(chest?.status).toBe('low'); // 5/week is below the 10-set minimum
   });
 });
