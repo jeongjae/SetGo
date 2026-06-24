@@ -169,6 +169,7 @@ export function App() {
       <RoutineSetupPage
         initialSection={view === 'routines' ? 'routine' : view === 'exercises' ? 'library' : 'schedule'}
         onRoutineSaved={handleRoutineSaved}
+        onStartRoutineDay={(routineDayId) => void handleStartWorkout(routineDayId)}
         onReviewCalendar={(dateKey) => {
           setCalendarSelectedDateKey(dateKey);
           setCalendarReviewingWeeklyPlan(true);
