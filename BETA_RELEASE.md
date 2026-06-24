@@ -2,7 +2,7 @@
 
 ## Release Candidate
 
-SetGo mobile beta is prepared as a local-first PWA release candidate.
+SetGo mobile beta is prepared as a local-first PWA release candidate for the v3 app structure.
 
 ## Verification Completed
 
@@ -10,7 +10,7 @@ SetGo mobile beta is prepared as a local-first PWA release candidate.
 - `npm run test -- --run`
 - `npm ls tailwindcss`
 - Browser render smoke check for Today shell and primary actions
-- Browser render smoke check for Settings, Weekly Plan, Exercise Library, and Calendar labels
+- Browser render smoke check for Today, Routines, History, Insights, More, Workout, and Export surfaces
 - Routine template localization and muscle-group regression tests
 - Static check for removed stale previous-summary error path
 - README and MVP status updated for beta testers
@@ -25,15 +25,15 @@ SetGo mobile beta is prepared as a local-first PWA release candidate.
 1. Open SetGo in iPhone Safari using the local network dev URL or hosted beta URL.
 2. Add to Home Screen.
 3. Open from Home Screen.
-4. Go to `설정`.
-5. Confirm `루틴 / 운동 / 주간 계획` tabs.
-6. Pick or reset a routine template.
-7. Confirm Today shows the planned routine and planned exercises.
-8. Start or continue a workout.
-9. Edit set weight/reps/RIR and confirm save feedback.
-10. Complete or skip the workout.
-11. Confirm Calendar status.
-12. Export Markdown and download a JSON backup.
+4. Confirm the bottom navigation shows `Today / Routines / History / Insights / More`.
+5. Confirm Today shows the recommended action and any in-progress workout.
+6. Open Routines, select or activate a routine, and confirm routine days and exercise plans are reachable.
+7. Start or continue a workout.
+8. Edit set weight/reps/RIR, toggle warmup/Hard, copy previous values, and confirm save feedback.
+9. Complete or skip the workout.
+10. Confirm the session is visible in History.
+11. Confirm Insights renders trends and exercise performance.
+12. Open More, export Markdown, download a JSON backup, and review local-data guidance.
 13. Turn off network and relaunch to confirm the PWA shell opens.
 
 ## Known Beta Risks
