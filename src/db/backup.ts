@@ -53,6 +53,46 @@ export type SetGoSettingsBackup = {
   >;
 };
 
+export type SetGoBackupPreview = {
+  kind: 'full' | 'settings' | 'invalid';
+  version?: number;
+  exportedAt?: string;
+  sessionCount: number;
+  exerciseCount: number;
+  routineCount: number;
+  routinePlanCount: number;
+  cardioCount: number;
+  issues: string[];
+};
+
+function countItems(value: unknown): number {
+  return Array.isArray(value) ? value.length : 0;
+}
+
+export function previewSetGoBackup(input: unknown): SetGoBackupPreview {
+  const backup = input as Partial<SetGoBackup & SetGoSettingsBackup>;
+  const issues: string[] = [];
+  const data = backup?.data as Partial<SetGoBackup['data']> | undefined;
+  const kind = backup?.kind === 'settings' ? 'settings' : backup?.app === 'SetGo' ? 'full' : 'invalid';
+
+  if (backup?.app !== 'SetGo') issues.push('Not a SetGo backup.');
+  if (backup?.version !== 1) issues.push(`Unsupported backup version ${String(backup?.version ?? 'unknown')}.`);
+  if (!data) issues.push('Backup data is missing.');
+  if (kind === 'settings' && backup.kind !== 'settings') issues.push('Settings backup marker is missing.');
+
+  return {
+    kind: issues.length > 0 ? 'invalid' : kind,
+    version: typeof backup?.version === 'number' ? backup.version : undefined,
+    exportedAt: typeof backup?.exportedAt === 'string' ? backup.exportedAt : undefined,
+    sessionCount: countItems(data?.workoutSessions),
+    exerciseCount: countItems(data?.exercises),
+    routineCount: countItems(data?.routines),
+    routinePlanCount: countItems(data?.routineExercisePlans),
+    cardioCount: countItems(data?.cardioRecords),
+    issues,
+  };
+}
+
 export async function createBackup(): Promise<SetGoBackup> {
   const [
     exercises,
