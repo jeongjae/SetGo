@@ -2,13 +2,14 @@ import { AlertTriangle, BarChart3, CalendarRange, Dumbbell, Target, TrendingUp }
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { db } from '../db/db';
 import { getExerciseCategories, getExerciseName, isWarmupOnlyExercise } from '../domain/exercises';
+import { buildRecoverySnapshot, type RecoveryMuscleGroup, type RecoverySnapshot, type RecoveryStatus } from '../domain/recovery';
 import { getStoredLocale, t, tf } from '../i18n/i18n';
 import { formatDateKey } from '../utils/date';
 import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 import { IOSPageHeader } from '../components/IosPrimitives';
 
 type Locale = 'ko' | 'en';
-type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulder' | 'biceps' | 'triceps' | 'core';
+type MuscleGroup = Exclude<RecoveryMuscleGroup, 'cardio'>;
 type LoadStatus = 'low' | 'normal' | 'high' | 'caution';
 
 type WeekStat = {
@@ -75,6 +76,7 @@ type StatsView = {
   dailyTrend: DailyTrendStat[];
   muscleStats: MuscleStat[];
   performances: ExercisePerformance[];
+  recovery: RecoverySnapshot;
   warnings: string[];
   analysisComment: string;
   nextWeekSuggestions: string[];
@@ -98,6 +100,29 @@ const muscleLabels: Record<Locale, Record<MuscleGroup, string>> = {
     biceps: 'Biceps',
     triceps: 'Triceps',
     core: 'Core',
+  },
+};
+
+const recoveryLabels: Record<Locale, Record<RecoveryMuscleGroup, string>> = {
+  ko: {
+    chest: '가슴',
+    back: '등',
+    legs: '하체',
+    shoulder: '어깨',
+    biceps: '이두',
+    triceps: '삼두',
+    core: '코어',
+    cardio: '유산소',
+  },
+  en: {
+    chest: 'Chest',
+    back: 'Back',
+    legs: 'Legs',
+    shoulder: 'Shoulders',
+    biceps: 'Biceps',
+    triceps: 'Triceps',
+    core: 'Core',
+    cardio: 'Cardio',
   },
 };
 
@@ -144,6 +169,7 @@ export function buildAiPrompt(stats: StatsView, locale: Locale): string {
 - 운동일수: ${stats.workoutDays}일
 - 총 볼륨: ${Math.round(stats.totalVolumeKg).toLocaleString()}kg
 - 총 세트: ${stats.totalSets}세트 (Hard 세트: ${stats.hardSets}세트, 비율: ${stats.hardSetRatio.toFixed(0)}%)
+- 평균 회복도: ${stats.recovery.averageRecoveryPercent}% (${recoveryStatusLabel(stats.recovery.readinessStatus, locale)})
 - 전주 대비 변화율: ${formatPct(stats.weekOverWeekPct)}
 
 [근육군별 분석 (권장 세트 수와 비교)]
@@ -182,6 +208,7 @@ You are a professional fitness AI coach. Based on my workout data this week belo
 - Workout Days: ${stats.workoutDays}d
 - Total Volume: ${Math.round(stats.totalVolumeKg).toLocaleString()}kg
 - Total Sets: ${stats.totalSets} (Hard Sets: ${stats.hardSets}, Ratio: ${stats.hardSetRatio.toFixed(0)}%)
+- Average Recovery: ${stats.recovery.averageRecoveryPercent}% (${recoveryStatusLabel(stats.recovery.readinessStatus, locale)})
 - Week-over-Week Change: ${formatPct(stats.weekOverWeekPct)}
 
 [Muscle-Group Analysis]
@@ -251,6 +278,14 @@ function toMuscleGroups(exercise: ExerciseMaster): MuscleGroup[] {
   return Array.from(new Set(mapped));
 }
 
+function toRecoveryMuscleGroups(exercise: ExerciseMaster): RecoveryMuscleGroup[] {
+  const groups: RecoveryMuscleGroup[] = [...toMuscleGroups(exercise)];
+  const categories = getExerciseCategories(exercise);
+  if (categories.includes('cardio')) groups.push('cardio');
+  if (groups.length === 0 && categories.includes('bodyweight')) groups.push('core');
+  return Array.from(new Set(groups));
+}
+
 function statusForSets(sets: number, min: number, max: number): LoadStatus {
   if (sets < min) return sets >= min * 0.7 ? 'caution' : 'low';
   if (sets > max) return sets <= max * 1.25 ? 'caution' : 'high';
@@ -282,6 +317,8 @@ function muscleTone(status: LoadStatus): string {
 }
 
 function insightStatus(stats: StatsView): LoadStatus {
+  if (stats.recovery.readinessStatus === 'fatigued') return 'high';
+  if (stats.recovery.readinessStatus === 'moderate') return 'caution';
   if (stats.warnings.length > 0 || stats.hardSetRatio > 70) return 'caution';
   if (stats.workoutDays === 0 || stats.totalSets === 0) return 'low';
   return 'normal';
@@ -290,21 +327,26 @@ function insightStatus(stats: StatsView): LoadStatus {
 function insightLabel(status: LoadStatus, locale: Locale): string {
   if (locale === 'ko') {
     if (status === 'normal') return '좋음';
-    if (status === 'high') return '과부하';
+    if (status === 'high') return '회복';
     if (status === 'caution') return '점검';
     return '부족';
   }
 
   if (status === 'normal') return 'Good';
-  if (status === 'high') return 'High';
+  if (status === 'high') return 'Recover';
   if (status === 'caution') return 'Review';
   return 'Low';
 }
 
 function insightMessage(stats: StatsView, locale: Locale): string {
+  const fatiguedGroups = stats.recovery.mostFatiguedGroups.filter((group) => group.recoveryPercent < 60);
   const lowMuscles = stats.muscleStats.filter((muscle) => muscle.status === 'low');
   const highMuscles = stats.muscleStats.filter((muscle) => muscle.status === 'high' || muscle.status === 'caution');
 
+  if (fatiguedGroups.length > 0) {
+    const muscles = fatiguedGroups.slice(0, 2).map((muscle) => recoveryLabels[locale][muscle.group]).join(', ');
+    return locale === 'ko' ? `${muscles} 회복도를 먼저 확인하세요.` : `Check recovery first for ${muscles}.`;
+  }
   if (stats.warnings.length > 0) return stats.warnings[0];
   if (lowMuscles.length > 0) {
     const muscles = lowMuscles.slice(0, 2).map((muscle) => muscleLabels[locale][muscle.group]).join(', ');
@@ -350,6 +392,7 @@ export function buildEmptyStats(locale: Locale): StatsView {
       excessSets: 0,
     })),
     performances: [],
+    recovery: buildRecoverySnapshot([], { asOf: new Date() }),
     warnings: [],
     analysisComment: t(locale, 'statsEmptyAnalysis'),
     nextWeekSuggestions: [t(locale, 'statsNextWeekHoldVolume')],
@@ -599,6 +642,42 @@ export function buildStats(
     };
   });
 
+  const strengthRecoveryInputs = completedWorkoutExercises.flatMap((workoutExercise) => {
+    const session = sessionById.get(workoutExercise.sessionId);
+    const exercise = exerciseById.get(workoutExercise.exerciseId);
+    if (!session || !exercise) return [];
+
+    const groups = toRecoveryMuscleGroups(exercise);
+    if (groups.length === 0) return [];
+
+    const completedAt = session.endedAt ?? session.startedAt ?? `${session.date}T12:00:00`;
+    return (setsByWorkoutExercise.get(workoutExercise.id) ?? [])
+      .filter((set) => set.isCompleted)
+      .map((set) => ({
+        date: session.date,
+        completedAt,
+        muscleGroups: groups,
+        load: setVolume(set),
+        isHard: isHardSet(set, exercise),
+        isWarmup: isWarmupSetForStats(set),
+      }));
+  });
+  const cardioRecoveryInputs = completedSessions.flatMap((session) => (
+    (cardioBySessionId.get(session.id) ?? [])
+      .filter((record) => record.isDraft !== true)
+      .map((record) => {
+        const distanceLoad = (record.distanceKm ?? 0) * 650;
+        const durationLoad = (record.durationSeconds ?? 0) / 60 * 45;
+        return {
+          date: session.date,
+          completedAt: record.endedAt ?? record.startedAt,
+          muscleGroups: ['cardio'] as RecoveryMuscleGroup[],
+          load: Math.max(distanceLoad, durationLoad),
+        };
+      })
+  ));
+  const recovery = buildRecoverySnapshot([...strengthRecoveryInputs, ...cardioRecoveryInputs], { asOf: today });
+
   const warnings: string[] = [];
   const completedDates = Array.from(new Set(completedSessions.map((session) => session.date))).sort();
   let streak = 0;
@@ -658,9 +737,19 @@ export function buildStats(
     highMuscles.length > 0
       ? tf(locale, 'statsAnalysisHighMuscles', { muscles: highMuscles.slice(0, 3).join(', ') })
       : t(locale, 'statsAnalysisNoOverload'),
+    locale === 'ko'
+      ? `평균 회복도는 ${recovery.averageRecoveryPercent}%입니다.`
+      : `Average recovery is ${recovery.averageRecoveryPercent}%.`,
     warnings.length > 0 ? t(locale, 'statsAnalysisReduceWarnings') : t(locale, 'statsAnalysisAddSets'),
   ].join(' ');
+  const recoverySuggestionGroups = recovery.mostFatiguedGroups.filter((group) => group.recoveryPercent < 60);
+  const recoverySuggestion = recoverySuggestionGroups.length > 0
+    ? locale === 'ko'
+      ? `${recoverySuggestionGroups.slice(0, 2).map((group) => recoveryLabels.ko[group.group]).join(', ')}는 볼륨을 줄이고 회복을 우선하세요.`
+      : `Reduce load and prioritize recovery for ${recoverySuggestionGroups.slice(0, 2).map((group) => recoveryLabels.en[group.group]).join(', ')}.`
+    : undefined;
   const nextWeekSuggestions = [
+    recoverySuggestion,
     warnings.length > 0 ? t(locale, 'statsNextWeekRecovery') : t(locale, 'statsNextWeekHoldVolume'),
     lowMuscles.length > 0 ? t(locale, 'statsNextWeekAddLagging') : undefined,
     highMuscles.length > 0 ? t(locale, 'statsNextWeekReduceHigh') : undefined,
@@ -677,6 +766,7 @@ export function buildStats(
     dailyTrend,
     muscleStats,
     performances,
+    recovery,
     warnings,
     analysisComment,
     nextWeekSuggestions,
@@ -726,6 +816,8 @@ function ReadinessPanel({ stats, locale }: { stats: StatsView; locale: Locale })
   const status = insightStatus(stats);
   const statusClass = status === 'normal'
     ? 'bg-[#2EC4B6] text-white'
+    : status === 'high'
+      ? 'bg-[#FF3B30] text-white'
     : status === 'caution'
       ? 'bg-[#FF9500] text-white'
       : 'bg-[#8E8E93] text-white';
@@ -735,13 +827,18 @@ function ReadinessPanel({ stats, locale }: { stats: StatsView; locale: Locale })
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-black uppercase tracking-wide text-[#159A91]">
-            {locale === 'ko' ? '훈련 판정' : 'Training read'}
+            {locale === 'ko' ? '회복 판정' : 'Recovery read'}
           </p>
           <h2 className="mt-1 text-xl font-black leading-tight text-[#1C1C1E]">
             {locale === 'ko'
+              ? `${stats.recovery.averageRecoveryPercent}% 회복`
+              : `${stats.recovery.averageRecoveryPercent}% recovered`}
+          </h2>
+          <p className="mt-0.5 text-[11px] font-black text-[#8E8E93]">
+            {locale === 'ko'
               ? `${stats.workoutDays}일 / ${formatKg(stats.totalVolumeKg)}`
               : `${stats.workoutDays}d / ${formatKg(stats.totalVolumeKg)}`}
-          </h2>
+          </p>
           <p className="mt-1 line-clamp-2 text-xs font-bold leading-relaxed text-[#6E6E73]">
             {insightMessage(stats, locale)}
           </p>
@@ -749,6 +846,66 @@ function ReadinessPanel({ stats, locale }: { stats: StatsView; locale: Locale })
         <span className={`shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-black uppercase shadow-sm ${statusClass}`}>
           {insightLabel(status, locale)}
         </span>
+      </div>
+    </section>
+  );
+}
+
+function recoveryBarClass(status: RecoveryStatus): string {
+  if (status === 'ready') return 'bg-[#34C759]';
+  if (status === 'moderate') return 'bg-[#FF9500]';
+  return 'bg-[#FF3B30]';
+}
+
+function recoveryStatusLabel(status: RecoveryStatus, locale: Locale): string {
+  if (locale === 'ko') {
+    if (status === 'ready') return '좋음';
+    if (status === 'moderate') return '보통';
+    return '피로';
+  }
+  if (status === 'ready') return 'Ready';
+  if (status === 'moderate') return 'Moderate';
+  return 'Fatigued';
+}
+
+function RecoveryDashboardPanel({ recovery, locale }: { recovery: RecoverySnapshot; locale: Locale }) {
+  const rows = recovery.groups
+    .slice()
+    .sort((a, b) => a.recoveryPercent - b.recoveryPercent || b.decayedLoad - a.decayedLoad)
+    .slice(0, 8);
+  const fatiguedGroups = recovery.mostFatiguedGroups.filter((group) => group.recoveryPercent < 60);
+  const recommendation = locale === 'ko'
+    ? fatiguedGroups.length > 0
+      ? `${fatiguedGroups.slice(0, 2).map((group) => recoveryLabels.ko[group.group]).join(', ')} 회복을 우선하세요.`
+      : '계획한 운동을 유지하거나 소폭 진행해도 됩니다.'
+    : recovery.recommendation;
+
+  return (
+    <section className="ios-card p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '회복 대시보드' : 'Recovery dashboard'}</h2>
+          <p className="mt-0.5 truncate text-[11px] font-bold text-[#8E8E93]">
+            {recommendation}
+          </p>
+        </div>
+        <span className="shrink-0 rounded-lg bg-[#F2F2F7] px-2 py-1 text-[11px] font-black uppercase text-[#1C1C1E]">
+          {recoveryStatusLabel(recovery.readinessStatus, locale)}
+        </span>
+      </div>
+      <div className="mt-2.5 grid gap-2">
+        {rows.map((group) => (
+          <div key={group.group} className="grid grid-cols-[4.7rem_1fr_3.2rem] items-center gap-2">
+            <span className="truncate text-xs font-black text-[#1C1C1E]">{recoveryLabels[locale][group.group]}</span>
+            <div className="h-2 overflow-hidden rounded-full bg-[#E5E5EA]">
+              <span
+                className={`block h-full rounded-full ${recoveryBarClass(group.status)}`}
+                style={{ width: `${group.recoveryPercent}%` }}
+              />
+            </div>
+            <span className="text-right text-[11px] font-black tabular-nums text-[#1C1C1E]">{group.recoveryPercent}%</span>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -1223,6 +1380,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
       ) : (
         <div className="inner-scroll min-h-0 space-y-2 pr-0.5">
           <ReadinessPanel stats={stats} locale={locale} />
+          <RecoveryDashboardPanel recovery={stats.recovery} locale={locale} />
 
           <div className="grid grid-cols-3 gap-2">
             <StatTile
