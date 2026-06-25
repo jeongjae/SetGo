@@ -163,6 +163,7 @@ export type WorkoutSession = {
   status: WorkoutStatus;
   totalStrengthVolumeKg: number;
   memo?: string;
+  isDemo?: boolean;
   createdAt: string;
   updatedAt: string;
 };

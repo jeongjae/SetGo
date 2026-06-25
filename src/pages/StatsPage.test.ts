@@ -464,4 +464,83 @@ describe('stats builder', () => {
     expect(chest?.setsPerWeek).toBe(5); // 20 / 4 weeks
     expect(chest?.status).toBe('low'); // 5/week is below the 10-set minimum
   });
+
+  it('excludes demo sessions from stats and performances', () => {
+    const date = formatDateKey(new Date());
+    const realSession: WorkoutSession = {
+      id: 'session_real',
+      date,
+      startedAt: `${date}T12:00:00.000`,
+      timeBand: 'afternoon',
+      status: 'completed',
+      totalStrengthVolumeKg: 0,
+      createdAt: `${date}T12:00:00.000`,
+      updatedAt: `${date}T12:00:00.000`,
+    };
+    const demoSession: WorkoutSession = {
+      id: 'session_demo',
+      date,
+      startedAt: `${date}T12:00:00.000`,
+      timeBand: 'afternoon',
+      status: 'completed',
+      totalStrengthVolumeKg: 0,
+      isDemo: true,
+      createdAt: `${date}T12:00:00.000`,
+      updatedAt: `${date}T12:00:00.000`,
+    };
+    const workoutExercises: WorkoutExercise[] = [
+      {
+        id: 'real_ex',
+        sessionId: realSession.id,
+        exerciseId: 'bench_press',
+        order: 1,
+        status: 'completed',
+        totalVolumeKg: 500,
+      },
+      {
+        id: 'demo_ex',
+        sessionId: demoSession.id,
+        exerciseId: 'lat_pulldown',
+        order: 1,
+        status: 'completed',
+        totalVolumeKg: 500,
+      },
+    ];
+    const sets: WorkoutSet[] = [
+      {
+        id: 'real_set_1',
+        workoutExerciseId: 'real_ex',
+        setNo: 1,
+        weightKg: 50,
+        reps: 10,
+        rir: 2,
+        isCompleted: true,
+      },
+      {
+        id: 'demo_set_1',
+        workoutExerciseId: 'demo_ex',
+        setNo: 1,
+        weightKg: 50,
+        reps: 10,
+        rir: 2,
+        isCompleted: true,
+      },
+    ];
+
+    const stats = buildStats(
+      [realSession, demoSession],
+      workoutExercises,
+      sets,
+      [
+        exercise('bench_press', 'main', ['main'], 'chest'),
+        exercise('lat_pulldown', 'main', ['main'], 'back'),
+      ],
+      'en',
+    );
+
+    expect(stats.totalSets).toBe(1);
+    expect(stats.workoutDays).toBe(1);
+    expect(stats.performances).toHaveLength(1);
+    expect(stats.performances[0].id).toBe('bench_press');
+  });
 });
