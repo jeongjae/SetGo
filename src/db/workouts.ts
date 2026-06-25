@@ -831,6 +831,86 @@ export async function addSetToWorkoutExercise(workoutExerciseId: string): Promis
   });
 }
 
+export async function addWarmupSetsToWorkoutExercise(workoutExerciseId: string): Promise<void> {
+  const workoutExercise = await db.workoutExercises.get(workoutExerciseId);
+  if (!workoutExercise) return;
+
+  const exercise = await db.exercises.get(workoutExercise.exerciseId);
+  const isBodyweight = exercise?.category === 'bodyweight';
+
+  const session = await db.workoutSessions.get(workoutExercise.sessionId);
+  let weightIncrementKg = DEFAULT_WEIGHT_INCREMENT_KG;
+  if (session?.routineDayId) {
+    const plan = await db.routineExercisePlans
+      .where('routineDayId')
+      .equals(session.routineDayId)
+      .filter((p) => p.exerciseId === workoutExercise.exerciseId)
+      .first();
+    weightIncrementKg = resolveWeightIncrementKg(plan);
+  }
+
+  // Get existing sets to base warmup calculations on
+  const existingSets = await db.workoutSets.where('workoutExerciseId').equals(workoutExerciseId).sortBy('setNo');
+  
+  // Find first non-warmup completed/planned set, or fallback to the first set, or default values
+  const baseSet = existingSets.find((s) => !s.isWarmup && s.type !== 'warmup') || existingSets[0];
+
+  const targetWeight = baseSet?.weightKg ?? 20;
+  const targetReps = baseSet?.reps ?? 10;
+
+  const roundWeight = (w: number, inc: number) => {
+    if (w <= 0) return 0;
+    const rounded = Math.round(w / inc) * inc;
+    return rounded > 0 ? rounded : inc;
+  };
+
+  await db.transaction('rw', db.workoutSets, db.workoutExercises, db.workoutSessions, async () => {
+    const sets = await db.workoutSets.where('workoutExerciseId').equals(workoutExerciseId).sortBy('setNo');
+    
+    // Shift all existing sets by +3
+    for (const set of sets) {
+      await db.workoutSets.update(set.id, { setNo: set.setNo + 3 });
+    }
+
+    const now = Date.now();
+    const warmupSets: WorkoutSet[] = [
+      {
+        id: `${workoutExerciseId}_warmup_1_${now}`,
+        workoutExerciseId,
+        setNo: 1,
+        weightKg: isBodyweight ? 0 : Math.min(targetWeight, roundWeight(targetWeight * 0.5, weightIncrementKg)),
+        reps: isBodyweight ? Math.max(1, Math.round(targetReps * 0.5)) : 10,
+        isCompleted: false,
+        isWarmup: true,
+        type: 'warmup',
+      },
+      {
+        id: `${workoutExerciseId}_warmup_2_${now}`,
+        workoutExerciseId,
+        setNo: 2,
+        weightKg: isBodyweight ? 0 : Math.min(targetWeight, roundWeight(targetWeight * 0.7, weightIncrementKg)),
+        reps: isBodyweight ? Math.max(1, Math.round(targetReps * 0.7)) : 5,
+        isCompleted: false,
+        isWarmup: true,
+        type: 'warmup',
+      },
+      {
+        id: `${workoutExerciseId}_warmup_3_${now}`,
+        workoutExerciseId,
+        setNo: 3,
+        weightKg: isBodyweight ? 0 : Math.min(targetWeight, roundWeight(targetWeight * 0.9, weightIncrementKg)),
+        reps: isBodyweight ? Math.max(1, Math.round(targetReps * 0.9)) : 2,
+        isCompleted: false,
+        isWarmup: true,
+        type: 'warmup',
+      },
+    ];
+
+    await db.workoutSets.bulkPut(warmupSets);
+    await refreshExerciseVolume(workoutExerciseId);
+  });
+}
+
 export async function deleteWorkoutSet(setId: string): Promise<void> {
   const set = await db.workoutSets.get(setId);
   if (!set) return;

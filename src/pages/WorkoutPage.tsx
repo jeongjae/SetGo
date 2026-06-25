@@ -29,6 +29,7 @@ import {
   addExerciseToWorkout,
   addCardioRecordToWorkout,
   addSetToWorkoutExercise,
+  addWarmupSetsToWorkoutExercise,
   completeWorkoutSession,
   deleteCardioRecord,
   deleteWorkoutExercise,
@@ -825,6 +826,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
     }, 150);
   }
 
+  async function handleAddWarmup(workoutExerciseId: string) {
+    await addWarmupSetsToWorkoutExercise(workoutExerciseId);
+    await loadWorkout();
+    setSaveMessage(locale === 'ko' ? '웜업 세트를 생성했습니다' : 'Warmup sets generated');
+  }
+
   async function handleDeleteSet(set: WorkoutSet) {
     if (shouldConfirmWorkoutSetDelete(set)) {
       const shouldDelete = window.confirm(
@@ -1272,6 +1279,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 onExerciseFinderChange={updateExerciseFinderState}
                 onReplaceExercise={(workoutExerciseId, exerciseId) => void handleReplaceExercise(workoutExerciseId, exerciseId)}
                 onAddSet={(workoutExerciseId) => void handleAddSet(workoutExerciseId)}
+                onAddWarmupSets={(workoutExerciseId) => void handleAddWarmup(workoutExerciseId)}
                 handleQuickAdjustSet={handleQuickAdjustSet}
                 handleSetChange={handleSetChange}
                 handleToggleWarmup={handleToggleWarmup}

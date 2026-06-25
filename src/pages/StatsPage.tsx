@@ -7,6 +7,9 @@ import { getStoredLocale, t, tf } from '../i18n/i18n';
 import { formatDateKey } from '../utils/date';
 import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 import { IOSPageHeader, IOSSegmentedControl } from '../components/IosPrimitives';
+import { RecoveryBodyMap } from '../components/workout/RecoveryBodyMap';
+import { MuscleVolumeRings } from '../components/stats/MuscleVolumeRings';
+import { StaticLineChart } from '../components/stats/StaticLineChart';
 
 type Locale = 'ko' | 'en';
 type MuscleGroup = Exclude<RecoveryMuscleGroup, 'cardio'>;
@@ -47,6 +50,7 @@ type ExercisePerformance = {
   estimatedOneRmKg: number;
   fourWeekChangePct?: number;
   oneRmHistory: Array<{ label: string; valueKg: number }>;
+  chartHistory?: Array<{ label: string; oneRm: number; volume: number }>;
 };
 
 type DailyTrendItem = {
@@ -587,6 +591,19 @@ export function buildStats(
       })
       .filter((item) => item.valueKg > 0)
       .reverse();
+    const chartHistory = sorted
+      .slice(0, 6)
+      .map((item) => {
+        const session = sessionById.get(item.sessionId);
+        const sessionSets = (setsByWorkoutExercise.get(item.id) ?? []).filter((set) => set.isCompleted);
+        return {
+          label: session ? `${session.date.slice(5, 7)}/${session.date.slice(8, 10)}` : '',
+          oneRm: Math.max(0, ...sessionSets.map(estimatedOneRm)),
+          volume: sessionSets.reduce((sum, set) => sum + setVolume(set), 0),
+        };
+      })
+      .filter((item) => item.oneRm > 0 || item.volume > 0)
+      .reverse();
     const currentPeriodVolume = items
       .filter((item) => {
         const date = sessionById.get(item.sessionId)?.date ?? '';
@@ -614,6 +631,7 @@ export function buildStats(
       estimatedOneRmKg: Math.max(0, ...allSets.map(estimatedOneRm)),
       fourWeekChangePct: pctChange(currentPeriodVolume, previousPeriodVolume),
       oneRmHistory,
+      chartHistory,
     };
   }).sort((a, b) => b.recentVolumeKg - a.recentVolumeKg).slice(0, 12);
 
@@ -1037,13 +1055,24 @@ function MuscleBalancePanel({ muscles, locale }: { muscles: MuscleStat[]; locale
       return statusRank[a.status] - statusRank[b.status] || b.setsPerWeek - a.setsPerWeek;
     });
 
+  const ringData = muscles.map((m) => ({
+    group: m.group,
+    label: muscleLabels[locale][m.group],
+    setsPerWeek: m.setsPerWeek,
+    recommendedMin: m.recommendedMin,
+    recommendedMax: m.recommendedMax,
+    status: m.status,
+    targetPct: m.targetPct,
+  }));
+
   return (
     <section className="ios-card p-3">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 mb-2">
         <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '부위 밸런스' : 'Muscle balance'}</h2>
         <span className="text-[11px] font-bold text-[#8E8E93]">{locale === 'ko' ? '목표 대비 세트' : 'sets vs target'}</span>
       </div>
-      <div className="mt-2.5 grid gap-2">
+      <MuscleVolumeRings muscles={ringData} locale={locale} />
+      <div className="mt-3.5 grid gap-2">
         {sorted.map((muscle) => {
           const minPct = Math.min(100, Math.round((muscle.recommendedMin / Math.max(1, muscle.recommendedMax)) * 100));
           const fillPct = muscle.setsPerWeek > 0 ? Math.max(3, muscle.targetPct) : 0;
@@ -1439,6 +1468,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
       ) : (
         <div className="inner-scroll min-h-0 space-y-2 pr-0.5">
           <ReadinessPanel stats={stats} locale={locale} />
+          <RecoveryBodyMap recovery={stats.recovery} locale={locale} />
           <RecoveryDashboardPanel recovery={stats.recovery} locale={locale} />
 
           <p className="px-1 text-[11px] font-bold uppercase tracking-wide text-[#8E8E93]">
@@ -1573,10 +1603,10 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
                     <p>{c.bestVolume} <span className="font-bold text-[#1C1C1E]">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
                     <p className="col-span-2 border-t border-[#E5E5EA] pt-2 mt-0.5">{c.estimatedOneRm} <span className="font-bold text-[#159A91]">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
                   </div>
-                  {performance.oneRmHistory.length > 0 ? (
+                  {performance.chartHistory && performance.chartHistory.length > 0 ? (
                     <div className="border-t border-[#E5E5EA] pt-3">
-                      <p className="text-xs font-bold uppercase text-[#8E8E93]">{c.oneRmHistory}</p>
-                      <MiniSparkBars history={performance.oneRmHistory} />
+                      <p className="text-xs font-bold uppercase text-[#8E8E93] mb-1.5">{locale === 'ko' ? '성과 추이 (1RM & 볼륨)' : 'Performance Trend (1RM & Vol)'}</p>
+                      <StaticLineChart data={performance.chartHistory} locale={locale} />
                     </div>
                   ) : null}
                 </div>

@@ -2,6 +2,7 @@ import { Check, Copy, Minus, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState, type FocusEvent } from 'react';
 import type { WorkoutExerciseLog } from '../../db/workouts';
 import type { WorkoutSet, WorkoutSetType } from '../../types';
+import { getOverloadTarget } from '../../utils/overloadCalc';
 
 export const WORKOUT_SET_GRID_CLASS = 'grid-cols-[1.65rem_2.75rem_minmax(4.5rem,1fr)_3rem_2.75rem_2.75rem]';
 
@@ -116,8 +117,26 @@ export function WorkoutSetRowV2({
     return sameTypePreviousSets[relativeIndex] ?? log.previousSets[setIndex];
   }, [currentType, log.previousSets, log.sets, set, setIndex]);
 
+  const overloadTarget = useMemo(() => getOverloadTarget(setIndex, log), [setIndex, log]);
+
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
     event.currentTarget.select();
+
+    // Auto-prefill empty inputs with progressive overload targets
+    if (event.currentTarget.id === `weight_input_${set.id}` && !weight) {
+      if (overloadTarget.weight > 0) {
+        setWeight(String(overloadTarget.weight));
+        void handleSetChange(set, { weightKg: overloadTarget.weight });
+      }
+    } else if (event.currentTarget.id === `reps_input_${set.id}` && !reps) {
+      if (overloadTarget.reps > 0) {
+        setReps(String(overloadTarget.reps));
+        void handleSetChange(set, { reps: overloadTarget.reps });
+      }
+    } else if (event.currentTarget.id === `rir_input_${set.id}` && !rir && overloadTarget.rir !== undefined) {
+      setRir(String(overloadTarget.rir));
+      void handleSetChange(set, { rir: overloadTarget.rir });
+    }
   };
 
   const handleEnterKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -198,7 +217,7 @@ export function WorkoutSetRowV2({
               if (nextWeight !== set.weightKg) void handleSetChange(set, { weightKg: nextWeight });
             }}
             className="min-w-0 bg-transparent px-0.5 text-center text-base font-black tabular-nums text-[#1C1C1E] outline-none placeholder:text-[#A0A3AA]"
-            placeholder="0"
+            placeholder={overloadTarget.weight ? String(overloadTarget.weight) : "0"}
           />
           <button
             type="button"
@@ -227,7 +246,7 @@ export function WorkoutSetRowV2({
             if (nextReps !== set.reps) void handleSetChange(set, { reps: nextReps });
           }}
           className="h-11 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-base font-black tabular-nums text-[#1C1C1E] outline-none placeholder:text-[#A0A3AA] focus:border-accent"
-          placeholder="0"
+          placeholder={overloadTarget.reps ? String(overloadTarget.reps) : "0"}
         />
 
         <input
@@ -247,7 +266,7 @@ export function WorkoutSetRowV2({
             if (nextRir !== set.rir) void handleSetChange(set, { rir: nextRir });
           }}
           className="h-11 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-base font-black tabular-nums text-[#1C1C1E] outline-none placeholder:text-[#A0A3AA] focus:border-accent"
-          placeholder="-"
+          placeholder={overloadTarget.rir !== undefined ? String(overloadTarget.rir) : "-"}
         />
 
         <button

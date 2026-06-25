@@ -29,6 +29,7 @@ type ExerciseLogCardProps = {
   onExerciseFinderChange: (state: ExerciseFinderState) => void;
   onReplaceExercise: (workoutExerciseId: string, exerciseId: string) => void;
   onAddSet: (workoutExerciseId: string) => void;
+  onAddWarmupSets: (workoutExerciseId: string) => void;
   handleQuickAdjustSet: (set: WorkoutSet, field: 'weightKg' | 'reps' | 'rir', delta: number) => Promise<void>;
   handleSetChange: (
     set: WorkoutSet,
@@ -61,6 +62,7 @@ export function ExerciseLogCard({
   onExerciseFinderChange,
   onReplaceExercise,
   onAddSet,
+  onAddWarmupSets,
   handleQuickAdjustSet,
   handleSetChange,
   handleToggleWarmup,
@@ -306,14 +308,24 @@ export function ExerciseLogCard({
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={() => onAddSet(workoutExerciseId)}
-            className="ios-button-secondary mt-2 flex min-h-11 w-full items-center justify-center gap-2 px-3 text-sm"
-          >
-            <Plus aria-hidden="true" size={15} />
-            <span>{locale === 'ko' ? '\uC138\uD2B8 \uCD94\uAC00' : 'Add Set'}</span>
-          </button>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => onAddSet(workoutExerciseId)}
+              className="ios-button-secondary flex-1 flex min-h-11 items-center justify-center gap-2 px-3 text-sm"
+            >
+              <Plus aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? '\uC138\uD2B8 \uCD94\uAC00' : 'Add Set'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onAddWarmupSets(workoutExerciseId)}
+              className="flex-1 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#007AFF]/20 bg-[#EAF4FF] px-3 text-sm font-extrabold text-[#007AFF] transition-all hover:bg-[#D5E8FF] active:scale-[0.98]"
+            >
+              <Plus aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? '웜업 생성' : 'Gen Warmup'}</span>
+            </button>
+          </div>
         </div>
       ) : null}
     </section>
