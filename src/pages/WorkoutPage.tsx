@@ -424,10 +424,20 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         const containerRect = container.getBoundingClientRect();
         const fieldRect = activeField.getBoundingClientRect();
 
+        // Calculate container's visible height within the visual viewport.
+        // This dynamically shrinks the centering frame when the keyboard slides up.
+        const viewportHeight = window.visualViewport
+          ? window.visualViewport.height
+          : window.innerHeight;
+        const containerVisibleHeight = Math.max(
+          100,
+          Math.min(containerRect.height, viewportHeight - containerRect.top)
+        );
+
         // Calculate target scroll top to center the active input row.
         const currentScrollTop = container.scrollTop;
         const fieldTopRelativeToContainer = fieldRect.top - containerRect.top;
-        const targetScrollTop = currentScrollTop + fieldTopRelativeToContainer - (containerRect.height / 2) + (fieldRect.height / 2);
+        const targetScrollTop = currentScrollTop + fieldTopRelativeToContainer - (containerVisibleHeight / 2) + (fieldRect.height / 2);
 
         container.scrollTo({
           top: targetScrollTop,
