@@ -367,26 +367,81 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
   useEffect(() => {
     const baselineHeight = window.innerHeight;
-    const updateKeyboardState = () => {
-      const activeElement = document.activeElement;
-      const isEditingField = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement;
-      const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
-      setIsKeyboardOpen(isEditingField || baselineHeight - visibleHeight > 140);
+
+    const getActiveField = (): HTMLInputElement | HTMLTextAreaElement | null => {
+      const el = document.activeElement;
+      return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ? el : null;
     };
 
-    updateKeyboardState();
-    window.visualViewport?.addEventListener('resize', updateKeyboardState);
-    window.visualViewport?.addEventListener('scroll', updateKeyboardState);
-    window.addEventListener('resize', updateKeyboardState);
-    window.addEventListener('focusin', updateKeyboardState);
-    window.addEventListener('focusout', updateKeyboardState);
+    const isKeyboardLikelyOpen = () => {
+      const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
+      return Boolean(getActiveField()) || baselineHeight - visibleHeight > 140;
+    };
+
+    // Toggling isKeyboardOpen on every blur reflows the layout (footer un-hides,
+    // padding changes). When switching between set inputs, the blur of one field
+    // is immediately followed by focusing the next, so collapsing the layout in
+    // between makes the tapped field jump away — forcing a second tap. Debounce
+    // the "closed" transition so a blur followed by a quick re-focus is a no-op;
+    // only commit the closed state once focus has truly settled outside inputs.
+    let closeTimer = 0;
+    const commitKeyboardState = () => {
+      if (isKeyboardLikelyOpen()) {
+        if (closeTimer) {
+          clearTimeout(closeTimer);
+          closeTimer = 0;
+        }
+        setIsKeyboardOpen(true);
+        return;
+      }
+      if (closeTimer) clearTimeout(closeTimer);
+      closeTimer = window.setTimeout(() => {
+        closeTimer = 0;
+        setIsKeyboardOpen(isKeyboardLikelyOpen());
+      }, 250);
+    };
+
+    // The app uses a fixed-height shell with an inner scroll container, so iOS
+    // Safari does not auto-scroll a focused field into view when the keyboard
+    // opens — the body never scrolls. Manually keep the focused weight/reps/RIR
+    // field centered in the area above the keyboard once the viewport shrinks.
+    let scrollFrame = 0;
+    const keepFieldVisible = () => {
+      const activeField = getActiveField();
+      if (!activeField) return;
+      if (scrollFrame) cancelAnimationFrame(scrollFrame);
+      scrollFrame = requestAnimationFrame(() => {
+        activeField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    };
+
+    const handleViewportResize = () => {
+      commitKeyboardState();
+      keepFieldVisible();
+    };
+
+    const handleFocusIn = (event: FocusEvent) => {
+      commitKeyboardState();
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        keepFieldVisible();
+      }
+    };
+
+    commitKeyboardState();
+    window.visualViewport?.addEventListener('resize', handleViewportResize);
+    window.visualViewport?.addEventListener('scroll', commitKeyboardState);
+    window.addEventListener('resize', commitKeyboardState);
+    window.addEventListener('focusin', handleFocusIn);
+    window.addEventListener('focusout', commitKeyboardState);
 
     return () => {
-      window.visualViewport?.removeEventListener('resize', updateKeyboardState);
-      window.visualViewport?.removeEventListener('scroll', updateKeyboardState);
-      window.removeEventListener('resize', updateKeyboardState);
-      window.removeEventListener('focusin', updateKeyboardState);
-      window.removeEventListener('focusout', updateKeyboardState);
+      if (closeTimer) clearTimeout(closeTimer);
+      if (scrollFrame) cancelAnimationFrame(scrollFrame);
+      window.visualViewport?.removeEventListener('resize', handleViewportResize);
+      window.visualViewport?.removeEventListener('scroll', commitKeyboardState);
+      window.removeEventListener('resize', commitKeyboardState);
+      window.removeEventListener('focusin', handleFocusIn);
+      window.removeEventListener('focusout', commitKeyboardState);
     };
   }, []);
 
@@ -604,11 +659,16 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
           [set.workoutExerciseId]: shouldCollapseCompletedExercise ? false : current[set.workoutExerciseId],
           [nextFocusTarget.workoutExerciseId]: true,
         }));
+        // Reveal the next set but do NOT auto-focus its input. Re-focusing would
+        // reopen the keyboard right after completion, hiding the rest timer that
+        // just appeared (the "flickering" timer). Let the rest timer stay visible
+        // and let the lifter tap the next set when they're ready to log it.
         window.setTimeout(() => {
-          const inputEl = document.getElementById(nextFocusTarget.inputId) as HTMLInputElement | null;
-          inputEl?.focus();
-          inputEl?.select();
-          inputEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+          document.getElementById(nextFocusTarget.inputId)?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest',
+          });
         }, 240);
       } else {
         autoTransitionAccordion(set.workoutExerciseId);
@@ -958,7 +1018,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         : 'All sets are complete.';
   const isFloatingRestTimerVisible = isRestTimerActive && restRemaining > 0 && !isKeyboardOpen;
   const scrollBottomPaddingClass = isKeyboardOpen
-    ? 'pb-8'
+    ? 'pb-48'
     : isFloatingRestTimerVisible
       ? 'pb-64'
       : 'pb-36';
