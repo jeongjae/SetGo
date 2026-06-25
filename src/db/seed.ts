@@ -40,6 +40,9 @@ export const defaultExercises: ExerciseMaster[] = [
 
   // 등
   exercise('lat_pulldown', '랫풀다운', 'Lat Pulldown', 'back', 'BK', 'main', ['back', 'biceps'], ['main'], '광배근과 대원근을 타겟으로 하여 넓은 등을 만들어주는 운동입니다. 상체를 고정하고 날개뼈를 아래로 당긴다는 느낌으로 바를 쇄골 방향으로 당기세요.'),
+  exercise('lat_pulldown_machine', '랫풀다운 (머신)', 'Lat Pulldown (Machine)', 'back', 'BK', 'main', ['back', 'biceps'], ['main'], '고정형 머신(블록 핀형)의 장력과 지정 궤적을 이용하여 광배근 전체를 안전하고 정밀하게 고립 단련하는 등 운동입니다.'),
+  exercise('lat_pulldown_cable', '랫풀다운 (케이블)', 'Lat Pulldown (Cable)', 'back', 'BK', 'main', ['back', 'biceps'], ['main'], '케이블 도르래 머신을 이용하여 상하좌우 미세한 궤적 조절이 가능하도록 넓은 광배근을 타겟팅하는 등 운동입니다.'),
+  exercise('lat_pulldown_plate', '랫풀다운 (기구)', 'Lat Pulldown (Plate Loaded)', 'back', 'BK', 'main', ['back', 'biceps'], ['main'], '원판 로드식(플레이트 로드형) 레버 기구를 사용하여 원판 무게감을 직관적으로 느끼며 등 바깥쪽 두께를 발달시키는 파워풀한 운동입니다.'),
   exercise('pull_up', '풀업', 'Pull-up', 'back', 'BK', 'main', ['back', 'bodyweight', 'biceps'], ['main'], '맨몸으로 등을 넓히고 상체 근력을 기르는 최강의 운동입니다. 코어를 조이고 광배근의 힘으로 몸을 끌어올리세요.'),
   exercise('seated_cable_row', '시티드 케이블 로우', 'Seated Cable Row', 'back', 'BK', 'main', ['back', 'biceps'], ['main'], '등 근육의 두께감을 더해주는 운동입니다. 허리를 곧게 펴고 케이블을 배꼽 쪽으로 수평하게 당기며 등을 강하게 쥐어짜세요.'),
   exercise('barbell_row', '바벨 로우', 'Bent-Over Barbell Row', 'back', 'BK', 'main', ['back', 'biceps'], ['main'], '등 전체의 두께감과 입체감을 발달시키는 바벨 운동입니다. 상체 각도를 숙인 상태에서 허리 정렬에 신경 쓰며 바벨을 당깁니다.'),
