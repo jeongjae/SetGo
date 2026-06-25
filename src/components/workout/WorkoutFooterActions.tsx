@@ -13,6 +13,7 @@ type WorkoutFooterActionsProps = {
   completeHint: string;
   saveLabel: string;
   isRunningOnlyWorkout?: boolean;
+  isRestTimerVisible?: boolean;
   onToggleAddExercise: () => void;
   onAddCardio?: () => void;
   onCreateRoutineFromWorkout: () => void;
@@ -35,6 +36,7 @@ export function WorkoutFooterActions({
   completeHint,
   saveLabel,
   isRunningOnlyWorkout = false,
+  isRestTimerVisible = false,
   onToggleAddExercise,
   onAddCardio,
   onCreateRoutineFromWorkout,
@@ -102,6 +104,8 @@ export function WorkoutFooterActions({
           <div className={`rounded-2xl px-3 transition-all ${
             isKeyboardOpen
               ? 'max-h-0 overflow-hidden py-0 opacity-0'
+              : isRestTimerVisible
+                ? 'max-h-0 overflow-hidden py-0 opacity-0'
               : 'py-2 opacity-100'
           } ${
             canCompleteWorkout

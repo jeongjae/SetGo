@@ -197,8 +197,8 @@ export function WorkoutSetRowV2({
               const nextWeight = parseWorkoutSetDecimalInput(weight) ?? 0;
               if (nextWeight !== set.weightKg) void handleSetChange(set, { weightKg: nextWeight });
             }}
-            className="min-w-0 bg-transparent px-0.5 text-center text-base font-black text-[#1C1C1E] outline-none"
-            placeholder="kg"
+            className="min-w-0 bg-transparent px-0.5 text-center text-base font-black tabular-nums text-[#1C1C1E] outline-none placeholder:text-[#A0A3AA]"
+            placeholder="0"
           />
           <button
             type="button"
@@ -226,7 +226,7 @@ export function WorkoutSetRowV2({
             const nextReps = Math.round(Number(reps)) || 0;
             if (nextReps !== set.reps) void handleSetChange(set, { reps: nextReps });
           }}
-          className="h-11 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-base font-black text-[#1C1C1E] outline-none focus:border-accent"
+          className="h-11 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-base font-black tabular-nums text-[#1C1C1E] outline-none placeholder:text-[#A0A3AA] focus:border-accent"
           placeholder="0"
         />
 
@@ -246,7 +246,7 @@ export function WorkoutSetRowV2({
             const nextRir = rir === '' ? undefined : Number(rir) || 0;
             if (nextRir !== set.rir) void handleSetChange(set, { rir: nextRir });
           }}
-          className="h-11 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-base font-black text-[#1C1C1E] outline-none focus:border-accent"
+          className="h-11 w-full rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] px-1 text-center text-base font-black tabular-nums text-[#1C1C1E] outline-none placeholder:text-[#A0A3AA] focus:border-accent"
           placeholder="-"
         />
 
