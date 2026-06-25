@@ -956,6 +956,12 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       : incompleteSetCount > 0
         ? `${incompleteSetCount} sets are still open. You can finish anyway.`
         : 'All sets are complete.';
+  const isFloatingRestTimerVisible = isRestTimerActive && restRemaining > 0 && !isKeyboardOpen;
+  const scrollBottomPaddingClass = isKeyboardOpen
+    ? 'pb-8'
+    : isFloatingRestTimerVisible
+      ? 'pb-64'
+      : 'pb-36';
 
   return (
     <section className={`viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col overflow-hidden px-3.5 text-[#1C1C1E] ${isKeyboardOpen ? 'py-2' : 'py-3'}`}>
@@ -989,7 +995,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       {false && logs.length > 0 && null}
 
       {/* Main scroll area */}
-      <div className={`inner-scroll -mx-2 flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-2 pt-2.5 scrollbar-none ${isKeyboardOpen ? 'pb-8' : 'pb-36'}`}>
+      <div className={`inner-scroll -mx-2 flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-2 pt-2.5 scrollbar-none ${scrollBottomPaddingClass}`}>
 
         {isCompletedEditMode ? (
           <section className="shrink-0 ios-card p-3 border-[#2EC4B6]/20 bg-[#2EC4B6]/5 shadow-sm animate-fade-in">
@@ -1208,6 +1214,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         completeHint={completeHint}
         saveLabel={t(locale, 'save')}
         isRunningOnlyWorkout={isRunningOnlyWorkout}
+        isRestTimerVisible={isFloatingRestTimerVisible}
         onToggleAddExercise={() => {
           setIsAdding((current) => !current);
           resetExerciseFinderState();
@@ -1263,7 +1270,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         </div>
       ) : null}
 
-      {isRestTimerActive && restRemaining > 0 && !isKeyboardOpen ? (
+      {isFloatingRestTimerVisible ? (
         <FloatingRestTimer
           label={t(locale, 'resting')}
           skipLabel={t(locale, 'skip')}
