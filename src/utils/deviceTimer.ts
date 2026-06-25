@@ -38,11 +38,38 @@ export async function requestRestNotifyPermission(): Promise<RestNotifyPermissio
 export function notifyRestComplete(title: string, body: string): void {
   if (notificationPermission() !== 'granted') return;
   if (typeof document !== 'undefined' && document.visibilityState === 'visible') return;
-  try {
-    // eslint-disable-next-line no-new
-    new Notification(title, { body, tag: 'setgo-rest-timer' });
-  } catch {
-    // Some engines require a service-worker registration to show notifications; ignore failures.
+
+  const fallback = () => {
+    try {
+      // eslint-disable-next-line no-new
+      new Notification(title, { body, tag: 'setgo-rest-timer' });
+    } catch {
+      // ignore failures
+    }
+  };
+
+  if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration()
+      .then((registration) => {
+        if (registration) {
+          const baseUrl = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.BASE_URL : '/';
+          registration.showNotification(title, {
+            body,
+            tag: 'setgo-rest-timer',
+            icon: `${baseUrl}icon.svg`,
+            vibrate: [200, 100, 200],
+          } as any).catch(() => {
+            fallback();
+          });
+        } else {
+          fallback();
+        }
+      })
+      .catch(() => {
+        fallback();
+      });
+  } else {
+    fallback();
   }
 }
 

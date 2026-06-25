@@ -410,8 +410,17 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       const activeField = getActiveField();
       if (!activeField) return;
       if (scrollFrame) cancelAnimationFrame(scrollFrame);
-      scrollFrame = requestAnimationFrame(() => {
+
+      const performScroll = () => {
         activeField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+
+      scrollFrame = requestAnimationFrame(() => {
+        performScroll();
+        // Keyboard appearance on iOS Safari has asynchronous layout reflow delays;
+        // fire additional checks at 80ms and 150ms to ensure the input centers.
+        window.setTimeout(performScroll, 80);
+        window.setTimeout(performScroll, 150);
       });
     };
 
