@@ -156,8 +156,18 @@ export function buildActivityCsvImport(
       failedCount += 1;
       return;
     }
+    if (durationSeconds !== undefined && durationSeconds < 0) {
+      issues.push(`Row ${csvLine}: durationSeconds cannot be negative.`);
+      failedCount += 1;
+      return;
+    }
     if (Number.isNaN(distanceKm)) {
       issues.push(`Row ${csvLine}: distanceKm must be a number.`);
+      failedCount += 1;
+      return;
+    }
+    if (distanceKm !== undefined && distanceKm < 0) {
+      issues.push(`Row ${csvLine}: distanceKm cannot be negative.`);
       failedCount += 1;
       return;
     }
@@ -170,6 +180,14 @@ export function buildActivityCsvImport(
     const date = normalizeRowDate(startedAt);
     if (!date) {
       issues.push(`Row ${csvLine}: startedAt must be a valid date/time.`);
+      failedCount += 1;
+      return;
+    }
+
+    const startMs = new Date(startedAt).getTime();
+    const nowMs = new Date(now).getTime();
+    if (startMs > nowMs) {
+      issues.push(`Row ${csvLine}: startedAt cannot be in the future.`);
       failedCount += 1;
       return;
     }

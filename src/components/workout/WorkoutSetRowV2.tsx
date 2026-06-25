@@ -292,7 +292,7 @@ export function WorkoutSetRowV2({
             </span>
           )}
           {progressLabel ? (
-            <span className="flex min-h-8 items-center rounded-md border border-amber-200 bg-amber-50 px-2 text-[9px] font-black leading-none text-amber-700">
+            <span className="flex min-h-8 items-center rounded-md border border-amber-200 bg-amber-50 px-2 text-[9px] font-black leading-none text-amber-700 animate-pr-pop">
               {progressLabel}
             </span>
           ) : null}

@@ -138,6 +138,12 @@ export function ExportPage({ onBack }: ExportPageProps) {
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => (
     typeof localStorage === 'undefined' ? null : localStorage.getItem('setgo-last-full-backup-at')
   ));
+  const [restorePreview, setRestorePreview] = useState<{
+    preview: SetGoBackupPreview;
+    rawData: any;
+    filename: string;
+    isSettings: boolean;
+  } | undefined>(undefined);
 
   async function loadSummaries(selectedSessionId?: string) {
     const recentSummaries = await getRecentWorkoutSummaries(20);
@@ -213,49 +219,30 @@ export function ExportPage({ onBack }: ExportPageProps) {
     window.setTimeout(() => setBackupStatus('idle'), 1200);
   }
 
-  async function handleRestore(event: ChangeEvent<HTMLInputElement>) {
+  async function handleRestoreSelect(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
       const parsedBackup = JSON.parse(await file.text());
       const preview = previewSetGoBackup(parsedBackup);
-      if (preview.kind !== 'full') {
-        setRestoreStatus('failed');
-        setBackupSummary(
-          locale === 'ko'
-            ? `복원할 수 없는 파일입니다. ${preview.issues.join(' ')}`
-            : `This file cannot be restored as a full backup. ${preview.issues.join(' ')}`,
-        );
-        window.setTimeout(() => setRestoreStatus('idle'), 1600);
-        return;
-      }
-
-      const shouldRestore = window.confirm(
-        locale === 'ko'
-          ? `SetGo 전체 백업을 복원할까요?\n\n${formatBackupPreview(preview, locale)}\n\n현재 로컬 데이터는 ${file.name}의 내용으로 교체됩니다.`
-          : `Restore this SetGo full backup?\n\n${formatBackupPreview(preview, locale)}\n\nThis replaces current local data with ${file.name}.`,
-      );
-
-      if (!shouldRestore) {
-        setRestoreStatus('cancelled');
-        setBackupSummary(locale === 'ko' ? `복원을 취소했습니다.\n${formatBackupPreview(preview, locale)}` : `Restore cancelled.\n${formatBackupPreview(preview, locale)}`);
-        window.setTimeout(() => setRestoreStatus('idle'), 1200);
-        return;
-      }
-
-      await restoreBackup(parsedBackup);
-      await loadSummaries();
-      setBackupSummary(locale === 'ko' ? `선택한 JSON 백업에서 로컬 데이터를 복원했습니다.\n${formatBackupPreview(preview, locale)}` : `Local data was restored from the selected JSON backup.\n${formatBackupPreview(preview, locale)}`);
-      setRestoreStatus('restored');
-      window.setTimeout(() => setRestoreStatus('idle'), 1200);
-      window.setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      
+      setRestorePreview({
+        preview,
+        rawData: parsedBackup,
+        filename: file.name,
+        isSettings: false,
+      });
+      setRestoreStatus('idle');
     } catch (error) {
-      console.error('Failed to restore SetGo backup', error);
+      console.error('Failed to parse backup JSON', error);
       setRestoreStatus('failed');
-      window.setTimeout(() => setRestoreStatus('idle'), 1600);
+      setBackupSummary(
+        locale === 'ko'
+          ? '올바른 백업 파일(JSON)이 아닙니다.'
+          : 'Not a valid JSON backup file.',
+      );
+      window.setTimeout(() => setRestoreStatus('idle'), 1800);
     } finally {
       event.target.value = '';
     }
@@ -274,47 +261,66 @@ export function ExportPage({ onBack }: ExportPageProps) {
     window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
   }
 
-  async function handleSettingsRestore(event: ChangeEvent<HTMLInputElement>) {
+  async function handleSettingsRestoreSelect(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
       const parsedBackup = JSON.parse(await file.text());
       const preview = previewSetGoBackup(parsedBackup);
-      if (preview.kind !== 'settings') {
+      
+      setRestorePreview({
+        preview,
+        rawData: parsedBackup,
+        filename: file.name,
+        isSettings: true,
+      });
+      setRestoreStatus('idle');
+    } catch (error) {
+      console.error('Failed to parse settings backup JSON', error);
+      setSettingsBackupStatus(
+        locale === 'ko' ? '올바른 설정 백업 파일이 아닙니다.' : 'Not a valid settings JSON file.',
+      );
+      window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
+    } finally {
+      event.target.value = '';
+    }
+  }
+
+  async function handleConfirmRestore() {
+    if (!restorePreview) return;
+    const { rawData, isSettings, preview } = restorePreview;
+
+    try {
+      if (isSettings) {
+        await restoreSettingsBackup(rawData);
         setSettingsBackupStatus(
           locale === 'ko'
-            ? `설정 백업 파일이 아닙니다. ${preview.issues.join(' ')}`
-            : `This is not a settings backup. ${preview.issues.join(' ')}`,
+            ? `설정 백업을 복원했습니다.\n${formatBackupPreview(preview, locale)}`
+            : `Settings backup restored.\n${formatBackupPreview(preview, locale)}`
         );
         window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
-        return;
+      } else {
+        await restoreBackup(rawData);
+        await loadSummaries();
+        setBackupSummary(
+          locale === 'ko'
+            ? `로컬 데이터를 성공적으로 복원했습니다.\n${formatBackupPreview(preview, locale)}`
+            : `Local data was successfully restored.\n${formatBackupPreview(preview, locale)}`
+        );
+        setRestoreStatus('restored');
+        window.setTimeout(() => setRestoreStatus('idle'), 1200);
       }
 
-      const shouldRestore = window.confirm(
-        locale === 'ko'
-          ? `SetGo 설정 백업을 복원할까요?\n\n${formatBackupPreview(preview, locale)}\n\n현재 루틴, 운동 라이브러리, 주간 계획이 교체됩니다. 운동 기록은 유지됩니다.`
-          : `Restore SetGo settings?\n\n${formatBackupPreview(preview, locale)}\n\nCurrent routines, exercise library, and weekly plan will be replaced. Workout logs stay untouched.`,
-      );
-
-      if (!shouldRestore) {
-        setSettingsBackupStatus(locale === 'ko' ? `설정 복원을 취소했습니다.\n${formatBackupPreview(preview, locale)}` : `Settings restore cancelled.\n${formatBackupPreview(preview, locale)}`);
-        window.setTimeout(() => setSettingsBackupStatus(undefined), 1600);
-        return;
-      }
-
-      await restoreSettingsBackup(parsedBackup);
-      setSettingsBackupStatus(locale === 'ko' ? `설정 백업을 복원했습니다.\n${formatBackupPreview(preview, locale)}` : `Settings backup restored.\n${formatBackupPreview(preview, locale)}`);
-      window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
+      setRestorePreview(undefined);
       window.setTimeout(() => {
         window.location.reload();
       }, 1000);
     } catch (error) {
-      console.error('Failed to restore SetGo settings backup', error);
-      setSettingsBackupStatus(locale === 'ko' ? '설정 백업 복원에 실패했습니다.' : 'Settings restore failed.');
-      window.setTimeout(() => setSettingsBackupStatus(undefined), 1800);
-    } finally {
-      event.target.value = '';
+      console.error('Failed to execute restore', error);
+      setRestoreStatus('failed');
+      setRestorePreview(undefined);
+      window.setTimeout(() => setRestoreStatus('idle'), 1800);
     }
   }
 
@@ -424,6 +430,84 @@ export function ExportPage({ onBack }: ExportPageProps) {
 
       {/* 내부 콘텐츠 스크롤 영역 */}
       <div className="inner-scroll min-h-0 space-y-2.5 pr-0.5">
+        {restorePreview ? (
+          <section className="space-y-3.5 ios-card p-4 border-[#2EC4B6]/30 bg-white animate-fade-in shrink-0">
+            <div className="flex items-center justify-between border-b border-[#E5E5EA] pb-2">
+              <h2 className="text-base font-black text-[#1C1C1E] flex items-center gap-2">
+                📂 {locale === 'ko' ? '백업 복원 프리뷰' : 'Backup Restore Preview'}
+              </h2>
+              <span className="rounded bg-[#F2F2F7] px-2 py-0.5 text-[10px] font-black text-[#8E8E93] uppercase">
+                {restorePreview.isSettings ? (locale === 'ko' ? '설정' : 'Settings') : (locale === 'ko' ? '전체' : 'Full')}
+              </span>
+            </div>
+            
+            <div className="text-xs font-bold text-[#6E6E73] space-y-1">
+              <p>📄 {locale === 'ko' ? '파일명' : 'File'}: <span className="text-[#1C1C1E] font-black">{restorePreview.filename}</span></p>
+              {restorePreview.preview.exportedAt && (
+                <p>🕒 {locale === 'ko' ? '내보낸 시간' : 'Exported At'}: <span className="text-[#1C1C1E] font-black">{formatBackupDate(restorePreview.preview.exportedAt, locale)}</span></p>
+              )}
+              <p>🔢 {locale === 'ko' ? '백업 버전' : 'Backup Version'}: <span className="text-[#1C1C1E] font-black">v{restorePreview.preview.version ?? 'unknown'}</span></p>
+            </div>
+
+            {/* Warning / Error banners */}
+            {restorePreview.preview.kind === 'invalid' ? (
+              <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3.5 py-3 text-xs leading-relaxed text-[#FF3B30] font-bold">
+                <p className="font-black text-[#FF3B30]">❌ {locale === 'ko' ? '오류: 복원할 수 없는 백업입니다' : 'Error: Unsupported Backup'}</p>
+                <ul className="mt-1.5 list-inside list-disc space-y-1 font-semibold">
+                  {restorePreview.preview.issues.map((issue, idx) => (
+                    <li key={idx}>{issue}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : restorePreview.preview.version !== 1 ? (
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-3.5 py-3 text-xs leading-relaxed text-amber-700 font-bold">
+                ⚠️ {locale === 'ko' 
+                  ? '경고: 백업의 스키마 버전이 현재 앱(v1)과 다릅니다. 복원 시 일부 데이터 구조의 불일치로 인해 예상치 못한 오류가 발생할 수 있습니다.' 
+                  : 'Warning: Schema version mismatch. Restoring a different version might cause data issues or application instability.'}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-[#2EC4B6]/20 bg-[#2EC4B6]/10 px-3.5 py-3 text-xs leading-relaxed text-[#159A91] font-bold">
+                ℹ️ {locale === 'ko' 
+                  ? '이 백업을 복원하면 현재 기기의 로컬 데이터가 삭제되고 백업 파일의 내용으로 완전히 교체됩니다. 이 작업은 취소할 수 없습니다.' 
+                  : 'Restoring this backup replaces all your current local data on this device. This operation is permanent.'}
+              </div>
+            )}
+
+            {/* Backup stats table */}
+            <div className="grid grid-cols-2 gap-2 bg-[#F2F2F7] p-2.5 rounded-xl text-xs font-bold text-[#6E6E73]">
+              {!restorePreview.isSettings && (
+                <p>🏋️ {locale === 'ko' ? '완료 세션' : 'Workout Sessions'}: <span className="text-[#1C1C1E] font-black">{restorePreview.preview.sessionCount}</span></p>
+              )}
+              <p>📋 {locale === 'ko' ? '루틴 목록' : 'Routines'}: <span className="text-[#1C1C1E] font-black">{restorePreview.preview.routineCount}</span></p>
+              <p>⚙️ {locale === 'ko' ? '운동 마스터' : 'Exercises'}: <span className="text-[#1C1C1E] font-black">{restorePreview.preview.exerciseCount}</span></p>
+              <p>🔀 {locale === 'ko' ? '루틴 계획' : 'Plans'}: <span className="text-[#1C1C1E] font-black">{restorePreview.preview.routinePlanCount}</span></p>
+              {!restorePreview.isSettings && (
+                <p>🏃 {locale === 'ko' ? '유산소 기록' : 'Cardio logs'}: <span className="text-[#1C1C1E] font-black">{restorePreview.preview.cardioCount}</span></p>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setRestorePreview(undefined)}
+                className="flex-1 ios-button-secondary flex min-h-11 items-center justify-center text-xs font-extrabold"
+              >
+                {locale === 'ko' ? '취소' : 'Cancel'}
+              </button>
+              {restorePreview.preview.kind !== 'invalid' && (
+                <button
+                  type="button"
+                  onClick={() => void handleConfirmRestore()}
+                  className="flex-1 ios-button-primary flex min-h-11 items-center justify-center text-xs font-extrabold bg-[#FF3B30] text-white shadow-none"
+                >
+                  {locale === 'ko' ? '복원 실행' : 'Confirm Restore'}
+                </button>
+              )}
+            </div>
+          </section>
+        ) : null}
+
         <section className="space-y-3 ios-card p-3.5">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">{t(locale, 'workoutSession')}</p>
@@ -567,7 +651,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
                 aria-label="Restore SetGo JSON backup"
                 type="file"
                 accept="application/json"
-                onChange={(event) => void handleRestore(event)}
+                onChange={(event) => void handleRestoreSelect(event)}
                 className="sr-only"
               />
             </label>
@@ -606,7 +690,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
                 aria-label="Restore SetGo settings JSON backup"
                 type="file"
                 accept="application/json"
-                onChange={(event) => void handleSettingsRestore(event)}
+                onChange={(event) => void handleSettingsRestoreSelect(event)}
                 className="sr-only"
               />
             </label>

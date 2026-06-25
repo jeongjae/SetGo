@@ -98,16 +98,22 @@ describe('buildActivityCsvImport', () => {
       'swimming,2026-06-20T09:00:00.000Z,1800,5',
       'running,not-a-date,1800,5',
       'running,2026-06-20T09:00:00.000Z,nope,5',
+      'running,2026-06-20T09:00:00.000Z,-300,5',
+      'running,2026-06-20T09:00:00.000Z,1800,-2.5',
+      'running,2026-06-25T09:00:00.000Z,1800,5',
     ].join('\n');
 
     const result = buildActivityCsvImport(csv, [], [], now);
 
     expect(result.importedCount).toBe(0);
-    expect(result.failedCount).toBe(3);
+    expect(result.failedCount).toBe(6);
     expect(result.issues).toEqual([
       'Row 2: activityType must be running, walking, cycling, elliptical, or other.',
       'Row 3: startedAt must be a valid date/time.',
       'Row 4: durationSeconds must be a number.',
+      'Row 5: durationSeconds cannot be negative.',
+      'Row 6: distanceKm cannot be negative.',
+      'Row 7: startedAt cannot be in the future.',
     ]);
   });
 

@@ -51,4 +51,21 @@ describe('backup preview', () => {
     expect(preview.kind).toBe('invalid');
     expect(preview.issues.length).toBeGreaterThan(0);
   });
+
+  it('reports unsupported version backup as invalid with issues', () => {
+    const preview = previewSetGoBackup({
+      app: 'SetGo',
+      version: 99,
+      data: {
+        exercises: [],
+        routines: [],
+        routineExercisePlans: [],
+        workoutSessions: [],
+        cardioRecords: [],
+      },
+    });
+
+    expect(preview.kind).toBe('invalid');
+    expect(preview.issues).toContain('Unsupported backup version 99.');
+  });
 });
