@@ -412,7 +412,26 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       if (scrollFrame) cancelAnimationFrame(scrollFrame);
 
       const performScroll = () => {
-        activeField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Enforce zero layout viewport scroll offset to prevent iOS Safari from shifting the entire page layout upwards.
+        if (window.scrollY !== 0) {
+          window.scrollTo(0, 0);
+        }
+
+        const container = activeField.closest('.inner-scroll');
+        if (!container) return;
+
+        const containerRect = container.getBoundingClientRect();
+        const fieldRect = activeField.getBoundingClientRect();
+
+        // Calculate target scroll top to center the active input row.
+        const currentScrollTop = container.scrollTop;
+        const fieldTopRelativeToContainer = fieldRect.top - containerRect.top;
+        const targetScrollTop = currentScrollTop + fieldTopRelativeToContainer - (containerRect.height / 2) + (fieldRect.height / 2);
+
+        container.scrollTo({
+          top: targetScrollTop,
+          behavior: 'auto', // Use instant positioning. Async smooth scrolling animations fight with keyboard layout resizing.
+        });
       };
 
       scrollFrame = requestAnimationFrame(() => {
@@ -436,12 +455,20 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       }
     };
 
+    // Prevent any browser-induced window-level (body) scrolling.
+    const handleWindowScroll = () => {
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+
     commitKeyboardState();
     window.visualViewport?.addEventListener('resize', handleViewportResize);
     window.visualViewport?.addEventListener('scroll', commitKeyboardState);
     window.addEventListener('resize', commitKeyboardState);
     window.addEventListener('focusin', handleFocusIn);
     window.addEventListener('focusout', commitKeyboardState);
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
 
     return () => {
       if (closeTimer) clearTimeout(closeTimer);
@@ -451,6 +478,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       window.removeEventListener('resize', commitKeyboardState);
       window.removeEventListener('focusin', handleFocusIn);
       window.removeEventListener('focusout', commitKeyboardState);
+      window.removeEventListener('scroll', handleWindowScroll);
     };
   }, []);
 
