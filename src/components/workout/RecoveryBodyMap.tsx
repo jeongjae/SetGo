@@ -10,7 +10,6 @@ type RecoveryBodyMapProps = {
 export function RecoveryBodyMap({ recovery, locale }: RecoveryBodyMapProps) {
   const [activeGroup, setActiveGroup] = useState<RecoveryMuscleGroup | null>(null);
 
-  // Helper to get recovery details of a specific muscle group
   const getMuscleStat = (group: RecoveryMuscleGroup) => {
     return recovery.groups.find((g) => g.group === group) || {
       group,
@@ -19,7 +18,6 @@ export function RecoveryBodyMap({ recovery, locale }: RecoveryBodyMapProps) {
     };
   };
 
-  // Map recovery status to fill colors (Apple/iOS style harmonized colors)
   const getMuscleColor = (group: RecoveryMuscleGroup) => {
     const stat = getMuscleStat(group);
     if (stat.recoveryPercent >= 75) return '#34C759'; // Ready (Green)
@@ -42,126 +40,178 @@ export function RecoveryBodyMap({ recovery, locale }: RecoveryBodyMapProps) {
         </span>
       </div>
 
-      {/* SVG Container holding Front and Back body outlines */}
       <div className="relative mt-2.5 flex h-60 w-full items-center justify-center overflow-hidden">
         <svg viewBox="0 0 240 220" className="h-full w-auto select-none">
           <defs>
             <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodOpacity="0.1" />
+              <feDropShadow dx="0" dy="1" stdDeviation="1" floodOpacity="0.08" />
             </filter>
           </defs>
 
-          {/* BACKGROUND CONTOUR SILHOUETTES */}
-          {/* Front Silhouette background contour */}
-          <path d="M 60,15 C 65,15 67,23 68,26 C 73,26 88,29 93,37 C 95,40 94,49 93,65 C 92,72 90,82 89,95 C 87,112 80,123 79,132 C 79,152 79,178 77,208 C 76,211 73,212 71,212 C 68,212 67,208 67,192 C 67,175 64,152 60,140 C 56,152 53,175 53,192 C 53,208 52,212 49,212 C 47,212 44,211 43,208 C 41,178 41,152 41,132 C 40,123 33,112 31,95 C 30,82 28,72 27,65 C 26,49 25,40 27,37 C 32,29 47,26 52,26 C 53,23 55,15 60,15 Z" fill="#E5E5EA" />
+          {/* FRONT BACKGROUND BODY OUTLINE (Center X = 60) */}
+          <path 
+            d="M 60,15 
+               C 65,15 67,19 67,23 
+               C 67,27 65,29 63,30 
+               C 64,30 68,31 71,32 
+               C 75,33 79,36 82,41 
+               C 85,46 87,55 86,64 
+               C 85,73 83,82 82,90 
+               C 81,95 81,100 80,105
+               C 78,112 75,118 73,123
+               C 73,142 72,165 70,195
+               C 69,207 68,211 65,211
+               C 63,211 62,207 62,185
+               C 62,165 61,142 60,132
+               C 59,142 58,165 58,185
+               C 58,207 57,211 55,211
+               C 52,211 51,207 50,195
+               C 48,165 47,142 47,123
+               C 45,118 42,112 40,105
+               C 39,100 39,95 38,90
+               C 37,82 35,73 34,64
+               C 33,55 35,46 38,41
+               C 41,36 45,33 49,32
+               C 52,31 56,30 57,30
+               C 55,29 53,27 53,23
+               C 53,19 55,15 60,15 Z" 
+            fill="#E5E5EA" 
+          />
           
-          {/* Back Silhouette background contour */}
-          <path d="M 180,15 C 185,15 187,23 188,26 C 193,26 208,29 213,37 C 215,40 214,49 213,65 C 212,72 210,82 209,95 C 207,112 200,123 199,132 C 199,152 199,178 197,208 C 196,211 193,212 191,212 C 188,212 187,208 187,192 C 187,175 184,152 180,140 C 176,152 173,175 173,192 C 173,208 172,212 169,212 C 167,212 164,211 163,208 C 161,178 161,152 161,132 C 160,123 153,112 151,95 C 150,82 148,72 147,65 C 146,49 145,40 147,37 C 152,29 167,26 172,26 C 173,23 175,15 180,15 Z" fill="#E5E5EA" />
+          {/* BACK BACKGROUND BODY OUTLINE (Center X = 180) */}
+          <path 
+            d="M 180,15 
+               C 185,15 187,19 187,23 
+               C 187,27 185,29 183,30 
+               C 184,30 188,31 191,32 
+               C 195,33 199,36 202,41 
+               C 205,46 207,55 206,64 
+               C 205,73 203,82 202,90 
+               C 201,95 201,100 200,105
+               C 198,112 195,118 193,123
+               C 193,142 192,165 190,195
+               C 189,207 188,211 185,211
+               C 183,211 182,207 182,185
+               C 182,165 181,142 180,132
+               C 179,142 178,165 178,185
+               C 178,207 177,211 175,211
+               C 172,211 171,207 170,195
+               C 168,165 167,142 167,123
+               C 165,118 162,112 160,105
+               C 159,100 159,95 158,90
+               C 157,82 155,73 154,64
+               C 153,55 155,46 158,41
+               C 161,36 165,33 169,32
+               C 172,31 176,30 177,30
+               C 175,29 173,27 173,23
+               C 173,19 175,15 180,15 Z" 
+            fill="#E5E5EA" 
+          />
 
-          {/* FRONT VIEW MUSCLES (Center X = 60) */}
+          {/* FRONT VIEW MUSCLES */}
           <g filter="url(#shadow)" className="cursor-pointer">
-            {/* Front Head - Dummy interactive placeholder */}
-            <circle cx="60" cy="23" r="10" fill="#D1D1D6" />
+            {/* Front Head */}
+            <circle cx="60" cy="23" r="8" fill="#D1D1D6" />
 
-            {/* Shoulder - Front Left */}
-            <rect
-              x="29" y="38" width="11" height="15" rx="5"
+            {/* Left Shoulder */}
+            <path
+              d="M 46,34 C 38,36 34,42 34,51 C 37,53 43,49 46,45 Z"
               fill={getMuscleColor('shoulder')}
               onClick={() => handleMuscleClick('shoulder')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95 origin-center"
+              className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
-            {/* Shoulder - Front Right */}
-            <rect
-              x="80" y="38" width="11" height="15" rx="5"
+            {/* Right Shoulder */}
+            <path
+              d="M 74,34 C 82,36 86,42 86,51 C 83,53 77,49 74,45 Z"
               fill={getMuscleColor('shoulder')}
               onClick={() => handleMuscleClick('shoulder')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95 origin-center"
+              className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
 
             {/* Chest - Left */}
             <path
-              d="M 43,44 L 59,44 L 59,62 L 44,60 Z"
+              d="M 44,44 C 44,56 50,59 59,59 C 59,48 56,44 44,44 Z"
               fill={getMuscleColor('chest')}
               onClick={() => handleMuscleClick('chest')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
             {/* Chest - Right */}
             <path
-              d="M 61,44 L 77,44 L 76,60 L 61,62 Z"
+              d="M 76,44 C 76,56 70,59 61,59 C 61,48 64,44 76,44 Z"
               fill={getMuscleColor('chest')}
               onClick={() => handleMuscleClick('chest')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
 
             {/* Biceps - Left */}
-            <rect
-              x="26" y="56" width="9" height="20" rx="4"
+            <path
+              d="M 33,53 C 29,57 28,67 31,76 C 34,74 36,67 36,58 Z"
               fill={getMuscleColor('biceps')}
               onClick={() => handleMuscleClick('biceps')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
             {/* Biceps - Right */}
-            <rect
-              x="85" y="56" width="9" height="20" rx="4"
+            <path
+              d="M 87,53 C 91,57 92,67 89,76 C 86,74 84,67 84,58 Z"
               fill={getMuscleColor('biceps')}
               onClick={() => handleMuscleClick('biceps')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
 
             {/* Core / Abs */}
-            <rect
-              x="46" y="65" width="28" height="38" rx="4"
+            <path
+              d="M 47,61 C 45,74 46,89 49,101 C 54,104 66,104 71,101 C 74,89 75,74 73,61 Z"
               fill={getMuscleColor('core')}
               onClick={() => handleMuscleClick('core')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
 
-            {/* Legs (Quads) - Left */}
-            <rect
-              x="43" y="108" width="12" height="42" rx="6"
+            {/* Legs - Left */}
+            <path
+              d="M 36,108 C 36,128 38,155 45,165 C 50,165 54,142 54,108 Z"
               fill={getMuscleColor('legs')}
               onClick={() => handleMuscleClick('legs')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
-            {/* Legs (Quads) - Right */}
-            <rect
-              x="65" y="108" width="12" height="42" rx="6"
+            {/* Legs - Right */}
+            <path
+              d="M 84,108 C 84,128 82,155 75,165 C 70,165 66,142 66,108 Z"
               fill={getMuscleColor('legs')}
               onClick={() => handleMuscleClick('legs')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
           </g>
 
-          {/* BACK VIEW MUSCLES (Center X = 180) */}
+          {/* BACK VIEW MUSCLES */}
           <g filter="url(#shadow)" className="cursor-pointer">
-            {/* Back Head - Dummy */}
-            <circle cx="180" cy="23" r="10" fill="#D1D1D6" />
+            {/* Back Head */}
+            <circle cx="180" cy="23" r="8" fill="#D1D1D6" />
 
             {/* Shoulder - Back Left */}
-            <rect
-              x="149" y="38" width="11" height="15" rx="5"
+            <path
+              d="M 166,34 C 158,36 154,42 154,51 C 157,53 163,49 166,45 Z"
               fill={getMuscleColor('shoulder')}
               onClick={() => handleMuscleClick('shoulder')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
             {/* Shoulder - Back Right */}
-            <rect
-              x="200" y="38" width="11" height="15" rx="5"
+            <path
+              d="M 194,34 C 202,36 206,42 206,51 C 203,53 197,49 194,45 Z"
               fill={getMuscleColor('shoulder')}
               onClick={() => handleMuscleClick('shoulder')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
 
             {/* Triceps - Left */}
-            <rect
-              x="146" y="56" width="9" height="20" rx="4"
+            <path
+              d="M 153,53 C 149,57 148,67 151,76 C 154,74 156,67 156,58 Z"
               fill={getMuscleColor('triceps')}
               onClick={() => handleMuscleClick('triceps')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
             {/* Triceps - Right */}
-            <rect
-              x="205" y="56" width="9" height="20" rx="4"
+            <path
+              d="M 207,53 C 211,57 212,67 209,76 C 206,74 204,67 204,58 Z"
               fill={getMuscleColor('triceps')}
               onClick={() => handleMuscleClick('triceps')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
@@ -169,42 +219,40 @@ export function RecoveryBodyMap({ recovery, locale }: RecoveryBodyMapProps) {
 
             {/* Back / Lats */}
             <path
-              d="M 163,44 L 197,44 L 193,82 L 167,82 Z"
+              d="M 180,36 C 163,38 159,48 159,60 C 165,72 175,77 180,81 C 185,77 195,72 201,60 C 201,48 197,38 180,36 Z"
               fill={getMuscleColor('back')}
               onClick={() => handleMuscleClick('back')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
 
-            {/* Lower Back / Glutes (Represented via core mapping on backside) */}
-            <rect
-              x="166" y="85" width="28" height="18" rx="3"
+            {/* Lower Back / Glutes */}
+            <path
+              d="M 164,84 C 161,96 163,104 180,104 C 197,104 199,96 196,84 Z"
               fill={getMuscleColor('core')}
               onClick={() => handleMuscleClick('core')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
 
-            {/* Legs (Hamstrings/Calves) - Left */}
-            <rect
-              x="163" y="108" width="12" height="42" rx="6"
+            {/* Legs - Left */}
+            <path
+              d="M 156,108 C 156,128 158,155 165,165 C 170,165 174,142 174,108 Z"
               fill={getMuscleColor('legs')}
               onClick={() => handleMuscleClick('legs')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
-            {/* Legs (Hamstrings/Calves) - Right */}
-            <rect
-              x="185" y="108" width="12" height="42" rx="6"
+            {/* Legs - Right */}
+            <path
+              d="M 204,108 C 204,128 202,155 195,165 C 190,165 186,142 186,108 Z"
               fill={getMuscleColor('legs')}
               onClick={() => handleMuscleClick('legs')}
               className="transition-all duration-300 hover:brightness-95 active:scale-95"
             />
           </g>
 
-          {/* Interactive labels for indicators */}
           <text x="60" y="218" textAnchor="middle" fill="#8E8E93" fontSize="9" fontWeight="bold">FRONT</text>
           <text x="180" y="218" textAnchor="middle" fill="#8E8E93" fontSize="9" fontWeight="bold">BACK</text>
         </svg>
 
-        {/* Dynamic Tooltip overlay on tap */}
         {selectedStat && (
           <div className="absolute bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-black/5 bg-[#1C1C1E] px-3.5 py-2 text-white shadow-lg animate-fade-in">
             <span className="text-xs font-black">
@@ -235,7 +283,6 @@ export function RecoveryBodyMap({ recovery, locale }: RecoveryBodyMapProps) {
         )}
       </div>
 
-      {/* Legend guide */}
       <div className="mt-3 flex items-center justify-center gap-4 border-t border-[#F2F2F7] pt-2.5 text-[10px] font-extrabold uppercase text-[#6E6E73] w-full">
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-[#34C759]" />

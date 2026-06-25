@@ -933,6 +933,7 @@ function recoveryStatusLabel(status: RecoveryStatus, locale: Locale): string {
 }
 
 function RecoveryDashboardPanel({ recovery, locale }: { recovery: RecoverySnapshot; locale: Locale }) {
+  const [showDetails, setShowDetails] = useState(false);
   const rows = recovery.groups
     .slice()
     .sort((a, b) => a.recoveryPercent - b.recoveryPercent || b.decayedLoad - a.decayedLoad)
@@ -947,30 +948,41 @@ function RecoveryDashboardPanel({ recovery, locale }: { recovery: RecoverySnapsh
   return (
     <section className="ios-card p-3">
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '회복 대시보드' : 'Recovery dashboard'}</h2>
           <p className="mt-0.5 truncate text-[11px] font-bold text-[#8E8E93]">
             {recommendation}
           </p>
         </div>
-        <span className="shrink-0 rounded-lg bg-[#F2F2F7] px-2 py-1 text-[11px] font-black uppercase text-[#1C1C1E]">
-          {recoveryStatusLabel(recovery.readinessStatus, locale)}
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="rounded-lg bg-[#F2F2F7] px-2 py-1 text-[11px] font-black uppercase text-[#1C1C1E] whitespace-nowrap">
+            {recoveryStatusLabel(recovery.readinessStatus, locale)}
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowDetails(!showDetails)}
+            className="rounded-lg bg-[#007AFF]/10 hover:bg-[#007AFF]/15 text-[#007AFF] px-2.5 py-1 text-[11px] font-black transition-all active:scale-95 whitespace-nowrap"
+          >
+            {showDetails ? (locale === 'ko' ? '접기' : '자세히') : (locale === 'ko' ? '자세히' : 'Details')}
+          </button>
+        </div>
       </div>
-      <div className="mt-2.5 grid gap-2">
-        {rows.map((group) => (
-          <div key={group.group} className="grid grid-cols-[4.7rem_1fr_3.2rem] items-center gap-2">
-            <span className="truncate text-xs font-black text-[#1C1C1E]">{recoveryLabels[locale][group.group]}</span>
-            <div className="h-2 overflow-hidden rounded-full bg-[#E5E5EA]">
-              <span
-                className={`block h-full rounded-full ${recoveryBarClass(group.status)}`}
-                style={{ width: `${group.recoveryPercent}%` }}
-              />
+      {showDetails && (
+        <div className="mt-2.5 grid gap-2 border-t border-[#E5E5EA] pt-2.5 animate-fade-in">
+          {rows.map((group) => (
+            <div key={group.group} className="grid grid-cols-[4.7rem_1fr_3.2rem] items-center gap-2">
+              <span className="truncate text-xs font-black text-[#1C1C1E]">{recoveryLabels[locale][group.group]}</span>
+              <div className="h-2 overflow-hidden rounded-full bg-[#E5E5EA]">
+                <span
+                  className={`block h-full rounded-full ${recoveryBarClass(group.status)}`}
+                  style={{ width: `${group.recoveryPercent}%` }}
+                />
+              </div>
+              <span className="text-right text-[11px] font-black tabular-nums text-[#1C1C1E]">{group.recoveryPercent}%</span>
             </div>
-            <span className="text-right text-[11px] font-black tabular-nums text-[#1C1C1E]">{group.recoveryPercent}%</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -1048,6 +1060,7 @@ function DailyLoadRail({ days, locale }: { days: DailyTrendStat[]; locale: Local
 }
 
 function MuscleBalancePanel({ muscles, locale }: { muscles: MuscleStat[]; locale: Locale }) {
+  const [showBars, setShowBars] = useState(false);
   const sorted = muscles
     .slice()
     .sort((a, b) => {
@@ -1069,40 +1082,51 @@ function MuscleBalancePanel({ muscles, locale }: { muscles: MuscleStat[]; locale
     <section className="ios-card p-3">
       <div className="flex items-center justify-between gap-3 mb-2">
         <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '부위 밸런스' : 'Muscle balance'}</h2>
-        <span className="text-[11px] font-bold text-[#8E8E93]">{locale === 'ko' ? '목표 대비 세트' : 'sets vs target'}</span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-[11px] font-bold text-[#8E8E93] mr-1">{locale === 'ko' ? '목표 대비 세트' : 'sets vs target'}</span>
+          <button
+            type="button"
+            onClick={() => setShowBars(!showBars)}
+            className="rounded-lg bg-[#007AFF]/10 hover:bg-[#007AFF]/15 text-[#007AFF] px-2.5 py-1 text-[11px] font-black transition-all active:scale-95 whitespace-nowrap"
+          >
+            {showBars ? (locale === 'ko' ? '접기' : '자세히') : (locale === 'ko' ? '자세히' : 'Details')}
+          </button>
+        </div>
       </div>
       <MuscleVolumeRings muscles={ringData} locale={locale} />
-      <div className="mt-3.5 grid gap-2">
-        {sorted.map((muscle) => {
-          const minPct = Math.min(100, Math.round((muscle.recommendedMin / Math.max(1, muscle.recommendedMax)) * 100));
-          const fillPct = muscle.setsPerWeek > 0 ? Math.max(3, muscle.targetPct) : 0;
-          const targetLabel = `${muscle.setsPerWeek}/${muscle.recommendedMin}-${muscle.recommendedMax}`;
+      {showBars && (
+        <div className="mt-3.5 grid gap-2 border-t border-[#E5E5EA] pt-3.5 animate-fade-in">
+          {sorted.map((muscle) => {
+            const minPct = Math.min(100, Math.round((muscle.recommendedMin / Math.max(1, muscle.recommendedMax)) * 100));
+            const fillPct = muscle.setsPerWeek > 0 ? Math.max(3, muscle.targetPct) : 0;
+            const targetLabel = `${muscle.setsPerWeek}/${muscle.recommendedMin}-${muscle.recommendedMax}`;
 
-          return (
-            <div key={muscle.group} className="grid grid-cols-[4.3rem_1fr_4.2rem] items-center gap-2">
-              <span className="truncate text-xs font-black text-[#1C1C1E]">{muscleLabels[locale][muscle.group]}</span>
-              <div
-                className="relative h-2 rounded-full bg-[#E5E5EA]"
-                aria-label={`${muscleLabels[locale][muscle.group]} ${targetLabel}`}
-              >
-                <span
-                  className="absolute top-0 h-2 rounded-r-full bg-white/55"
-                  style={{ left: `${minPct}%`, width: `${100 - minPct}%` }}
-                />
-                <span
-                  className="absolute top-[-3px] z-10 h-4 w-0.5 rounded-full bg-[#1C1C1E]/45"
-                  style={{ left: `calc(${minPct}% - 1px)` }}
-                />
-                <span
-                  className={`absolute left-0 top-0 z-0 h-2 rounded-full ${muscleTone(muscle.status)}`}
-                  style={{ width: `${fillPct}%` }}
-                />
+            return (
+              <div key={muscle.group} className="grid grid-cols-[4.3rem_1fr_4.2rem] items-center gap-2">
+                <span className="truncate text-xs font-black text-[#1C1C1E]">{muscleLabels[locale][muscle.group]}</span>
+                <div
+                  className="relative h-2 rounded-full bg-[#E5E5EA]"
+                  aria-label={`${muscleLabels[locale][muscle.group]} ${targetLabel}`}
+                >
+                  <span
+                    className="absolute top-0 h-2 rounded-r-full bg-white/55"
+                    style={{ left: `${minPct}%`, width: `${100 - minPct}%` }}
+                  />
+                  <span
+                    className="absolute top-[-3px] z-10 h-4 w-0.5 rounded-full bg-[#1C1C1E]/45"
+                    style={{ left: `calc(${minPct}% - 1px)` }}
+                  />
+                  <span
+                    className={`absolute left-0 top-0 z-0 h-2 rounded-full ${muscleTone(muscle.status)}`}
+                    style={{ width: `${fillPct}%` }}
+                  />
+                </div>
+                <span className="text-right text-[11px] font-black tabular-nums text-[#1C1C1E]">{targetLabel}</span>
               </div>
-              <span className="text-right text-[11px] font-black tabular-nums text-[#1C1C1E]">{targetLabel}</span>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
