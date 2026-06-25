@@ -467,7 +467,7 @@ export function buildStats(
   });
 
   const completedSessions = sessions
-    .filter((session) => session.status === 'completed')
+    .filter((session) => session.status === 'completed' && session.isDemo !== true)
     .sort((a, b) => a.date.localeCompare(b.date));
   const completedSessionIds = new Set(completedSessions.map((session) => session.id));
   const completedWorkoutExercises = workoutExercises.filter((item) => completedSessionIds.has(item.sessionId));
@@ -633,7 +633,7 @@ export function buildStats(
       oneRmHistory,
       chartHistory,
     };
-  }).sort((a, b) => b.recentVolumeKg - a.recentVolumeKg).slice(0, 12);
+  }).sort((a, b) => b.recentVolumeKg - a.recentVolumeKg);
 
   // Daily rail spans the selected window (capped at 14 bars for readability).
   const dailyTrendLength = Math.min(Math.max(windowDays, 7), 14);
@@ -1410,6 +1410,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
   }), [locale]);
 
   const [copied, setCopied] = useState(false);
+  const [showAllPerformances, setShowAllPerformances] = useState(false);
 
   const handleCopyPrompt = () => {
     const promptText = buildAiPrompt(stats, locale);
@@ -1614,27 +1615,43 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
             <div className="grid gap-2.5">
               {stats.performances.length === 0 ? (
                 <p className="py-4 text-center text-xs font-bold text-[#8E8E93]">{c.noPerformance}</p>
-              ) : stats.performances.map((performance) => (
-                <div key={performance.id} className="space-y-2.5 rounded-2xl border border-black/5 bg-[#F2F2F7] p-3.5 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-sm font-black text-[#1C1C1E] tracking-wide">{performance.name}</h3>
-                    <span className="rounded-lg border border-black/5 bg-white px-2 py-0.5 text-xs font-bold text-[#159A91]">{formatPct(performance.fourWeekChangePct)}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl border border-black/5 bg-white px-3 py-2.5 text-xs font-semibold text-[#6E6E73]">
-                    <p>{c.recentWeight} <span className="font-bold text-[#1C1C1E]">{performance.recentWeightKg.toFixed(1)}kg</span></p>
-                    <p>{c.bestWeight} <span className="font-bold text-[#1C1C1E]">{performance.bestWeightKg.toFixed(1)}kg</span></p>
-                    <p>{c.recentVolume} <span className="font-bold text-[#1C1C1E]">{Math.round(performance.recentVolumeKg).toLocaleString()}kg</span></p>
-                    <p>{c.bestVolume} <span className="font-bold text-[#1C1C1E]">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
-                    <p className="col-span-2 border-t border-[#E5E5EA] pt-2 mt-0.5">{c.estimatedOneRm} <span className="font-bold text-[#159A91]">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
-                  </div>
-                  {performance.chartHistory && performance.chartHistory.length > 0 ? (
-                    <div className="border-t border-[#E5E5EA] pt-3">
-                      <p className="text-xs font-bold uppercase text-[#8E8E93] mb-1.5">{locale === 'ko' ? '성과 추이 (1RM & 볼륨)' : 'Performance Trend (1RM & Vol)'}</p>
-                      <StaticLineChart data={performance.chartHistory} locale={locale} />
+              ) : (
+                <>
+                  {(showAllPerformances ? stats.performances : stats.performances.slice(0, 10)).map((performance) => (
+                    <div key={performance.id} className="space-y-2.5 rounded-2xl border border-black/5 bg-[#F2F2F7] p-3.5 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="text-sm font-black text-[#1C1C1E] tracking-wide">{performance.name}</h3>
+                        <span className="rounded-lg border border-black/5 bg-white px-2 py-0.5 text-xs font-bold text-[#159A91]">{formatPct(performance.fourWeekChangePct)}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl border border-black/5 bg-white px-3 py-2.5 text-xs font-semibold text-[#6E6E73]">
+                        <p>{c.recentWeight} <span className="font-bold text-[#1C1C1E]">{performance.recentWeightKg.toFixed(1)}kg</span></p>
+                        <p>{c.bestWeight} <span className="font-bold text-[#1C1C1E]">{performance.bestWeightKg.toFixed(1)}kg</span></p>
+                        <p>{c.recentVolume} <span className="font-bold text-[#1C1C1E]">{Math.round(performance.recentVolumeKg).toLocaleString()}kg</span></p>
+                        <p>{c.bestVolume} <span className="font-bold text-[#1C1C1E]">{Math.round(performance.bestVolumeKg).toLocaleString()}kg</span></p>
+                        <p className="col-span-2 border-t border-[#E5E5EA] pt-2 mt-0.5">{c.estimatedOneRm} <span className="font-bold text-[#159A91]">{performance.estimatedOneRmKg.toFixed(1)}kg</span></p>
+                      </div>
+                      {performance.chartHistory && performance.chartHistory.length > 0 ? (
+                        <div className="border-t border-[#E5E5EA] pt-3">
+                          <p className="text-xs font-bold uppercase text-[#8E8E93] mb-1.5">{locale === 'ko' ? '성과 추이 (1RM & 볼륨)' : 'Performance Trend (1RM & Vol)'}</p>
+                          <StaticLineChart data={performance.chartHistory} locale={locale} />
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
-                </div>
-              ))}
+                  ))}
+                  
+                  {stats.performances.length > 10 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllPerformances((prev) => !prev)}
+                      className="mt-2 w-full rounded-xl border border-black/5 bg-[#F2F2F7] py-2.5 text-xs font-bold text-accent-dark transition-all hover:bg-[#E5E5EA] active:scale-98"
+                    >
+                      {showAllPerformances
+                        ? (locale === 'ko' ? '간략히 보기' : 'Show Less')
+                        : (locale === 'ko' ? `더보기 (${stats.performances.length - 10}개 추가)` : `Show More (${stats.performances.length - 10} more)`)}
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </DetailSection>
 
