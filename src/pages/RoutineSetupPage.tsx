@@ -15,6 +15,7 @@ import {
   labelForStage,
 } from '../domain/exercises';
 import { exerciseCountLabel, getStoredLocale, t } from '../i18n/i18n';
+import { triggerSelectionHaptic } from '../utils/haptics';
 import {
   activateStoredRoutine,
   activateRoutineTemplate,
@@ -95,6 +96,7 @@ export function RoutineSetupPage({
   const [cyclePlan, setCyclePlan] = useState<RoutineCyclePlanView[]>([]);
   const [selectedDayId, setSelectedDayId] = useState<string | undefined>();
   const [addingDayId, setAddingDayId] = useState<string | undefined>();
+  const [showDaySettingsModal, setShowDaySettingsModal] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState('');
   const [exerciseCategoryFilter, setExerciseCategoryFilter] = useState<ExerciseCategory | 'all'>('all');
   const [routineAddSearch, setRoutineAddSearch] = useState('');
@@ -404,6 +406,16 @@ export function RoutineSetupPage({
 
   async function handleUpdateRoutineDayName(routineDayId: string, name: string) {
     await updateRoutineDayName(routineDayId, name);
+    onRoutineSaved();
+    await loadSetup();
+  }
+
+  async function handleUpdateDayField(field: 'name' | 'family' | 'intensityPhase', value: string) {
+    if (!selectedDayId) return;
+    await db.routineDays.update(selectedDayId, { [field]: value });
+    if (field === 'name') {
+      await db.routineDays.update(selectedDayId, { code: value.toLowerCase().replace(/\s+/g, '_') });
+    }
     onRoutineSaved();
     await loadSetup();
   }
@@ -1314,6 +1326,14 @@ export function RoutineSetupPage({
                   />
                   <button
                     type="button"
+                    onClick={() => setShowDaySettingsModal(true)}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#6E6E73] shadow-sm transition-all hover:bg-[#F2F2F7] active:scale-95"
+                    aria-label={locale === 'ko' ? '하루 설정 편집' : 'Edit day settings'}
+                  >
+                    <span className="text-sm">⚙️</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => {
                       setAddingDayId((current) => (
                         current === selectedDay.routineDay.id ? undefined : selectedDay.routineDay.id
@@ -1492,6 +1512,107 @@ export function RoutineSetupPage({
           </section>
         )}
       </div>
+      {showDaySettingsModal && selectedDay ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setShowDaySettingsModal(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-t-3xl bg-white p-5 shadow-2xl transition-all animate-slide-up"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#E5E5EA] pb-3">
+              <h3 className="text-base font-black text-[#1C1C1E]">
+                {locale === 'ko' ? '요일 상세 설정' : 'Day Settings'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowDaySettingsModal(false)}
+                className="text-sm font-bold text-[#159A91] hover:text-[#2EC4B6]"
+              >
+                {locale === 'ko' ? '완료' : 'Done'}
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {/* Day Name */}
+              <label className="block text-xs font-bold text-[#6E6E73]">
+                {locale === 'ko' ? '요일 이름' : 'Day Name'}
+                <input
+                  type="text"
+                  value={selectedDay.routineDay.name}
+                  onChange={(e) => {
+                    const nextName = e.target.value;
+                    void handleUpdateDayField('name', nextName);
+                  }}
+                  className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-[#F2F2F7] px-3.5 py-2 text-sm font-bold text-[#1C1C1E] outline-none"
+                />
+              </label>
+
+              {/* Group Family */}
+              <div>
+                <span className="block text-xs font-bold text-[#6E6E73]">
+                  {locale === 'ko' ? '그룹 계열 (Family)' : 'Group Family'}
+                </span>
+                <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-xl bg-[#F2F2F7] p-1">
+                  {([
+                    ['upper', locale === 'ko' ? '상체' : 'Upper'],
+                    ['lower', locale === 'ko' ? '하체' : 'Lower'],
+                    ['full_body', locale === 'ko' ? '전신' : 'Full Body'],
+                  ] as const).map(([val, label]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        void handleUpdateDayField('family', val);
+                        triggerSelectionHaptic();
+                      }}
+                      className={`min-h-8 rounded-lg text-xs font-bold transition-all ${
+                        selectedDay.routineDay.family === val
+                          ? 'bg-white text-[#1C1C1E] shadow-sm'
+                          : 'text-[#6E6E73]'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Intensity Phase */}
+              <div>
+                <span className="block text-xs font-bold text-[#6E6E73]">
+                  {locale === 'ko' ? '훈련 강도 페이즈 (Intensity Phase)' : 'Intensity Phase'}
+                </span>
+                <div className="mt-1.5 grid grid-cols-4 gap-0.5 rounded-xl bg-[#F2F2F7] p-1">
+                  {([
+                    ['hypertrophy', locale === 'ko' ? '근성장' : 'Heavy'],
+                    ['maintenance', locale === 'ko' ? '근유지' : 'Light'],
+                    ['deload', locale === 'ko' ? '디로드' : 'Deload'],
+                    ['cardio', locale === 'ko' ? '유산소' : 'Cardio'],
+                  ] as const).map(([val, label]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        void handleUpdateDayField('intensityPhase', val);
+                        triggerSelectionHaptic();
+                      }}
+                      className={`min-h-8 rounded-lg text-[10px] font-extrabold transition-all ${
+                        selectedDay.routineDay.intensityPhase === val
+                          ? 'bg-white text-[#1C1C1E] shadow-sm'
+                          : 'text-[#6E6E73]'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

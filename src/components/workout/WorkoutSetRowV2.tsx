@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, type FocusEvent } from 'react';
 import type { WorkoutExerciseLog } from '../../db/workouts';
 import type { WorkoutSet, WorkoutSetType } from '../../types';
 import { getOverloadTarget } from '../../utils/overloadCalc';
+import { triggerSelectionHaptic } from '../../utils/haptics';
 
 export const WORKOUT_SET_GRID_CLASS = 'grid-cols-[1.65rem_2.75rem_minmax(4.5rem,1fr)_3rem_2.75rem_2.75rem]';
 
@@ -31,7 +32,7 @@ type WorkoutSetRowV2Props = {
   handleQuickAdjustSet: (set: WorkoutSet, field: 'weightKg' | 'reps' | 'rir', delta: number) => Promise<void>;
   handleSetChange: (
     set: WorkoutSet,
-    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type'>>,
+    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type' | 'intensityTechnique'>>,
   ) => Promise<void>;
   handleToggleWarmup: (set: WorkoutSet) => Promise<void>;
   handleToggleHardSet: (set: WorkoutSet) => Promise<void>;
@@ -153,12 +154,46 @@ export function WorkoutSetRowV2({
   };
 
   async function handleToggleSetType() {
-    const nextType = getNextSetType(set.type, set.isWarmup);
+    triggerSelectionHaptic();
+    let nextWarmup = false;
+    let nextTechnique: 'straight' | 'drop_set' | 'myo_reps' = 'straight';
+    let nextType: WorkoutSetType = 'normal';
+
+    if (set.isWarmup) {
+      // Warmup -> Drop set
+      nextWarmup = false;
+      nextTechnique = 'drop_set';
+      nextType = 'normal';
+    } else if (set.intensityTechnique === 'drop_set') {
+      // Drop set -> Myo reps
+      nextWarmup = false;
+      nextTechnique = 'myo_reps';
+      nextType = 'normal';
+    } else if (set.intensityTechnique === 'myo_reps') {
+      // Myo reps -> Straight (Normal)
+      nextWarmup = false;
+      nextTechnique = 'straight';
+      nextType = 'normal';
+    } else {
+      // Straight -> Warmup
+      nextWarmup = true;
+      nextTechnique = 'straight';
+      nextType = 'warmup';
+    }
+
     await handleSetChange(set, {
+      isWarmup: nextWarmup,
       type: nextType,
-      isWarmup: nextType === 'warmup',
+      intensityTechnique: nextTechnique,
     });
   }
+
+  const getSetLabel = () => {
+    if (set.isWarmup) return locale === 'ko' ? '웜업' : 'Warm';
+    if (set.intensityTechnique === 'drop_set') return locale === 'ko' ? '드롭' : 'Drop';
+    if (set.intensityTechnique === 'myo_reps') return locale === 'ko' ? '마이오' : 'Myo';
+    return locale === 'ko' ? '일반' : 'Work';
+  };
 
   const rowTone = set.isCompleted
     ? 'border-[#2EC4B6]/35 bg-[#F4FBFA]'
@@ -178,17 +213,17 @@ export function WorkoutSetRowV2({
           type="button"
           onClick={() => void handleToggleSetType()}
           className={`flex h-11 w-full items-center justify-center rounded-lg text-[10px] font-black leading-none transition-all active:scale-95 ${
-            currentType === 'warmup'
-              ? 'border border-yellow-200 bg-yellow-50 text-yellow-800'
-              : currentType === 'failure'
-                ? 'border border-rose-100 bg-[#FFECEC] text-danger'
-                : currentType === 'drop'
-                  ? 'border border-accent/20 bg-[#E8F3F3] text-accent-dark'
+            set.isWarmup
+              ? 'border border-[#007AFF]/30 bg-[#EAF4FF] text-[#007AFF]'
+              : set.intensityTechnique === 'drop_set'
+                ? 'border border-[#5856D6]/30 bg-[#F2F1FA] text-[#5856D6]'
+                : set.intensityTechnique === 'myo_reps'
+                  ? 'border border-[#FF2D55]/30 bg-[#FFF0F2] text-[#FF2D55]'
                   : 'border border-black/5 bg-[#F2F2F7] text-[#1C1C1E]'
           }`}
-          aria-label={`Set ${set.setNo} type: ${currentType}`}
+          aria-label={`Set ${set.setNo} type: ${getSetLabel()}`}
         >
-          {getSetKindLabel(set.type, set.isWarmup, locale)}
+          {getSetLabel()}
         </button>
 
         <div className="grid h-11 grid-cols-[1.75rem_minmax(0,1fr)_1.75rem] overflow-hidden rounded-lg border border-[#D1D1D6] bg-[#F2F2F7] focus-within:border-accent">

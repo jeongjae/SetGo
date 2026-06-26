@@ -1,10 +1,11 @@
 import { ArrowDown, ArrowUp, Check, ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { CardioRecord } from '../../types';
+import { triggerSelectionHaptic } from '../../utils/haptics';
 
 type CardioUpdate = Partial<Pick<
   CardioRecord,
-  'environment' | 'machineType' | 'location' | 'startedAt' | 'endedAt' | 'distanceKm' | 'memo' | 'inclinePercent' | 'isDraft'
+  'environment' | 'machineType' | 'location' | 'startedAt' | 'endedAt' | 'distanceKm' | 'memo' | 'inclinePercent' | 'isDraft' | 'speedKmh' | 'inclinePct'
 >>;
 
 type WorkoutCardioSectionProps = {
@@ -244,7 +245,7 @@ export function WorkoutCardioSection({
                     </label>
                   )}
 
-                  <div className={`grid gap-2.5 ${cardioRecord.environment === 'indoor' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                  <div className="grid gap-2.5 grid-cols-2">
                     <label className="text-xs font-bold uppercase text-[#6E6E73]">
                       Km
                       <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
@@ -321,47 +322,130 @@ export function WorkoutCardioSection({
                         </button>
                       </div>
                     </label>
+                  </div>
 
-                    {cardioRecord.environment === 'indoor' ? (
-                      <label className="text-xs font-bold uppercase text-[#6E6E73]">
-                        {locale === 'ko' ? '\uACBD\uC0AC (%)' : 'Inc (%)'}
-                        <div className="mt-1 grid grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-xl border border-[#D1D1D6] bg-white focus-within:border-[#2EC4B6]">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const nextVal = Math.max(0, (cardioRecord.inclinePercent || 0) - 1);
-                              onUpdateCardio(cardioRecord, { inclinePercent: nextVal });
-                            }}
-                            className="min-h-11 text-sm font-bold text-[#6E6E73] hover:text-[#1C1C1E] active:bg-[#F2F2F7]"
-                          >
-                            -
-                          </button>
+                  {/* 2-Column Grid for Speed and Incline with toggles and sliders */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {/* Speed Selector */}
+                    <div className="flex flex-col gap-1.5 rounded-xl border border-black/5 bg-white p-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-[#6E6E73]">
+                          {locale === 'ko' ? '속도 (km/h)' : 'Speed (km/h)'}
+                        </span>
+                        <input
+                          aria-label="Toggle speed input"
+                          type="checkbox"
+                          checked={cardioRecord.speedKmh !== undefined}
+                          onChange={(e) => {
+                            triggerSelectionHaptic();
+                            onUpdateCardio(cardioRecord, {
+                              speedKmh: e.target.checked ? 8.0 : undefined,
+                            });
+                          }}
+                          className="h-4 w-7 rounded-full bg-[#E5E5EA] transition-all cursor-pointer accent-[#2EC4B6]"
+                        />
+                      </div>
+                      {cardioRecord.speedKmh !== undefined ? (
+                        <div className="space-y-1">
                           <input
-                            aria-label="Cardio incline"
-                            type="text"
-                            inputMode="numeric"
-                            enterKeyHint="done"
-                            value={cardioRecord.inclinePercent ?? ''}
-                            onChange={(event) => {
-                              const value = event.target.value === '' ? undefined : Number(event.target.value) || 0;
-                              onUpdateCardio(cardioRecord, { inclinePercent: value });
+                            aria-label="Cardio speed slider"
+                            type="range"
+                            min="0"
+                            max="20"
+                            step="0.5"
+                            value={cardioRecord.speedKmh ?? 8.0}
+                            onChange={(e) => {
+                              onUpdateCardio(cardioRecord, {
+                                speedKmh: parseFloat(e.target.value),
+                              });
                             }}
-                            placeholder="%"
-                            className="min-w-0 bg-transparent px-1 py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none"
+                            className="w-full h-1 bg-[#F2F2F7] rounded-lg appearance-none cursor-pointer accent-[#2EC4B6]"
                           />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const nextVal = (cardioRecord.inclinePercent || 0) + 1;
-                              onUpdateCardio(cardioRecord, { inclinePercent: nextVal });
+                          <input
+                            aria-label="Cardio speed text input"
+                            type="number"
+                            min="0"
+                            max="20"
+                            step="0.1"
+                            value={cardioRecord.speedKmh ?? ''}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              onUpdateCardio(cardioRecord, {
+                                speedKmh: isNaN(val) ? undefined : val,
+                              });
                             }}
-                            className="min-h-11 text-sm font-bold text-[#159A91] hover:text-[#2EC4B6] active:bg-[#F2F2F7]"
-                          >
-                            +
-                          </button>
+                            className="w-full text-center text-xs font-black tabular-nums text-[#1C1C1E] bg-[#F2F2F7] rounded-md py-0.5 border border-black/5 outline-none"
+                          />
                         </div>
-                      </label>
-                    ) : null}
+                      ) : (
+                        <span className="text-center text-[11px] font-bold text-[#8E8E93] py-2.5">
+                          {locale === 'ko' ? '입력 안 함' : 'None'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Incline Selector */}
+                    <div className="flex flex-col gap-1.5 rounded-xl border border-black/5 bg-white p-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-[#6E6E73]">
+                          {locale === 'ko' ? '경사 (%)' : 'Incline (%)'}
+                        </span>
+                        <input
+                          aria-label="Toggle incline input"
+                          type="checkbox"
+                          checked={cardioRecord.inclinePct !== undefined}
+                          onChange={(e) => {
+                            triggerSelectionHaptic();
+                            const nextVal = e.target.checked ? 0 : undefined;
+                            onUpdateCardio(cardioRecord, {
+                              inclinePct: nextVal,
+                              inclinePercent: nextVal,
+                            });
+                          }}
+                          className="h-4 w-7 rounded-full bg-[#E5E5EA] transition-all cursor-pointer accent-[#2EC4B6]"
+                        />
+                      </div>
+                      {cardioRecord.inclinePct !== undefined ? (
+                        <div className="space-y-1">
+                          <input
+                            aria-label="Cardio incline slider"
+                            type="range"
+                            min="0"
+                            max="15"
+                            step="1"
+                            value={cardioRecord.inclinePct ?? 0}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              onUpdateCardio(cardioRecord, {
+                                inclinePct: val,
+                                inclinePercent: val,
+                              });
+                            }}
+                            className="w-full h-1 bg-[#F2F2F7] rounded-lg appearance-none cursor-pointer accent-[#2EC4B6]"
+                          />
+                          <input
+                            aria-label="Cardio incline text input"
+                            type="number"
+                            min="0"
+                            max="15"
+                            step="1"
+                            value={cardioRecord.inclinePct ?? ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              onUpdateCardio(cardioRecord, {
+                                inclinePct: isNaN(val) ? undefined : val,
+                                inclinePercent: isNaN(val) ? undefined : val,
+                              });
+                            }}
+                            className="w-full text-center text-xs font-black tabular-nums text-[#1C1C1E] bg-[#F2F2F7] rounded-md py-0.5 border border-black/5 outline-none"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-center text-[11px] font-bold text-[#8E8E93] py-2.5">
+                          {locale === 'ko' ? '입력 안 함' : 'None'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 

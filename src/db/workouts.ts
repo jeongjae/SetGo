@@ -1,5 +1,5 @@
 import { db } from './db';
-import { getActiveRoutine, getRoutineScheduleForDate } from './routines';
+import { getActiveRoutine, getRoutineScheduleForDate, getSuggestedCyclePlanItem } from './routines';
 import type { CardioRecord, ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutExercise, WorkoutRecommendationExerciseTarget, WorkoutRecommendationSnapshot, WorkoutSession, WorkoutSessionKind, WorkoutSet } from '../types';
 import { formatDateKey, getTimeBand } from '../utils/date';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg, calculateSessionStrengthVolumeKg } from '../domain/volume';
@@ -81,6 +81,7 @@ export function createWorkoutSessionForDate(
   routineDayId?: string,
   entryKind: WorkoutStartKind = 'planned',
   recommendationSnapshot?: WorkoutRecommendationSnapshot,
+  cyclePlanItemId?: string,
 ): WorkoutSession {
   const timestamp = now.toISOString();
   const isFirstBackdatedSession = _existingSessionCount === 0 && date !== formatDateKey(now);
@@ -92,6 +93,7 @@ export function createWorkoutSessionForDate(
     timeBand: getTimeBand(new Date(`${date}T12:00:00`)),
     routineId,
     routineDayId,
+    cyclePlanItemId,
     entryKind: entryKind === 'planned' ? undefined : entryKind,
     recommendationSnapshot,
     status: 'in_progress',
@@ -113,6 +115,7 @@ export function selectWorkoutStartSession(
   options: WorkoutStartOptions = {},
   routineId?: string,
   routineDayId?: string,
+  cyclePlanItemId?: string,
 ): WorkoutStartSessionSelection {
   const existingSession = selectReusableInProgressSession(existingSessions, selectedRoutineDayId, options);
   if (existingSession) {
@@ -129,6 +132,7 @@ export function selectWorkoutStartSession(
       routineDayId,
       options.kind ?? 'planned',
       options.recommendationSnapshot,
+      cyclePlanItemId,
     ),
   };
 }
@@ -164,6 +168,14 @@ export async function getOrCreateWorkoutForDate(
     ? routineDays.find((day) => day.id === selectedRoutineDayId) ?? scheduledRoutineDay
     : undefined;
 
+  let cyclePlanItemId = scheduledPlan?.cycleItem?.id;
+  if (!cyclePlanItemId && activeRoutine && routineDay) {
+    const { nextItem } = await getSuggestedCyclePlanItem(activeRoutine).catch(() => ({ nextItem: undefined }));
+    if (nextItem && nextItem.routineDayId === routineDay.id) {
+      cyclePlanItemId = nextItem.id;
+    }
+  }
+
   const existingSessions = await getWorkoutSessionsForDate(date);
   const sessionSelection = selectWorkoutStartSession(
     date,
@@ -173,6 +185,7 @@ export async function getOrCreateWorkoutForDate(
     options,
     routineDay ? activeRoutine?.id : undefined,
     routineDay?.id,
+    cyclePlanItemId,
   );
 
   if (sessionSelection.kind === 'reuse') {

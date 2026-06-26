@@ -115,6 +115,27 @@ export class SetGoDatabase extends Dexie {
         }
       })
     ));
+
+    this.version(7).stores({
+      exercises: 'id, category, stage, isDefault, isActive',
+      routines: 'id, splitType, isActive, startDate',
+      routineDays: 'id, routineId, sequence, family, intensityPhase',
+      weeklySchedules: 'id, routineId, weekday, routineDayId',
+      routineCyclePlanItems: 'id, routineId, order, routineDayId, kind',
+      calendarPlanOverrides: 'id, date, routineId, routineDayId, kind',
+      routineExercisePlans: 'id, routineDayId, exerciseId, order',
+      workoutSessions: 'id, date, routineId, routineDayId, cyclePlanItemId, status',
+      workoutExercises: 'id, sessionId, exerciseId, order, status',
+      workoutSets: 'id, workoutExerciseId, setNo, intensityTechnique',
+      cardioRecords: 'id, sessionId, environment, order',
+    }).upgrade((tx) => {
+      return tx.table('routineDays').toCollection().modify((day) => {
+        const name = (day.name || '').toLowerCase();
+        day.family = name.includes('upper') || name.includes('상체') ? 'upper' : 
+                     name.includes('lower') || name.includes('하체') ? 'lower' : 'full_body';
+        day.intensityPhase = 'hypertrophy';
+      });
+    });
   }
 }
 
