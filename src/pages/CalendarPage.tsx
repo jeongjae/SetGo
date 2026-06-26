@@ -71,7 +71,9 @@ function buildCalendarDays(year: number, monthIndex: number): CalendarDay[] {
 }
 
 function dateFromKey(dateKey: string): Date {
-  return new Date(`${dateKey}T12:00:00`);
+  if (!dateKey) return new Date();
+  const parsed = new Date(`${dateKey}T12:00:00`);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
 function monthFromDate(date: Date): Date {
@@ -148,7 +150,13 @@ export function CalendarPage({
   const [activeRoutine, setActiveRoutine] = useState<Routine | undefined>();
   const [cycleItems, setCycleItems] = useState<RoutineCyclePlanItem[]>([]);
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklyScheduleView[]>([]);
-  const [selectedDateKey, setSelectedDateKey] = useState(initialSelectedDateKey ?? todayKey);
+  const [selectedDateKey, setSelectedDateKey] = useState(() => {
+    if (initialSelectedDateKey) {
+      const parsed = new Date(`${initialSelectedDateKey}T12:00:00`);
+      if (!isNaN(parsed.getTime())) return initialSelectedDateKey;
+    }
+    return todayKey;
+  });
   const [reloadKey, setReloadKey] = useState(0);
   const [locale] = useState(() => getStoredLocale());
   const monthFormatter = useMemo(() => new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
@@ -283,9 +291,11 @@ export function CalendarPage({
   useEffect(() => {
     if (!initialSelectedDateKey) return;
 
-    const initialDate = dateFromKey(initialSelectedDateKey);
-    setVisibleMonth(monthFromDate(initialDate));
-    setSelectedDateKey(initialSelectedDateKey);
+    const parsed = new Date(`${initialSelectedDateKey}T12:00:00`);
+    if (!isNaN(parsed.getTime())) {
+      setVisibleMonth(monthFromDate(parsed));
+      setSelectedDateKey(initialSelectedDateKey);
+    }
   }, [initialSelectedDateKey]);
 
   const getRoutineSummaryDescription = () => {

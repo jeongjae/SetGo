@@ -360,6 +360,12 @@ export function RoutineSetupPage({
 
   async function handleSaveWeeklySchedule() {
     if (!activeRoutine || !scheduleStartDate || cyclePlan.length === 0) return;
+    const parsedDate = new Date(`${scheduleStartDate}T12:00:00`);
+    if (isNaN(parsedDate.getTime())) {
+      setScheduleStatus(locale === 'ko' ? '올바른 시작일을 입력해 주세요.' : 'Please enter a valid start date.');
+      window.setTimeout(() => setScheduleStatus(undefined), 2000);
+      return;
+    }
     await saveRoutineCyclePlan(activeRoutine.id, scheduleStartDate, cyclePlan);
     setScheduleDirty(false);
     setScheduleStatus(locale === 'ko' ? '운동 사이클 계획을 저장했습니다.' : 'Weekly plan saved.');
@@ -369,6 +375,12 @@ export function RoutineSetupPage({
 
   async function handleReviewCycleCalendar() {
     if (!activeRoutine || !scheduleStartDate || cyclePlan.length === 0) return;
+    const parsedDate = new Date(`${scheduleStartDate}T12:00:00`);
+    if (isNaN(parsedDate.getTime())) {
+      setScheduleStatus(locale === 'ko' ? '올바른 시작일을 입력해 주세요.' : 'Please enter a valid start date.');
+      window.setTimeout(() => setScheduleStatus(undefined), 2000);
+      return;
+    }
     if (scheduleDirty) {
       await saveRoutineCyclePlan(activeRoutine.id, scheduleStartDate, cyclePlan);
       setScheduleDirty(false);

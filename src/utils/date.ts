@@ -18,7 +18,9 @@ export function formatDateKey(date: Date): string {
 }
 
 export function dateFromKey(dateKey: string): Date {
-  return new Date(`${dateKey}T12:00:00`);
+  if (!dateKey) return new Date();
+  const parsed = new Date(`${dateKey}T12:00:00`);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
 export function addDays(date: Date, days: number): Date {
