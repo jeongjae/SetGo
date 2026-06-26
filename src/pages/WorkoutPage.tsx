@@ -547,7 +547,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
   async function handleSetChange(
     set: WorkoutSet,
-    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type'>>,
+    values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type' | 'intensityTechnique'>>,
   ) {
     setSaveMessage(locale === 'ko' ? '\uC800\uC7A5 \uC911...' : 'Saving...');
     const wasCompleted = set.isCompleted;

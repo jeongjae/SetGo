@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import type { AppView } from '../app/App';
 import { IOSListRow, IOSPageHeader } from '../components/IosPrimitives';
 import { getStoredLocale, saveStoredLocale, t, type AppLocale } from '../i18n/i18n';
+import { triggerSelectionHaptic } from '../utils/haptics';
 
 type MorePageProps = {
   onNavigate: (view: AppView) => void;
@@ -12,6 +13,14 @@ type MorePageProps = {
 export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
   const [locale, setLocale] = useState<AppLocale>(() => getStoredLocale());
   const [showStorageInfo, setShowStorageInfo] = useState(false);
+
+  const [globalGoal, setGlobalGoal] = useState<'hypertrophy' | 'maintenance'>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const stored = localStorage.getItem('setgo-global-goal');
+      if (stored === 'maintenance') return 'maintenance';
+    }
+    return 'hypertrophy';
+  });
 
   useEffect(() => {
     if (!showStorageInfo) return undefined;
@@ -30,6 +39,14 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
     saveStoredLocale(nextLocale);
     setLocale(nextLocale);
     onLocaleChanged();
+  }
+
+  function handleGoalChange(nextGoal: 'hypertrophy' | 'maintenance') {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('setgo-global-goal', nextGoal);
+    }
+    setGlobalGoal(nextGoal);
+    triggerSelectionHaptic();
   }
 
   const managementRows = [
@@ -87,6 +104,37 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
             detail={locale === 'ko' ? 'Markdown, JSON 백업, CSV 관리' : 'Markdown, JSON backup, CSV management'}
             onClick={() => onNavigate('export')}
           />
+
+          {/* Global Training Goal */}
+          <div className="ios-row flex w-full items-center gap-3 bg-white p-3.5 text-left border-b border-black/[0.04]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FF2D55] text-white">
+              <span className="text-sm font-bold">🎯</span>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold text-[#1C1C1E]">
+                {locale === 'ko' ? '훈련 목적 설정' : 'Global Goal'}
+              </span>
+              <span className="mt-0.5 block text-xs font-semibold text-[#8E8E93]">
+                {locale === 'ko' ? '근성장(과부하) vs 유지 관리(피로 조절)' : 'Hypertrophy vs Maintenance'}
+              </span>
+            </span>
+            <div className="flex shrink-0 items-center rounded-xl border border-black/5 bg-[#F2F2F7] p-0.5">
+              {(['hypertrophy', 'maintenance'] as const).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => handleGoalChange(item)}
+                  className={`min-h-7 rounded-lg px-3 text-xs font-bold transition-all ${
+                    globalGoal === item
+                      ? 'bg-white font-black text-[#1C1C1E] shadow-sm'
+                      : 'text-[#6E6E73] hover:text-[#1C1C1E]'
+                  }`}
+                >
+                  {item === 'hypertrophy' ? (locale === 'ko' ? '근성장' : 'Gain') : (locale === 'ko' ? '유지' : 'Keep')}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="ios-row flex w-full items-center gap-3 bg-white p-3.5 text-left">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#8E8E93] text-white">

@@ -104,6 +104,8 @@ export type RoutineDay = {
   code: string;
   name: string;
   sequence: number;
+  family?: string;
+  intensityPhase?: 'hypertrophy' | 'maintenance' | 'deload' | 'cardio';
 };
 
 export type WeeklySchedule = {
@@ -158,6 +160,7 @@ export type WorkoutSession = {
   timeBand: TimeBand;
   routineId?: string;
   routineDayId?: string;
+  cyclePlanItemId?: string;
   entryKind?: WorkoutSessionKind;
   recommendationSnapshot?: WorkoutRecommendationSnapshot;
   status: WorkoutStatus;
@@ -193,6 +196,7 @@ export type WorkoutSet = {
   isWarmup?: boolean;
   isHard?: boolean;
   type?: WorkoutSetType;
+  intensityTechnique?: 'straight' | 'drop_set' | 'myo_reps';
 };
 
 export type CardioRecordSource = 'manual' | 'imported';
@@ -217,5 +221,7 @@ export type CardioRecord = {
   distanceKm?: number;
   averageSpeedKmh?: number;
   inclinePercent?: number;
+  speedKmh?: number;
+  inclinePct?: number;
   memo?: string;
 };

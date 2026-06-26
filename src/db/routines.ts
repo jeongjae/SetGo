@@ -550,6 +550,74 @@ export async function getNextRoutineDayAfterLatestWorkout(): Promise<RoutineDay 
   return days[(latestIndex + 1) % days.length] ?? days[0];
 }
 
+export async function getSuggestedCyclePlanItem(
+  activeRoutine: Routine,
+): Promise<{ nextItem: RoutineCyclePlanItem; shouldSkipCardio: boolean }> {
+  const cycleItems = await db.routineCyclePlanItems
+    .where('routineId')
+    .equals(activeRoutine.id)
+    .sortBy('order');
+
+  if (cycleItems.length === 0) {
+    return {
+      nextItem: {
+        id: 'fallback_rest',
+        routineId: activeRoutine.id,
+        order: 1,
+        kind: 'rest',
+      },
+      shouldSkipCardio: false,
+    };
+  }
+
+  const latestSession = await db.workoutSessions
+    .where('routineId')
+    .equals(activeRoutine.id)
+    .filter((s) => s.status === 'completed')
+    .reverse()
+    .first();
+
+  let nextIndex = 0;
+  let didSkipCardio = false;
+
+  if (latestSession) {
+    let lastItemIndex = -1;
+    if (latestSession.cyclePlanItemId) {
+      lastItemIndex = cycleItems.findIndex((item) => item.id === latestSession.cyclePlanItemId);
+    }
+    if (lastItemIndex === -1 && latestSession.routineDayId) {
+      lastItemIndex = cycleItems.findIndex((item) => item.routineDayId === latestSession.routineDayId);
+    }
+    if (lastItemIndex !== -1) {
+      nextIndex = (lastItemIndex + 1) % cycleItems.length;
+    }
+  }
+
+  let nextItem = cycleItems[nextIndex];
+
+  // Auto-Skip running/cardio if companion cardio was completed in the latest completed session
+  let loopCount = 0;
+  while ((nextItem.kind === 'running' || nextItem.kind === 'free') && loopCount < cycleItems.length) {
+    if (latestSession) {
+      const companionCardio = await db.cardioRecords
+        .where('sessionId')
+        .equals(latestSession.id)
+        .first();
+
+      if (companionCardio && (companionCardio.distanceKm ?? 0) > 0) {
+        nextIndex = (nextIndex + 1) % cycleItems.length;
+        nextItem = cycleItems[nextIndex];
+        didSkipCardio = true;
+        loopCount++;
+        continue;
+      }
+    }
+    break;
+  }
+
+  return { nextItem, shouldSkipCardio: didSkipCardio };
+}
+
 export async function getRoutineScheduleForDate(date = new Date()): Promise<RoutineScheduleForDate> {
   const routine = await getActiveRoutine();
   const [days, schedule, cycleItems] = await Promise.all([
@@ -580,6 +648,25 @@ export async function getRoutineScheduleForDate(date = new Date()): Promise<Rout
     return { kind: 'rest', isRestDay: true };
   }
 
+  // --- Dynamic Cycle Queue (Option 2) for TODAY ---
+  const todayKey = formatDateKey(new Date());
+  if (routine && cycleItems.length > 0 && dateKey === todayKey) {
+    const { nextItem } = await getSuggestedCyclePlanItem(routine).catch(() => ({ nextItem: undefined }));
+    if (nextItem) {
+      const routineDay = nextItem.routineDayId
+        ? days.find((day) => day.id === nextItem.routineDayId)
+        : undefined;
+
+      return {
+        cycleItem: nextItem,
+        routineDay,
+        kind: nextItem.kind,
+        isRestDay: nextItem.kind === 'rest' || (nextItem.kind === 'routine' && !routineDay),
+      };
+    }
+  }
+
+  // Fallback to date-based calculation for other dates (like in calendar)
   const cycleItem = getCyclePlanItemForDate(routine, cycleItems, dateKey);
   if (cycleItem) {
     const routineDay = cycleItem.routineDayId

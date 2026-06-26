@@ -119,6 +119,11 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const [selectedWorkoutKind, setSelectedWorkoutKind] = useState<WorkoutSessionKind>('planned');
   const [reloadKey, setReloadKey] = useState(0);
   const [locale] = useState(() => getStoredLocale());
+  const [showDeloadToast, setShowDeloadToast] = useState(false);
+  const [weeklyCardioMinutes, setWeeklyCardioMinutes] = useState(0);
+
+  const CARDIO_WEEKLY_TARGET_MINUTES = 60;
+  const cardioProgressPercent = Math.min(100, Math.round((weeklyCardioMinutes / CARDIO_WEEKLY_TARGET_MINUTES) * 100));
 
   const todayLabel = useMemo(() => new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
     weekday: 'long',
@@ -126,6 +131,13 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
     day: 'numeric',
     year: 'numeric',
   }).format(new Date()), [locale]);
+
+  useEffect(() => {
+    if (showDeloadToast) {
+      const timer = setTimeout(() => setShowDeloadToast(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showDeloadToast]);
 
   useEffect(() => {
     async function load() {
@@ -199,6 +211,34 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             ?? recommendation.routineDay?.id
             ?? (days.some((day) => day.id === current) ? current : undefined);
         });
+
+        // 1. Calculate weekly completed cardio minutes (last 7 days)
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const oneWeekAgoStr = formatDateKey(oneWeekAgo);
+
+        const recentSessions = await db.workoutSessions
+          .where('date')
+          .aboveOrEqual(oneWeekAgoStr)
+          .toArray();
+        const sessionIds = new Set(recentSessions.map(s => s.id));
+        const allCardio = await db.cardioRecords.toArray();
+        const weeklyCardio = allCardio
+          .filter(r => sessionIds.has(r.sessionId) && r.isDraft !== true)
+          .reduce((sum, r) => {
+            const started = new Date(r.startedAt).getTime();
+            const ended = new Date(r.endedAt).getTime();
+            if (isNaN(started) || isNaN(ended)) return sum;
+            return sum + Math.max(1, Math.round((ended - started) / 60000));
+          }, 0);
+        setWeeklyCardioMinutes(weeklyCardio);
+
+        // 2. Trigger Deload Week toast notice if scheduled routine is deload
+        if (todaySchedule.routineDay?.intensityPhase === 'deload') {
+          setShowDeloadToast(true);
+        } else {
+          setShowDeloadToast(false);
+        }
       } catch (error) {
         console.error('Failed to load local SetGo data', error);
       }
@@ -365,39 +405,80 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-[#10201F] px-4 py-3.5 text-white shadow-[0_12px_24px_rgba(16,32,31,0.14)]">
+          {/* Glassmorphism Up Next Card */}
+          <div className="pwa-upnext-card rounded-2xl px-4 py-3.5 text-[#1C1C1E] border border-white/50 backdrop-blur-md animate-slide-up">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-black uppercase tracking-wide text-white/65">{t(locale, 'todayRecommendation')}</p>
+              <p className="text-xs font-black uppercase tracking-wide text-[#6E6E73]">{t(locale, 'todayRecommendation')}</p>
+              {selectedRoutineDay?.intensityPhase && (
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-black tracking-wide ${
+                  selectedRoutineDay.intensityPhase === 'hypertrophy'
+                    ? 'bg-[#2EC4B6]/15 text-[#159A91]'
+                    : selectedRoutineDay.intensityPhase === 'maintenance'
+                      ? 'bg-[#34C759]/15 text-[#24963E]'
+                      : selectedRoutineDay.intensityPhase === 'deload'
+                        ? 'bg-[#FF9500]/15 text-[#B25E00]'
+                        : 'bg-[#007AFF]/15 text-[#0051A8]'
+                }`}>
+                  {selectedRoutineDay.intensityPhase === 'hypertrophy'
+                    ? (locale === 'ko' ? '강 / 근성장' : 'Heavy / Gain')
+                    : selectedRoutineDay.intensityPhase === 'maintenance'
+                      ? (locale === 'ko' ? '약 / 근유지' : 'Light / Keep')
+                      : selectedRoutineDay.intensityPhase === 'deload'
+                        ? (locale === 'ko' ? '회복 / 디로드' : 'Deload')
+                        : (locale === 'ko' ? '유산소' : 'Cardio')}
+                </span>
+              )}
             </div>
-            <p className="mt-2 flex items-center gap-2 text-[1.7rem] font-black leading-none">
+            <p className="mt-2 flex items-center gap-2 text-[1.7rem] font-black leading-none text-[#1C1C1E]">
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#2EC4B6]" />
               {displayedPlanLabel}
             </p>
             {dailyRecommendation ? (
-              <p className="mt-2 text-sm font-semibold leading-5 text-white/72">
+              <p className="mt-2 text-sm font-semibold leading-5 text-[#6E6E73]">
                 {dailyRecommendationReasonLabel(dailyRecommendation.reason, locale)}
               </p>
             ) : null}
             {recoveryWarning ? (
-              <p className="mt-2 flex items-start gap-1.5 rounded-xl bg-[#FF9500]/15 px-2.5 py-2 text-[13px] font-semibold leading-4 text-[#FFCC66]">
-                <AlertTriangle aria-hidden="true" size={15} className="mt-px shrink-0" />
+              <p className="mt-2 flex items-start gap-1.5 rounded-xl bg-[#FF9500]/10 px-2.5 py-2 text-[13px] font-semibold leading-4 text-[#B25E00]">
+                <AlertTriangle aria-hidden="true" size={15} className="mt-px shrink-0 text-[#FF9500]" />
                 <span>{recoveryWarning}</span>
               </p>
             ) : null}
             {plannedExerciseNames.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {plannedExerciseNames.slice(0, 4).map((exerciseName) => (
-                  <span key={exerciseName} className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-white/85">
+                  <span key={exerciseName} className="rounded-full bg-black/5 px-2.5 py-1 text-[11px] font-bold text-[#6E6E73]">
                     {exerciseName}
                   </span>
                 ))}
                 {plannedExerciseNames.length > 4 ? (
-                  <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-white/85">
+                  <span className="rounded-full bg-black/5 px-2.5 py-1 text-[11px] font-bold text-[#6E6E73]">
                     +{plannedExerciseNames.length - 4}
                   </span>
                 ) : null}
               </div>
             ) : null}
+
+            {/* Cardio Filler Progress Bar */}
+            {cardioProgressPercent < 70 && (
+              <div className="mt-4 border-t border-black/[0.06] pt-3">
+                <div className="flex items-center justify-between text-[11px] font-bold text-[#6E6E73]">
+                  <span>🏃 {locale === 'ko' ? '주간 유산소 달성도' : 'Weekly Cardio Progress'}</span>
+                  <span>{cardioProgressPercent}%</span>
+                </div>
+                <div className="mt-1.5 h-2 w-full rounded-full bg-[#E5E5EA] overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#2EC4B6] to-[#34C759] transition-all duration-500"
+                    style={{ width: `${cardioProgressPercent}%` }}
+                  />
+                </div>
+                <p className="mt-1.5 text-[11px] font-semibold leading-normal text-[#159A91]">
+                  {locale === 'ko'
+                    ? `이번 주 러닝이 ${CARDIO_WEEKLY_TARGET_MINUTES - weeklyCardioMinutes}분 부족합니다. 운동 후 가벼운 러닝을 추가해 보세요!`
+                    : `You need ${CARDIO_WEEKLY_TARGET_MINUTES - weeklyCardioMinutes} more mins of running this week. Add a light run after workout!`}
+                </p>
+              </div>
+            )}
           </div>
 
           {!activeRoutine ? (
@@ -487,6 +568,13 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
           <span>{workoutRecordLabel}</span>
         </button>
       </footer>
+      {showDeloadToast && (
+        <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-2xl bg-[#FF9500] px-4 py-3 text-sm font-black text-white shadow-2xl transition-all duration-500 animate-slide-up">
+          ⚠️ {locale === 'ko'
+            ? '피로 회복 주간(디로드)이 활성화되었습니다. 강도가 20% 자동 감축되었습니다.'
+            : 'Deload week active. Intensity reduced by 20% for recovery.'}
+        </div>
+      )}
     </section>
   );
 }
