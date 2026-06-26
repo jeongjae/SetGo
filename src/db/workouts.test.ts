@@ -4,11 +4,12 @@ import {
   createDraftCardioRecord,
   createWorkoutExerciseSeed,
   createWorkoutSessionForDate,
+  resolveAutoSkippedRunningItem,
   resolveWeightIncrementKg,
   selectReusableInProgressSession,
   selectWorkoutStartSession,
 } from './workouts';
-import type { ExerciseMaster, RoutineExercisePlan, WorkoutRecommendationSnapshot, WorkoutSession } from '../types';
+import type { ExerciseMaster, RoutineCyclePlanItem, RoutineExercisePlan, WorkoutRecommendationSnapshot, WorkoutSession } from '../types';
 
 function session(
   id: string,
@@ -347,6 +348,32 @@ describe('weight increment resolution', () => {
     expect(resolveWeightIncrementKg({ preferredWeightIncrementKg: -1 })).toBe(2.5);
     expect(resolveWeightIncrementKg({})).toBe(2.5);
     expect(resolveWeightIncrementKg()).toBe(2.5);
+  });
+});
+
+describe('cycle cardio auto-skip resolution', () => {
+  const cycleItems: RoutineCyclePlanItem[] = [
+    { id: 'cycle_upper', routineId: 'routine', order: 1, kind: 'routine', routineDayId: 'upper' },
+    { id: 'cycle_run', routineId: 'routine', order: 2, kind: 'running' },
+    { id: 'cycle_lower', routineId: 'routine', order: 3, kind: 'routine', routineDayId: 'lower' },
+  ];
+
+  it('marks the immediate running cycle item as auto-skippable after a routine workout', () => {
+    expect(resolveAutoSkippedRunningItem({
+      routineId: 'routine',
+      routineDayId: 'upper',
+      cyclePlanItemId: 'cycle_upper',
+    }, cycleItems)).toMatchObject({
+      id: 'cycle_run',
+      kind: 'running',
+    });
+  });
+
+  it('does not advance or auto-skip from a free workout', () => {
+    expect(resolveAutoSkippedRunningItem({
+      routineId: 'routine',
+      entryKind: 'free',
+    }, cycleItems)).toBeUndefined();
   });
 });
 

@@ -1,10 +1,12 @@
 import { db } from './db';
 import { getActiveRoutine, getRoutineScheduleForDate, getSuggestedCyclePlanItem } from './routines';
-import type { CardioRecord, ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutExercise, WorkoutRecommendationExerciseTarget, WorkoutRecommendationSnapshot, WorkoutSession, WorkoutSessionKind, WorkoutSet } from '../types';
+import type { CardioRecord, ExerciseMaster, RoutineCyclePlanItem, RoutineDay, RoutineExercisePlan, WorkoutExercise, WorkoutRecommendationExerciseTarget, WorkoutRecommendationSnapshot, WorkoutSession, WorkoutSessionKind, WorkoutSet } from '../types';
 import { formatDateKey, getTimeBand } from '../utils/date';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg, calculateSessionStrengthVolumeKg } from '../domain/volume';
 import { isWarmupOnlyExercise } from '../domain/exercises';
-import { recommendExerciseTarget, type ExerciseTargetRecommendation, type RecentExerciseSession } from '../domain/recommendations';
+import { buildStats, toRecoveryMuscleGroups } from '../domain/stats';
+import { recommendExerciseTarget, type ExerciseTargetRecommendation, type RecentExerciseSession, type TrainingGoal } from '../domain/recommendations';
+import type { RecoverySnapshot } from '../domain/recovery';
 
 export type ActiveWorkout = {
   session: WorkoutSession;
@@ -36,6 +38,40 @@ export const DEFAULT_WEIGHT_INCREMENT_KG = 2.5;
 export function resolveWeightIncrementKg(plan?: Pick<RoutineExercisePlan, 'preferredWeightIncrementKg'>): number {
   const value = plan?.preferredWeightIncrementKg;
   return value !== undefined && Number.isFinite(value) && value > 0 ? value : DEFAULT_WEIGHT_INCREMENT_KG;
+}
+
+function getStoredTrainingGoal(): TrainingGoal {
+  if (typeof localStorage === 'undefined') return 'hypertrophy';
+  return localStorage.getItem('setgo-global-goal') === 'maintenance' ? 'maintenance' : 'hypertrophy';
+}
+
+async function getCurrentRecoverySnapshot(): Promise<RecoverySnapshot> {
+  const [sessions, workoutExercises, workoutSets, exercises, cardioRecords] = await Promise.all([
+    db.workoutSessions.toArray(),
+    db.workoutExercises.toArray(),
+    db.workoutSets.toArray(),
+    db.exercises.toArray(),
+    db.cardioRecords.toArray(),
+  ]);
+
+  return buildStats(sessions, workoutExercises, workoutSets, exercises, 'en', cardioRecords, 7).recovery;
+}
+
+function recoveryPercentForExercise(
+  exercise: ExerciseMaster | undefined,
+  recoverySnapshot: RecoverySnapshot | undefined,
+): number | undefined {
+  if (!exercise || !recoverySnapshot) return undefined;
+
+  const groups = toRecoveryMuscleGroups(exercise).filter((group) => group !== 'cardio');
+  if (groups.length === 0) return undefined;
+
+  const recoveryByGroup = new Map(recoverySnapshot.groups.map((group) => [group.group, group.recoveryPercent]));
+  const percents = groups
+    .map((group) => recoveryByGroup.get(group))
+    .filter((value): value is number => value !== undefined);
+
+  return percents.length > 0 ? Math.min(...percents) : undefined;
 }
 
 export type WorkoutStartOptions = {
@@ -135,6 +171,27 @@ export function selectWorkoutStartSession(
       cyclePlanItemId,
     ),
   };
+}
+
+export function resolveAutoSkippedRunningItem(
+  completedSession: Pick<WorkoutSession, 'cyclePlanItemId' | 'entryKind' | 'routineDayId' | 'routineId'>,
+  cycleItems: RoutineCyclePlanItem[],
+): RoutineCyclePlanItem | undefined {
+  if (completedSession.entryKind === 'running' || completedSession.entryKind === 'free' || !completedSession.routineId) {
+    return undefined;
+  }
+
+  let lastItemIndex = -1;
+  if (completedSession.cyclePlanItemId) {
+    lastItemIndex = cycleItems.findIndex((item) => item.id === completedSession.cyclePlanItemId);
+  }
+  if (lastItemIndex === -1 && completedSession.routineDayId) {
+    lastItemIndex = cycleItems.findIndex((item) => item.routineDayId === completedSession.routineDayId);
+  }
+  if (lastItemIndex === -1) return undefined;
+
+  const nextItem = cycleItems[(lastItemIndex + 1) % cycleItems.length];
+  return nextItem?.kind === 'running' ? nextItem : undefined;
 }
 
 export async function getOrCreateWorkoutForDate(
@@ -375,7 +432,7 @@ async function getRecentExerciseSessions(
     return { session, sets };
   }));
 
-  return candidates
+  const recentCandidates = candidates
     .filter((candidate): candidate is { session: WorkoutSession; sets: WorkoutSet[] } => (
       candidate.session !== undefined
       && candidate.session.status === 'completed'
@@ -388,16 +445,39 @@ async function getRecentExerciseSessions(
     .map((candidate) => ({
       date: candidate.session.date,
       sets: candidate.sets,
+      session: candidate.session,
     }));
+
+  return Promise.all(recentCandidates.map(async (candidate) => {
+    const routineDay = candidate.session.routineDayId
+      ? await db.routineDays.get(candidate.session.routineDayId)
+      : undefined;
+    return {
+      date: candidate.date,
+      family: routineDay?.family,
+      intensityPhase: routineDay?.intensityPhase,
+      sets: candidate.sets,
+    };
+  }));
 }
 
 async function getPlanRecommendation(
   sessionId: string,
   plan: RoutineExercisePlan,
   exercise: ExerciseMaster | undefined,
+  routineDay?: RoutineDay,
+  recoverySnapshot?: RecoverySnapshot,
 ): Promise<ExerciseTargetRecommendation> {
   const recentSessions = await getRecentExerciseSessions(sessionId, plan.exerciseId);
-  return recommendExerciseTarget({ plan, recentSessions, exercise });
+  return recommendExerciseTarget({
+    plan,
+    recentSessions,
+    exercise,
+    currentFamily: routineDay?.family,
+    currentPhase: routineDay?.intensityPhase,
+    globalGoal: getStoredTrainingGoal(),
+    recoveryPercent: recoveryPercentForExercise(exercise, recoverySnapshot),
+  });
 }
 
 async function getTargetRecommendationForWorkoutExercise(
@@ -406,6 +486,8 @@ async function getTargetRecommendationForWorkoutExercise(
   exercise: ExerciseMaster,
   currentSets: WorkoutSet[],
   routinePlan?: RoutineExercisePlan,
+  routineDay?: RoutineDay,
+  recoverySnapshot?: RecoverySnapshot,
 ): Promise<ExerciseTargetRecommendation> {
   const firstSet = currentSets[0];
   const fallbackPlan: RoutineExercisePlan = {
@@ -420,7 +502,7 @@ async function getTargetRecommendationForWorkoutExercise(
     plannedRestSeconds: workoutExercise.restSeconds ?? 90,
   };
 
-  return getPlanRecommendation(session.id, routinePlan ?? fallbackPlan, exercise);
+  return getPlanRecommendation(session.id, routinePlan ?? fallbackPlan, exercise, routineDay, recoverySnapshot);
 }
 
 async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayId?: string): Promise<void> {
@@ -429,10 +511,14 @@ async function seedWorkoutExercisesFromRoutineDay(sessionId: string, routineDayI
   const plans = await db.routineExercisePlans.where('routineDayId').equals(routineDayId).sortBy('order');
   if (plans.length === 0) return;
 
-  const planExercises = await Promise.all(plans.map((plan) => db.exercises.get(plan.exerciseId)));
+  const [routineDay, planExercises] = await Promise.all([
+    db.routineDays.get(routineDayId),
+    Promise.all(plans.map((plan) => db.exercises.get(plan.exerciseId))),
+  ]);
   const exerciseById = new Map(plans.map((plan, index) => [plan.exerciseId, planExercises[index]]));
+  const recoverySnapshot = await getCurrentRecoverySnapshot();
   const recommendations = await Promise.all(
-    plans.map((plan, index) => getPlanRecommendation(sessionId, plan, planExercises[index])),
+    plans.map((plan, index) => getPlanRecommendation(sessionId, plan, planExercises[index], routineDay, recoverySnapshot)),
   );
   const recommendationByPlanId = new Map(plans.map((plan, index) => [plan.id, recommendations[index]]));
   const seed = createWorkoutExerciseSeed(sessionId, plans, exerciseById, recommendationByPlanId);
@@ -487,6 +573,7 @@ export async function getWorkoutSummariesForDate(date: string): Promise<WorkoutS
 export async function getWorkoutExerciseLogs(sessionId: string): Promise<WorkoutExerciseLog[]> {
   const workoutExercises = await db.workoutExercises.where('sessionId').equals(sessionId).sortBy('order');
   const session = await db.workoutSessions.get(sessionId);
+  const recoverySnapshot = await getCurrentRecoverySnapshot();
 
   return Promise.all(
     workoutExercises.map(async (workoutExercise) => {
@@ -508,8 +595,9 @@ export async function getWorkoutExerciseLogs(sessionId: string): Promise<Workout
 
       const prevRecord = await getPreviousExerciseRecord(workoutExercise.sessionId, workoutExercise.exerciseId);
       const pastBests = await getExercisePastBests(workoutExercise.sessionId, workoutExercise.exerciseId);
+      const routineDay = session?.routineDayId ? await db.routineDays.get(session.routineDayId) : undefined;
       const targetRecommendation = session
-        ? await getTargetRecommendationForWorkoutExercise(session, workoutExercise, exercise, sets, routinePlan)
+        ? await getTargetRecommendationForWorkoutExercise(session, workoutExercise, exercise, sets, routinePlan, routineDay, recoverySnapshot)
         : undefined;
 
       return {
@@ -736,16 +824,19 @@ export async function addExerciseToWorkout(sessionId: string, exerciseId: string
 
   const isWarmup = isWarmupOnlyExercise(exercise);
   const workoutExerciseId = `${sessionId}_${exerciseId}_${Date.now()}`;
+  const session = await db.workoutSessions.get(sessionId);
+  const routineDay = session?.routineDayId ? await db.routineDays.get(session.routineDayId) : undefined;
+  const recoverySnapshot = await getCurrentRecoverySnapshot();
   const recommendation = await getPlanRecommendation(sessionId, {
     id: `${workoutExerciseId}_free_plan`,
-    routineDayId: '',
+    routineDayId: routineDay?.id ?? '',
     exerciseId,
     order,
     plannedSets: 3,
     plannedReps: isWarmup ? 12 : 10,
     plannedRir: isWarmup ? undefined : 2,
     plannedRestSeconds: 90,
-  }, exercise);
+  }, exercise, routineDay, recoverySnapshot);
   const workoutExercise: WorkoutExercise = {
     id: workoutExerciseId,
     sessionId,
@@ -1053,7 +1144,7 @@ export async function moveWorkoutCardioBlock(sessionId: string, direction: -1 | 
 
 export async function updateWorkoutSet(
   setId: string,
-  values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type'>>,
+  values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type' | 'intensityTechnique'>>,
 ): Promise<void> {
   const existingSet = await db.workoutSets.get(setId);
   if (!existingSet) return;
@@ -1097,18 +1188,86 @@ export async function updateWorkoutExerciseRestSeconds(workoutExerciseId: string
   });
 }
 
+async function recordAutoSkippedCompanionCardio(sessionId: string, now: Date): Promise<void> {
+  const completedSession = await db.workoutSessions.get(sessionId);
+  if (
+    !completedSession
+    || completedSession.entryKind === 'running'
+    || completedSession.entryKind === 'free'
+    || !completedSession.routineId
+  ) {
+    return;
+  }
+
+  const companionCardio = await db.cardioRecords
+    .where('sessionId')
+    .equals(sessionId)
+    .filter((record) => record.isDraft !== true && (record.distanceKm ?? 0) > 0)
+    .first();
+  if (!companionCardio) return;
+
+  const routine = await db.routines.get(completedSession.routineId);
+  if (!routine) return;
+
+  const cycleItems = await db.routineCyclePlanItems
+    .where('routineId')
+    .equals(routine.id)
+    .sortBy('order');
+  if (cycleItems.length === 0) return;
+
+  const skippedRunningItem = resolveAutoSkippedRunningItem(completedSession, cycleItems);
+  if (!skippedRunningItem) return;
+
+  const { nextItem, shouldSkipCardio } = await getSuggestedCyclePlanItem(routine);
+  if (!shouldSkipCardio || nextItem.id === skippedRunningItem.id) return;
+
+  const existingSkip = await db.workoutSessions
+    .where('routineId')
+    .equals(routine.id)
+    .filter((session) => (
+      session.date === completedSession.date
+      && session.cyclePlanItemId === skippedRunningItem.id
+      && session.status === 'skipped'
+      && session.autoSkipped === true
+    ))
+    .first();
+  if (existingSkip) return;
+
+  const timestamp = now.toISOString();
+  await db.workoutSessions.put({
+    id: `workout_${completedSession.date}_auto_skip_${skippedRunningItem.id}_${now.getTime()}`,
+    date: completedSession.date,
+    startedAt: timestamp,
+    endedAt: timestamp,
+    timeBand: completedSession.timeBand,
+    routineId: routine.id,
+    cyclePlanItemId: skippedRunningItem.id,
+    entryKind: 'running',
+    status: 'skipped',
+    totalStrengthVolumeKg: 0,
+    autoSkipped: true,
+    skipReason: 'companion_cardio_completed',
+    memo: 'Auto-skipped because cardio was completed inside the companion strength workout.',
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  });
+}
+
 export async function completeWorkoutSession(sessionId: string): Promise<void> {
+  const now = new Date();
   await db.workoutSessions.update(sessionId, {
     status: 'completed',
-    endedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    endedAt: now.toISOString(),
+    updatedAt: now.toISOString(),
   });
+  await recordAutoSkippedCompanionCardio(sessionId, now);
 }
 
 export async function skipWorkoutSession(sessionId: string): Promise<void> {
   await db.workoutSessions.update(sessionId, {
     status: 'skipped',
     endedAt: new Date().toISOString(),
+    skipReason: 'manual',
     updatedAt: new Date().toISOString(),
   });
 }

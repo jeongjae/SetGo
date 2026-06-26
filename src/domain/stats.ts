@@ -188,6 +188,29 @@ export function isHardSet(set: WorkoutSet, exercise: ExerciseMaster): boolean {
   return set.isCompleted && !isWarmup && !isWarmupOnlyExercise(exercise) && set.isHard === true;
 }
 
+function normalizedHardSetCount(
+  sets: WorkoutSet[],
+  workoutExerciseById: Map<string, WorkoutExercise>,
+  exerciseById: Map<string, ExerciseMaster>,
+): number {
+  const countedMyoExercises = new Set<string>();
+  let count = 0;
+
+  for (const set of sets) {
+    const workoutExercise = workoutExerciseById.get(set.workoutExerciseId);
+    const exercise = workoutExercise ? exerciseById.get(workoutExercise.exerciseId) : undefined;
+    if (!workoutExercise || !exercise || !isHardSet(set, exercise)) continue;
+
+    if (set.intensityTechnique === 'myo_reps') {
+      if (countedMyoExercises.has(set.workoutExerciseId)) continue;
+      countedMyoExercises.add(set.workoutExerciseId);
+    }
+    count += 1;
+  }
+
+  return count;
+}
+
 export function toMuscleGroups(exercise: ExerciseMaster): MuscleGroup[] {
   const categories = getExerciseCategories(exercise);
   const mapped = categories
@@ -397,11 +420,7 @@ export function buildStats(
       workoutDays: new Set(weekSessions.map((session) => session.date)).size,
       volumeKg: weekSets.reduce((sum, set) => sum + setVolume(set), 0),
       sets: weekSets.length,
-      hardSets: weekSets.filter((set) => {
-        const workoutExercise = workoutExerciseById.get(set.workoutExerciseId);
-        const exercise = workoutExercise ? exerciseById.get(workoutExercise.exerciseId) : undefined;
-        return exercise ? isHardSet(set, exercise) : false;
-      }).length,
+      hardSets: normalizedHardSetCount(weekSets, workoutExerciseById, exerciseById),
     };
   });
 
@@ -421,11 +440,7 @@ export function buildStats(
     return Boolean(isWarmup) || isWarmupOnlyExercise(exercise);
   };
   const currentPeriodTrainingSets = currentPeriodSets.filter((set) => !isWarmupSetForStats(set));
-  const hardSets = currentPeriodSets.filter((set) => {
-    const workoutExercise = workoutExerciseById.get(set.workoutExerciseId);
-    const exercise = workoutExercise ? exerciseById.get(workoutExercise.exerciseId) : undefined;
-    return exercise ? isHardSet(set, exercise) : false;
-  }).length;
+  const hardSets = normalizedHardSetCount(currentPeriodSets, workoutExerciseById, exerciseById);
 
   type MuscleAccumulator = Omit<MuscleStat, 'status' | 'targetPct' | 'deficitSets' | 'excessSets' | 'setsPerWeek'>;
   const muscleMap = new Map<MuscleGroup, MuscleAccumulator>(
@@ -453,7 +468,7 @@ export function buildStats(
         if (!stat) return;
         stat.volumeKg += sets.reduce((sum, set) => sum + setVolume(set), 0);
         stat.sets += trainingSets.length;
-        stat.hardSets += sets.filter((set) => isHardSet(set, exercise)).length;
+        stat.hardSets += normalizedHardSetCount(sets, workoutExerciseById, exerciseById);
       });
     });
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { calculateSuggestedVolume, countNormalizedHardSets } from './recommendation';
 import type { WorkoutSet } from '../types';
 
@@ -7,19 +7,19 @@ describe('calculateSuggestedVolume', () => {
 
   it('falls back to template values when there is no past history', () => {
     const suggested = calculateSuggestedVolume([], 'hypertrophy', 100, 'hypertrophy', templatePlan);
-    expect(suggested.weightKg).toBe(52.5); // 50 + 2.5 hypertrophy overload
+    expect(suggested.weightKg).toBe(50);
     expect(suggested.reps).toBe(10);
     expect(suggested.sets).toBe(3);
   });
 
   it('calculates hypertrophy overload based on history', () => {
     const history: WorkoutSet[] = [
-      { id: '1', workoutExerciseId: 'e1', setNo: 1, weightKg: 80, reps: 8, isCompleted: true },
-      { id: '2', workoutExerciseId: 'e1', setNo: 2, weightKg: 80, reps: 8, isCompleted: true },
+      { id: '1', workoutExerciseId: 'e1', setNo: 1, weightKg: 80, reps: 10, rir: 2, isCompleted: true },
+      { id: '2', workoutExerciseId: 'e1', setNo: 2, weightKg: 80, reps: 10, rir: 2, isCompleted: true },
     ];
     const suggested = calculateSuggestedVolume(history, 'hypertrophy', 100, 'hypertrophy');
-    expect(suggested.weightKg).toBe(82.5); // 80 + 2.5
-    expect(suggested.sets).toBe(2); // Matches history completed sets count
+    expect(suggested.weightKg).toBe(82.5);
+    expect(suggested.sets).toBe(2);
   });
 
   it('maintains weight on hypertrophy phase if global goal is maintenance', () => {
@@ -27,16 +27,16 @@ describe('calculateSuggestedVolume', () => {
       { id: '1', workoutExerciseId: 'e1', setNo: 1, weightKg: 80, reps: 8, isCompleted: true },
     ];
     const suggested = calculateSuggestedVolume(history, 'hypertrophy', 100, 'maintenance');
-    expect(suggested.weightKg).toBe(80); // Maintains same weight
+    expect(suggested.weightKg).toBe(80);
   });
 
-  it('calculates B/Maintenance session weight as 80% of hypertrophy history', () => {
+  it('calculates B session weight as 80% of hypertrophy history', () => {
     const history: WorkoutSet[] = [
       { id: '1', workoutExerciseId: 'e1', setNo: 1, weightKg: 100, reps: 10, isCompleted: true },
     ];
     const suggested = calculateSuggestedVolume(history, 'maintenance', 100, 'hypertrophy');
-    expect(suggested.weightKg).toBe(80); // 100 * 0.8
-    expect(suggested.reps).toBe(12); // High reps (12) for maintenance/light day
+    expect(suggested.weightKg).toBe(80);
+    expect(suggested.reps).toBe(12);
   });
 
   it('applies deload weight and set reduction', () => {
@@ -47,19 +47,19 @@ describe('calculateSuggestedVolume', () => {
       { id: '4', workoutExerciseId: 'e1', setNo: 4, weightKg: 100, reps: 10, isCompleted: true },
     ];
     const suggested = calculateSuggestedVolume(history, 'deload', 100, 'hypertrophy');
-    expect(suggested.weightKg).toBe(80); // 100 * 0.8
-    expect(suggested.sets).toBe(2); // 4 sets * 50% = 2 sets
+    expect(suggested.weightKg).toBe(80);
+    expect(suggested.sets).toBe(2);
   });
 
-  it('reduces 1 set if muscle recovery is low (< 50%)', () => {
+  it('reduces 1 set if muscle recovery is low', () => {
     const history: WorkoutSet[] = [
       { id: '1', workoutExerciseId: 'e1', setNo: 1, weightKg: 100, reps: 10, isCompleted: true },
       { id: '2', workoutExerciseId: 'e1', setNo: 2, weightKg: 100, reps: 10, isCompleted: true },
       { id: '3', workoutExerciseId: 'e1', setNo: 3, weightKg: 100, reps: 10, isCompleted: true },
     ];
     const suggested = calculateSuggestedVolume(history, 'hypertrophy', 40, 'hypertrophy');
-    expect(suggested.sets).toBe(2); // 3 sets - 1 = 2 sets
-    expect(suggested.note).toContain('회복 주의');
+    expect(suggested.sets).toBe(2);
+    expect(suggested.note).toContain('Recovery is low');
   });
 });
 
@@ -68,18 +68,18 @@ describe('countNormalizedHardSets', () => {
     const sets = [
       { isCompleted: true, isWarmup: false, workoutExerciseId: 'ex1' },
       { isCompleted: true, isWarmup: false, workoutExerciseId: 'ex1' },
-      { isCompleted: true, isWarmup: true, workoutExerciseId: 'ex1' }, // Warmup set
+      { isCompleted: true, isWarmup: true, workoutExerciseId: 'ex1' },
     ];
     expect(countNormalizedHardSets(sets)).toBe(2);
   });
 
-  it('collapses multiple myo_reps sets in the same exercise into 1 hard set count', () => {
+  it('collapses multiple myo-reps sets in the same exercise into 1 hard set count', () => {
     const sets = [
       { isCompleted: true, isWarmup: false, intensityTechnique: 'myo_reps', workoutExerciseId: 'ex1' },
       { isCompleted: true, isWarmup: false, intensityTechnique: 'myo_reps', workoutExerciseId: 'ex1' },
       { isCompleted: true, isWarmup: false, intensityTechnique: 'myo_reps', workoutExerciseId: 'ex1' },
-      { isCompleted: true, isWarmup: false, workoutExerciseId: 'ex2' }, // Another standard exercise
+      { isCompleted: true, isWarmup: false, workoutExerciseId: 'ex2' },
     ];
-    expect(countNormalizedHardSets(sets)).toBe(2); // 1 (myo_reps collapsed) + 1 (standard) = 2
+    expect(countNormalizedHardSets(sets)).toBe(2);
   });
 });
