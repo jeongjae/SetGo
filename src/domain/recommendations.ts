@@ -1,9 +1,13 @@
-import type { ExerciseMaster, RoutineExercisePlan, WorkoutSet } from '../types';
+import type { ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutSet } from '../types';
 
 export type ExerciseProgressionStyle = NonNullable<RoutineExercisePlan['progressionStyle']>;
+export type TrainingGoal = 'hypertrophy' | 'maintenance';
+export type IntensityPhase = NonNullable<RoutineDay['intensityPhase']>;
 
 export type RecentExerciseSession = {
   date: string;
+  family?: string;
+  intensityPhase?: IntensityPhase;
   sets: Array<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'type'>>;
 };
 
@@ -42,6 +46,24 @@ function bestSet(sets: RecentExerciseSession['sets']) {
     .sort((a, b) => (b.weightKg * b.reps) - (a.weightKg * a.reps))[0];
 }
 
+function roundToHalfKg(value: number): number {
+  return Number((Math.round(value * 2) / 2).toFixed(1));
+}
+
+function withLowRecoveryAdjustment(
+  recommendation: ExerciseTargetRecommendation,
+  recoveryPercent?: number,
+): ExerciseTargetRecommendation {
+  if (recoveryPercent === undefined || recoveryPercent >= 50) return recommendation;
+
+  return {
+    ...recommendation,
+    sets: Math.max(2, recommendation.sets - 1),
+    confidence: recommendation.confidence === 'high' ? 'medium' : recommendation.confidence,
+    reason: `${recommendation.reason} Recovery is low (${recoveryPercent}%), so SetGo removes one working set.`,
+  };
+}
+
 function inferProgressionStyle(
   exercise?: Pick<ExerciseMaster, 'category' | 'categoryTags'>,
 ): ExerciseProgressionStyle {
@@ -72,6 +94,10 @@ export function recommendExerciseTarget({
   plan,
   recentSessions,
   exercise,
+  currentFamily,
+  currentPhase = 'hypertrophy',
+  globalGoal = 'hypertrophy',
+  recoveryPercent,
 }: {
   plan: Pick<
     RoutineExercisePlan,
@@ -79,6 +105,10 @@ export function recommendExerciseTarget({
   >;
   recentSessions: RecentExerciseSession[];
   exercise?: Pick<ExerciseMaster, 'category' | 'categoryTags'>;
+  currentFamily?: string;
+  currentPhase?: IntensityPhase;
+  globalGoal?: TrainingGoal;
+  recoveryPercent?: number;
 }): ExerciseTargetRecommendation {
   const targetRange = resolveTargetRepRange(plan);
   const plannedSets = Math.max(1, Math.round(plan.plannedSets ?? 3));
@@ -91,8 +121,31 @@ export function recommendExerciseTarget({
     .filter((item) => item.sets.length > 0);
   const last = completedSessions[0];
 
+  if (currentPhase === 'maintenance') {
+    const matchedHypertrophy = completedSessions.find((item) => (
+      item.session.intensityPhase === 'hypertrophy'
+      && (!currentFamily || !item.session.family || item.session.family === currentFamily)
+    ));
+    const source = matchedHypertrophy ?? last;
+    const sourceBest = source ? bestSet(source.sets) : undefined;
+    const sourceWeight = sourceBest?.weightKg ?? plan.plannedWeightKg;
+
+    return withLowRecoveryAdjustment({
+      weightKg: sourceWeight === undefined ? undefined : roundToHalfKg(sourceWeight * 0.8),
+      reps: 12,
+      sets: source ? Math.max(plannedSets, source.sets.length) : plannedSets,
+      rir: plannedRir ?? 3,
+      targetRepMin: Math.min(targetRange.min, 10),
+      targetRepMax: Math.max(targetRange.max, 12),
+      reason: source
+        ? 'Light session: SetGo uses 80% of the latest matching heavy-session weight for active recovery.'
+        : 'Light session: no heavy-session history yet, so SetGo starts from the routine target.',
+      confidence: matchedHypertrophy ? 'high' : source ? 'medium' : 'low',
+    }, recoveryPercent);
+  }
+
   if (!last) {
-    return {
+    return withLowRecoveryAdjustment({
       weightKg: plan.plannedWeightKg,
       reps: plannedReps,
       sets: plannedSets,
@@ -101,7 +154,7 @@ export function recommendExerciseTarget({
       targetRepMax: targetRange.max,
       reason: 'No completed history yet, so SetGo uses the routine target.',
       confidence: 'low',
-    };
+    }, currentPhase === 'deload' ? undefined : recoveryPercent);
   }
 
   const lastSets = last.sets;
@@ -118,21 +171,37 @@ export function recommendExerciseTarget({
   });
   const recentSetCount = Math.max(plannedSets, Math.round(lastSets.length || plannedSets));
 
-  if (allReachedTop && baseRir !== undefined && baseRir >= 1 && baseRir <= 3 && increment > 0) {
+  if (currentPhase === 'deload') {
     return {
-      weightKg: roundToIncrement(baseWeight + increment, increment),
+      weightKg: roundToHalfKg(baseWeight * 0.8),
+      reps: Math.min(10, Math.max(1, plannedReps)),
+      sets: Math.max(1, Math.round(recentSetCount * 0.5)),
+      rir: plannedRir ?? 4,
+      targetRepMin: targetRange.min,
+      targetRepMax: targetRange.max,
+      reason: 'Deload session: SetGo reduces recent working weight by 20% and cuts set count by about half.',
+      confidence: 'high',
+    };
+  }
+
+  if (allReachedTop && baseRir !== undefined && baseRir >= 1 && baseRir <= 3 && increment > 0) {
+    const shouldIncrease = globalGoal === 'hypertrophy';
+    return withLowRecoveryAdjustment({
+      weightKg: shouldIncrease ? roundToIncrement(baseWeight + increment, increment) : baseWeight,
       reps: targetRange.min,
       sets: recentSetCount,
       rir: plannedRir ?? 2,
       targetRepMin: targetRange.min,
       targetRepMax: targetRange.max,
-      reason: `Last session reached ${targetRange.max} reps across working sets with RIR ${baseRir}, so SetGo suggests a small weight increase.`,
+      reason: shouldIncrease
+        ? `Last session reached ${targetRange.max} reps across working sets with RIR ${baseRir}, so SetGo suggests a small weight increase.`
+        : `Last session reached ${targetRange.max} reps, but the global goal is maintenance, so SetGo holds weight steady.`,
       confidence: completedSessions.length >= 2 ? 'high' : 'medium',
-    };
+    }, recoveryPercent);
   }
 
   if (repeatedMaxEffort) {
-    return {
+    return withLowRecoveryAdjustment({
       weightKg: baseWeight,
       reps: Math.max(targetRange.min, Math.min(finalSet?.reps ?? targetRange.min, targetRange.max)),
       sets: recentSetCount,
@@ -141,12 +210,12 @@ export function recommendExerciseTarget({
       targetRepMax: targetRange.max,
       reason: 'The last two sessions ended at RIR 0, so SetGo holds weight steady before progressing.',
       confidence: 'medium',
-    };
+    }, recoveryPercent);
   }
 
   if (anyBelowMin) {
     const shouldReduce = finalWasMaxEffort && increment > 0;
-    return {
+    return withLowRecoveryAdjustment({
       weightKg: shouldReduce ? roundToIncrement(Math.max(0, baseWeight - increment), increment) : baseWeight,
       reps: targetRange.min,
       sets: recentSetCount,
@@ -157,7 +226,7 @@ export function recommendExerciseTarget({
         ? `A working set fell below ${targetRange.min} reps at max effort, so SetGo suggests a small reduction.`
         : `A working set fell below ${targetRange.min} reps, so SetGo holds weight and targets the low end of the range.`,
       confidence: 'medium',
-    };
+    }, recoveryPercent);
   }
 
   const bestReps = Math.max(...lastSets.map((set) => set.reps));
@@ -165,7 +234,7 @@ export function recommendExerciseTarget({
     ? clamp(bestReps + 1, targetRange.min, targetRange.max)
     : clamp(bestReps, targetRange.min, targetRange.max);
 
-  return {
+  return withLowRecoveryAdjustment({
     weightKg: baseWeight || plan.plannedWeightKg,
     reps: nextReps,
     sets: recentSetCount,
@@ -174,5 +243,5 @@ export function recommendExerciseTarget({
     targetRepMax: targetRange.max,
     reason: 'Recent work is inside the target range, so SetGo keeps the weight stable and nudges reps within range.',
     confidence: completedSessions.length >= 2 ? 'high' : 'medium',
-  };
+  }, recoveryPercent);
 }

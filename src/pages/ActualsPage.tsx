@@ -65,6 +65,22 @@ function summarizeCardioMinutes(records: CardioRecord[]): number {
     }, 0);
 }
 
+function countDisplayHardSets(sets: WorkoutSet[]): number {
+  const countedMyoExercises = new Set<string>();
+  let count = 0;
+
+  for (const set of sets) {
+    if (set.isHard !== true || set.type === 'warmup' || set.isWarmup === true) continue;
+    if (set.intensityTechnique === 'myo_reps') {
+      if (countedMyoExercises.has(set.workoutExerciseId)) continue;
+      countedMyoExercises.add(set.workoutExerciseId);
+    }
+    count += 1;
+  }
+
+  return count;
+}
+
 export function actualsDayCellLabel(
   summaries: WorkoutSummary[],
   locale: 'ko' | 'en',
@@ -264,7 +280,7 @@ export function ActualsPage({
   const selectedWeekCardioDistance = cardioRecords
     .filter((record) => selectedWeekSessionIds.has(record.sessionId) && record.isDraft !== true)
     .reduce((sum, record) => sum + (record.distanceKm ?? 0), 0);
-  const hardSets = selectedWeekSets.filter((set) => set.isHard === true && set.type !== 'warmup' && !set.isWarmup).length;
+  const hardSets = countDisplayHardSets(selectedWeekSets);
   const totalVolume = selectedWeekSummaries.reduce((sum, summary) => sum + summary.session.totalStrengthVolumeKg, 0);
   const exerciseById = new Map(exercises.map((exercise) => [exercise.id, exercise]));
   const categoryCounts = new Map<string, number>();
@@ -518,14 +534,12 @@ export function ActualsPage({
                 const sessionCompletedSets = workoutSets.filter((set) => (
                   sessionWorkoutExerciseIds.has(set.workoutExerciseId) && set.isCompleted
                 ));
-                const sessionHardSets = sessionCompletedSets.filter((set) => (
-                  set.isHard === true && set.type !== 'warmup' && set.isWarmup !== true
-                ));
+                const sessionHardSetCount = countDisplayHardSets(sessionCompletedSets);
                 const sessionCardClass = actualsSessionCardClass(summary.session.status, summary.session.date, todayKey);
                 const metricItems = [
                   [locale === 'ko' ? '볼륨' : 'Volume', `${Math.round(summary.session.totalStrengthVolumeKg).toLocaleString()}kg`],
                   [locale === 'ko' ? '세트' : 'Sets', String(sessionCompletedSets.length)],
-                  ['Hard', String(sessionHardSets.length)],
+                  ['Hard', String(sessionHardSetCount)],
                   [locale === 'ko' ? '러닝' : 'Run', distance > 0 ? `${distance.toFixed(1)}km` : '-'],
                 ];
 

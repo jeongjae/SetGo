@@ -570,12 +570,12 @@ export async function getSuggestedCyclePlanItem(
     };
   }
 
-  const latestSession = await db.workoutSessions
+  const latestSession = (await db.workoutSessions
     .where('routineId')
     .equals(activeRoutine.id)
     .filter((s) => s.status === 'completed')
-    .reverse()
-    .first();
+    .toArray())
+    .sort((a, b) => (b.endedAt ?? b.startedAt ?? b.createdAt).localeCompare(a.endedAt ?? a.startedAt ?? a.createdAt))[0];
 
   let nextIndex = 0;
   let didSkipCardio = false;
@@ -597,7 +597,7 @@ export async function getSuggestedCyclePlanItem(
 
   // Auto-Skip running/cardio if companion cardio was completed in the latest completed session
   let loopCount = 0;
-  while ((nextItem.kind === 'running' || nextItem.kind === 'free') && loopCount < cycleItems.length) {
+  while (nextItem.kind === 'running' && loopCount < cycleItems.length) {
     if (latestSession) {
       const companionCardio = await db.cardioRecords
         .where('sessionId')

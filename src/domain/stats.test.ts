@@ -214,6 +214,61 @@ describe('stats builder', () => {
     expect(stats.muscleStats.find((item) => item.group === 'back')?.sets).toBe(3);
   });
 
+  it('counts multiple myo-reps mini sets as one hard set in stats', () => {
+    const date = formatDateKey(new Date());
+    const session: WorkoutSession = {
+      id: 'session_myo',
+      date,
+      startedAt: `${date}T12:00:00.000`,
+      timeBand: 'evening',
+      status: 'completed',
+      totalStrengthVolumeKg: 0,
+      createdAt: `${date}T12:00:00.000`,
+      updatedAt: `${date}T12:00:00.000`,
+    };
+    const workoutExercises: WorkoutExercise[] = [{
+      id: 'session_myo_press',
+      sessionId: session.id,
+      exerciseId: 'bench_press',
+      order: 1,
+      status: 'completed',
+      totalVolumeKg: 0,
+    }];
+    const sets: WorkoutSet[] = [
+      {
+        id: 'myo_activation',
+        workoutExerciseId: 'session_myo_press',
+        setNo: 1,
+        weightKg: 80,
+        reps: 12,
+        isCompleted: true,
+        isHard: true,
+      },
+      ...[2, 3, 4, 5].map((setNo) => ({
+        id: `myo_mini_${setNo}`,
+        workoutExerciseId: 'session_myo_press',
+        setNo,
+        weightKg: 60,
+        reps: 4,
+        isCompleted: true,
+        isHard: true,
+        intensityTechnique: 'myo_reps' as const,
+      })),
+    ];
+
+    const stats = buildStats(
+      [session],
+      workoutExercises,
+      sets,
+      [exercise('bench_press', 'main', ['main'], 'chest')],
+      'en',
+    );
+
+    expect(stats.totalSets).toBe(5);
+    expect(stats.hardSets).toBe(2);
+    expect(stats.muscleStats.find((item) => item.group === 'chest')?.hardSets).toBe(2);
+  });
+
   it('exposes recovery readiness from recent hard muscle load', () => {
     const date = formatDateKey(new Date());
     const session: WorkoutSession = {

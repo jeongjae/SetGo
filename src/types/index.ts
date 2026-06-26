@@ -166,6 +166,8 @@ export type WorkoutSession = {
   status: WorkoutStatus;
   totalStrengthVolumeKg: number;
   memo?: string;
+  autoSkipped?: boolean;
+  skipReason?: 'companion_cardio_completed' | 'manual';
   isDemo?: boolean;
   createdAt: string;
   updatedAt: string;

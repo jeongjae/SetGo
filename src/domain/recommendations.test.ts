@@ -49,6 +49,79 @@ describe('exercise target recommendations', () => {
     });
   });
 
+  it('uses 80% of the matching hypertrophy history for maintenance phase', () => {
+    expect(recommendExerciseTarget({
+      plan: {
+        plannedWeightKg: 70,
+        plannedReps: 10,
+        plannedSets: 3,
+        plannedRir: 2,
+      },
+      currentFamily: 'upper',
+      currentPhase: 'maintenance',
+      recentSessions: [
+        session('2026-06-20', [
+          { weightKg: 100, reps: 10, rir: 2, isCompleted: true },
+          { weightKg: 100, reps: 8, rir: 2, isCompleted: true },
+        ]),
+      ].map((item) => ({ ...item, family: 'upper', intensityPhase: 'hypertrophy' })),
+    })).toMatchObject({
+      weightKg: 80,
+      reps: 12,
+      sets: 3,
+      confidence: 'high',
+    });
+  });
+
+  it('cuts load and sets for deload phase', () => {
+    expect(recommendExerciseTarget({
+      plan: {
+        plannedWeightKg: 90,
+        plannedReps: 10,
+        plannedSets: 4,
+        plannedRir: 2,
+      },
+      currentPhase: 'deload',
+      recentSessions: [
+        session('2026-06-20', [
+          { weightKg: 100, reps: 10, rir: 2, isCompleted: true },
+          { weightKg: 100, reps: 10, rir: 2, isCompleted: true },
+          { weightKg: 100, reps: 10, rir: 2, isCompleted: true },
+          { weightKg: 100, reps: 10, rir: 2, isCompleted: true },
+        ]),
+      ],
+    })).toMatchObject({
+      weightKg: 80,
+      reps: 10,
+      sets: 2,
+      confidence: 'high',
+    });
+  });
+
+  it('holds weight when the global goal is maintenance', () => {
+    expect(recommendExerciseTarget({
+      plan: {
+        plannedWeightKg: 60,
+        plannedReps: 10,
+        targetRepMin: 8,
+        targetRepMax: 10,
+        progressionStyle: 'compound',
+      },
+      globalGoal: 'maintenance',
+      recentSessions: [
+        session('2026-06-18', [
+          { weightKg: 60, reps: 10, rir: 2, isCompleted: true },
+          { weightKg: 60, reps: 10, rir: 2, isCompleted: true },
+          { weightKg: 60, reps: 10, rir: 2, isCompleted: true },
+        ]),
+      ],
+    })).toMatchObject({
+      weightKg: 60,
+      reps: 8,
+      sets: 3,
+    });
+  });
+
   it('holds weight when recent working sets are inside the target range', () => {
     expect(recommendExerciseTarget({
       plan: {
