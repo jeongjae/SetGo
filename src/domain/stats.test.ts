@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildStats, buildEmptyStats, buildAiPrompt } from './StatsPage';
+import { buildStats, buildEmptyStats, buildAiPrompt } from './stats';
 import { formatDateKey } from '../utils/date';
 import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 
@@ -99,7 +99,6 @@ describe('stats builder', () => {
 
   it('generates high-quality AI analysis prompt for ChatGPT and Gemini in both ko and en', () => {
     const stats = buildEmptyStats('ko');
-    // 테스트 데이터를 임의로 채워넣음
     stats.workoutDays = 3;
     stats.totalVolumeKg = 2500;
     stats.totalSets = 12;
@@ -310,14 +309,12 @@ describe('stats builder', () => {
     );
     const todayTrend = stats.dailyTrend.find((item) => item.date === date);
 
-    // Default window is 7 days, so the daily rail shows 7 bars.
     expect(stats.dailyTrend).toHaveLength(7);
     expect(stats.trendGranularity).toBe('daily');
     expect(todayTrend?.strengthVolumeKg).toBe(500);
     expect(todayTrend?.strengthSets).toBe(1);
     expect(todayTrend?.cardioDistanceKm).toBe(2.4);
 
-    // A 28-day window caps the daily rail at 14 bars and switches to weekly granularity.
     const monthStats = buildStats(
       [session],
       workoutExercises,
@@ -424,7 +421,6 @@ describe('stats builder', () => {
       isCompleted: true,
     }];
 
-    // A session five days ago falls inside the rolling 7-day window regardless of weekday.
     const stats = buildStats([session], workoutExercises, sets, [exercise('bench_press', 'main', ['main'], 'chest')], 'en', [], 7);
     expect(stats.totalSets).toBe(1);
     expect(stats.workoutDays).toBe(1);
@@ -435,7 +431,6 @@ describe('stats builder', () => {
     const sessions: WorkoutSession[] = [];
     const workoutExercises: WorkoutExercise[] = [];
     const sets: WorkoutSet[] = [];
-    // 4 weekly chest sessions of 5 sets each across the last 28 days => 20 sets total, 5/week.
     for (let week = 0; week < 4; week += 1) {
       const date = new Date(today);
       date.setDate(today.getDate() - week * 7);
@@ -460,9 +455,9 @@ describe('stats builder', () => {
 
     const stats = buildStats(sessions, workoutExercises, sets, [exercise('bench_press', 'main', ['main'], 'chest')], 'en', [], 28);
     const chest = stats.muscleStats.find((item) => item.group === 'chest');
-    expect(chest?.sets).toBe(20); // period total
-    expect(chest?.setsPerWeek).toBe(5); // 20 / 4 weeks
-    expect(chest?.status).toBe('low'); // 5/week is below the 10-set minimum
+    expect(chest?.sets).toBe(20);
+    expect(chest?.setsPerWeek).toBe(5);
+    expect(chest?.status).toBe('low');
   });
 
   it('excludes demo sessions from stats and performances', () => {
