@@ -1,6 +1,6 @@
 # SetGo
 
-SetGo is a local-first workout logging PWA for strength training, routine-based lifting, and manual cardio logging.
+SetGo is a local-first workout logging app for strength training, routine-based lifting, and manual cardio logging.
 
 ## Mobile Beta Scope
 
@@ -67,6 +67,12 @@ npm run build
 SetGo v3 uses `docs/v3-development-roadmap.md` as the product and development guide. The current target is a Strong/Hevy-fast workout logger with Fitbod-like local recovery awareness, motivating PR/completion feedback, and trustworthy local-first data ownership.
 
 `docs/v3-strong-hevy-menu-migration.md` is the IA reference for the v3 menu model. `docs/benchmark-workout-apps.md` remains the benchmark guide for Strong, Hevy, Fitbod, JEFIT, and related workout app patterns.
+
+## v5 Direction
+
+The next product goal is a native-first iPhone app that removes the need to restore data after PWA updates and builds a more intelligent, explainable coaching layer on top of durable local storage.
+
+Use `docs/v5-native-intelligent-coach-roadmap.md` as the v5 planning reference.
 
 ## Out Of Beta
 

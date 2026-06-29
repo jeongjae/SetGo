@@ -2,21 +2,23 @@
 
 ## Project
 
-SetGo is a local-first mobile workout logging PWA for strength training, routine-based lifting, and manual cardio.
+SetGo is a local-first mobile workout logging app for strength training, routine-based lifting, and manual cardio.
 
 Primary target:
 
 - iPhone Safari / Home Screen PWA
+- v5 planning target: native-first iPhone app with durable local storage
 - Android browser compatibility
 - Desktop browser for development and testing
 
 ## Development Assumptions
 
-- Build as a PWA, not a native iOS app.
-- Store all user data locally in IndexedDB through Dexie.
+- Current shipped app is a PWA. v5 planning now explicitly explores a native iPhone app because the product scope has changed.
+- Current PWA stores user data locally in IndexedDB through Dexie.
+- v5 native work should introduce a storage repository boundary before moving durable workout data to native SQLite.
 - Do not add a backend, authentication, or cloud sync unless the product scope explicitly changes.
 - Keep Tailwind on v3.
-- Apple Watch / HealthKit direct integration is out of scope for the PWA; manual or file-based import can be added.
+- Apple Watch / HealthKit direct integration is out of scope for the current PWA; native v5 may explore it only after durable local storage is proven.
 - Do not commit local backup/settings artifacts unless explicitly requested.
 
 ## Tech Stack
