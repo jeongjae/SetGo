@@ -28,6 +28,7 @@ import {
   recoveryGroupLabel,
   recoveryWarningGroups,
 } from '../domain/recoveryInputs';
+import { buildStats, type DeloadRecommendation } from '../domain/stats';
 import { getStoredLocale, t, tf, type AppLocale } from '../i18n/i18n';
 import type { CardioRecord, Routine, RoutineDay, WorkoutRecommendationSnapshot, WorkoutSession, WorkoutSessionKind } from '../types';
 import { formatDateKey } from '../utils/date';
@@ -120,6 +121,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const [reloadKey, setReloadKey] = useState(0);
   const [locale] = useState(() => getStoredLocale());
   const [showDeloadToast, setShowDeloadToast] = useState(false);
+  const [deloadRecommendation, setDeloadRecommendation] = useState<DeloadRecommendation | undefined>();
   const [weeklyCardioMinutes, setWeeklyCardioMinutes] = useState(0);
 
   const CARDIO_WEEKLY_TARGET_MINUTES = 60;
@@ -239,6 +241,18 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         } else {
           setShowDeloadToast(false);
         }
+
+        const [sessions, workoutExercises, workoutSets, exercises, cardioRecords] = await Promise.all([
+          db.workoutSessions.toArray(),
+          db.workoutExercises.toArray(),
+          db.workoutSets.toArray(),
+          db.exercises.toArray(),
+          db.cardioRecords.toArray(),
+        ]);
+        const stats = buildStats(sessions, workoutExercises, workoutSets, exercises, locale, cardioRecords, 7);
+        const dismissedKey = `setgo.deloadRecommendation.dismissed.${formatDateKey(new Date())}`;
+        const isDismissed = typeof localStorage !== 'undefined' && localStorage.getItem(dismissedKey) === 'true';
+        setDeloadRecommendation(isDismissed ? undefined : stats.deloadRecommendation);
       } catch (error) {
         console.error('Failed to load local SetGo data', error);
       }
@@ -311,6 +325,28 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const workoutRecordLabel = matchingInProgressWorkout
     ? locale === 'ko' ? '계속 기록하기' : 'Continue Logging'
     : locale === 'ko' ? `${selectedWorkoutLabel} 시작` : `Start ${selectedWorkoutLabel}`;
+  const shouldShowDeloadRecommendation = Boolean(
+    deloadRecommendation
+    && selectedWorkoutKind === 'planned'
+    && selectedRoutineDay
+    && selectedRoutineDay.intensityPhase !== 'deload',
+  );
+
+  async function handleApplyDeloadRecommendation() {
+    const targetDay = selectedRoutineDay ?? todayRoutineDay ?? dailyRecommendation?.routineDay;
+    if (!targetDay) return;
+
+    await db.routineDays.update(targetDay.id, { intensityPhase: 'deload' });
+    setDeloadRecommendation(undefined);
+    setShowDeloadToast(true);
+    setReloadKey((current) => current + 1);
+  }
+
+  function handleDismissDeloadRecommendation() {
+    const dismissedKey = `setgo.deloadRecommendation.dismissed.${formatDateKey(new Date())}`;
+    if (typeof localStorage !== 'undefined') localStorage.setItem(dismissedKey, 'true');
+    setDeloadRecommendation(undefined);
+  }
 
   function handleStartSelectedWorkout() {
     if (matchingInProgressWorkout) {
@@ -443,6 +479,42 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
                 <AlertTriangle aria-hidden="true" size={15} className="mt-px shrink-0 text-[#FF9500]" />
                 <span>{recoveryWarning}</span>
               </p>
+            ) : null}
+            {shouldShowDeloadRecommendation && deloadRecommendation ? (
+              <div className="mt-2 rounded-xl border border-[#FF9500]/20 bg-[#FFF7EA] px-3 py-2.5">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle aria-hidden="true" size={16} className="mt-0.5 shrink-0 text-[#FF9500]" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-black leading-4 text-[#1C1C1E]">
+                      {locale === 'ko' ? '자동 디로드 권장' : 'Auto deload recommended'}
+                    </p>
+                    <p className="mt-1 text-[12px] font-semibold leading-4 text-[#6E6E73]">
+                      {locale === 'ko'
+                        ? `최근 부하가 높습니다. 이번 운동은 세트를 약 ${deloadRecommendation.suggestedSetReductionPct}% 줄이는 디로드로 전환하세요.`
+                        : `Recent load is high. Switch this workout to a deload and cut sets by about ${deloadRecommendation.suggestedSetReductionPct}%.`}
+                    </p>
+                    <p className="mt-1 text-[11px] font-bold leading-4 text-[#B25E00]">
+                      {deloadRecommendation.reasons[0]}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleApplyDeloadRecommendation()}
+                    className="min-h-9 rounded-lg bg-[#FF9500] px-2 text-xs font-black text-white transition-all active:scale-95"
+                  >
+                    {locale === 'ko' ? '디로드 적용' : 'Apply deload'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDismissDeloadRecommendation}
+                    className="min-h-9 rounded-lg bg-white px-2 text-xs font-black text-[#6E6E73] transition-all active:scale-95"
+                  >
+                    {locale === 'ko' ? '오늘은 유지' : 'Keep today'}
+                  </button>
+                </div>
+              </div>
             ) : null}
             {plannedExerciseNames.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-1.5">

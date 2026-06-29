@@ -515,6 +515,68 @@ describe('stats builder', () => {
     expect(chest?.status).toBe('low');
   });
 
+  it('recommends a deload when hard sets and weekly volume spike above the recent baseline', () => {
+    const today = new Date();
+    const sessions: WorkoutSession[] = [];
+    const workoutExercises: WorkoutExercise[] = [];
+    const sets: WorkoutSet[] = [];
+
+    [28, 21, 14, 7, 0].forEach((daysAgo) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - daysAgo);
+      const dateKey = formatDateKey(date);
+      const sessionId = `deload_session_${daysAgo}`;
+      const workoutExerciseId = `${sessionId}_bench`;
+      const setCount = daysAgo === 0 ? 14 : 8;
+
+      sessions.push({
+        id: sessionId,
+        date: dateKey,
+        startedAt: `${dateKey}T12:00:00.000`,
+        endedAt: `${dateKey}T13:00:00.000`,
+        timeBand: 'afternoon',
+        status: 'completed',
+        totalStrengthVolumeKg: 0,
+        createdAt: `${dateKey}T12:00:00.000`,
+        updatedAt: `${dateKey}T13:00:00.000`,
+      });
+      workoutExercises.push({
+        id: workoutExerciseId,
+        sessionId,
+        exerciseId: 'bench_press',
+        order: 1,
+        status: 'completed',
+        totalVolumeKg: 0,
+      });
+      for (let setNo = 1; setNo <= setCount; setNo += 1) {
+        sets.push({
+          id: `${workoutExerciseId}_${setNo}`,
+          workoutExerciseId,
+          setNo,
+          weightKg: 50,
+          reps: 10,
+          isCompleted: true,
+          isHard: true,
+        });
+      }
+    });
+
+    const stats = buildStats(
+      sessions,
+      workoutExercises,
+      sets,
+      [exercise('bench_press', 'main', ['main'], 'chest')],
+      'en',
+      [],
+      7,
+    );
+
+    expect(stats.deloadRecommendation?.shouldDeload).toBe(true);
+    expect(stats.deloadRecommendation?.currentHardSets).toBe(14);
+    expect(stats.deloadRecommendation?.suggestedSetReductionPct).toBeGreaterThanOrEqual(35);
+    expect(stats.nextWeekSuggestions[0]).toContain('deload');
+  });
+
   it('excludes demo sessions from stats and performances', () => {
     const date = formatDateKey(new Date());
     const realSession: WorkoutSession = {

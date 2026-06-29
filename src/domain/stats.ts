@@ -63,6 +63,18 @@ export type DailyTrendStat = {
   items: DailyTrendItem[];
 };
 
+export type DeloadRecommendation = {
+  shouldDeload: boolean;
+  severity: 'caution' | 'high';
+  currentHardSets: number;
+  baselineHardSets: number;
+  hardSetRatio: number;
+  volumeChangePct?: number;
+  recoveryPercent: number;
+  suggestedSetReductionPct: number;
+  reasons: string[];
+};
+
 export type StatsView = {
   windowDays: number;
   weeksInPeriod: number;
@@ -78,6 +90,7 @@ export type StatsView = {
   muscleStats: MuscleStat[];
   performances: ExercisePerformance[];
   recovery: RecoverySnapshot;
+  deloadRecommendation?: DeloadRecommendation;
   warnings: string[];
   analysisComment: string;
   nextWeekSuggestions: string[];
@@ -306,6 +319,62 @@ export function insightMessage(stats: StatsView, locale: Locale): string {
   return locale === 'ko' ? '이번 주 부하는 안정적인 범위입니다.' : 'This week is inside a stable load range.';
 }
 
+export function buildDeloadRecommendation(
+  weeks: WeekStat[],
+  hardSetRatio: number,
+  recovery: Pick<RecoverySnapshot, 'averageRecoveryPercent' | 'readinessStatus'>,
+  locale: Locale,
+): DeloadRecommendation | undefined {
+  const currentWeek = weeks[weeks.length - 1];
+  const previousWeeks = weeks
+    .slice(Math.max(0, weeks.length - 5), Math.max(0, weeks.length - 1))
+    .filter((week) => week.sets > 0 || week.hardSets > 0 || week.volumeKg > 0);
+
+  if (!currentWeek || currentWeek.hardSets < 6 || previousWeeks.length < 2) return undefined;
+
+  const baselineHardSets = previousWeeks.reduce((sum, week) => sum + week.hardSets, 0) / previousWeeks.length;
+  const baselineVolume = previousWeeks.reduce((sum, week) => sum + week.volumeKg, 0) / previousWeeks.length;
+  const hardSetIncreasePct = pctChange(currentWeek.hardSets, baselineHardSets) ?? 0;
+  const volumeChangePct = pctChange(currentWeek.volumeKg, baselineVolume);
+  const reasons: string[] = [];
+
+  if (hardSetRatio >= 75 && hardSetIncreasePct >= 20) {
+    reasons.push(locale === 'ko'
+      ? `Hard 세트 비율이 ${hardSetRatio.toFixed(0)}%이고 최근 4주 평균보다 ${hardSetIncreasePct.toFixed(0)}% 많습니다.`
+      : `Hard-set ratio is ${hardSetRatio.toFixed(0)}%, ${hardSetIncreasePct.toFixed(0)}% above the recent 4-week average.`);
+  }
+  if (volumeChangePct !== undefined && volumeChangePct >= 25 && hardSetRatio >= 60) {
+    reasons.push(locale === 'ko'
+      ? `주간 볼륨이 최근 4주 평균보다 ${volumeChangePct.toFixed(0)}% 높습니다.`
+      : `Weekly volume is ${volumeChangePct.toFixed(0)}% above the recent 4-week average.`);
+  }
+  if (recovery.readinessStatus === 'fatigued' || recovery.averageRecoveryPercent < 55) {
+    reasons.push(locale === 'ko'
+      ? `평균 회복도가 ${recovery.averageRecoveryPercent}%로 낮습니다.`
+      : `Average recovery is low at ${recovery.averageRecoveryPercent}%.`);
+  }
+
+  if (reasons.length === 0) return undefined;
+
+  const severity: DeloadRecommendation['severity'] = (
+    recovery.readinessStatus === 'fatigued'
+    || hardSetRatio >= 85
+    || (volumeChangePct ?? 0) >= 40
+  ) ? 'high' : 'caution';
+
+  return {
+    shouldDeload: true,
+    severity,
+    currentHardSets: currentWeek.hardSets,
+    baselineHardSets: Math.round(baselineHardSets),
+    hardSetRatio,
+    volumeChangePct,
+    recoveryPercent: recovery.averageRecoveryPercent,
+    suggestedSetReductionPct: severity === 'high' ? 50 : 35,
+    reasons,
+  };
+}
+
 export function decorateMuscleStat(
   stat: Omit<MuscleStat, 'status' | 'targetPct' | 'deficitSets' | 'excessSets' | 'setsPerWeek'>,
   weeksInPeriod: number,
@@ -350,6 +419,7 @@ export function buildEmptyStats(locale: Locale, windowDays = analysisWindowDays(
     })),
     performances: [],
     recovery: buildRecoverySnapshot([], { asOf: new Date() }),
+    deloadRecommendation: undefined,
     warnings: [],
     analysisComment: t(locale, 'statsEmptyAnalysis'),
     nextWeekSuggestions: [t(locale, 'statsNextWeekHoldVolume')],
@@ -684,6 +754,7 @@ export function buildStats(
   if (hardSetRatio > 70) {
     warnings.push(tf(locale, 'statsWarningHardSetRatio', { ratio: hardSetRatio.toFixed(0) }));
   }
+  const deloadRecommendation = buildDeloadRecommendation(weekStats, hardSetRatio, recovery, locale);
 
   const lowMuscles = muscleStats.filter((stat) => stat.status === 'low').map((stat) => muscleLabels[locale][stat.group]);
   const highMuscles = muscleStats.filter((stat) => stat.status === 'high' || stat.status === 'caution').map((stat) => muscleLabels[locale][stat.group]);
@@ -718,6 +789,11 @@ export function buildStats(
       : `Reduce load and prioritize recovery for ${recoverySuggestionGroups.slice(0, 2).map((group) => recoveryLabels.en[group.group]).join(', ')}.`
     : undefined;
   const nextWeekSuggestions = [
+    deloadRecommendation
+      ? locale === 'ko'
+        ? `다음 운동은 디로드로 전환하고 세트를 약 ${deloadRecommendation.suggestedSetReductionPct}% 줄이세요.`
+        : `Switch the next workout to a deload and cut sets by about ${deloadRecommendation.suggestedSetReductionPct}%.`
+      : undefined,
     recoverySuggestion,
     warnings.length > 0 ? t(locale, 'statsNextWeekRecovery') : t(locale, 'statsNextWeekHoldVolume'),
     lowMuscles.length > 0 ? t(locale, 'statsNextWeekAddLagging') : undefined,
@@ -739,6 +815,7 @@ export function buildStats(
     muscleStats,
     performances,
     recovery,
+    deloadRecommendation,
     warnings,
     analysisComment,
     nextWeekSuggestions,
