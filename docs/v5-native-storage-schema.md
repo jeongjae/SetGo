@@ -12,6 +12,7 @@ The contract mirrors the current Dexie backup snapshot so that:
 
 The executable schema contract lives in `src/storage/nativeSchema.ts`.
 The repository adapter spike lives in `src/storage/nativeSqliteRepository.ts`.
+The Capacitor SQLite driver binding lives in `src/storage/capacitorSqliteDriver.ts`.
 
 ## Version
 
@@ -91,8 +92,9 @@ It also adds native-only cardio import indexes:
 
 Bind the SQLite adapter spike to an actual Capacitor/iOS SQLite driver:
 
+- run the iOS scaffold on macOS/Xcode;
 - execute `createNativeSchemaSql()` through the native driver;
 - insert and read one routine, one workout session, one workout exercise, one set, and one cardio record through `createNativeSqliteDataRepository()`;
 - verify the record survives app relaunch in the native shell.
 
-The current spike already verifies SQL generation, backup snapshot writes, backup snapshot reads, JSON serialization, boolean serialization, and settings-only replace behavior using a fake SQLite driver.
+The current spike already verifies SQL generation, backup snapshot writes, backup snapshot reads, JSON serialization, boolean serialization, settings-only replace behavior, and Capacitor plugin type compatibility.
