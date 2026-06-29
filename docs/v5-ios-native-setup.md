@@ -36,6 +36,25 @@ npm run native:open
 
 Then select a simulator or connected iPhone in Xcode and run the app.
 
+## Windows-Only Development Path
+
+When the developer only has a Windows PC, use this split:
+
+```text
+Windows PC:
+  React / TypeScript / Capacitor config / tests / web deploy
+
+GitHub Actions macOS runner:
+  iOS sync / Xcode simulator build
+
+Later, with Apple Developer credentials:
+  signed archive / TestFlight upload / iPhone install
+```
+
+The workflow `.github/workflows/ios-native-check.yml` builds the iOS simulator app on a macOS runner without code signing. This verifies that the native scaffold, Swift Package setup, Capacitor sync, and SQLite plugin wiring can compile outside the Windows machine.
+
+This does not install the app on a real iPhone and does not upload to TestFlight. Those require Apple Developer signing assets and an App Store Connect setup.
+
 ## Native Storage Path
 
 The configured SQLite location is:
