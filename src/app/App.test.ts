@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  shouldShowBottomNav,
   shouldResetCalendarContextOnNavigate,
+  viewportMetricsForKeyboard,
   workoutModeForHistoricalAdd,
   workoutReturnViewForStart,
   type AppView,
@@ -32,5 +34,22 @@ describe('app navigation state rules', () => {
   it('keeps same-day records active but opens past records in history edit mode', () => {
     expect(workoutModeForHistoricalAdd('2026-06-19', '2026-06-19')).toBe('active');
     expect(workoutModeForHistoricalAdd('2026-06-18', '2026-06-19')).toBe('history-edit');
+  });
+
+  it('keeps the app shell height stable when the visual viewport shrinks for the keyboard', () => {
+    expect(viewportMetricsForKeyboard(844, 520, 0)).toEqual({
+      shellHeight: 844,
+      keyboardInset: 324,
+    });
+    expect(viewportMetricsForKeyboard(844, 844, 0)).toEqual({
+      shellHeight: 844,
+      keyboardInset: 0,
+    });
+  });
+
+  it('hides bottom navigation while form fields are focused', () => {
+    expect(shouldShowBottomNav('routines', false)).toBe(true);
+    expect(shouldShowBottomNav('routines', true)).toBe(false);
+    expect(shouldShowBottomNav('workout', false)).toBe(false);
   });
 });

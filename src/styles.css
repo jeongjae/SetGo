@@ -139,6 +139,10 @@ textarea:focus-visible {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+.app-shell.keyboard-open {
+  padding-bottom: 0;
+}
+
 .viewport-locked {
   flex: 1;
   min-height: 0;
@@ -153,6 +157,11 @@ textarea:focus-visible {
   overflow-y: auto;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
+  scroll-padding-bottom: calc(var(--setgo-keyboard-inset, 0px) + 1.5rem);
+}
+
+.keyboard-open .inner-scroll {
+  padding-bottom: calc(var(--setgo-keyboard-inset, 0px) + 1.5rem);
 }
 
 .overflow-x-auto {
