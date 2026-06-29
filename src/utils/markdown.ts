@@ -3,7 +3,7 @@ import { getExerciseName } from '../domain/exercises';
 import { calculateAverageSpeedKmh, calculateExerciseVolumeKg } from '../domain/volume';
 import { timeBandLabel, type AppLocale } from '../i18n/i18n';
 import { getExerciseIcon } from './exerciseIcon';
-import { getProgressLabel } from '../components/workout/WorkoutSetRowV2';
+import { getProgressLabel } from '../domain/workoutSession';
 
 type ExerciseLogInput = {
   workoutExercise: WorkoutExercise;

@@ -10,12 +10,12 @@ import {
   getNextIncompleteSetTarget,
   getWorkoutFinishSummary,
   getWorkoutSetProgressBadges,
-  parseOptionalDecimalInput,
   shouldConfirmCardioDelete,
   shouldCompleteHistoricalSetOnSave,
   shouldConfirmWorkoutExerciseDelete,
   shouldConfirmWorkoutSetDelete,
-} from './WorkoutPage';
+} from '../domain/workoutSession';
+import { parseOptionalDecimalInput } from './WorkoutPage';
 
 describe('workout elapsed time', () => {
   it('measures UTC session time without timezone correction', () => {
@@ -159,6 +159,21 @@ describe('workout completion eligibility', () => {
     expect(summary.prCount).toBe(1);
     expect(summary.cardioCount).toBe(1);
     expect(summary.metrics.map((metric) => metric.label)).toEqual(['Exercises', 'Sets', 'Hard', 'PR', 'Cardio']);
+  });
+
+  it('keeps Korean completion summary labels readable', () => {
+    const summary = getWorkoutFinishSummary([
+      {
+        pastBestWeight: 100,
+        pastBestVolume: 1000,
+        sets: [
+          { isCompleted: true, weightKg: 105, reps: 10, isWarmup: false, isHard: true },
+        ],
+      } as any,
+    ], [{ isDraft: false }], 1050, 'ko');
+
+    expect(summary.primaryText).toBe('1개 운동 / 1세트 / 1,050kg');
+    expect(summary.metrics.map((metric) => metric.label)).toEqual(['운동', '세트', 'Hard', 'PR', '러닝']);
   });
 });
 

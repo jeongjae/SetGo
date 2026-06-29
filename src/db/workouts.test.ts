@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  calculateEstimatedOneRmKg,
   calculateCardioDurationSeconds,
   createDraftCardioRecord,
   createWorkoutExerciseSeed,
@@ -348,6 +349,47 @@ describe('weight increment resolution', () => {
     expect(resolveWeightIncrementKg({ preferredWeightIncrementKg: -1 })).toBe(2.5);
     expect(resolveWeightIncrementKg({})).toBe(2.5);
     expect(resolveWeightIncrementKg()).toBe(2.5);
+  });
+});
+
+describe('estimated 1RM persistence values', () => {
+  it('calculates a rounded Epley estimated 1RM for workout sets', () => {
+    expect(calculateEstimatedOneRmKg({ weightKg: 100, reps: 10 })).toBe(133.3);
+    expect(calculateEstimatedOneRmKg({ weightKg: 0, reps: 10 })).toBeUndefined();
+    expect(calculateEstimatedOneRmKg({ weightKg: 100, reps: 0 })).toBeUndefined();
+  });
+
+  it('stores estimated 1RM on seeded routine workout sets', () => {
+    const plan: RoutineExercisePlan = {
+      id: 'routine_day_1_bench_press',
+      routineDayId: 'routine_day_1',
+      exerciseId: 'bench_press',
+      order: 1,
+      plannedSets: 1,
+      plannedWeightKg: 100,
+      plannedReps: 10,
+    };
+
+    const seed = createWorkoutExerciseSeed(
+      'workout_2026-05-21',
+      [plan],
+      new Map([['bench_press', {
+        id: 'bench_press',
+        nameKo: 'bench_press',
+        nameEn: 'bench_press',
+        stage: 'main',
+        stageTags: ['main'],
+        category: 'chest',
+        categoryTags: ['chest'],
+        defaultEmoji: 'EX',
+        isDefault: true,
+        isActive: true,
+        createdAt: '2026-05-20T00:00:00.000Z',
+        updatedAt: '2026-05-20T00:00:00.000Z',
+      }]]),
+    );
+
+    expect(seed.workoutSets[0].estimatedOneRmKg).toBe(133.3);
   });
 });
 

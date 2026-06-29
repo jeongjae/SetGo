@@ -118,15 +118,34 @@ function isRunningOnlySummary(summary: WorkoutSummary): boolean {
     );
 }
 
-function actualSummaryLabel(summaries: WorkoutSummary[], locale: 'ko' | 'en'): string | undefined {
+function hasAutoSkippedCompanionCardio(summaries: WorkoutSummary[]): boolean {
+  return summaries.some((summary) => (
+    summary.session.autoSkipped === true
+    && summary.session.skipReason === 'companion_cardio_completed'
+    && summary.session.entryKind === 'running'
+  ));
+}
+
+export function actualSummaryLabel(summaries: WorkoutSummary[], locale: 'ko' | 'en'): string | undefined {
   const firstSummary = summaries[0];
   if (!firstSummary) return undefined;
-  if (isRunningOnlySummary(firstSummary)) return locale === 'ko' ? '\uB7EC\uB2DD' : 'Run';
-  if (firstSummary.session.entryKind === 'free') return locale === 'ko' ? '\uC790\uC720\uC6B4\uB3D9' : 'Free';
+  const autoSkipped = hasAutoSkippedCompanionCardio(summaries);
+  const autoSkippedLabel = locale === 'ko' ? '러닝 자동 건너뜀' : 'Run auto-skipped';
 
-  return getRoutineDayDisplayName(firstSummary.routineDay, locale)
-    ?? firstSummary.routineName
-    ?? (locale === 'ko' ? '\uC6B4\uB3D9' : 'Workout');
+  if (summaries.length === 1 && autoSkipped) return autoSkippedLabel;
+
+  let label: string;
+  if (isRunningOnlySummary(firstSummary)) {
+    label = locale === 'ko' ? '\uB7EC\uB2DD' : 'Run';
+  } else if (firstSummary.session.entryKind === 'free') {
+    label = locale === 'ko' ? '\uC790\uC720\uC6B4\uB3D9' : 'Free';
+  } else {
+    label = getRoutineDayDisplayName(firstSummary.routineDay, locale)
+      ?? firstSummary.routineName
+      ?? (locale === 'ko' ? '\uC6B4\uB3D9' : 'Workout');
+  }
+
+  return autoSkipped ? `${label} + ${autoSkippedLabel}` : label;
 }
 
 export function CalendarPage({
@@ -619,5 +638,4 @@ export function CalendarPage({
     </section>
   );
 }
-
 
