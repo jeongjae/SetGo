@@ -892,18 +892,21 @@ export function RoutineSetupPage({
               <h2 className="mt-0.5 text-sm font-black text-[#1C1C1E]">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
               <p className="mt-1 text-xs font-medium leading-normal text-[#6E6E73]">{t(locale, 'routinePlanFor')}</p>
             </div>
-            <label className="block text-xs font-bold text-[#6E6E73]">
-              {locale === 'ko' ? '시작일' : 'Start date'}
+            <div className="flex items-end justify-between gap-3">
+              <label htmlFor="routine-schedule-start" className="text-xs font-bold text-[#6E6E73]">
+                {locale === 'ko' ? '시작일' : 'Start date'}
+              </label>
               <input
+                id="routine-schedule-start"
                 type="date"
                 value={scheduleStartDate}
                 onChange={(event) => {
                   setScheduleStartDate(event.target.value);
                   setScheduleDirty(true);
                 }}
-                className="mt-1 min-h-10 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-semibold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                className="min-h-10 w-[10.75rem] max-w-[68%] rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-semibold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
               />
-            </label>
+            </div>
             {cyclePlan.length === 0 ? (
               <button
                 type="button"
@@ -988,7 +991,7 @@ export function RoutineSetupPage({
               <button
                 type="button"
                 onClick={() => void handleCancelWeeklySchedule()}
-                className="min-h-11 rounded-xl border border-black/5 bg-white text-sm font-bold text-[#1C1C1E] shadow-sm transition-all active:scale-95"
+                className="flex min-h-11 items-center justify-center rounded-xl border border-black/5 bg-white text-sm font-bold text-[#1C1C1E] shadow-sm transition-all active:scale-95"
               >
                 {locale === 'ko' ? '취소' : 'Cancel'}
               </button>
@@ -996,7 +999,7 @@ export function RoutineSetupPage({
                 type="button"
                 onClick={() => void handleSaveWeeklySchedule()}
                 disabled={!activeRoutine || !scheduleDirty || !scheduleStartDate || cyclePlan.length === 0}
-                className="min-h-11 rounded-xl bg-[#2EC4B6] text-sm font-black text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                className="flex min-h-11 items-center justify-center rounded-xl bg-[#2EC4B6] text-sm font-black text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
               >
                 {t(locale, 'save')}
               </button>
@@ -1288,11 +1291,11 @@ export function RoutineSetupPage({
                   {selectedDayLabel ?? t(locale, 'noRoutineDayPlanned')}
                 </p>
               </div>
-              <div className="flex gap-1.5">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => void handleRevertRoutineChanges()}
-                  className="ios-button-secondary flex min-h-8 px-2 text-xs font-bold"
+                  className="ios-button-secondary flex h-9 items-center justify-center gap-1.5 px-2.5 text-xs font-bold"
                 >
                   <RotateCcw aria-hidden="true" size={12} />
                   <span>{locale === 'ko' ? '취소' : 'Cancel'}</span>
@@ -1300,7 +1303,7 @@ export function RoutineSetupPage({
                 <button
                   type="button"
                   onClick={() => void handleSaveRoutineChanges()}
-                  className="ios-button-primary min-h-8 px-3 text-xs font-bold"
+                  className="ios-button-primary flex h-9 items-center justify-center px-3 text-xs font-bold"
                 >
                   {t(locale, 'save')}
                 </button>
