@@ -892,7 +892,7 @@ export function RoutineSetupPage({
               <h2 className="mt-0.5 text-sm font-black text-[#1C1C1E]">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
               <p className="mt-1 text-xs font-medium leading-normal text-[#6E6E73]">{t(locale, 'routinePlanFor')}</p>
             </div>
-            <div className="flex items-end justify-between gap-3">
+            <div className="flex items-center justify-start gap-2.5">
               <label htmlFor="routine-schedule-start" className="text-xs font-bold text-[#6E6E73]">
                 {locale === 'ko' ? '시작일' : 'Start date'}
               </label>
@@ -904,7 +904,7 @@ export function RoutineSetupPage({
                   setScheduleStartDate(event.target.value);
                   setScheduleDirty(true);
                 }}
-                className="min-h-10 w-[10.75rem] max-w-[68%] rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-semibold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                className="min-h-10 w-[12.25rem] max-w-[72%] rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-semibold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
               />
             </div>
             {cyclePlan.length === 0 ? (
