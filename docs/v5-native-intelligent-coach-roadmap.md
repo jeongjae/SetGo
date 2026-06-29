@@ -163,11 +163,12 @@ The v5 native storage contract is now defined in:
 - `src/storage/nativeSchema.ts`
 - `src/storage/nativeSqliteRepository.ts`
 - `src/storage/capacitorSqliteDriver.ts`
+- `src/storage/nativeMigration.ts`
 - `src/storage/nativeMigrationFixture.ts`
 - `docs/v5-native-storage-schema.md`
 - `docs/v5-ios-native-setup.md`
 
-This contract maps the current backup snapshot to SQLite-ready native tables, adds a plugin-agnostic SQLite repository adapter, binds the selected Capacitor SQLite plugin to that adapter, and preserves recommendation/cardio data needed by the intelligent coach roadmap. A synthetic non-personal migration fixture now verifies representative backup import without committing private workout data.
+This contract maps the current backup snapshot to SQLite-ready native tables, adds a plugin-agnostic SQLite repository adapter, binds the selected Capacitor SQLite plugin to that adapter, and preserves recommendation/cardio data needed by the intelligent coach roadmap. Native migration preview/import validation now checks record counts, relationship integrity, duplicate imported cardio warnings, and representative fixture import without committing private workout data.
 
 ## Migration Strategy
 
