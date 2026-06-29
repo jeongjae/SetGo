@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { ChevronLeft, Copy, Download, Info, Upload } from 'lucide-react';
 import { type ChangeEvent, useEffect, useState } from 'react';
 import { ActivityCsvImportError, createActivityCsv, importActivityCsv, type ActivityCsvImportSummary } from '../db/activityCsv';
@@ -12,6 +13,7 @@ import {
 } from '../db/workouts';
 import { getRoutineDayDisplayName } from '../db/routines';
 import { exerciseCountLabel, getStoredLocale, routineNameLabel, t, workoutStatusLabel } from '../i18n/i18n';
+import type { NativeMigrationPreview } from '../storage/nativeMigration';
 import { formatWorkoutMarkdown } from '../utils/markdown';
 
 type ExportPageProps = {
@@ -119,6 +121,15 @@ function formatBackupPreview(preview: SetGoBackupPreview, locale: 'ko' | 'en'): 
   return `${meta}\n${counts}`;
 }
 
+function formatNativeMigrationPreview(preview: NativeMigrationPreview, locale: 'ko' | 'en'): string {
+  const exportedAt = formatBackupDate(preview.exportedAt ?? null, locale);
+  const counts = locale === 'ko'
+    ? `${preview.counts.workoutSessions} sessions, ${preview.counts.exercises} exercises, ${preview.counts.routines} routines, ${preview.counts.routineExercisePlans} plans, ${preview.counts.cardioRecords} cardio`
+    : `${preview.counts.workoutSessions} sessions, ${preview.counts.exercises} exercises, ${preview.counts.routines} routines, ${preview.counts.routineExercisePlans} plans, ${preview.counts.cardioRecords} cardio`;
+  const status = preview.canImport ? 'Ready' : 'Blocked';
+  return `${status}${exportedAt ? ` / Exported: ${exportedAt}` : ''}\n${counts}`;
+}
+
 export function ExportPage({ onBack }: ExportPageProps) {
   const [summaries, setSummaries] = useState<WorkoutSummary[]>([]);
   const [summary, setSummary] = useState<WorkoutSummary | undefined>();
@@ -133,6 +144,13 @@ export function ExportPage({ onBack }: ExportPageProps) {
   const [activityCsvStatus, setActivityCsvStatus] = useState<string | undefined>();
   const [activityCsvIssues, setActivityCsvIssues] = useState<string[]>([]);
   const [settingsBackupStatus, setSettingsBackupStatus] = useState<string | undefined>();
+  const [nativeMigrationStatus, setNativeMigrationStatus] = useState<'idle' | 'ready' | 'importing' | 'imported' | 'failed'>('idle');
+  const [nativeMigrationSummary, setNativeMigrationSummary] = useState<string | undefined>();
+  const [nativeMigrationPreview, setNativeMigrationPreview] = useState<{
+    preview: NativeMigrationPreview;
+    rawText: string;
+    filename: string;
+  } | undefined>();
   const [isPersisted, setIsPersisted] = useState(false);
   const [showPersistenceInfo, setShowPersistenceInfo] = useState(false);
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => (
@@ -144,6 +162,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
     filename: string;
     isSettings: boolean;
   } | undefined>(undefined);
+  const isNativeApp = Capacitor.isNativePlatform();
 
   async function loadSummaries(selectedSessionId?: string) {
     const recentSummaries = await getRecentWorkoutSummaries(20);
@@ -406,6 +425,48 @@ export function ExportPage({ onBack }: ExportPageProps) {
       window.setTimeout(() => setActivityCsvStatus(undefined), 2200);
     } finally {
       event.target.value = '';
+    }
+  }
+
+  async function handleNativeMigrationSelect(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const rawText = await file.text();
+      const { previewNativeBackupJson } = await import('../storage/nativeMigrationRuntime');
+      const preview = previewNativeBackupJson(rawText);
+      setNativeMigrationPreview({ preview, rawText, filename: file.name });
+      setNativeMigrationStatus(preview.canImport ? 'ready' : 'failed');
+      setNativeMigrationSummary(formatNativeMigrationPreview(preview, locale));
+    } catch (error) {
+      console.error('Failed to preview native migration backup', error);
+      setNativeMigrationStatus('failed');
+      setNativeMigrationPreview(undefined);
+      setNativeMigrationSummary(locale === 'ko' ? 'Native migration preview failed.' : 'Native migration preview failed.');
+    } finally {
+      event.target.value = '';
+    }
+  }
+
+  async function handleConfirmNativeMigration() {
+    if (!nativeMigrationPreview || !nativeMigrationPreview.preview.canImport) return;
+
+    setNativeMigrationStatus('importing');
+    try {
+      const { importNativeBackupJsonToNativeStorage } = await import('../storage/nativeMigrationRuntime');
+      const result = await importNativeBackupJsonToNativeStorage(nativeMigrationPreview.rawText);
+      setNativeMigrationStatus('imported');
+      setNativeMigrationSummary(
+        locale === 'ko'
+          ? `Native import complete.\n${formatNativeMigrationPreview(result, locale)}`
+          : `Native import complete.\n${formatNativeMigrationPreview(result, locale)}`,
+      );
+      setNativeMigrationPreview(undefined);
+    } catch (error) {
+      console.error('Failed to import native migration backup', error);
+      setNativeMigrationStatus('failed');
+      setNativeMigrationSummary(error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -672,6 +733,90 @@ export function ExportPage({ onBack }: ExportPageProps) {
               />
             </label>
           </div>
+
+          {isNativeApp ? (
+            <div className="space-y-3 rounded-2xl border border-[#5856D6]/20 bg-[#F7F7FF] p-3.5">
+              <div>
+                <p className="text-xs font-black uppercase tracking-wide text-[#5856D6]">
+                  Native Migration
+                </p>
+                <h3 className="mt-1 text-sm font-black text-[#1C1C1E]">
+                  Import Backup to Native SQLite
+                </h3>
+                <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6E6E73]">
+                  {nativeMigrationSummary ?? 'Preview a SetGo JSON backup, then import it into native SQLite with a migration receipt.'}
+                </p>
+              </div>
+
+              {nativeMigrationPreview ? (
+                <div className="space-y-2 rounded-xl bg-white px-3 py-2.5 text-xs font-semibold text-[#6E6E73]">
+                  <p>
+                    File: <span className="font-black text-[#1C1C1E]">{nativeMigrationPreview.filename}</span>
+                  </p>
+                  <p>
+                    Status: <span className={`font-black ${nativeMigrationPreview.preview.canImport ? 'text-[#159A91]' : 'text-[#FF3B30]'}`}>
+                      {nativeMigrationPreview.preview.canImport ? 'Ready' : 'Blocked'}
+                    </span>
+                  </p>
+                  <p>
+                    Records: {nativeMigrationPreview.preview.counts.workoutSessions} sessions, {nativeMigrationPreview.preview.counts.workoutSets} sets, {nativeMigrationPreview.preview.counts.cardioRecords} cardio
+                  </p>
+                  {nativeMigrationPreview.preview.issues.length > 0 ? (
+                    <ul className="space-y-1 border-t border-black/[0.04] pt-2">
+                      {nativeMigrationPreview.preview.issues.slice(0, 4).map((issue) => (
+                        <li
+                          key={`${issue.code}-${issue.message}`}
+                          className={issue.severity === 'error' ? 'text-[#FF3B30]' : 'text-amber-700'}
+                        >
+                          {issue.severity.toUpperCase()}: {issue.message}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-2">
+                <label className="ios-button-secondary flex min-h-11 cursor-pointer items-center justify-center gap-2 px-3 text-xs">
+                  <Upload aria-hidden="true" size={15} />
+                  <span>{nativeMigrationStatus === 'ready' ? 'Choose Again' : 'Choose JSON'}</span>
+                  <input
+                    aria-label="Preview native SetGo JSON migration"
+                    type="file"
+                    accept="application/json"
+                    onChange={(event) => void handleNativeMigrationSelect(event)}
+                    className="sr-only"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void handleConfirmNativeMigration()}
+                  disabled={!nativeMigrationPreview?.preview.canImport || nativeMigrationStatus === 'importing'}
+                  className="ios-button-primary flex min-h-11 items-center justify-center px-3 text-xs disabled:pointer-events-none disabled:opacity-40"
+                >
+                  {nativeMigrationStatus === 'importing'
+                    ? 'Importing'
+                    : nativeMigrationStatus === 'imported'
+                      ? 'Imported'
+                      : 'Import Native'}
+                </button>
+              </div>
+
+              {nativeMigrationPreview ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNativeMigrationPreview(undefined);
+                    setNativeMigrationStatus('idle');
+                    setNativeMigrationSummary(undefined);
+                  }}
+                  className="min-h-8 w-full rounded-lg text-xs font-black text-[#6E6E73] transition-all active:bg-black/[0.04]"
+                >
+                  Cancel Native Migration Preview
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </section>
 
         <section className="space-y-3 ios-card p-3.5">
