@@ -69,6 +69,14 @@ It represents a PWA JSON backup with:
 
 `src/storage/nativeMigrationFixture.test.ts` verifies that the fixture previews correctly and imports through the native SQLite repository adapter.
 
+`src/storage/nativeMigration.ts` provides the reusable preview/import layer for native migration. It reports:
+
+- record counts;
+- estimated backup size;
+- missing relationship errors;
+- duplicate imported cardio warnings;
+- whether the backup can be imported.
+
 ## Native Storage Path
 
 The configured SQLite location is:
