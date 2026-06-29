@@ -1,8 +1,10 @@
+import { Capacitor } from '@capacitor/core';
 import { Database, FileDown, Info, Languages, Library } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { AppView } from '../app/App';
 import { IOSListRow, IOSPageHeader } from '../components/IosPrimitives';
 import { getStoredLocale, saveStoredLocale, t, type AppLocale } from '../i18n/i18n';
+import type { NativeDurabilityProbeResult } from '../storage/nativeDurabilityProbe';
 import { triggerSelectionHaptic } from '../utils/haptics';
 
 type MorePageProps = {
@@ -13,6 +15,10 @@ type MorePageProps = {
 export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
   const [locale, setLocale] = useState<AppLocale>(() => getStoredLocale());
   const [showStorageInfo, setShowStorageInfo] = useState(false);
+  const [nativeProbeStatus, setNativeProbeStatus] = useState<'idle' | 'running' | 'success' | 'failed'>('idle');
+  const [nativeProbeResult, setNativeProbeResult] = useState<NativeDurabilityProbeResult | undefined>();
+  const [nativeProbeError, setNativeProbeError] = useState<string | undefined>();
+  const isNativeApp = Capacitor.isNativePlatform();
 
   const [globalGoal, setGlobalGoal] = useState<'hypertrophy' | 'maintenance'>(() => {
     if (typeof localStorage !== 'undefined') {
@@ -47,6 +53,21 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
     }
     setGlobalGoal(nextGoal);
     triggerSelectionHaptic();
+  }
+
+  async function handleNativeProbe() {
+    setNativeProbeStatus('running');
+    setNativeProbeError(undefined);
+    try {
+      const { runNativeDurabilityProbe } = await import('../storage/nativeDurabilityProbe');
+      const result = await runNativeDurabilityProbe();
+      setNativeProbeResult(result);
+      setNativeProbeStatus('success');
+      triggerSelectionHaptic();
+    } catch (error) {
+      setNativeProbeError(error instanceof Error ? error.message : String(error));
+      setNativeProbeStatus('failed');
+    }
   }
 
   const managementRows = [
@@ -164,6 +185,59 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
             </div>
           </div>
         </div>
+
+        {isNativeApp ? (
+          <div className="ios-group overflow-hidden">
+            <div className="ios-row flex w-full items-center gap-3 bg-white p-3.5 text-left">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#5856D6] text-white">
+                <Database aria-hidden="true" size={17} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold text-[#1C1C1E]">
+                  {locale === 'ko' ? 'Native 저장소 점검' : 'Native Storage Check'}
+                </span>
+                <span className="mt-0.5 block text-xs font-semibold text-[#8E8E93]">
+                  {nativeProbeStatus === 'running'
+                    ? (locale === 'ko' ? 'SQLite 점검 중...' : 'Checking SQLite...')
+                    : nativeProbeStatus === 'success'
+                      ? (nativeProbeResult?.previousRun
+                        ? (locale === 'ko' ? '이전 실행 데이터 확인됨' : 'Previous run found')
+                        : (locale === 'ko' ? '첫 native 기록 저장 완료' : 'First native record saved'))
+                      : nativeProbeStatus === 'failed'
+                        ? (locale === 'ko' ? '점검 실패' : 'Check failed')
+                        : (locale === 'ko' ? '별도 DB에 테스트 기록을 저장/조회합니다' : 'Writes and reads an isolated probe DB')}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => void handleNativeProbe()}
+                disabled={nativeProbeStatus === 'running'}
+                className="min-h-8 rounded-lg bg-[#F2F2F7] px-3 text-xs font-black text-[#1C1C1E] disabled:opacity-50"
+              >
+                {nativeProbeStatus === 'running' ? (locale === 'ko' ? '확인 중' : 'Checking') : (locale === 'ko' ? '실행' : 'Run')}
+              </button>
+            </div>
+            {nativeProbeResult || nativeProbeError ? (
+              <div className="border-t border-black/[0.04] bg-white px-3.5 py-3 text-xs font-semibold leading-relaxed text-[#6E6E73]">
+                {nativeProbeResult ? (
+                  <p>
+                    {locale === 'ko'
+                      ? `DB ${nativeProbeResult.database}: 세션 ${nativeProbeResult.currentRun.sessionCount}, 세트 ${nativeProbeResult.currentRun.setCount}, 유산소 ${nativeProbeResult.currentRun.cardioCount}.`
+                      : `DB ${nativeProbeResult.database}: ${nativeProbeResult.currentRun.sessionCount} session, ${nativeProbeResult.currentRun.setCount} set, ${nativeProbeResult.currentRun.cardioCount} cardio.`}
+                  </p>
+                ) : null}
+                {nativeProbeResult?.previousRun ? (
+                  <p className="mt-1">
+                    {locale === 'ko'
+                      ? `이전 저장: ${nativeProbeResult.previousRun.writtenAt}`
+                      : `Previous write: ${nativeProbeResult.previousRun.writtenAt}`}
+                  </p>
+                ) : null}
+                {nativeProbeError ? <p className="text-[#FF3B30]">{nativeProbeError}</p> : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {showStorageInfo ? (

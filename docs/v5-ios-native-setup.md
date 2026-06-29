@@ -72,12 +72,13 @@ This is intended to preserve workout data across normal app updates. Manual rest
 3. Run `npm run native:open`.
 4. In Xcode, build the `App` target for an iPhone simulator.
 5. Confirm the app launches and renders the SetGo Today screen.
-6. Wire a small native storage probe to:
-   - create the schema with `initializeNativeSqliteSchema()`;
-   - create a repository with `createNativeSqliteDataRepository()`;
-   - write one routine, workout session, workout exercise, set, and cardio record;
-   - terminate and relaunch the app;
-   - read the records back through the repository.
+6. Open More and run `Native Storage Check`.
+7. Confirm the first run reports a saved native record.
+8. Terminate and relaunch the app.
+9. Open More and run `Native Storage Check` again.
+10. Confirm the second run reports that a previous run was found.
+
+The probe uses a separate SQLite database named `setgo_probe`. It does not clear or mutate the real SetGo workout database.
 
 ## Notes
 
