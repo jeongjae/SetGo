@@ -156,6 +156,15 @@ React UI / domain logic
 - Restore should no longer be part of normal update flow.
 - Export remains available for ownership and emergency portability.
 
+### Storage Contract
+
+The v5 native storage contract is now defined in:
+
+- `src/storage/nativeSchema.ts`
+- `docs/v5-native-storage-schema.md`
+
+This contract maps the current backup snapshot to SQLite-ready native tables and preserves recommendation/cardio data needed by the intelligent coach roadmap.
+
 ## Migration Strategy
 
 ### One-Time PWA To Native Migration
@@ -379,9 +388,9 @@ Exit criteria:
 
 ## Immediate Next Actions
 
-1. Add a storage repository interface around the current Dexie access points.
-2. Choose the native storage plugin after a focused SQLite spike.
-3. Define the v5 SQLite schema from current Dexie tables and backup JSON shape.
+1. Done: add a storage repository interface around the current Dexie access points.
+2. Done: define the v5 SQLite schema from current Dexie tables and backup JSON shape.
+3. Choose the native storage plugin after a focused SQLite spike.
 4. Create a migration fixture using a real exported backup without committing personal data.
 5. Implement native shell proof: create, relaunch, verify durable record.
 6. Design the Readiness Score rule set after storage stability is proven.
