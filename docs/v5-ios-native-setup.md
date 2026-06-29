@@ -79,6 +79,8 @@ It represents a PWA JSON backup with:
 
 `src/storage/nativeMigrationReceipt.ts` stores a compact migration receipt in Capacitor Preferences after a successful native import. The receipt includes backup/export timestamps, imported counts, estimated size, and warning count.
 
+`src/storage/nativeMigrationRuntime.ts` is the runtime bridge for the future native import UI. It parses JSON backup text, previews it, initializes the native SQLite schema, imports through the native repository, and saves the migration receipt.
+
 ## Native Storage Path
 
 The configured SQLite location is:
