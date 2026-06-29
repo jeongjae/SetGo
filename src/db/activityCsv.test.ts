@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ActivityCsvImportError, buildActivityCsvImport } from './activityCsv';
+import { ActivityCsvImportError, buildActivityCsvExport, buildActivityCsvImport } from './activityCsv';
 import type { CardioRecord, WorkoutSession } from '../types';
 
 const now = '2026-06-24T08:00:00.000Z';
@@ -120,5 +120,34 @@ describe('buildActivityCsvImport', () => {
   it('rejects files without startedAt', () => {
     expect(() => buildActivityCsvImport('durationSeconds,distanceKm\n1800,5', [], [], now))
       .toThrow(ActivityCsvImportError);
+  });
+});
+
+describe('buildActivityCsvExport', () => {
+  it('exports running and cardio records using import-compatible headers', () => {
+    const csv = buildActivityCsvExport([
+      record('manual_cardio', {
+        source: 'manual',
+        sourceName: undefined,
+        externalId: undefined,
+        activityType: 'cycling',
+        environment: 'indoor',
+        machineType: 'indoor_bike',
+        startedAt: '2026-06-21T09:00:00.000Z',
+        endedAt: '2026-06-21T09:45:00.000Z',
+        durationSeconds: 2700,
+        distanceKm: 18.5,
+        averageSpeedKmh: 24.7,
+        memo: 'Zone 2, easy',
+      }),
+      record('draft_cardio', {
+        isDraft: true,
+        startedAt: '2026-06-22T09:00:00.000Z',
+      }),
+    ]);
+
+    expect(csv.split('\n')[0]).toBe('externalId,sourceName,activityType,startedAt,endedAt,durationSeconds,distanceKm,environment,machineType,location,averageSpeedKmh,speedKmh,inclinePercent,memo');
+    expect(csv).toContain('SetGo,cycling,2026-06-21T09:00:00.000Z,2026-06-21T09:45:00.000Z,2700,18.5,indoor,indoor_bike,,24.7,,,\"Zone 2, easy\"');
+    expect(csv).not.toContain('draft_cardio');
   });
 });

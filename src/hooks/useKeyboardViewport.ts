@@ -1,14 +1,24 @@
 import { useEffect, useState } from 'react';
 
+type FocusableFormField = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLElement;
+
 export function useKeyboardViewport(): boolean {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   useEffect(() => {
     const baselineHeight = window.innerHeight;
 
-    const getActiveField = (): HTMLInputElement | HTMLTextAreaElement | null => {
+    const getActiveField = (): FocusableFormField | null => {
       const el = document.activeElement;
-      return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ? el : null;
+      if (
+        el instanceof HTMLInputElement
+        || el instanceof HTMLTextAreaElement
+        || el instanceof HTMLSelectElement
+      ) {
+        return el;
+      }
+      if (el instanceof HTMLElement && el.isContentEditable) return el;
+      return null;
     };
 
     const isKeyboardLikelyOpen = () => {
@@ -102,7 +112,12 @@ export function useKeyboardViewport(): boolean {
 
     const handleFocusIn = (event: FocusEvent) => {
       commitKeyboardState();
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+      if (
+        event.target instanceof HTMLInputElement
+        || event.target instanceof HTMLTextAreaElement
+        || event.target instanceof HTMLSelectElement
+        || (event.target instanceof HTMLElement && event.target.isContentEditable)
+      ) {
         keepFieldVisible();
       }
     };
@@ -116,7 +131,7 @@ export function useKeyboardViewport(): boolean {
 
     commitKeyboardState();
     window.visualViewport?.addEventListener('resize', handleViewportResize);
-    window.visualViewport?.addEventListener('scroll', commitKeyboardState);
+    window.visualViewport?.addEventListener('scroll', handleViewportResize);
     window.addEventListener('resize', commitKeyboardState);
     window.addEventListener('focusin', handleFocusIn);
     window.addEventListener('focusout', commitKeyboardState);
@@ -126,7 +141,7 @@ export function useKeyboardViewport(): boolean {
       if (closeTimer) clearTimeout(closeTimer);
       if (scrollFrame) cancelAnimationFrame(scrollFrame);
       window.visualViewport?.removeEventListener('resize', handleViewportResize);
-      window.visualViewport?.removeEventListener('scroll', commitKeyboardState);
+      window.visualViewport?.removeEventListener('scroll', handleViewportResize);
       window.removeEventListener('resize', commitKeyboardState);
       window.removeEventListener('focusin', handleFocusIn);
       window.removeEventListener('focusout', commitKeyboardState);

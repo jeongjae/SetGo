@@ -26,6 +26,23 @@ type ActivityCsvBuildResult = ActivityCsvImportSummary & {
   records: CardioRecord[];
 };
 
+const exportHeaders = [
+  'externalId',
+  'sourceName',
+  'activityType',
+  'startedAt',
+  'endedAt',
+  'durationSeconds',
+  'distanceKm',
+  'environment',
+  'machineType',
+  'location',
+  'averageSpeedKmh',
+  'speedKmh',
+  'inclinePercent',
+  'memo',
+] as const;
+
 function parseDelimitedRows(input: string, delimiter: ',' | '\t'): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -75,6 +92,12 @@ function parseCsvRows(csv: string): string[][] {
   const firstLine = csv.split(/\r?\n/, 1)[0] ?? '';
   const delimiter = firstLine.includes('\t') && !firstLine.includes(',') ? '\t' : ',';
   return parseDelimitedRows(csv, delimiter);
+}
+
+function csvCell(value: string | number | undefined): string {
+  if (value === undefined) return '';
+  const text = String(value);
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 function parseNumber(value: string): number | undefined {
@@ -265,4 +288,36 @@ export async function importActivityCsv(csv: string): Promise<ActivityCsvImportS
     sessionCount: importResult.sessionCount,
     issues: importResult.issues,
   };
+}
+
+export function buildActivityCsvExport(records: CardioRecord[]): string {
+  const rows = records
+    .filter((record) => record.isDraft !== true)
+    .slice()
+    .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
+    .map((record) => ([
+      record.externalId,
+      record.sourceName ?? (record.source === 'imported' ? 'Imported' : 'SetGo'),
+      record.activityType ?? 'running',
+      record.startedAt,
+      record.endedAt,
+      record.durationSeconds,
+      record.distanceKm,
+      record.environment,
+      record.machineType,
+      record.location,
+      record.averageSpeedKmh,
+      record.speedKmh,
+      record.inclinePercent ?? record.inclinePct,
+      record.memo,
+    ].map(csvCell).join(',')));
+
+  return [
+    exportHeaders.join(','),
+    ...rows,
+  ].join('\n');
+}
+
+export async function createActivityCsv(): Promise<string> {
+  return buildActivityCsvExport(await db.cardioRecords.toArray());
 }

@@ -1,6 +1,6 @@
 import { ChevronLeft, Copy, Download, Info, Upload } from 'lucide-react';
 import { type ChangeEvent, useEffect, useState } from 'react';
-import { ActivityCsvImportError, importActivityCsv, type ActivityCsvImportSummary } from '../db/activityCsv';
+import { ActivityCsvImportError, createActivityCsv, importActivityCsv, type ActivityCsvImportSummary } from '../db/activityCsv';
 import { createBackup, createSettingsBackup, previewSetGoBackup, restoreBackup, restoreSettingsBackup, type SetGoBackupPreview } from '../db/backup';
 import { createExerciseCsv, ExerciseCsvImportError, importExerciseCsv } from '../db/exerciseCsv';
 import { isStoragePersisted } from '../db/db';
@@ -409,6 +409,22 @@ export function ExportPage({ onBack }: ExportPageProps) {
     }
   }
 
+  async function handleActivityCsvExport() {
+    const csv = await createActivityCsv();
+    const bom = '\uFEFF';
+    const contents = `${bom}${csv}`;
+    const filename = `setgo-activities-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.csv`;
+    const saveMode = await saveTextFile(contents, filename, 'text/csv;charset=utf-8');
+    const rowCount = Math.max(0, csv.split(/\r?\n/).filter((line) => line.trim()).length - 1);
+    setActivityCsvIssues([]);
+    setActivityCsvStatus(
+      locale === 'ko'
+        ? `${rowCount}개 러닝/유산소 기록 CSV를 내보냈습니다. ${savedMessage(locale, filename, saveMode)}`
+        : `${rowCount} running/cardio rows exported. ${savedMessage(locale, filename, saveMode)}`,
+    );
+    window.setTimeout(() => setActivityCsvStatus(undefined), 2200);
+  }
+
   return (
     <section className="ios-page">
       <header className="flex shrink-0 flex-col gap-2.5 pb-1">
@@ -795,17 +811,27 @@ export function ExportPage({ onBack }: ExportPageProps) {
               ) : null}
             </div>
           ) : null}
-          <label className="ios-button-secondary flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 px-3 text-xs">
-            <Upload aria-hidden="true" size={15} />
-            <span>Import Activity CSV</span>
-            <input
-              aria-label="Import running and cardio activity CSV"
-              type="file"
-              accept=".csv,text/csv"
-              onChange={(event) => void handleActivityCsvImport(event)}
-              className="sr-only"
-            />
-          </label>
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => void handleActivityCsvExport()}
+              className="ios-button-secondary flex min-h-12 items-center justify-center gap-2 px-3 text-xs"
+            >
+              <Download aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? 'CSV 내보내기' : 'Export CSV'}</span>
+            </button>
+            <label className="ios-button-secondary flex min-h-12 cursor-pointer items-center justify-center gap-2 px-3 text-xs">
+              <Upload aria-hidden="true" size={15} />
+              <span>{locale === 'ko' ? 'CSV 가져오기' : 'Import CSV'}</span>
+              <input
+                aria-label="Import running and cardio activity CSV"
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(event) => void handleActivityCsvImport(event)}
+                className="sr-only"
+              />
+            </label>
+          </div>
         </section>
 
         <pre className="min-h-72 overflow-auto whitespace-pre-wrap rounded-2xl border border-black/5 bg-white p-4 text-xs leading-relaxed font-mono text-[#1C1C1E] shadow-inner">
