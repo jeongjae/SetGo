@@ -163,10 +163,11 @@ The v5 native storage contract is now defined in:
 - `src/storage/nativeSchema.ts`
 - `src/storage/nativeSqliteRepository.ts`
 - `src/storage/capacitorSqliteDriver.ts`
+- `src/storage/nativeMigrationFixture.ts`
 - `docs/v5-native-storage-schema.md`
 - `docs/v5-ios-native-setup.md`
 
-This contract maps the current backup snapshot to SQLite-ready native tables, adds a plugin-agnostic SQLite repository adapter, binds the selected Capacitor SQLite plugin to that adapter, and preserves recommendation/cardio data needed by the intelligent coach roadmap.
+This contract maps the current backup snapshot to SQLite-ready native tables, adds a plugin-agnostic SQLite repository adapter, binds the selected Capacitor SQLite plugin to that adapter, and preserves recommendation/cardio data needed by the intelligent coach roadmap. A synthetic non-personal migration fixture now verifies representative backup import without committing private workout data.
 
 ## Migration Strategy
 
@@ -394,7 +395,7 @@ Exit criteria:
 1. Done: add a storage repository interface around the current Dexie access points.
 2. Done: define the v5 SQLite schema from current Dexie tables and backup JSON shape.
 3. Done: choose and bind the native storage plugin after the plugin-agnostic SQLite adapter spike.
-4. Create a migration fixture using a real exported backup without committing personal data.
+4. Done: create a non-personal migration fixture that represents an exported backup without committing private data.
 5. In progress: implement native shell proof on macOS/Xcode: create, relaunch, verify durable record.
 6. Design the Readiness Score rule set after storage stability is proven.
 
