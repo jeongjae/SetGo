@@ -35,6 +35,14 @@ export type WorkoutStartKind = WorkoutSessionKind;
 
 export const DEFAULT_WEIGHT_INCREMENT_KG = 2.5;
 
+export function calculateEstimatedOneRmKg(
+  set: Pick<WorkoutSet, 'weightKg' | 'reps'>,
+): number | undefined {
+  if (!Number.isFinite(set.weightKg) || set.weightKg <= 0) return undefined;
+  if (!Number.isFinite(set.reps) || set.reps <= 0) return undefined;
+  return Math.round(set.weightKg * (1 + set.reps / 30) * 10) / 10;
+}
+
 export function resolveWeightIncrementKg(plan?: Pick<RoutineExercisePlan, 'preferredWeightIncrementKg'>): number {
   const value = plan?.preferredWeightIncrementKg;
   return value !== undefined && Number.isFinite(value) && value > 0 ? value : DEFAULT_WEIGHT_INCREMENT_KG;
@@ -401,6 +409,10 @@ export function createWorkoutExerciseSeed(
       setNo: setIndex + 1,
       weightKg: recommendation?.weightKg ?? plan.plannedWeightKg ?? 0,
       reps: recommendation?.reps ?? plan.plannedReps ?? 0,
+      estimatedOneRmKg: calculateEstimatedOneRmKg({
+        weightKg: recommendation?.weightKg ?? plan.plannedWeightKg ?? 0,
+        reps: recommendation?.reps ?? plan.plannedReps ?? 0,
+      }),
       rir: recommendation?.rir ?? plan.plannedRir,
       isCompleted: false,
       isWarmup,
@@ -929,6 +941,10 @@ export async function addSetToWorkoutExercise(workoutExerciseId: string): Promis
     setNo: nextSetNo,
     weightKg: lastSet?.weightKg ?? 0,
     reps: lastSet?.reps ?? 0,
+    estimatedOneRmKg: calculateEstimatedOneRmKg({
+      weightKg: lastSet?.weightKg ?? 0,
+      reps: lastSet?.reps ?? 0,
+    }),
     rir: lastSet?.rir,
     isCompleted: false,
     isWarmup: lastSet?.isWarmup ?? false,
@@ -984,6 +1000,10 @@ export async function addWarmupSetsToWorkoutExercise(workoutExerciseId: string):
         setNo: 1,
         weightKg: isBodyweight ? 0 : Math.min(targetWeight, roundWeight(targetWeight * 0.5, weightIncrementKg)),
         reps: isBodyweight ? Math.max(1, Math.round(targetReps * 0.5)) : 10,
+        estimatedOneRmKg: calculateEstimatedOneRmKg({
+          weightKg: isBodyweight ? 0 : Math.min(targetWeight, roundWeight(targetWeight * 0.5, weightIncrementKg)),
+          reps: isBodyweight ? Math.max(1, Math.round(targetReps * 0.5)) : 10,
+        }),
         isCompleted: false,
         isWarmup: true,
         type: 'warmup',
@@ -994,6 +1014,10 @@ export async function addWarmupSetsToWorkoutExercise(workoutExerciseId: string):
         setNo: 2,
         weightKg: isBodyweight ? 0 : Math.min(targetWeight, roundWeight(targetWeight * 0.7, weightIncrementKg)),
         reps: isBodyweight ? Math.max(1, Math.round(targetReps * 0.7)) : 5,
+        estimatedOneRmKg: calculateEstimatedOneRmKg({
+          weightKg: isBodyweight ? 0 : Math.min(targetWeight, roundWeight(targetWeight * 0.7, weightIncrementKg)),
+          reps: isBodyweight ? Math.max(1, Math.round(targetReps * 0.7)) : 5,
+        }),
         isCompleted: false,
         isWarmup: true,
         type: 'warmup',
@@ -1004,6 +1028,10 @@ export async function addWarmupSetsToWorkoutExercise(workoutExerciseId: string):
         setNo: 3,
         weightKg: isBodyweight ? 0 : Math.min(targetWeight, roundWeight(targetWeight * 0.9, weightIncrementKg)),
         reps: isBodyweight ? Math.max(1, Math.round(targetReps * 0.9)) : 2,
+        estimatedOneRmKg: calculateEstimatedOneRmKg({
+          weightKg: isBodyweight ? 0 : Math.min(targetWeight, roundWeight(targetWeight * 0.9, weightIncrementKg)),
+          reps: isBodyweight ? Math.max(1, Math.round(targetReps * 0.9)) : 2,
+        }),
         isCompleted: false,
         isWarmup: true,
         type: 'warmup',
@@ -1150,9 +1178,12 @@ export async function updateWorkoutSet(
   if (!existingSet) return;
 
   await db.transaction('rw', db.workoutSets, db.workoutExercises, db.workoutSessions, async () => {
-    await db.workoutSets.update(setId, values);
-
     const updatedSet = { ...existingSet, ...values };
+    await db.workoutSets.update(setId, {
+      ...values,
+      estimatedOneRmKg: calculateEstimatedOneRmKg(updatedSet),
+    });
+
     await refreshExerciseVolume(updatedSet.workoutExerciseId);
   });
 }

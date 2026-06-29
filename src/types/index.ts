@@ -193,6 +193,7 @@ export type WorkoutSet = {
   setNo: number;
   weightKg: number;
   reps: number;
+  estimatedOneRmKg?: number;
   rir?: number;
   isCompleted: boolean;
   isWarmup?: boolean;

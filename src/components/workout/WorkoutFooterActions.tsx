@@ -1,5 +1,5 @@
 import { Check, ClipboardList, Plus } from 'lucide-react';
-import type { WorkoutFinishSummary } from '../../pages/WorkoutPage';
+import type { WorkoutFinishSummary } from '../../domain/workoutSession';
 
 type WorkoutFooterActionsProps = {
   locale: 'ko' | 'en';

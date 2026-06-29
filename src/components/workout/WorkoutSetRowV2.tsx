@@ -2,8 +2,11 @@ import { Check, Copy, Minus, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState, type FocusEvent } from 'react';
 import type { WorkoutExerciseLog } from '../../db/workouts';
 import type { WorkoutSet, WorkoutSetType } from '../../types';
+import { getProgressLabel } from '../../domain/workoutSession';
 import { getOverloadTarget } from '../../utils/overloadCalc';
 import { triggerSelectionHaptic } from '../../utils/haptics';
+
+export { getProgressLabel } from '../../domain/workoutSession';
 
 export const WORKOUT_SET_GRID_CLASS = 'grid-cols-[1.65rem_2.75rem_minmax(4.5rem,1fr)_3rem_2.75rem_2.75rem]';
 
@@ -56,21 +59,6 @@ export function getSetKindLabel(type: WorkoutSetType | undefined, isWarmup: bool
 export function getNextSetType(type: WorkoutSetType | undefined, isWarmup: boolean | undefined): WorkoutSetType {
   const current = type || (isWarmup ? 'warmup' : 'normal');
   return current === 'warmup' ? 'normal' : 'warmup';
-}
-
-export function getProgressLabel(
-  set: Pick<WorkoutSet, 'isCompleted' | 'weightKg' | 'reps'>,
-  pastBestWeight?: number,
-  pastBestVolume?: number,
-): string | undefined {
-  if (!set.isCompleted) return undefined;
-
-  const isWeightPr = pastBestWeight !== undefined && pastBestWeight > 0 && set.weightKg >= pastBestWeight;
-  const isVolumePr = pastBestVolume !== undefined && pastBestVolume > 0 && (set.weightKg * set.reps) >= pastBestVolume;
-  if (isWeightPr && isVolumePr) return 'PR';
-  if (isWeightPr) return 'kg PR';
-  if (isVolumePr) return 'vol PR';
-  return undefined;
 }
 
 export function WorkoutSetRowV2({

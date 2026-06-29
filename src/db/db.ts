@@ -136,6 +136,28 @@ export class SetGoDatabase extends Dexie {
         day.intensityPhase = 'hypertrophy';
       });
     });
+
+    this.version(8).stores({
+      exercises: 'id, category, stage, isDefault, isActive',
+      routines: 'id, splitType, isActive, startDate',
+      routineDays: 'id, routineId, sequence, family, intensityPhase',
+      weeklySchedules: 'id, routineId, weekday, routineDayId',
+      routineCyclePlanItems: 'id, routineId, order, routineDayId, kind',
+      calendarPlanOverrides: 'id, date, routineId, routineDayId, kind',
+      routineExercisePlans: 'id, routineDayId, exerciseId, order',
+      workoutSessions: 'id, date, routineId, routineDayId, cyclePlanItemId, status',
+      workoutExercises: 'id, sessionId, exerciseId, order, status',
+      workoutSets: 'id, workoutExerciseId, setNo, intensityTechnique',
+      cardioRecords: 'id, sessionId, environment, order',
+    }).upgrade((tx) => (
+      tx.table('workoutSets').toCollection().modify((set) => {
+        const weightKg = Number(set.weightKg);
+        const reps = Number(set.reps);
+        set.estimatedOneRmKg = Number.isFinite(weightKg) && weightKg > 0 && Number.isFinite(reps) && reps > 0
+          ? Math.round(weightKg * (1 + reps / 30) * 10) / 10
+          : undefined;
+      })
+    ));
   }
 }
 
