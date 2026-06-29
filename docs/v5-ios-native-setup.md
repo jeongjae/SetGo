@@ -77,6 +77,8 @@ It represents a PWA JSON backup with:
 - duplicate imported cardio warnings;
 - whether the backup can be imported.
 
+`src/storage/nativeMigrationReceipt.ts` stores a compact migration receipt in Capacitor Preferences after a successful native import. The receipt includes backup/export timestamps, imported counts, estimated size, and warning count.
+
 ## Native Storage Path
 
 The configured SQLite location is:

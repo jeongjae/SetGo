@@ -1,4 +1,10 @@
 import { previewSetGoBackup, restoreBackup, type SetGoBackup } from '../db/backup';
+import {
+  createNativeMigrationReceipt,
+  saveNativeMigrationReceipt,
+  type NativeMigrationReceipt,
+  type NativeMigrationReceiptStore,
+} from './nativeMigrationReceipt';
 import type { SetGoDataRepository, SetGoDataSnapshot } from './setgoDataRepository';
 
 export type NativeMigrationIssue = {
@@ -31,6 +37,12 @@ export type NativeMigrationPreview = {
 
 export type NativeMigrationImportResult = NativeMigrationPreview & {
   importedAt: string;
+  receipt?: NativeMigrationReceipt;
+};
+
+export type NativeMigrationImportOptions = {
+  saveReceipt?: boolean;
+  receiptStore?: NativeMigrationReceiptStore;
 };
 
 type BackupData = Partial<SetGoBackup['data']>;
@@ -77,6 +89,7 @@ export function previewNativeBackupMigration(input: unknown): NativeMigrationPre
 export async function importNativeBackupMigration(
   input: unknown,
   repository: SetGoDataRepository,
+  options: NativeMigrationImportOptions = {},
 ): Promise<NativeMigrationImportResult> {
   const preview = previewNativeBackupMigration(input);
   if (!preview.canImport) {
@@ -85,10 +98,18 @@ export async function importNativeBackupMigration(
 
   await restoreBackup(input, repository);
 
-  return {
+  const result: NativeMigrationImportResult = {
     ...preview,
     importedAt: new Date().toISOString(),
   };
+
+  if (options.saveReceipt) {
+    const receipt = createNativeMigrationReceipt(result);
+    await saveNativeMigrationReceipt(receipt, options.receiptStore);
+    result.receipt = receipt;
+  }
+
+  return result;
 }
 
 function countItems(value: unknown): number {

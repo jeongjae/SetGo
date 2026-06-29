@@ -4,7 +4,28 @@ import {
   previewNativeBackupMigration,
 } from './nativeMigration';
 import { SETGO_V5_MIGRATION_FIXTURE_BACKUP } from './nativeMigrationFixture';
+import {
+  readNativeMigrationReceipt,
+  SETGO_NATIVE_MIGRATION_RECEIPT_KEY,
+  type NativeMigrationReceiptStore,
+} from './nativeMigrationReceipt';
 import type { SetGoDataRepository, SetGoDataSnapshot, SetGoSettingsDataSnapshot } from './setgoDataRepository';
+
+class MemoryReceiptStore implements NativeMigrationReceiptStore {
+  values = new Map<string, string>();
+
+  async get(key: string): Promise<string | undefined> {
+    return this.values.get(key);
+  }
+
+  async set(key: string, value: string): Promise<void> {
+    this.values.set(key, value);
+  }
+
+  async remove(key: string): Promise<void> {
+    this.values.delete(key);
+  }
+}
 
 function emptySnapshot(overrides: Partial<SetGoDataSnapshot> = {}): SetGoDataSnapshot {
   return {
@@ -97,6 +118,7 @@ describe('native migration preview and import', () => {
 
   it('imports valid migration input through the provided repository', async () => {
     let restored: SetGoDataSnapshot | undefined;
+    const receiptStore = new MemoryReceiptStore();
     const repository: SetGoDataRepository = {
       readBackupData: async () => emptySnapshot(),
       readSettingsBackupData: async () => emptySettingsSnapshot(),
@@ -107,10 +129,16 @@ describe('native migration preview and import', () => {
       replaceSettingsData: async () => {},
     };
 
-    const result = await importNativeBackupMigration(SETGO_V5_MIGRATION_FIXTURE_BACKUP, repository);
+    const result = await importNativeBackupMigration(SETGO_V5_MIGRATION_FIXTURE_BACKUP, repository, {
+      saveReceipt: true,
+      receiptStore,
+    });
 
     expect(result.canImport).toBe(true);
     expect(result.importedAt).toEqual(expect.any(String));
+    expect(result.receipt?.counts.workoutSessions).toBe(2);
+    expect(receiptStore.values.has(SETGO_NATIVE_MIGRATION_RECEIPT_KEY)).toBe(true);
+    await expect(readNativeMigrationReceipt(receiptStore)).resolves.toEqual(result.receipt);
     expect(restored?.workoutSessions).toHaveLength(2);
     expect(restored?.cardioRecords[0].externalId).toBe('fixture-health-running-001');
   });
