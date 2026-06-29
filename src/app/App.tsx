@@ -33,6 +33,20 @@ export function workoutModeForHistoricalAdd(dateKey: string, todayKey: string): 
   return dateKey === todayKey ? 'active' : 'history-edit';
 }
 
+export function viewportMetricsForKeyboard(layoutHeight: number, visualHeight: number, visualOffsetTop = 0): {
+  shellHeight: number;
+  keyboardInset: number;
+} {
+  return {
+    shellHeight: layoutHeight,
+    keyboardInset: Math.max(0, layoutHeight - visualHeight - visualOffsetTop),
+  };
+}
+
+export function shouldShowBottomNav(view: AppView, isKeyboardOpen: boolean): boolean {
+  return view !== 'workout' && !isKeyboardOpen;
+}
+
 function describeStartupError(error: unknown) {
   if (error instanceof Error) {
     return {
@@ -46,7 +60,7 @@ function describeStartupError(error: unknown) {
 }
 
 export function App() {
-  useKeyboardViewport();
+  const isKeyboardOpen = useKeyboardViewport();
 
   const [view, setView] = useState<AppView>('today');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -58,8 +72,14 @@ export function App() {
 
   useEffect(() => {
     const updateViewportHeight = () => {
-      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-      document.documentElement.style.setProperty('--setgo-viewport-height', `${viewportHeight}px`);
+      const layoutHeight = window.innerHeight;
+      const visualViewport = window.visualViewport;
+      const visualHeight = visualViewport?.height ?? layoutHeight;
+      const visualOffsetTop = visualViewport?.offsetTop ?? 0;
+      const metrics = viewportMetricsForKeyboard(layoutHeight, visualHeight, visualOffsetTop);
+
+      document.documentElement.style.setProperty('--setgo-viewport-height', `${metrics.shellHeight}px`);
+      document.documentElement.style.setProperty('--setgo-keyboard-inset', `${metrics.keyboardInset}px`);
     };
 
     updateViewportHeight();
@@ -216,12 +236,12 @@ export function App() {
   const loadingLabel = getStoredLocale() === 'ko' ? '불러오는 중...' : 'Loading...';
 
   return (
-    <main className="app-shell ios-screen">
+    <main className={`app-shell ios-screen ${isKeyboardOpen ? 'keyboard-open' : ''}`}>
       <PwaStatus />
       <Suspense fallback={<div className="ios-page items-center justify-center text-sm font-bold text-[#6E6E73]">{loadingLabel}</div>}>
         {content}
       </Suspense>
-      {view !== 'workout' ? <AppBottomNav activeView={view} onNavigate={handleNavigate} /> : null}
+      {shouldShowBottomNav(view, isKeyboardOpen) ? <AppBottomNav activeView={view} onNavigate={handleNavigate} /> : null}
     </main>
   );
 }
