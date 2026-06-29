@@ -55,6 +55,20 @@ The workflow `.github/workflows/ios-native-check.yml` builds the iOS simulator a
 
 This does not install the app on a real iPhone and does not upload to TestFlight. Those require Apple Developer signing assets and an App Store Connect setup.
 
+## Migration Fixture
+
+The non-personal migration fixture is `src/storage/nativeMigrationFixture.ts`.
+
+It represents a PWA JSON backup with:
+
+- exercises and routine plans;
+- a completed strength workout;
+- a completed running/cardio record;
+- recommendation snapshots;
+- a calendar running override.
+
+`src/storage/nativeMigrationFixture.test.ts` verifies that the fixture previews correctly and imports through the native SQLite repository adapter.
+
 ## Native Storage Path
 
 The configured SQLite location is:
