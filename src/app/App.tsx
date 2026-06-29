@@ -5,6 +5,7 @@ import { getOrCreateTodayWorkout, getOrCreateWorkoutForDate, type WorkoutStartKi
 import { formatDateKey } from '../utils/date';
 import { requestPersistentStorage } from '../db/db';
 import { getStoredLocale } from '../i18n/i18n';
+import { useKeyboardViewport } from '../hooks/useKeyboardViewport';
 import type { WorkoutRecommendationSnapshot } from '../types';
 
 const CalendarPage = lazy(() => import('../pages/CalendarPage').then((module) => ({ default: module.CalendarPage })));
@@ -45,6 +46,8 @@ function describeStartupError(error: unknown) {
 }
 
 export function App() {
+  useKeyboardViewport();
+
   const [view, setView] = useState<AppView>('today');
   const [refreshKey, setRefreshKey] = useState(0);
   const [, setLocaleRefreshKey] = useState(0);
