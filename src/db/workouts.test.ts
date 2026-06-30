@@ -343,8 +343,9 @@ describe('routine plan seeding', () => {
 });
 
 describe('weight increment resolution', () => {
-  it('uses routine plan preferred weight increments with a 2.5kg fallback', () => {
-    expect(resolveWeightIncrementKg({ preferredWeightIncrementKg: 1 })).toBe(1);
+  it('uses exercise preferred weight increments before legacy routine plan increments', () => {
+    expect(resolveWeightIncrementKg({ preferredWeightIncrementKg: 0.5 }, { preferredWeightIncrementKg: 1 })).toBe(0.5);
+    expect(resolveWeightIncrementKg({}, { preferredWeightIncrementKg: 1 })).toBe(1);
     expect(resolveWeightIncrementKg({ preferredWeightIncrementKg: 0 })).toBe(2.5);
     expect(resolveWeightIncrementKg({ preferredWeightIncrementKg: -1 })).toBe(2.5);
     expect(resolveWeightIncrementKg({})).toBe(2.5);

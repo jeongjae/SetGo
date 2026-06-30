@@ -104,7 +104,7 @@ export function recommendExerciseTarget({
     'plannedWeightKg' | 'plannedReps' | 'plannedSets' | 'plannedRir' | 'targetRepMin' | 'targetRepMax' | 'progressionStyle' | 'preferredWeightIncrementKg'
   >;
   recentSessions: RecentExerciseSession[];
-  exercise?: Pick<ExerciseMaster, 'category' | 'categoryTags'>;
+  exercise?: Pick<ExerciseMaster, 'category' | 'categoryTags' | 'preferredWeightIncrementKg'>;
   currentFamily?: string;
   currentPhase?: IntensityPhase;
   globalGoal?: TrainingGoal;
@@ -115,7 +115,7 @@ export function recommendExerciseTarget({
   const plannedReps = clamp(Math.round(plan.plannedReps ?? targetRange.max), targetRange.min, targetRange.max);
   const plannedRir = plan.plannedRir;
   const style = plan.progressionStyle ?? inferProgressionStyle(exercise);
-  const increment = plan.preferredWeightIncrementKg ?? defaultIncrement(style);
+  const increment = exercise?.preferredWeightIncrementKg ?? plan.preferredWeightIncrementKg ?? defaultIncrement(style);
   const completedSessions = recentSessions
     .map((session) => ({ session, sets: workingSets(session) }))
     .filter((item) => item.sets.length > 0);

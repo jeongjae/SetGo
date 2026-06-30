@@ -17,7 +17,7 @@ The native durability probe lives in `src/storage/nativeDurabilityProbe.ts`.
 
 ## Version
 
-- Native schema version: `1`
+- Native schema version: `2`
 - Source data model: current SetGo backup snapshot plus Dexie v8 indexes
 - Storage target: SQLite-compatible tables behind the SetGo repository adapter
 

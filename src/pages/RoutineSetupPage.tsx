@@ -560,7 +560,7 @@ export function RoutineSetupPage({
 
   async function handleUpdateExercise(
     exerciseId: string,
-    values: Partial<Pick<ExerciseMaster, 'nameKo' | 'nameEn' | 'description' | 'categoryTags' | 'stageTags'>>,
+    values: Partial<Pick<ExerciseMaster, 'nameKo' | 'nameEn' | 'description' | 'categoryTags' | 'stageTags' | 'preferredWeightIncrementKg'>>,
   ) {
     if (pendingExerciseDraft?.id === exerciseId) {
       const categoryTags = values.categoryTags ?? getExerciseCategories(pendingExerciseDraft);
@@ -1171,6 +1171,23 @@ export function RoutineSetupPage({
                       className="mt-1 w-full resize-none rounded-xl border border-[#D1D1D6] bg-white px-3 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                     />
                   </label>
+                  <label className="text-xs font-bold uppercase text-[#6E6E73]">
+                    {locale === 'ko' ? '무게 조정 단위(kg)' : 'Weight step (kg)'}
+                    <input
+                      aria-label="Edit exercise weight increment"
+                      type="text"
+                      inputMode="decimal"
+                      defaultValue={editingExercise.preferredWeightIncrementKg ?? ''}
+                      placeholder="2.5"
+                      onBlur={(event) => {
+                        const value = Number(event.target.value);
+                        void handleUpdateExercise(editingExercise.id, {
+                          preferredWeightIncrementKg: Number.isFinite(value) && value > 0 ? value : undefined,
+                        });
+                      }}
+                      className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                    />
+                  </label>
                 </div>
 
                 <div className="space-y-3.5 pt-1 border-t border-[#E5E5EA]">
@@ -1487,7 +1504,7 @@ export function RoutineSetupPage({
                               className="w-full rounded-xl border border-[#D1D1D6] bg-white py-2 text-center text-sm font-bold text-[#1C1C1E] outline-none transition-all focus:border-[#2EC4B6]"
                             />
                           </label>
-                          <label className="block text-center">
+                          <label className="hidden">
                             <span className="mb-1 block text-xs font-bold uppercase text-[#6E6E73]">
                               {locale === 'ko' ? '단위' : 'Step'}
                             </span>
