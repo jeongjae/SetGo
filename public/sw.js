@@ -1,4 +1,4 @@
-const CACHE_NAME = 'setgo-shell-v9';
+const CACHE_NAME = 'setgo-shell-v10';
 const BASE_PATH = new URL(self.registration.scope).pathname;
 const APP_SHELL = [BASE_PATH, `${BASE_PATH}index.html`, `${BASE_PATH}manifest.webmanifest`, `${BASE_PATH}icon.svg`];
 const IS_LOCAL_DEV = ['localhost', '127.0.0.1', '::1'].includes(self.location.hostname);
@@ -46,13 +46,29 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
-          const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(BASE_PATH, responseClone);
+            cache.put(BASE_PATH, networkResponse.clone());
+            cache.put(`${BASE_PATH}index.html`, networkResponse.clone());
           });
           return networkResponse;
         })
-        .catch(() => caches.match(BASE_PATH)),
+        .catch(() => caches.match(BASE_PATH).then((response) => response || caches.match(`${BASE_PATH}index.html`))),
+    );
+    return;
+  }
+
+  const destination = event.request.destination;
+  if (destination === 'script' || destination === 'style' || destination === 'worker') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request)),
     );
     return;
   }

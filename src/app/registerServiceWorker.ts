@@ -24,6 +24,17 @@ export function registerServiceWorker() {
     void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, {
       scope: import.meta.env.BASE_URL,
     }).then((registration) => {
+      void registration.update();
+
+      const checkForUpdate = () => {
+        if (document.visibilityState === 'visible') {
+          void registration.update();
+        }
+      };
+
+      document.addEventListener('visibilitychange', checkForUpdate);
+      window.addEventListener('focus', checkForUpdate);
+
       registration.addEventListener('updatefound', () => {
         const installingWorker = registration.installing;
         if (!installingWorker) return;
