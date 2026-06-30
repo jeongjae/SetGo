@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyAutomaticHardSet,
   calculateEstimatedOneRmKg,
   calculateCardioDurationSeconds,
   createDraftCardioRecord,
@@ -10,7 +11,7 @@ import {
   selectReusableInProgressSession,
   selectWorkoutStartSession,
 } from './workouts';
-import type { ExerciseMaster, RoutineCyclePlanItem, RoutineExercisePlan, WorkoutRecommendationSnapshot, WorkoutSession } from '../types';
+import type { ExerciseMaster, RoutineCyclePlanItem, RoutineExercisePlan, WorkoutRecommendationSnapshot, WorkoutSession, WorkoutSet } from '../types';
 
 function session(
   id: string,
@@ -30,6 +31,37 @@ function session(
     updatedAt: startedAt,
   };
 }
+
+function workoutSet(values: Partial<WorkoutSet> = {}): WorkoutSet {
+  return {
+    id: 'set',
+    workoutExerciseId: 'workout_exercise',
+    setNo: 1,
+    weightKg: 100,
+    reps: 8,
+    isCompleted: false,
+    isWarmup: false,
+    isHard: false,
+    ...values,
+  };
+}
+
+describe('automatic hard-set marking', () => {
+  it('marks non-warmup sets as hard when RIR is 2 or lower', () => {
+    expect(applyAutomaticHardSet(workoutSet(), { rir: 2 })).toMatchObject({
+      rir: 2,
+      isHard: true,
+    });
+  });
+
+  it('does not override explicit hard-set choices or warmup sets', () => {
+    expect(applyAutomaticHardSet(workoutSet(), { rir: 1, isHard: false })).toMatchObject({
+      rir: 1,
+      isHard: false,
+    });
+    expect(applyAutomaticHardSet(workoutSet({ isWarmup: true }), { rir: 1 })).toEqual({ rir: 1 });
+  });
+});
 
 describe('workout session reuse', () => {
   it('reuses the newest in-progress session for the selected date', () => {

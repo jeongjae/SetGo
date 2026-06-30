@@ -28,6 +28,7 @@ import {
   recoveryGroupLabel,
   recoveryWarningGroups,
 } from '../domain/recoveryInputs';
+import type { RecoveryMuscleGroup, RecoverySnapshot } from '../domain/recovery';
 import { buildStats, type DeloadRecommendation } from '../domain/stats';
 import { getStoredLocale, t, tf, type AppLocale } from '../i18n/i18n';
 import type { CardioRecord, Routine, RoutineDay, WorkoutRecommendationSnapshot, WorkoutSession, WorkoutSessionKind } from '../types';
@@ -43,6 +44,42 @@ function getRoutinePlanPrefix(routine: Routine | undefined, locale: 'ko' | 'en')
   const splitNumber = routine.name.match(/(\d+)[-\s]?Day/i)?.[1] ?? routine.name.match(/(\d+)분할/)?.[1];
   if (splitNumber) return locale === 'ko' ? `${splitNumber}분할 루틴` : `${splitNumber}-Day Routine`;
   return routine.name;
+}
+
+export function scopeDeloadRecommendationToPlannedGroups(
+  recommendation: DeloadRecommendation | undefined,
+  plannedGroups: RecoveryMuscleGroup[],
+  recovery: RecoverySnapshot,
+  locale: AppLocale,
+): DeloadRecommendation | undefined {
+  if (!recommendation) return undefined;
+  if (plannedGroups.length === 0) return recommendation;
+
+  const recoveryByGroup = new Map(recovery.groups.map((group) => [group.group, group]));
+  const plannedRecovery = plannedGroups
+    .map((group) => recoveryByGroup.get(group))
+    .filter((group): group is RecoverySnapshot['groups'][number] => Boolean(group));
+  const fatiguedPlannedGroups = plannedRecovery
+    .filter((group) => group.recoveryPercent < 60)
+    .sort((a, b) => a.recoveryPercent - b.recoveryPercent);
+  const globalFatigue = recommendation.severity === 'high' && recovery.averageRecoveryPercent < 50;
+
+  if (fatiguedPlannedGroups.length === 0 && !globalFatigue) return undefined;
+  if (fatiguedPlannedGroups.length === 0) return recommendation;
+
+  const labels = fatiguedPlannedGroups
+    .slice(0, 2)
+    .map((group) => recoveryGroupLabel(group.group, locale))
+    .join(', ');
+  const plannedReason = locale === 'ko'
+    ? `오늘 예정 운동의 ${labels} 회복도가 ${fatiguedPlannedGroups[0].recoveryPercent}%입니다.`
+    : `Today's planned ${labels} recovery is ${fatiguedPlannedGroups[0].recoveryPercent}%.`;
+
+  return {
+    ...recommendation,
+    recoveryPercent: fatiguedPlannedGroups[0].recoveryPercent,
+    reasons: [plannedReason, ...recommendation.reasons],
+  };
 }
 
 function dailyRecommendationReasonLabel(reason: DailyWorkoutRecommendationReason, locale: AppLocale): string {
@@ -252,7 +289,26 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
         const stats = buildStats(sessions, workoutExercises, workoutSets, exercises, locale, cardioRecords, 7);
         const dismissedKey = `setgo.deloadRecommendation.dismissed.${formatDateKey(new Date())}`;
         const isDismissed = typeof localStorage !== 'undefined' && localStorage.getItem(dismissedKey) === 'true';
-        setDeloadRecommendation(isDismissed ? undefined : stats.deloadRecommendation);
+        const plannedRoutineDayId = todayWorkout?.session.routineDayId
+          ?? (todaySchedule.kind === 'routine' && !todaySchedule.isRestDay ? todaySchedule.routineDay?.id : undefined)
+          ?? recommendation.routineDay?.id;
+        const plannedRoutinePlans = plannedRoutineDayId
+          ? await db.routineExercisePlans.where('routineDayId').equals(plannedRoutineDayId).toArray()
+          : [];
+        const exerciseById = new Map(exercises.map((exercise) => [exercise.id, exercise]));
+        const plannedGroups = Array.from(new Set(
+          plannedRoutinePlans.flatMap((plan) => {
+            const exercise = exerciseById.get(plan.exerciseId);
+            return exercise ? exerciseRecoveryMuscleGroups(exercise) : [];
+          }),
+        ));
+        const scopedDeloadRecommendation = scopeDeloadRecommendationToPlannedGroups(
+          stats.deloadRecommendation,
+          plannedGroups,
+          stats.recovery,
+          locale,
+        );
+        setDeloadRecommendation(isDismissed ? undefined : scopedDeloadRecommendation);
       } catch (error) {
         console.error('Failed to load local SetGo data', error);
       }
