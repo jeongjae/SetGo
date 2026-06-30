@@ -637,6 +637,7 @@ export function RoutineSetupPage({
   const selectedDayLabel = selectedDay ? getRoutineDayDisplayName(selectedDay.routineDay, locale) : undefined;
   const selectedDayExerciseCount = selectedDay?.plans.length ?? 0;
   const routineSummary = getRoutineSummaryInfo();
+  const workoutCycleLabel = locale === 'ko' ? '운동사이클' : 'Workout Cycle';
 
   return (
     <section className="viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col gap-0 overflow-hidden px-3.5 py-3 text-[#1C1C1E]">
@@ -655,15 +656,15 @@ export function RoutineSetupPage({
           <div>
             <p className="text-xs font-black uppercase leading-none text-accent-dark">{t(locale, 'routines')}</p>
             <h1 className="mt-0.5 text-lg font-extrabold text-[#1C1C1E]">
-              {setupTab === 'routine' ? t(locale, 'routine') : setupTab === 'library' ? t(locale, 'exerciseLibrary') : t(locale, 'weeklyPlan')}
+              {setupTab === 'routine' ? t(locale, 'routine') : setupTab === 'schedule' ? workoutCycleLabel : t(locale, 'exerciseLibrary')}
             </h1>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#F2F2F7] p-1">
           {([
             ['routine', t(locale, 'routine')],
+            ['schedule', workoutCycleLabel],
             ['library', t(locale, 'exerciseLibrary')],
-            ['schedule', t(locale, 'weeklyPlan')],
           ] as Array<[SetupTab, string]>).map(([value, label]) => (
             <button
               key={value}
@@ -885,14 +886,14 @@ export function RoutineSetupPage({
 
         {/* 주간 계획 */}
         {setupTab === 'schedule' && (
-          <section className="ios-card shrink-0 space-y-3.5 p-4">
-            <p className="text-xs font-bold uppercase text-[#8E8E93]">{t(locale, 'weeklyPlan')}</p>
-            <div className="rounded-xl border border-black/5 bg-[#F2F2F7] px-3.5 py-2.5">
+          <section className="ios-card shrink-0 space-y-2.5 p-3">
+            <p className="text-xs font-bold uppercase text-[#8E8E93]">{workoutCycleLabel}</p>
+            <div className="rounded-xl border border-black/5 bg-[#F2F2F7] px-3 py-2">
               <p className="text-xs font-extrabold uppercase text-[#8E8E93]">{t(locale, 'activeRoutine')}</p>
               <h2 className="mt-0.5 text-sm font-black text-[#1C1C1E]">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
               <p className="mt-1 text-xs font-medium leading-normal text-[#6E6E73]">{t(locale, 'routinePlanFor')}</p>
             </div>
-            <div className="flex items-center justify-start gap-2.5">
+            <div className="flex items-center justify-start gap-2">
               <label htmlFor="routine-schedule-start" className="text-xs font-bold text-[#6E6E73]">
                 {locale === 'ko' ? '시작일' : 'Start date'}
               </label>
@@ -904,7 +905,7 @@ export function RoutineSetupPage({
                   setScheduleStartDate(event.target.value);
                   setScheduleDirty(true);
                 }}
-                className="min-h-10 w-[12.25rem] max-w-[72%] rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-semibold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                className="min-h-9 w-[12.25rem] max-w-[72%] rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-semibold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
               />
             </div>
             {cyclePlan.length === 0 ? (
@@ -918,15 +919,15 @@ export function RoutineSetupPage({
                 <span>{locale === 'ko' ? '운동사이클 정하기' : 'Set workout cycle'}</span>
               </button>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {cyclePlan.map((item, index) => (
-                  <div key={`${item.id ?? 'new'}_${index}`} className="grid grid-cols-[2rem_1fr_auto_auto_auto] items-center gap-1.5 rounded-xl border border-black/5 bg-[#F2F2F7] p-2">
+                  <div key={`${item.id ?? 'new'}_${index}`} className="grid grid-cols-[1.5rem_1fr_2rem_2rem_2rem] items-center gap-1 rounded-xl border border-black/5 bg-[#F2F2F7] p-1.5">
                     <span className="text-center text-xs font-black text-[#159A91]">{index + 1}</span>
                     <select
                       aria-label={`Cycle item ${index + 1}`}
                       value={item.kind === 'routine' ? `routine:${item.routineDayId ?? ''}` : item.kind}
                       onChange={(event) => handleCycleItemChange(index, event.target.value)}
-                      className="min-h-9 min-w-0 cursor-pointer rounded-lg border border-[#D1D1D6] bg-white px-2 text-sm font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                      className="min-h-8 min-w-0 cursor-pointer rounded-lg border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                     >
                       {dayPlans.map((dayPlan) => (
                         <option key={dayPlan.routineDay.id} value={`routine:${dayPlan.routineDay.id}`}>
@@ -940,50 +941,50 @@ export function RoutineSetupPage({
                       type="button"
                       onClick={() => handleMoveCycleItem(index, -1)}
                       disabled={index === 0}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-black/5 bg-white text-[#1C1C1E] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/5 bg-white text-[#1C1C1E] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                       aria-label="Move cycle item up"
                     >
-                      <ArrowUp aria-hidden="true" size={14} className="text-[#1C1C1E]" />
+                      <ArrowUp aria-hidden="true" size={13} className="text-[#1C1C1E]" />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleMoveCycleItem(index, 1)}
                       disabled={index === cyclePlan.length - 1}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-black/5 bg-white text-[#1C1C1E] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/5 bg-white text-[#1C1C1E] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                       aria-label="Move cycle item down"
                     >
-                      <ArrowDown aria-hidden="true" size={14} className="text-[#1C1C1E]" />
+                      <ArrowDown aria-hidden="true" size={13} className="text-[#1C1C1E]" />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteCycleItem(index)}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 transition-all active:scale-95"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 transition-all active:scale-95"
                       aria-label="Delete cycle item"
                     >
-                      <Trash2 aria-hidden="true" size={14} />
+                      <Trash2 aria-hidden="true" size={13} />
                     </button>
                   </div>
                 ))}
-                <div className="grid grid-cols-3 gap-2">
-                  <button type="button" onClick={() => handleAddCycleItem('routine')} className="min-h-10 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button type="button" onClick={() => handleAddCycleItem('routine')} className="min-h-9 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
                     {locale === 'ko' ? '운동 추가' : 'Workout'}
                   </button>
-                  <button type="button" onClick={() => handleAddCycleItem('running')} className="min-h-10 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
+                  <button type="button" onClick={() => handleAddCycleItem('running')} className="min-h-9 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
                     {locale === 'ko' ? '러닝 추가' : 'Running'}
                   </button>
-                  <button type="button" onClick={() => handleAddCycleItem('rest')} className="min-h-10 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
+                  <button type="button" onClick={() => handleAddCycleItem('rest')} className="min-h-9 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
                     {locale === 'ko' ? '휴식 추가' : 'Rest'}
                   </button>
                 </div>
               </div>
             )}
             {scheduleStatus ? <p className="rounded-xl bg-accent-soft px-3 py-2 text-xs font-bold text-accent-dark border border-[#2EC4B6]/20">{scheduleStatus}</p> : null}
-            <div className="grid grid-cols-3 gap-2 border-t border-[#E5E5EA] pt-2.5">
+            <div className="grid grid-cols-3 gap-1.5 border-t border-[#E5E5EA] pt-2">
               <button
                 type="button"
                 onClick={() => void handleReviewCycleCalendar()}
                 disabled={!activeRoutine || !scheduleStartDate || cyclePlan.length === 0}
-                className="flex min-h-11 items-center justify-center gap-1 rounded-xl border border-[#2EC4B6]/20 bg-white px-2 text-xs font-bold text-[#159A91] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                className="flex min-h-10 items-center justify-center gap-1 rounded-xl border border-[#2EC4B6]/20 bg-white px-2 text-xs font-bold text-[#159A91] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
               >
                 <CalendarDays aria-hidden="true" size={15} />
                 <span>{locale === 'ko' ? '캘린더 확인' : 'Calendar'}</span>
@@ -991,7 +992,7 @@ export function RoutineSetupPage({
               <button
                 type="button"
                 onClick={() => void handleCancelWeeklySchedule()}
-                className="flex min-h-11 items-center justify-center rounded-xl border border-black/5 bg-white text-sm font-bold text-[#1C1C1E] shadow-sm transition-all active:scale-95"
+                className="flex min-h-10 items-center justify-center rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] shadow-sm transition-all active:scale-95"
               >
                 {locale === 'ko' ? '취소' : 'Cancel'}
               </button>
@@ -999,7 +1000,7 @@ export function RoutineSetupPage({
                 type="button"
                 onClick={() => void handleSaveWeeklySchedule()}
                 disabled={!activeRoutine || !scheduleDirty || !scheduleStartDate || cyclePlan.length === 0}
-                className="flex min-h-11 items-center justify-center rounded-xl bg-[#2EC4B6] text-sm font-black text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                className="flex min-h-10 items-center justify-center rounded-xl bg-[#2EC4B6] text-xs font-black text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
               >
                 {t(locale, 'save')}
               </button>
@@ -1035,8 +1036,8 @@ export function RoutineSetupPage({
 
             {/* Exercise search */}
             {exerciseLibraryMode === 'browse' ? (
-              <div className="grid gap-2">
-                <div className="flex items-center gap-2.5 rounded-xl border border-[#D1D1D6] bg-white px-3.5 py-2 focus-within:border-[#2EC4B6]">
+              <div className="grid grid-cols-[minmax(0,1fr)_7.25rem_4.5rem] items-center gap-1.5">
+                <div className="flex min-h-9 items-center gap-2 rounded-xl border border-[#D1D1D6] bg-white px-2.5 py-1.5 focus-within:border-[#2EC4B6]">
                   <Search aria-hidden="true" size={15} className="shrink-0 text-[#6E6E73]" />
                   <input
                     aria-label="Search exercise library"
@@ -1044,15 +1045,15 @@ export function RoutineSetupPage({
                     value={exerciseSearch}
                     onChange={(event) => setExerciseSearch(event.target.value)}
                     placeholder={t(locale, 'searchExercises')}
-                    className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[#1C1C1E] outline-none placeholder:text-[#8E8E93]"
+                    className="min-w-0 flex-1 bg-transparent text-xs font-medium text-[#1C1C1E] outline-none placeholder:text-[#8E8E93]"
                   />
                 </div>
-                <div className="grid grid-cols-[1fr_auto] gap-2">
+                <div className="contents">
                   <select
                     aria-label="Exercise category filter"
                     value={exerciseCategoryFilter}
                     onChange={(event) => setExerciseCategoryFilter(event.target.value as ExerciseCategory | 'all')}
-                    className="min-h-10 rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                    className="min-h-9 min-w-0 rounded-xl border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                   >
                     {exerciseCategories.map((category) => (
                       <option key={category.value} value={category.value}>
@@ -1063,7 +1064,7 @@ export function RoutineSetupPage({
                   <button
                     type="button"
                     onClick={() => setShowHiddenExercises((current) => !current)}
-                    className="ios-button-secondary min-h-10 px-3 text-xs font-bold"
+                    className="ios-button-secondary min-h-9 overflow-hidden px-1.5 text-[10px] font-bold leading-tight"
                   >
                     {showHiddenExercises ? (locale === 'ko' ? '사용 중' : 'Active') : (locale === 'ko' ? '숨긴 운동' : 'Hidden')}
                   </button>
@@ -1072,24 +1073,24 @@ export function RoutineSetupPage({
             ) : null}
 
             {/* Exercise library two-column grid */}
-            {exerciseLibraryMode === 'browse' ? <div className="grid min-h-[24rem] max-h-[calc(100dvh-22rem)] auto-rows-[3.75rem] grid-cols-2 content-start gap-2 overflow-y-auto border-t border-[#E5E5EA] pt-3 pr-1 scrollbar-thin">
+            {exerciseLibraryMode === 'browse' ? <div className="grid h-[11.5rem] auto-rows-[3.35rem] grid-cols-2 content-start gap-1.5 overflow-y-auto border-t border-[#E5E5EA] pt-2 pr-1 scrollbar-thin">
               {filteredExerciseLibrary.map((exercise) => (
                 <button
                   key={exercise.id}
                   type="button"
                   onClick={() => handleSelectExercise(exercise)}
-                  className={`flex h-full items-center rounded-xl p-2 text-left border transition-all active:scale-95 ${
+                  className={`flex h-full items-center rounded-xl p-1.5 text-left border transition-all active:scale-95 ${
                     editingExercise?.id === exercise.id
                       ? 'bg-[#E8F3F3] border-[#2EC4B6]/30 text-[#159A91] font-bold shadow-sm'
                       : 'border-black/5 bg-[#F2F2F7] text-[#1C1C1E] hover:bg-[#E5E5EA]'
                   }`}
                 >
-                  <div className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-lg text-sm shadow-inner ${
+                  <div className={`w-7 h-7 shrink-0 flex items-center justify-center rounded-lg text-xs shadow-inner ${
                     editingExercise?.id === exercise.id ? 'bg-black/5 text-[#1C1C1E]' : 'border border-[#D1D1D6] bg-white'
                   }`}>
                     {getExerciseIcon(exercise.defaultEmoji)}
                   </div>
-                  <div className="min-w-0 flex-1 ml-2">
+                  <div className="min-w-0 flex-1 ml-1.5">
                     <span className="block truncate text-xs font-black leading-tight">{getExerciseName(exercise, locale)}</span>
                     <span className={`mt-0.5 block truncate text-[11px] ${editingExercise?.id === exercise.id ? 'font-semibold text-[#159A91]' : 'text-[#6E6E73]'}`}>
                       {getExerciseCategories(exercise).map((c) => labelForCategory(c, locale)).join('/')}
@@ -1261,7 +1262,7 @@ export function RoutineSetupPage({
                   </>
                 ) : (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-2 rounded-xl border border-black/5 bg-white p-3 text-xs">
+                    <div className="grid grid-cols-3 gap-2 rounded-xl border border-black/5 bg-white p-3 text-xs">
                       <div>
                         <p className="font-bold uppercase text-[#8E8E93]">{t(locale, 'koreanName')}</p>
                         <p className="mt-1 text-sm font-bold text-[#1C1C1E]">{editingExercise.nameKo}</p>
@@ -1269,6 +1270,10 @@ export function RoutineSetupPage({
                       <div>
                         <p className="font-bold uppercase text-[#8E8E93]">{t(locale, 'englishName')}</p>
                         <p className="mt-1 text-sm font-bold text-[#1C1C1E]">{editingExercise.nameEn ?? '-'}</p>
+                      </div>
+                      <div>
+                        <p className="font-bold uppercase text-[#8E8E93]">{locale === 'ko' ? '무게 단위' : 'Weight step'}</p>
+                        <p className="mt-1 text-sm font-bold text-[#1C1C1E]">{editingExercise.preferredWeightIncrementKg ?? 2.5}kg</p>
                       </div>
                     </div>
                     <div className="rounded-xl border border-black/5 bg-white p-3">
