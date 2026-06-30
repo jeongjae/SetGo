@@ -7,11 +7,14 @@ import { getExerciseIcon } from '../utils/exerciseIcon';
 import {
   exerciseCategoryOptions,
   exerciseMatchesFilters,
+  exerciseProgressionStyleOptions,
   exerciseStageOptions,
   getExerciseCategories,
   getExerciseName,
   getExerciseStages,
+  inferExerciseProgressionStyle,
   labelForCategory,
+  labelForProgressionStyle,
   labelForStage,
 } from '../domain/exercises';
 import { exerciseCountLabel, getStoredLocale, t } from '../i18n/i18n';
@@ -43,7 +46,7 @@ import {
   type RoutineCyclePlanView,
   type WeeklyScheduleView,
 } from '../db/routines';
-import type { ExerciseCategory, ExerciseMaster, ExerciseStage, Routine, RoutineDay, RoutineExercisePlan, RoutineSplitType, Weekday, WorkoutPlanKind } from '../types';
+import type { ExerciseCategory, ExerciseMaster, ExerciseProgressionStyle, ExerciseStage, Routine, RoutineDay, RoutineExercisePlan, RoutineSplitType, Weekday, WorkoutPlanKind } from '../types';
 
 type RoutineSetupPageProps = {
   initialSection: SetupTab;
@@ -471,6 +474,7 @@ export function RoutineSetupPage({
       stageTags: ['main'],
       category: 'chest',
       categoryTags: ['chest'],
+      progressionStyle: 'compound',
       defaultEmoji: 'CH',
       isDefault: false,
       isActive: true,
@@ -560,7 +564,7 @@ export function RoutineSetupPage({
 
   async function handleUpdateExercise(
     exerciseId: string,
-    values: Partial<Pick<ExerciseMaster, 'nameKo' | 'nameEn' | 'description' | 'categoryTags' | 'stageTags' | 'preferredWeightIncrementKg'>>,
+    values: Partial<Pick<ExerciseMaster, 'nameKo' | 'nameEn' | 'description' | 'categoryTags' | 'stageTags' | 'progressionStyle' | 'preferredWeightIncrementKg'>>,
   ) {
     if (pendingExerciseDraft?.id === exerciseId) {
       const categoryTags = values.categoryTags ?? getExerciseCategories(pendingExerciseDraft);
@@ -572,6 +576,7 @@ export function RoutineSetupPage({
         categoryTags,
         stage: stageTags[0] ?? pendingExerciseDraft.stage,
         stageTags,
+        progressionStyle: values.progressionStyle ?? pendingExerciseDraft.progressionStyle ?? inferExerciseProgressionStyle({ ...pendingExerciseDraft, categoryTags }),
         updatedAt: new Date().toISOString(),
       });
       return;
@@ -587,6 +592,7 @@ export function RoutineSetupPage({
       categoryTags,
       stage: stageTags[0] ?? existing.stage,
       stageTags,
+      progressionStyle: values.progressionStyle ?? existing.progressionStyle ?? inferExerciseProgressionStyle({ ...existing, categoryTags }),
       updatedAt: new Date().toISOString(),
     });
     await loadSetup();
@@ -1189,6 +1195,23 @@ export function RoutineSetupPage({
                       className="mt-1 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 py-2 text-sm font-medium text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                     />
                   </label>
+                  <label className="text-xs font-bold uppercase text-[#6E6E73]">
+                    {locale === 'ko' ? '운동 성격' : 'Exercise type'}
+                    <select
+                      aria-label="Edit exercise progression style"
+                      value={inferExerciseProgressionStyle(editingExercise)}
+                      onChange={(event) => void handleUpdateExercise(editingExercise.id, {
+                        progressionStyle: event.target.value as ExerciseProgressionStyle,
+                      })}
+                      className="mt-1 min-h-10 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 py-2 text-sm font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                    >
+                      {exerciseProgressionStyleOptions.filter((style) => style.value !== 'stable').map((style) => (
+                        <option key={style.value} value={style.value}>
+                          {labelForProgressionStyle(style.value, locale)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
 
                 <div className="space-y-3.5 pt-1 border-t border-[#E5E5EA]">
@@ -1262,7 +1285,7 @@ export function RoutineSetupPage({
                   </>
                 ) : (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-2 rounded-xl border border-black/5 bg-white p-3 text-xs">
+                    <div className="grid grid-cols-2 gap-2 rounded-xl border border-black/5 bg-white p-3 text-xs">
                       <div>
                         <p className="font-bold uppercase text-[#8E8E93]">{t(locale, 'koreanName')}</p>
                         <p className="mt-1 text-sm font-bold text-[#1C1C1E]">{editingExercise.nameKo}</p>
@@ -1274,6 +1297,12 @@ export function RoutineSetupPage({
                       <div>
                         <p className="font-bold uppercase text-[#8E8E93]">{locale === 'ko' ? '무게 단위' : 'Weight step'}</p>
                         <p className="mt-1 text-sm font-bold text-[#1C1C1E]">{editingExercise.preferredWeightIncrementKg ?? 2.5}kg</p>
+                      </div>
+                      <div>
+                        <p className="font-bold uppercase text-[#8E8E93]">{locale === 'ko' ? '운동 성격' : 'Exercise type'}</p>
+                        <p className="mt-1 text-sm font-bold text-[#1C1C1E]">
+                          {labelForProgressionStyle(inferExerciseProgressionStyle(editingExercise), locale)}
+                        </p>
                       </div>
                     </div>
                     <div className="rounded-xl border border-black/5 bg-white p-3">

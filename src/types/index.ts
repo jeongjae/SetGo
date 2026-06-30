@@ -43,6 +43,7 @@ export type WorkoutRecommendationReason =
   | 'restDay'
   | 'nextRoutineAfterLatestWorkout'
   | 'noActiveRoutine';
+export type ExerciseProgressionStyle = 'compound' | 'isolation' | 'bodyweight' | 'stable';
 export type WorkoutRecommendationSnapshot = {
   kind: WorkoutPlanKind;
   sessionKind: WorkoutSessionKind;
@@ -79,6 +80,7 @@ export type ExerciseMaster = {
   stageTags?: ExerciseStage[];
   category: ExerciseCategory;
   categoryTags?: ExerciseCategory[];
+  progressionStyle?: ExerciseProgressionStyle;
   description?: string;
   defaultEmoji: string;
   preferredWeightIncrementKg?: number;
@@ -148,7 +150,7 @@ export type RoutineExercisePlan = {
   plannedRestSeconds?: number;
   targetRepMin?: number;
   targetRepMax?: number;
-  progressionStyle?: 'compound' | 'isolation' | 'bodyweight' | 'stable';
+  progressionStyle?: ExerciseProgressionStyle;
   preferredWeightIncrementKg?: number;
   note?: string;
 };

@@ -1,4 +1,5 @@
 import { db } from './db';
+import { inferExerciseProgressionStyle } from '../domain/exercises';
 import type { ExerciseMaster } from '../types';
 
 const now = () => new Date().toISOString();
@@ -21,6 +22,7 @@ const exercise = (
   stageTags,
   category,
   categoryTags,
+  progressionStyle: inferExerciseProgressionStyle({ category, categoryTags }),
   description,
   defaultEmoji: icon,
   isDefault: true,
@@ -125,7 +127,8 @@ export async function seedDefaultExercises() {
       return !nameEn
         || !nameKo
         || duplicatedEnglishName
-        || barbellCurlLeak;
+        || barbellCurlLeak
+        || exerciseItem.progressionStyle !== canonical.progressionStyle;
     })
     .map((exerciseItem) => {
       const canonical = canonicalById.get(exerciseItem.id);
@@ -137,6 +140,7 @@ export async function seedDefaultExercises() {
         nameEn: canonical.nameEn,
         category: canonical.category,
         categoryTags: canonical.categoryTags,
+        progressionStyle: canonical.progressionStyle,
         stage: canonical.stage,
         stageTags: canonical.stageTags,
         defaultEmoji: canonical.defaultEmoji,

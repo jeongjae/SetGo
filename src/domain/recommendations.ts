@@ -1,4 +1,5 @@
 import type { ExerciseMaster, RoutineDay, RoutineExercisePlan, WorkoutSet } from '../types';
+import { inferExerciseProgressionStyle } from './exercises';
 
 export type ExerciseProgressionStyle = NonNullable<RoutineExercisePlan['progressionStyle']>;
 export type TrainingGoal = 'hypertrophy' | 'maintenance';
@@ -65,12 +66,10 @@ function withLowRecoveryAdjustment(
 }
 
 function inferProgressionStyle(
-  exercise?: Pick<ExerciseMaster, 'category' | 'categoryTags'>,
+  exercise?: Pick<ExerciseMaster, 'category' | 'categoryTags' | 'progressionStyle'>,
 ): ExerciseProgressionStyle {
-  const categories = exercise?.categoryTags?.length ? exercise.categoryTags : exercise ? [exercise.category] : [];
-  if (categories.includes('bodyweight') || categories.includes('mobility') || categories.includes('cardio')) return 'bodyweight';
-  if (categories.includes('biceps') || categories.includes('triceps') || categories.includes('shoulder')) return 'isolation';
-  return 'compound';
+  if (!exercise) return 'compound';
+  return inferExerciseProgressionStyle(exercise);
 }
 
 function defaultIncrement(style: ExerciseProgressionStyle): number {
@@ -104,7 +103,7 @@ export function recommendExerciseTarget({
     'plannedWeightKg' | 'plannedReps' | 'plannedSets' | 'plannedRir' | 'targetRepMin' | 'targetRepMax' | 'progressionStyle' | 'preferredWeightIncrementKg'
   >;
   recentSessions: RecentExerciseSession[];
-  exercise?: Pick<ExerciseMaster, 'category' | 'categoryTags' | 'preferredWeightIncrementKg'>;
+  exercise?: Pick<ExerciseMaster, 'category' | 'categoryTags' | 'progressionStyle' | 'preferredWeightIncrementKg'>;
   currentFamily?: string;
   currentPhase?: IntensityPhase;
   globalGoal?: TrainingGoal;

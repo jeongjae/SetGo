@@ -11,7 +11,7 @@ import {
 
 describe('native schema contract', () => {
   it('tracks the current native schema version', () => {
-    expect(SETGO_NATIVE_SCHEMA_VERSION).toBe(2);
+    expect(SETGO_NATIVE_SCHEMA_VERSION).toBe(3);
   });
 
   it('covers every backup snapshot table', () => {
@@ -61,6 +61,11 @@ describe('native schema contract', () => {
     expect(table?.columns).toContainEqual({
       name: 'preferredWeightIncrementKg',
       type: 'real',
+      nullable: true,
+    });
+    expect(table?.columns).toContainEqual({
+      name: 'progressionStyle',
+      type: 'text',
       nullable: true,
     });
   });

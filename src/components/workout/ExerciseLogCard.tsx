@@ -166,12 +166,20 @@ export function ExerciseLogCard({
             isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0 pb-0' : 'max-h-12 opacity-100'
           }`}>
             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-black text-[#8E8E93]">{locale === 'ko' ? '\uC6B4\uB3D9 \uAD00\uB9AC' : 'Manage Exercise'}</span>
               <span className="rounded-md bg-[#F2F2F7] px-1.5 py-0.5 text-[10px] font-black text-[#6E6E73]">
                 {locale === 'ko' ? `\uC911\uB7C9\uB2E8\uC704: ${weightIncrementKg}kg` : `Weight step: ${weightIncrementKg}kg`}
               </span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center justify-end gap-1">
+              <button
+                type="button"
+                onClick={() => onAddWarmupSets(workoutExerciseId)}
+                className="flex h-9 items-center justify-center gap-1 rounded-lg border border-[#007AFF]/20 bg-[#EAF4FF] px-2 text-[11px] font-extrabold text-[#007AFF] transition-all hover:bg-[#D5E8FF] active:scale-95"
+                title={locale === 'ko' ? '\uC6DC\uC5C5 \uC138\uD2B8 \uC0DD\uC131' : 'Generate warmup sets'}
+              >
+                <Plus aria-hidden="true" size={13} />
+                <span>{locale === 'ko' ? '\uC6DC\uC5C5' : 'Warm'}</span>
+              </button>
               <button
                 type="button"
                 onClick={() => onMoveExercise(workoutExerciseId, -1)}
@@ -316,14 +324,6 @@ export function ExerciseLogCard({
             >
               <Plus aria-hidden="true" size={15} />
               <span>{locale === 'ko' ? '\uC138\uD2B8 \uCD94\uAC00' : 'Add Set'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onAddWarmupSets(workoutExerciseId)}
-              className="flex-1 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#007AFF]/20 bg-[#EAF4FF] px-3 text-sm font-extrabold text-[#007AFF] transition-all hover:bg-[#D5E8FF] active:scale-[0.98]"
-            >
-              <Plus aria-hidden="true" size={15} />
-              <span>{locale === 'ko' ? '웜업 생성' : 'Gen Warmup'}</span>
             </button>
           </div>
         </div>
