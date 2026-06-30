@@ -46,6 +46,20 @@ function getRoutinePlanPrefix(routine: Routine | undefined, locale: 'ko' | 'en')
   return routine.name;
 }
 
+function plannedGroupScopeLabel(groups: RecoveryMuscleGroup[], locale: AppLocale): string {
+  const strengthGroups = groups.filter((group) => group !== 'cardio');
+  const hasLower = strengthGroups.includes('legs');
+  const hasUpper = strengthGroups.some((group) => group !== 'legs' && group !== 'core');
+  const hasCoreOnly = strengthGroups.length > 0 && strengthGroups.every((group) => group === 'core');
+
+  if (hasUpper && hasLower) return locale === 'ko' ? '\uC804\uC2E0' : 'full-body';
+  if (hasLower) return locale === 'ko' ? '\uD558\uCCB4' : 'lower-body';
+  if (hasUpper) return locale === 'ko' ? '\uC0C1\uCCB4' : 'upper-body';
+  if (hasCoreOnly) return locale === 'ko' ? '\uCF54\uC5B4' : 'core';
+  if (groups.includes('cardio')) return locale === 'ko' ? '\uC720\uC0B0\uC18C' : 'cardio';
+  return locale === 'ko' ? '\uC804\uC2E0' : 'full-body';
+}
+
 export function scopeDeloadRecommendationToPlannedGroups(
   recommendation: DeloadRecommendation | undefined,
   plannedGroups: RecoveryMuscleGroup[],
@@ -65,15 +79,24 @@ export function scopeDeloadRecommendationToPlannedGroups(
   const globalFatigue = recommendation.severity === 'high' && recovery.averageRecoveryPercent < 50;
 
   if (fatiguedPlannedGroups.length === 0 && !globalFatigue) return undefined;
-  if (fatiguedPlannedGroups.length === 0) return recommendation;
+  if (fatiguedPlannedGroups.length === 0) {
+    const globalReason = locale === 'ko'
+      ? `\uC804\uC2E0 \uD53C\uB85C\uAC00 \uB192\uC2B5\uB2C8\uB2E4. \uD3C9\uADE0 \uD68C\uBCF5\uB3C4\uAC00 ${recovery.averageRecoveryPercent}%\uC785\uB2C8\uB2E4.`
+      : `Full-body fatigue is high. Average recovery is ${recovery.averageRecoveryPercent}%.`;
+    return {
+      ...recommendation,
+      reasons: [globalReason, ...recommendation.reasons],
+    };
+  }
 
+  const scopeLabel = plannedGroupScopeLabel(plannedGroups, locale);
   const labels = fatiguedPlannedGroups
     .slice(0, 2)
     .map((group) => recoveryGroupLabel(group.group, locale))
     .join(', ');
   const plannedReason = locale === 'ko'
-    ? `오늘 예정 운동의 ${labels} 회복도가 ${fatiguedPlannedGroups[0].recoveryPercent}%입니다.`
-    : `Today's planned ${labels} recovery is ${fatiguedPlannedGroups[0].recoveryPercent}%.`;
+    ? `\uC624\uB298 \uC608\uC815 \uC6B4\uB3D9\uC740 ${scopeLabel}\uC774\uBA70, ${labels} \uD68C\uBCF5\uB3C4\uAC00 ${fatiguedPlannedGroups[0].recoveryPercent}%\uC785\uB2C8\uB2E4.`
+    : `Today's planned workout is ${scopeLabel}; ${labels} recovery is ${fatiguedPlannedGroups[0].recoveryPercent}%.`;
 
   return {
     ...recommendation,
