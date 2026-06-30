@@ -75,7 +75,7 @@ describe('serializeExerciseCsv', () => {
   it('exports a non-empty header row when the library is empty', () => {
     const csv = serializeExerciseCsv([]);
 
-    expect(csv).toBe('id,nameKo,nameEn,categoryTags,stageTags,description,icon,preferredWeightIncrementKg,isActive');
+    expect(csv).toBe('id,nameKo,nameEn,categoryTags,stageTags,progressionStyle,description,icon,preferredWeightIncrementKg,isActive');
     expect(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }).size).toBeGreaterThan(0);
   });
 
@@ -86,6 +86,7 @@ describe('serializeExerciseCsv', () => {
       nameEn: 'Bench, "Press"',
       category: 'chest',
       categoryTags: ['chest', 'triceps'],
+      progressionStyle: 'compound',
       stage: 'main',
       stageTags: ['main'],
       description: 'line 1\nline 2',
@@ -98,6 +99,7 @@ describe('serializeExerciseCsv', () => {
     }]);
 
     expect(csv).toContain('bench_press');
+    expect(csv).toContain(',compound,');
     expect(csv).toContain(',1,true');
     expect(csv).toContain('"Bench, ""Press"""');
     expect(csv).toContain('"line 1\nline 2"');

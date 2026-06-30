@@ -1,4 +1,4 @@
-import type { ExerciseCategory, ExerciseMaster, ExerciseStage } from '../types';
+import type { ExerciseCategory, ExerciseMaster, ExerciseProgressionStyle, ExerciseStage } from '../types';
 
 export const exerciseCategoryOptions: Array<{ label: string; labelKo: string; value: ExerciseCategory }> = [
   { label: 'Chest', labelKo: '가슴', value: 'chest' },
@@ -18,12 +18,35 @@ export const exerciseStageOptions: Array<{ label: string; labelKo: string; value
   { label: 'Cooldown', labelKo: '마무리', value: 'cooldown' },
 ];
 
+export const exerciseProgressionStyleOptions: Array<{ label: string; labelKo: string; value: ExerciseProgressionStyle }> = [
+  { label: 'Compound', labelKo: '복합운동', value: 'compound' },
+  { label: 'Isolation', labelKo: '고립운동', value: 'isolation' },
+  { label: 'Bodyweight', labelKo: '맨몸운동', value: 'bodyweight' },
+  { label: 'Stable', labelKo: '유지형', value: 'stable' },
+];
+
 export function getExerciseCategories(exercise: ExerciseMaster): ExerciseCategory[] {
   return exercise.categoryTags?.length ? exercise.categoryTags : [exercise.category];
 }
 
 export function getExerciseStages(exercise: ExerciseMaster): ExerciseStage[] {
   return exercise.stageTags?.length ? exercise.stageTags : [exercise.stage];
+}
+
+export function inferExerciseProgressionStyle(
+  exercise: Pick<ExerciseMaster, 'category' | 'categoryTags' | 'progressionStyle'>,
+): ExerciseProgressionStyle {
+  if (exercise.progressionStyle) return exercise.progressionStyle;
+
+  const categories = exercise.categoryTags?.length ? exercise.categoryTags : [exercise.category];
+  if (categories.includes('bodyweight') || categories.includes('mobility') || categories.includes('cardio')) return 'bodyweight';
+  if (categories.includes('biceps') || categories.includes('triceps') || categories.includes('shoulder')) return 'isolation';
+  return 'compound';
+}
+
+export function labelForProgressionStyle(style: ExerciseProgressionStyle, locale: 'ko' | 'en' = 'ko'): string {
+  const option = exerciseProgressionStyleOptions.find((item) => item.value === style);
+  return locale === 'ko' ? option?.labelKo ?? style : option?.label ?? style;
 }
 
 export function isWarmupOnlyExercise(exercise: Pick<ExerciseMaster, 'stage' | 'stageTags'> | undefined): boolean {

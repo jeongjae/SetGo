@@ -1,4 +1,4 @@
-export const SETGO_NATIVE_SCHEMA_VERSION = 2;
+export const SETGO_NATIVE_SCHEMA_VERSION = 3;
 
 export type NativeColumnType = 'text' | 'integer' | 'real' | 'json';
 
@@ -49,6 +49,7 @@ export const SETGO_NATIVE_TABLES: NativeTable[] = [
       json('stageTags', true),
       text('category'),
       json('categoryTags', true),
+      text('progressionStyle', true),
       text('description', true),
       text('defaultEmoji'),
       real('preferredWeightIncrementKg', true),

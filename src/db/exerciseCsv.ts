@@ -1,5 +1,6 @@
 import { db } from './db';
-import type { ExerciseCategory, ExerciseMaster, ExerciseStage } from '../types';
+import type { ExerciseCategory, ExerciseMaster, ExerciseProgressionStyle, ExerciseStage } from '../types';
+import { inferExerciseProgressionStyle } from '../domain/exercises';
 import { getCategoryAbbreviation } from '../utils/exerciseIcon';
 
 const exerciseCategories: ExerciseCategory[] = [
@@ -15,6 +16,7 @@ const exerciseCategories: ExerciseCategory[] = [
 ];
 
 const exerciseStages: ExerciseStage[] = ['warmup', 'main', 'cooldown'];
+const exerciseProgressionStyles: ExerciseProgressionStyle[] = ['compound', 'isolation', 'bodyweight', 'stable'];
 
 const csvHeaders = [
   'id',
@@ -22,13 +24,14 @@ const csvHeaders = [
   'nameEn',
   'categoryTags',
   'stageTags',
+  'progressionStyle',
   'description',
   'icon',
   'preferredWeightIncrementKg',
   'isActive',
 ];
 
-const requiredCsvHeaders = csvHeaders.filter((header) => header !== 'preferredWeightIncrementKg');
+const requiredCsvHeaders = csvHeaders.filter((header) => header !== 'preferredWeightIncrementKg' && header !== 'progressionStyle');
 
 export class ExerciseCsvImportError extends Error {
   constructor(public readonly issues: string[]) {
@@ -135,6 +138,7 @@ export function serializeExerciseCsv(exercises: ExerciseMaster[]): string {
     exercise.nameEn ?? '',
     (exercise.categoryTags?.length ? exercise.categoryTags : [exercise.category]).join('|'),
     (exercise.stageTags?.length ? exercise.stageTags : [exercise.stage]).join('|'),
+    inferExerciseProgressionStyle(exercise),
     exercise.description ?? '',
     exercise.defaultEmoji,
     exercise.preferredWeightIncrementKg ?? '',
@@ -240,6 +244,7 @@ export function buildExerciseCsvImport(
 
       const invalidCategoryTags = invalidTags(read('categoryTags'), exerciseCategories);
       const invalidStageTags = invalidTags(read('stageTags'), exerciseStages);
+      const rawProgressionStyle = read('progressionStyle') as ExerciseProgressionStyle | '';
       const categoryTags = validateTags(read('categoryTags'), exerciseCategories);
       const stageTags = validateTags(read('stageTags'), exerciseStages);
       const nameKo = rawNameKo || existing?.nameKo;
@@ -250,6 +255,9 @@ export function buildExerciseCsvImport(
       if (!nameKo) issues.push(`Row ${csvLine}: nameKo is required for "${id}"`);
       if (invalidCategoryTags.length > 0) issues.push(`Row ${csvLine}: invalid categoryTags ${invalidCategoryTags.join('|')}`);
       if (invalidStageTags.length > 0) issues.push(`Row ${csvLine}: invalid stageTags ${invalidStageTags.join('|')}`);
+      if (rawProgressionStyle && !exerciseProgressionStyles.includes(rawProgressionStyle)) {
+        issues.push(`Row ${csvLine}: invalid progressionStyle ${rawProgressionStyle}`);
+      }
       if (categoryTags.length === 0 && !existing) issues.push(`Row ${csvLine}: categoryTags is required for new exercise "${id}"`);
       if (stageTags.length === 0 && !existing) issues.push(`Row ${csvLine}: stageTags is required for new exercise "${id}"`);
 
@@ -272,6 +280,12 @@ export function buildExerciseCsvImport(
       const preferredWeightIncrementKg: number | undefined = rawWeightIncrement
         ? Number(rawWeightIncrement)
         : existing?.preferredWeightIncrementKg;
+      const progressionStyle = rawProgressionStyle && exerciseProgressionStyles.includes(rawProgressionStyle)
+        ? rawProgressionStyle
+        : existing?.progressionStyle ?? inferExerciseProgressionStyle({
+          category: nextCategoryTags[0],
+          categoryTags: nextCategoryTags,
+        });
 
       return {
         id,
@@ -279,6 +293,7 @@ export function buildExerciseCsvImport(
         nameEn,
         category: nextCategoryTags[0],
         categoryTags: nextCategoryTags,
+        progressionStyle,
         stage: nextStageTags[0],
         stageTags: nextStageTags,
         description: read('description') || undefined,
