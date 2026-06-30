@@ -53,7 +53,30 @@ Later, with Apple Developer credentials:
 
 The workflow `.github/workflows/ios-native-check.yml` builds the iOS simulator app on a macOS runner without code signing. This verifies that the native scaffold, Swift Package setup, Capacitor sync, and SQLite plugin wiring can compile outside the Windows machine.
 
-This does not install the app on a real iPhone and does not upload to TestFlight. Those require Apple Developer signing assets and an App Store Connect setup.
+The workflow also uploads two artifacts for Windows-only development:
+
+- `SetGo-simulator-app`: zipped unsigned `App.app` built for iOS Simulator.
+- `ios-native-build-log`: raw `xcodebuild` log for debugging native failures.
+
+This does not install the app on a real iPhone and does not upload to TestFlight. A simulator app can only run in an iOS Simulator on macOS. Real iPhone installation requires Apple Developer signing assets and an App Store Connect or Xcode signing path.
+
+## Windows-Only Native Workflow
+
+Use this loop while developing from Windows:
+
+1. Make React, TypeScript, Capacitor, schema, and migration changes locally.
+2. Run `npm run test -- --run`, `npm run build`, `npm run test:e2e`, and `npm run test:viewport`.
+3. Push to `main`.
+4. Open the GitHub Actions run named `iOS Native Check`.
+5. Confirm the workflow is green.
+6. Download `ios-native-build-log` when a native failure needs inspection.
+7. Treat `SetGo-simulator-app` as CI evidence that the native simulator build was produced, not as an iPhone-installable build.
+
+For real-device beta distribution from a Windows-only setup, the practical options are:
+
+- use a temporary rented/cloud macOS environment to perform Apple signing and TestFlight upload;
+- borrow a Mac briefly for Xcode signing and TestFlight setup;
+- defer real-device native installation until Apple Developer credentials and a macOS signing path are available.
 
 ## Migration Fixture
 
