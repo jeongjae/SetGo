@@ -43,12 +43,36 @@ jobs:
         run: npm run native:sync
 
       - name: Build unsigned simulator app
-        run: >
-          xcodebuild
-          -project ios/App/App.xcodeproj
-          -scheme App
-          -configuration Debug
-          -sdk iphonesimulator
-          -destination 'platform=iOS Simulator,name=iPhone 16'
-          CODE_SIGNING_ALLOWED=NO
-          build
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -derivedDataPath build/ios-derived-data \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tee build/ios-simulator-build.log
+
+      - name: Package simulator app artifact
+        run: |
+          mkdir -p build/artifacts
+          ditto -c -k --keepParent \
+            build/ios-derived-data/Build/Products/Debug-iphonesimulator/App.app \
+            build/artifacts/SetGo-simulator-app.zip
+
+      - name: Upload simulator app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SetGo-simulator-app
+          path: build/artifacts/SetGo-simulator-app.zip
+          retention-days: 14
+
+      - name: Upload native build log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-native-build-log
+          path: build/ios-simulator-build.log
+          retention-days: 14
