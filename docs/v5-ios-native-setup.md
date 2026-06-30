@@ -81,6 +81,8 @@ It represents a PWA JSON backup with:
 
 `src/storage/nativeMigrationRuntime.ts` is the runtime bridge for the future native import UI. It parses JSON backup text, previews it, initializes the native SQLite schema, imports through the native repository, and saves the migration receipt.
 
+`src/storage/nativeDurabilityProbe.test.ts` also simulates two probe runs against the same repository. The first run writes an isolated demo workout/cardio snapshot; the second run must detect the previous write. This is the Windows-safe regression test for the relaunch/update durability proof. The real iOS proof still requires the macOS checklist below.
+
 ## Native Storage Path
 
 The configured SQLite location is:
