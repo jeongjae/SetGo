@@ -397,7 +397,7 @@ Exit criteria:
 2. Done: define the v5 SQLite schema from current Dexie tables and backup JSON shape.
 3. Done: choose and bind the native storage plugin after the plugin-agnostic SQLite adapter spike.
 4. Done: create a non-personal migration fixture that represents an exported backup without committing private data.
-5. In progress: implement native shell proof on macOS/Xcode: create, relaunch, verify durable record.
+5. In progress: implement native shell proof on macOS/Xcode: create, relaunch, verify durable record. Windows-side regression coverage now simulates first-run and relaunch-like second-run native durability checks through the repository contract.
 6. Design the Readiness Score rule set after storage stability is proven.
 
 ## Not In Scope Until Foundation Is Proven

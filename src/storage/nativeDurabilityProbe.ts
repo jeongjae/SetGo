@@ -3,7 +3,7 @@ import {
   createNativeSqliteDataRepository,
   initializeNativeSqliteSchema,
 } from './nativeSqliteRepository';
-import type { SetGoDataSnapshot } from './setgoDataRepository';
+import type { SetGoDataRepository, SetGoDataSnapshot } from './setgoDataRepository';
 
 export const SETGO_NATIVE_PROBE_DATABASE = 'setgo_probe';
 export const SETGO_NATIVE_PROBE_SESSION_ID = 'native_probe_session';
@@ -164,11 +164,10 @@ export function createNativeDurabilityProbeSnapshot(writtenAt: string): SetGoDat
   };
 }
 
-export async function runNativeDurabilityProbe(): Promise<NativeDurabilityProbeResult> {
-  const driver = await createCapacitorSqliteDriver({ database: SETGO_NATIVE_PROBE_DATABASE });
-  await initializeNativeSqliteSchema(driver);
-
-  const repository = createNativeSqliteDataRepository(driver);
+export async function runNativeDurabilityProbeAgainstRepository(
+  repository: SetGoDataRepository,
+  writtenAt = new Date().toISOString(),
+): Promise<NativeDurabilityProbeResult> {
   const before = await repository.readBackupData();
   const previousSession = before.workoutSessions.find((session) => session.id === SETGO_NATIVE_PROBE_SESSION_ID);
   const previousRun = previousSession
@@ -180,7 +179,6 @@ export async function runNativeDurabilityProbe(): Promise<NativeDurabilityProbeR
     }
     : undefined;
 
-  const writtenAt = new Date().toISOString();
   await repository.replaceBackupData(createNativeDurabilityProbeSnapshot(writtenAt));
 
   const after = await repository.readBackupData();
@@ -203,4 +201,12 @@ export async function runNativeDurabilityProbe(): Promise<NativeDurabilityProbeR
       cardioCount: after.cardioRecords.length,
     },
   };
+}
+
+export async function runNativeDurabilityProbe(): Promise<NativeDurabilityProbeResult> {
+  const driver = await createCapacitorSqliteDriver({ database: SETGO_NATIVE_PROBE_DATABASE });
+  await initializeNativeSqliteSchema(driver);
+
+  const repository = createNativeSqliteDataRepository(driver);
+  return runNativeDurabilityProbeAgainstRepository(repository);
 }
