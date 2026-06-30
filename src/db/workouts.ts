@@ -1181,14 +1181,30 @@ export async function updateWorkoutSet(
   if (!existingSet) return;
 
   await db.transaction('rw', db.workoutSets, db.workoutExercises, db.workoutSessions, async () => {
-    const updatedSet = { ...existingSet, ...values };
+    const nextValues = applyAutomaticHardSet(existingSet, values);
+    const updatedSet = { ...existingSet, ...nextValues };
     await db.workoutSets.update(setId, {
-      ...values,
+      ...nextValues,
       estimatedOneRmKg: calculateEstimatedOneRmKg(updatedSet),
     });
 
     await refreshExerciseVolume(updatedSet.workoutExerciseId);
   });
+}
+
+export function applyAutomaticHardSet(
+  existingSet: WorkoutSet,
+  values: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type' | 'intensityTechnique'>>,
+): Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'rir' | 'isCompleted' | 'isWarmup' | 'isHard' | 'type' | 'intensityTechnique'>> {
+  const nextType = values.type ?? existingSet.type;
+  const nextIsWarmup = nextType ? nextType === 'warmup' : values.isWarmup ?? existingSet.isWarmup;
+  const nextRir = values.rir ?? existingSet.rir;
+
+  if (values.isHard !== undefined || values.rir === undefined || nextRir === undefined || nextRir > 2 || nextIsWarmup) {
+    return values;
+  }
+
+  return { ...values, isHard: true };
 }
 
 export async function updateWorkoutSessionMemo(sessionId: string, memo: string): Promise<void> {

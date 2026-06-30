@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { summarizeRunningRecordsForTodayCard, todayWorkoutSummaryLabel } from './TodayPage';
+import { scopeDeloadRecommendationToPlannedGroups, summarizeRunningRecordsForTodayCard, todayWorkoutSummaryLabel } from './TodayPage';
+import type { RecoverySnapshot } from '../domain/recovery';
+import type { DeloadRecommendation } from '../domain/stats';
 
 describe('today workout summary label', () => {
   it('shows running for independent running workouts', () => {
@@ -50,5 +52,41 @@ describe('today running summary detail', () => {
         isDraft: true,
       },
     ], 'en')).toBeUndefined();
+  });
+});
+
+describe('planned deload recommendation scope', () => {
+  const recommendation: DeloadRecommendation = {
+    shouldDeload: true,
+    severity: 'caution',
+    currentHardSets: 10,
+    baselineHardSets: 6,
+    hardSetRatio: 80,
+    recoveryPercent: 70,
+    suggestedSetReductionPct: 35,
+    reasons: ['Global load is elevated.'],
+  };
+  const recovery: RecoverySnapshot = {
+    generatedAt: '2026-06-30T00:00:00.000Z',
+    averageRecoveryPercent: 70,
+    readinessStatus: 'moderate',
+    mostFatiguedGroups: [],
+    bestRecoveredGroups: [],
+    recommendation: '',
+    groups: [
+      { group: 'chest', rawLoad: 1000, adjustedLoad: 1000, decayedLoad: 1000, fatigueScore: 60, recoveryPercent: 40, status: 'fatigued' },
+      { group: 'legs', rawLoad: 100, adjustedLoad: 100, decayedLoad: 100, fatigueScore: 15, recoveryPercent: 85, status: 'ready' },
+    ],
+  };
+
+  it('hides global deload prompts when the planned muscle groups are recovered', () => {
+    expect(scopeDeloadRecommendationToPlannedGroups(recommendation, ['legs'], recovery, 'ko')).toBeUndefined();
+  });
+
+  it('keeps deload prompts when the planned muscle groups are fatigued', () => {
+    const scoped = scopeDeloadRecommendationToPlannedGroups(recommendation, ['chest'], recovery, 'ko');
+
+    expect(scoped?.recoveryPercent).toBe(40);
+    expect(scoped?.reasons[0]).toContain('가슴');
   });
 });
