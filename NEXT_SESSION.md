@@ -3,15 +3,55 @@
 ## Current State
 
 - Project path: `C:\Users\NB-24021500\Projects\SetGo\setgo-starter`
-- App: Vite React TypeScript PWA, local-first, Dexie/IndexedDB only.
+- App: Vite React TypeScript PWA, local-first. Current native track uses Capacitor iOS plus a native SQLite repository/migration path.
 - GitHub repo: `https://github.com/jeongjae/SetGo.git`
 - Current branch: `main` (synced with `origin/main`)
-- Latest pushed commit: `295b78f Complete Phase 9: Polish workout logging colors, input focus behavior, and stabilize scroll/focus on set add`
+- Latest pushed commit at the 2026-06-30 native/PWA handoff: `52d3462 ci: create ios build log directory`
 - Phases 4 through 9 are complete and pushed (see Recently Completed Work).
-- Deploy verification: pushing `295b78f` triggers the GitHub Pages workflow. Confirm the run status on the repo Actions page (the `gh` CLI is not available in the current shell).
+- Deploy verification: pushing to `main` triggers GitHub Pages and `iOS Native Check`. Confirm both on the repo Actions page (the `gh` CLI is not available in the current shell).
 - Local development URL used in the last UAT: `http://127.0.0.1:5173/`
 - Deployment target: GitHub Pages.
-- Health at handoff: `npm run build` passes; `npm run test -- --run` = 85 tests passed (13 files).
+- Health at handoff: `npm.cmd run test -- --run`, `npm.cmd run build`, `npm.cmd run test:e2e`, and `npm.cmd run test:viewport` pass. GitHub `Deploy SetGo` and `iOS Native Check` were green after `52d3462`.
+
+## 2026-06-30 Operating Direction
+
+The user has requested Korean responses going forward.
+
+Use a PWA-first, native-compatible parallel development model:
+
+```text
+PWA = main product surface for fast feature and UX iteration
+Native = same React app wrapped by Capacitor, continuously verified for iOS build/storage/migration compatibility
+```
+
+Recommended sequence for future work:
+
+1. Improve PWA features and UX first.
+2. Run local checks: `npm.cmd run test -- --run`, `npm.cmd run build`, `npm.cmd run test:e2e`, `npm.cmd run test:viewport`.
+3. Push to `main`.
+4. Confirm GitHub `Deploy SetGo` is green.
+5. Confirm GitHub `iOS Native Check` is green.
+6. If a change touches data model, backup format, `src/db/*`, `src/storage/*`, or shared types, also strengthen native migration/schema tests.
+
+Treat PWA and native as one shared codebase, not two separate products. Do not fork product logic into iOS-only code unless the feature is genuinely platform-specific, such as signing, native SQLite, file import, HealthKit, notifications, or iOS permissions.
+
+Apple Developer account enrollment is pending and may take 2-3 days. Until it is approved, keep native development focused on CI-verifiable work from Windows. Real iPhone install/TestFlight still needs Apple signing through a cloud/borrowed Mac or later CI signing setup.
+
+The latest real user backup validation:
+
+- File: `C:\Users\NB-24021500\Documents\카카오톡 받은 파일\setgo-backup-2026-06-30T01-19-38.json`
+- Valid SetGo v1 full backup.
+- Native import allowed.
+- Errors: 0.
+- Warnings: 0.
+- Counts: 62 exercises, 5 routines, 17 routine days, 104 routine exercise plans, 33 workout sessions, 135 workout exercises, 421 workout sets, 17 cardio records.
+- Date range: 2026-05-14 to 2026-06-29.
+
+Current cloud Mac recommendation for first signing/TestFlight upload:
+
+1. MacinCloud Dedicated Server Plan as first choice for beginner-friendly remote Mac + Xcode.
+2. Scaleway Mac mini M2/M4 as cheaper but more technical option.
+3. Avoid AWS EC2 Mac for first upload because it is more complex and has a 24-hour minimum allocation.
 
 ## Hard Rules
 

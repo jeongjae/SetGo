@@ -400,6 +400,16 @@ Exit criteria:
 5. In progress: implement native shell proof on macOS/Xcode: create, relaunch, verify durable record. Windows-side regression coverage now simulates first-run and relaunch-like second-run native durability checks through the repository contract.
 6. Design the Readiness Score rule set after storage stability is proven.
 
+## Current Development Mode
+
+As of 2026-06-30, continue with a PWA-first, native-compatible parallel track:
+
+- Build and polish the PWA first because it is the fastest product surface and shares most code with the Capacitor iOS app.
+- Keep every PWA change compatible with native by running local tests/build and confirming GitHub `iOS Native Check` after push.
+- When changing data models, backup JSON, `src/db/*`, `src/storage/*`, or shared types, update native schema/migration tests in the same work.
+- Do not split SetGo into separate PWA and iOS product logic unless the code is truly platform-specific.
+- Apple Developer enrollment is pending; real iPhone/TestFlight validation resumes after Apple signing access is available.
+
 ## Not In Scope Until Foundation Is Proven
 
 - Apple Watch app.
