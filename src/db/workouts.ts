@@ -43,8 +43,11 @@ export function calculateEstimatedOneRmKg(
   return Math.round(set.weightKg * (1 + set.reps / 30) * 10) / 10;
 }
 
-export function resolveWeightIncrementKg(plan?: Pick<RoutineExercisePlan, 'preferredWeightIncrementKg'>): number {
-  const value = plan?.preferredWeightIncrementKg;
+export function resolveWeightIncrementKg(
+  exercise?: Pick<ExerciseMaster, 'preferredWeightIncrementKg'>,
+  plan?: Pick<RoutineExercisePlan, 'preferredWeightIncrementKg'>,
+): number {
+  const value = exercise?.preferredWeightIncrementKg ?? plan?.preferredWeightIncrementKg;
   return value !== undefined && Number.isFinite(value) && value > 0 ? value : DEFAULT_WEIGHT_INCREMENT_KG;
 }
 
@@ -620,7 +623,7 @@ export async function getWorkoutExerciseLogs(sessionId: string): Promise<Workout
         pastBestWeight: pastBests.bestWeight,
         pastBestVolume: pastBests.bestVolume,
         targetRecommendation,
-        weightIncrementKg: resolveWeightIncrementKg(routinePlan),
+        weightIncrementKg: resolveWeightIncrementKg(exercise, routinePlan),
       };
     }),
   );

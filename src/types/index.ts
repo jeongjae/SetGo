@@ -81,6 +81,7 @@ export type ExerciseMaster = {
   categoryTags?: ExerciseCategory[];
   description?: string;
   defaultEmoji: string;
+  preferredWeightIncrementKg?: number;
   isDefault: boolean;
   isActive: boolean;
   createdAt: string;

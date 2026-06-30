@@ -11,7 +11,7 @@ import {
 
 describe('native schema contract', () => {
   it('tracks the current native schema version', () => {
-    expect(SETGO_NATIVE_SCHEMA_VERSION).toBe(1);
+    expect(SETGO_NATIVE_SCHEMA_VERSION).toBe(2);
   });
 
   it('covers every backup snapshot table', () => {
@@ -54,6 +54,15 @@ describe('native schema contract', () => {
       nullable: true,
     });
     expect(table?.indexes.map((index) => index.columns)).toContainEqual(['cyclePlanItemId']);
+  });
+
+  it('stores exercise-level weight increment preferences for native migration', () => {
+    const table = SETGO_NATIVE_TABLES.find((item) => item.name === 'exercises');
+    expect(table?.columns).toContainEqual({
+      name: 'preferredWeightIncrementKg',
+      type: 'real',
+      nullable: true,
+    });
   });
 
   it('adds cardio import indexes for native duplicate detection', () => {

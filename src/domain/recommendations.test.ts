@@ -49,6 +49,33 @@ describe('exercise target recommendations', () => {
     });
   });
 
+  it('uses the exercise library weight increment before the legacy routine plan increment', () => {
+    expect(recommendExerciseTarget({
+      plan: {
+        plannedWeightKg: 60,
+        plannedReps: 10,
+        targetRepMin: 8,
+        targetRepMax: 10,
+        progressionStyle: 'compound',
+        preferredWeightIncrementKg: 2.5,
+      },
+      exercise: {
+        category: 'biceps',
+        categoryTags: ['biceps'],
+        preferredWeightIncrementKg: 1,
+      },
+      recentSessions: [
+        session('2026-06-18', [
+          { weightKg: 20, reps: 10, rir: 2, isCompleted: true },
+          { weightKg: 20, reps: 10, rir: 2, isCompleted: true },
+        ]),
+      ],
+    })).toMatchObject({
+      weightKg: 21,
+      reps: 8,
+    });
+  });
+
   it('uses 80% of the matching hypertrophy history for maintenance phase', () => {
     expect(recommendExerciseTarget({
       plan: {

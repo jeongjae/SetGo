@@ -24,8 +24,11 @@ const csvHeaders = [
   'stageTags',
   'description',
   'icon',
+  'preferredWeightIncrementKg',
   'isActive',
 ];
+
+const requiredCsvHeaders = csvHeaders.filter((header) => header !== 'preferredWeightIncrementKg');
 
 export class ExerciseCsvImportError extends Error {
   constructor(public readonly issues: string[]) {
@@ -134,6 +137,7 @@ export function serializeExerciseCsv(exercises: ExerciseMaster[]): string {
     (exercise.stageTags?.length ? exercise.stageTags : [exercise.stage]).join('|'),
     exercise.description ?? '',
     exercise.defaultEmoji,
+    exercise.preferredWeightIncrementKg ?? '',
     exercise.isActive ? 'true' : 'false',
   ]);
 
@@ -196,7 +200,7 @@ export function buildExerciseCsvImport(
   if (!headerRow) return [];
 
   const headerIndex = new Map(headerRow.map((header, index) => [header.trim().replace(/^\uFEFF/, ''), index]));
-  const missingHeaders = csvHeaders.filter((header) => !headerIndex.has(header));
+  const missingHeaders = requiredCsvHeaders.filter((header) => !headerIndex.has(header));
   if (missingHeaders.length > 0) {
     throw new ExerciseCsvImportError([`Missing required columns: ${missingHeaders.join(', ')}`]);
   }
@@ -264,6 +268,10 @@ export function buildExerciseCsvImport(
       const nextStageTags = stageTags.length > 0
         ? stageTags
         : splitTags(read('stageTags'), exerciseStages, existing?.stage ?? 'main');
+      const rawWeightIncrement = read('preferredWeightIncrementKg');
+      const preferredWeightIncrementKg: number | undefined = rawWeightIncrement
+        ? Number(rawWeightIncrement)
+        : existing?.preferredWeightIncrementKg;
 
       return {
         id,
@@ -275,6 +283,9 @@ export function buildExerciseCsvImport(
         stageTags: nextStageTags,
         description: read('description') || undefined,
         defaultEmoji: normalizeIcon(read('icon') || existing?.defaultEmoji || '', nextCategoryTags[0]),
+        preferredWeightIncrementKg: typeof preferredWeightIncrementKg === 'number' && Number.isFinite(preferredWeightIncrementKg) && preferredWeightIncrementKg > 0
+          ? preferredWeightIncrementKg
+          : undefined,
         isDefault: existing?.isDefault ?? false,
         isActive,
         createdAt: existing?.createdAt ?? now,
