@@ -87,6 +87,18 @@ describe('planned deload recommendation scope', () => {
     const scoped = scopeDeloadRecommendationToPlannedGroups(recommendation, ['chest'], recovery, 'ko');
 
     expect(scoped?.recoveryPercent).toBe(40);
+    expect(scoped?.reasons[0]).toContain('상체');
     expect(scoped?.reasons[0]).toContain('가슴');
+  });
+
+  it('keeps high-severity global deload prompts when full-body recovery is very low', () => {
+    const scoped = scopeDeloadRecommendationToPlannedGroups(
+      { ...recommendation, severity: 'high' },
+      ['legs'],
+      { ...recovery, averageRecoveryPercent: 45 },
+      'ko',
+    );
+
+    expect(scoped?.reasons[0]).toContain('전신');
   });
 });

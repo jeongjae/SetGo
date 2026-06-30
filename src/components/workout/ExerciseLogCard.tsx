@@ -162,19 +162,19 @@ export function ExerciseLogCard({
 
       {isExpanded ? (
         <div className={`border-t border-[#E5E5EA] bg-white px-3 ${isKeyboardOpen ? 'pb-2 pt-1.5' : 'pb-3 pt-2'}`}>
-          <div className={`flex items-center justify-between gap-2 border-b border-[#F2F2F7] pb-2 transition-all duration-300 ${
+          <div className={`grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 border-b border-[#F2F2F7] pb-2 transition-all duration-300 ${
             isKeyboardOpen ? 'max-h-0 overflow-hidden opacity-0 pb-0' : 'max-h-12 opacity-100'
           }`}>
-            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-              <span className="rounded-md bg-[#F2F2F7] px-1.5 py-0.5 text-[10px] font-black text-[#6E6E73]">
+            <div className="flex min-w-0 items-center">
+              <span className="inline-flex h-8 shrink-0 items-center rounded-lg bg-[#F2F2F7] px-2 text-[10px] font-black leading-none text-[#6E6E73]">
                 {locale === 'ko' ? `\uC911\uB7C9\uB2E8\uC704: ${weightIncrementKg}kg` : `Weight step: ${weightIncrementKg}kg`}
               </span>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-1">
+            <div className="flex min-w-0 items-center justify-end gap-1 overflow-x-auto whitespace-nowrap scrollbar-none">
               <button
                 type="button"
                 onClick={() => onAddWarmupSets(workoutExerciseId)}
-                className="flex h-9 items-center justify-center gap-1 rounded-lg border border-[#007AFF]/20 bg-[#EAF4FF] px-2 text-[11px] font-extrabold text-[#007AFF] transition-all hover:bg-[#D5E8FF] active:scale-95"
+                className="flex h-8 shrink-0 items-center justify-center gap-1 rounded-lg border border-[#007AFF]/20 bg-[#EAF4FF] px-2 text-[11px] font-extrabold leading-none text-[#007AFF] transition-all hover:bg-[#D5E8FF] active:scale-95"
                 title={locale === 'ko' ? '\uC6DC\uC5C5 \uC138\uD2B8 \uC0DD\uC131' : 'Generate warmup sets'}
               >
                 <Plus aria-hidden="true" size={13} />
@@ -184,59 +184,59 @@ export function ExerciseLogCard({
                 type="button"
                 onClick={() => onMoveExercise(workoutExerciseId, -1)}
                 disabled={index === 0}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
                 title={locale === 'ko' ? '\uC704\uB85C \uC774\uB3D9' : 'Move Up'}
               >
-                <ArrowUp size={15} />
+                <ArrowUp size={14} />
               </button>
               <button
                 type="button"
                 onClick={() => onMoveExercise(workoutExerciseId, 1)}
                 disabled={index === totalExerciseCount - 1}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:border-transparent disabled:bg-[#F2F2F7] disabled:text-[#C7C7CC] active:scale-95"
                 title={locale === 'ko' ? '\uC544\uB798\uB85C \uC774\uB3D9' : 'Move Down'}
               >
-                <ArrowDown size={15} />
+                <ArrowDown size={14} />
               </button>
               <button
                 type="button"
                 onClick={() => onToggleMemo(workoutExerciseId)}
-                className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all active:scale-95 ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-all active:scale-95 ${
                   isMemoOpen || hasExerciseMemo
                     ? 'border-transparent bg-[#E8F3F3] text-accent-dark'
                     : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
                 }`}
                 title={locale === 'ko' ? '\uBA54\uBAA8' : 'Memo'}
               >
-                <ClipboardList size={15} />
+                <ClipboardList size={14} />
               </button>
               <button
                 type="button"
                 onClick={() => onToggleReplace(workoutExerciseId)}
-                className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all active:scale-95 ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-all active:scale-95 ${
                   isReplacing
                     ? 'border-transparent bg-[#F2F2F7] text-[#6E6E73]'
                     : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
                 }`}
                 title={locale === 'ko' ? '\uAD50\uCCB4' : 'Replace'}
               >
-                <RefreshCw size={14} className={isReplacing ? 'animate-spin' : ''} />
+                <RefreshCw size={13} className={isReplacing ? 'animate-spin' : ''} />
               </button>
               <button
                 type="button"
                 onClick={() => onViewHistory(log.exercise.id)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E8F3F3] text-accent-dark transition-all hover:bg-[#D8EFEF] active:scale-95"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E8F3F3] text-accent-dark transition-all hover:bg-[#D8EFEF] active:scale-95"
                 title={locale === 'ko' ? '\uAE30\uB85D' : 'History'}
               >
-                <BarChart3 size={15} />
+                <BarChart3 size={14} />
               </button>
               <button
                 type="button"
                 onClick={() => onDeleteExercise(log)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FFECEC] text-danger transition-all hover:bg-[#FFD1D1] active:scale-95"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FFECEC] text-danger transition-all hover:bg-[#FFD1D1] active:scale-95"
                 title={locale === 'ko' ? '\uC0AD\uC81C' : 'Delete'}
               >
-                <Trash2 size={15} />
+                <Trash2 size={14} />
               </button>
             </div>
           </div>
