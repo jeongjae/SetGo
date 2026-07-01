@@ -147,7 +147,7 @@ export function RoutineSetupPage({
     setSavedRoutines(routines);
     setSelectedDayId((current) => current ?? plans[0]?.routineDay.id);
     const today = new Date().toISOString().slice(0, 10);
-    setScheduleStartDate(routine?.endDate ? routine.startDate : today);
+    setScheduleStartDate(routine?.startDate ?? today);
     setScheduleEndDate(addDays(routine?.startDate ?? today, 60));
     setScheduleDirty(false);
 

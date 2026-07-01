@@ -85,6 +85,18 @@ describe('routine templates', () => {
     expect(getCyclePlanItemForDate(routine, cycle, '2026-05-04')?.kind).toBe('rest');
     expect(getCyclePlanItemForDate(routine, cycle, '2026-05-05')?.routineDayId).toBe('upper');
   });
+
+  it('uses the saved routine start date to resolve the current calendar cycle item', () => {
+    const routine = { startDate: '2026-05-01' };
+    const cycle = [
+      { id: 'c1', routineId: 'r1', order: 1, kind: 'routine' as const, routineDayId: 'upper' },
+      { id: 'c2', routineId: 'r1', order: 2, kind: 'routine' as const, routineDayId: 'lower' },
+      { id: 'c3', routineId: 'r1', order: 3, kind: 'rest' as const },
+    ];
+
+    expect(getCyclePlanItemForDate(routine, cycle, '2026-05-02')?.routineDayId).toBe('lower');
+    expect(getCyclePlanItemForDate({ startDate: '2026-05-02' }, cycle, '2026-05-02')?.routineDayId).toBe('upper');
+  });
 });
 
 describe('routine duplication safety', () => {

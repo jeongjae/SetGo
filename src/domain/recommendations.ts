@@ -44,11 +44,30 @@ function workingSets(session: RecentExerciseSession) {
 function bestSet(sets: RecentExerciseSession['sets']) {
   return sets
     .slice()
-    .sort((a, b) => (b.weightKg * b.reps) - (a.weightKg * a.reps))[0];
+    .sort((a, b) => estimatedOneRm(b) - estimatedOneRm(a) || b.weightKg - a.weightKg)[0];
 }
 
 function roundToHalfKg(value: number): number {
   return Number((Math.round(value * 2) / 2).toFixed(1));
+}
+
+function estimatedOneRm(set: Pick<WorkoutSet, 'weightKg' | 'reps'>): number {
+  return set.weightKg * (1 + set.reps / 30);
+}
+
+function isControlledEffort(set: Pick<WorkoutSet, 'rir'>, plannedRir?: number): boolean {
+  const rir = set.rir ?? plannedRir;
+  return rir !== undefined && rir >= 1 && rir <= 3;
+}
+
+function recommendedSetCount(
+  plannedSets: number,
+  completedSessions: Array<{ sets: RecentExerciseSession['sets'] }>,
+): number {
+  const recentCounts = completedSessions.slice(0, 2).map((item) => item.sets.length);
+  const latestCount = recentCounts[0] ?? plannedSets;
+  const repeatedHigherCount = recentCounts.length >= 2 && recentCounts.every((count) => count > plannedSets);
+  return repeatedHigherCount ? Math.min(latestCount, plannedSets + 1) : plannedSets;
 }
 
 function withLowRecoveryAdjustment(
@@ -117,7 +136,8 @@ export function recommendExerciseTarget({
   const increment = exercise?.preferredWeightIncrementKg ?? plan.preferredWeightIncrementKg ?? defaultIncrement(style);
   const completedSessions = recentSessions
     .map((session) => ({ session, sets: workingSets(session) }))
-    .filter((item) => item.sets.length > 0);
+    .filter((item) => item.sets.length > 0)
+    .sort((a, b) => b.session.date.localeCompare(a.session.date));
   const last = completedSessions[0];
 
   if (currentPhase === 'maintenance') {
@@ -132,7 +152,7 @@ export function recommendExerciseTarget({
     return withLowRecoveryAdjustment({
       weightKg: sourceWeight === undefined ? undefined : roundToHalfKg(sourceWeight * 0.8),
       reps: 12,
-      sets: source ? Math.max(plannedSets, source.sets.length) : plannedSets,
+      sets: plannedSets,
       rir: plannedRir ?? 3,
       targetRepMin: Math.min(targetRange.min, 10),
       targetRepMax: Math.max(targetRange.max, 12),
@@ -162,13 +182,14 @@ export function recommendExerciseTarget({
   const baseWeight = lastBest?.weightKg ?? plan.plannedWeightKg ?? 0;
   const baseRir = finalSet?.rir ?? plannedRir;
   const allReachedTop = lastSets.every((set) => set.reps >= targetRange.max);
+  const allReachedTopWithControlledEffort = allReachedTop && lastSets.every((set) => isControlledEffort(set, plannedRir));
   const anyBelowMin = lastSets.some((set) => set.reps < targetRange.min);
   const finalWasMaxEffort = finalSet?.rir !== undefined && finalSet.rir <= 0;
   const repeatedMaxEffort = completedSessions.length >= 2 && completedSessions.slice(0, 2).every((item) => {
     const lastCompletedSet = item.sets[item.sets.length - 1];
     return lastCompletedSet?.rir !== undefined && lastCompletedSet.rir <= 0;
   });
-  const recentSetCount = Math.max(plannedSets, Math.round(lastSets.length || plannedSets));
+  const recentSetCount = recommendedSetCount(plannedSets, completedSessions);
 
   if (currentPhase === 'deload') {
     return {
@@ -183,7 +204,7 @@ export function recommendExerciseTarget({
     };
   }
 
-  if (allReachedTop && baseRir !== undefined && baseRir >= 1 && baseRir <= 3 && increment > 0) {
+  if (allReachedTopWithControlledEffort && increment > 0) {
     const shouldIncrease = globalGoal === 'hypertrophy';
     return withLowRecoveryAdjustment({
       weightKg: shouldIncrease ? roundToIncrement(baseWeight + increment, increment) : baseWeight,
