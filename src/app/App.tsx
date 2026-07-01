@@ -6,6 +6,7 @@ import { formatDateKey } from '../utils/date';
 import { requestPersistentStorage } from '../db/db';
 import { getStoredLocale } from '../i18n/i18n';
 import { useKeyboardViewport } from '../hooks/useKeyboardViewport';
+import { createAutomaticBackupIfDue, ensureAutoBackupOnStartup } from '../storage/autoBackup';
 import type { WorkoutRecommendationSnapshot } from '../types';
 
 const CalendarPage = lazy(() => import('../pages/CalendarPage').then((module) => ({ default: module.CalendarPage })));
@@ -68,6 +69,42 @@ export function App() {
 
   useEffect(() => {
     void requestPersistentStorage();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void ensureAutoBackupOnStartup()
+      .then((result) => {
+        if (!cancelled && result.status === 'restored') {
+          setRefreshKey((current) => current + 1);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to run SetGo auto backup startup guard', describeStartupError(error));
+      });
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        void createAutomaticBackupIfDue('visibility-hidden').catch((error) => {
+          console.warn('Failed to create SetGo auto backup on background', describeStartupError(error));
+        });
+      }
+    };
+
+    const interval = window.setInterval(() => {
+      void createAutomaticBackupIfDue('periodic').catch((error) => {
+        console.warn('Failed to create SetGo periodic auto backup', describeStartupError(error));
+      });
+    }, 5 * 60 * 1000);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   useEffect(() => {
