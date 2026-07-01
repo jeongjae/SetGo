@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildStats, buildEmptyStats, buildAiPrompt } from './stats';
+import { buildStats, buildEmptyStats, buildAiPrompt, buildDeloadRecommendation, type WeekStat } from './stats';
 import { formatDateKey } from '../utils/date';
 import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
 
@@ -575,6 +575,58 @@ describe('stats builder', () => {
     expect(stats.deloadRecommendation?.currentHardSets).toBe(14);
     expect(stats.deloadRecommendation?.suggestedSetReductionPct).toBeGreaterThanOrEqual(35);
     expect(stats.nextWeekSuggestions[0]).toContain('deload');
+  });
+
+  it('does not recommend a deload from low recovery alone', () => {
+    const weeks: WeekStat[] = [28, 21, 14, 7, 0].map((daysAgo) => ({
+      key: `week_${daysAgo}`,
+      label: `week_${daysAgo}`,
+      start: new Date(),
+      end: new Date(),
+      workoutDays: 2,
+      volumeKg: 5000,
+      sets: 20,
+      hardSets: 10,
+    }));
+
+    expect(buildDeloadRecommendation(
+      weeks,
+      50,
+      { averageRecoveryPercent: 35, readinessStatus: 'fatigued' },
+      'en',
+    )).toBeUndefined();
+  });
+
+  it('does not recommend a deload from a small hard-set increase alone', () => {
+    const weeks: WeekStat[] = [
+      ...[28, 21, 14, 7].map((daysAgo) => ({
+        key: `week_${daysAgo}`,
+        label: `week_${daysAgo}`,
+        start: new Date(),
+        end: new Date(),
+        workoutDays: 2,
+        volumeKg: 5000,
+        sets: 15,
+        hardSets: 10,
+      })),
+      {
+        key: 'week_0',
+        label: 'week_0',
+        start: new Date(),
+        end: new Date(),
+        workoutDays: 3,
+        volumeKg: 5500,
+        sets: 15,
+        hardSets: 12,
+      },
+    ];
+
+    expect(buildDeloadRecommendation(
+      weeks,
+      80,
+      { averageRecoveryPercent: 70, readinessStatus: 'moderate' },
+      'en',
+    )).toBeUndefined();
   });
 
   it('excludes demo sessions from stats and performances', () => {

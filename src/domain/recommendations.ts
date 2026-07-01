@@ -55,13 +55,13 @@ function withLowRecoveryAdjustment(
   recommendation: ExerciseTargetRecommendation,
   recoveryPercent?: number,
 ): ExerciseTargetRecommendation {
-  if (recoveryPercent === undefined || recoveryPercent >= 50) return recommendation;
+  if (recoveryPercent === undefined || recoveryPercent >= 40 || recommendation.sets < 3) return recommendation;
 
   return {
     ...recommendation,
     sets: Math.max(2, recommendation.sets - 1),
     confidence: recommendation.confidence === 'high' ? 'medium' : recommendation.confidence,
-    reason: `${recommendation.reason} Recovery is low (${recoveryPercent}%), so SetGo removes one working set.`,
+    reason: `${recommendation.reason} Recovery is very low (${recoveryPercent}%), so SetGo removes one working set.`,
   };
 }
 
