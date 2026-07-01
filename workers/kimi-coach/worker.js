@@ -22,66 +22,26 @@ function jsonResponse(body, status, origin, env) {
   });
 }
 
-function responseSchema() {
-  return {
-    type: 'object',
-    additionalProperties: false,
-    required: ['action', 'confidence', 'summaryKo', 'adjustments', 'warnings'],
-    properties: {
-      action: {
-        type: 'string',
-        enum: ['keep_plan', 'reduce_volume', 'increase_recovery', 'deload', 'rest'],
-      },
-      confidence: {
-        type: 'string',
-        enum: ['low', 'medium', 'high'],
-      },
-      summaryKo: {
-        type: 'string',
-        minLength: 1,
-        maxLength: 500,
-      },
-      summaryEn: {
-        type: 'string',
-        maxLength: 500,
-      },
-      adjustments: {
-        type: 'array',
-        maxItems: 5,
-        items: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['target', 'change', 'reasonCode'],
-          properties: {
-            target: { type: 'string', maxLength: 80 },
-            change: {
-              type: 'string',
-              enum: ['keep', 'reduce_sets', 'hold_weight', 'raise_rir', 'deload', 'rest'],
-            },
-            reasonCode: { type: 'string', maxLength: 80 },
-          },
-        },
-      },
-      warnings: {
-        type: 'array',
-        maxItems: 3,
-        items: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['type', 'messageKo'],
-          properties: {
-            type: {
-              type: 'string',
-              enum: ['recovery', 'volume', 'hard_sets', 'consistency', 'other'],
-            },
-            messageKo: { type: 'string', maxLength: 240 },
-            messageEn: { type: 'string', maxLength: 240 },
-          },
-        },
-      },
+const RESPONSE_CONTRACT = {
+  action: 'keep_plan | reduce_volume | increase_recovery | deload | rest',
+  confidence: 'low | medium | high',
+  summaryKo: 'Korean coaching summary, max 3 short sentences',
+  summaryEn: 'Optional English summary',
+  adjustments: [
+    {
+      target: 'exercise id, exercise name, or today',
+      change: 'keep | reduce_sets | hold_weight | raise_rir | deload | rest',
+      reasonCode: 'short snake_case reason',
     },
-  };
-}
+  ],
+  warnings: [
+    {
+      type: 'recovery | volume | hard_sets | consistency | other',
+      messageKo: 'Korean warning sentence',
+      messageEn: 'Optional English warning sentence',
+    },
+  ],
+};
 
 function buildMessages(context) {
   return [
@@ -94,6 +54,7 @@ function buildMessages(context) {
         'Never invent workout history. Use only the provided JSON.',
         'Do not provide medical diagnosis. Keep advice practical and low-risk.',
         'Always write summaryKo in Korean.',
+        'Return only valid JSON. Do not wrap it in markdown.',
       ].join(' '),
     },
     {
@@ -106,10 +67,81 @@ function buildMessages(context) {
           'Do not increase weight, sets, or intensity beyond the SetGo local recommendation.',
           'Return only the structured JSON object.',
         ],
+        requiredJsonContract: RESPONSE_CONTRACT,
         context,
       }),
     },
   ];
+}
+
+function extractMessageContent(kimiJson) {
+  const content = kimiJson?.choices?.[0]?.message?.content;
+  if (typeof content === 'string') return content.trim();
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') return part;
+        if (part && typeof part === 'object' && typeof part.text === 'string') return part.text;
+        return '';
+      })
+      .join('')
+      .trim();
+  }
+  return '';
+}
+
+function parseJsonContent(content) {
+  const trimmed = content.trim();
+  if (!trimmed) throw new Error('empty content');
+  const unfenced = trimmed
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+  return JSON.parse(unfenced);
+}
+
+async function callKimi(env, context, useJsonMode) {
+  const body = {
+    model: env.KIMI_MODEL || 'kimi-k2.6',
+    messages: buildMessages(context),
+    max_tokens: 900,
+    thinking: { type: 'disabled' },
+  };
+
+  if (useJsonMode) {
+    body.response_format = { type: 'json_object' };
+  }
+
+  const kimiResponse = await fetch(KIMI_API_URL, {
+    method: 'POST',
+    headers: {
+      'authorization': `Bearer ${env.KIMI_API_KEY}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  const kimiText = await kimiResponse.text();
+  if (!kimiResponse.ok) {
+    return {
+      ok: false,
+      status: kimiResponse.status,
+      error: kimiText.slice(0, 1000),
+    };
+  }
+
+  try {
+    return {
+      ok: true,
+      json: JSON.parse(kimiText),
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      error: 'Kimi API returned non-JSON response.',
+    };
+  }
 }
 
 async function handleCoach(request, env) {
@@ -130,53 +162,46 @@ async function handleCoach(request, env) {
     return jsonResponse({ error: 'Request body must be valid JSON.' }, 400, origin, env);
   }
 
-  const kimiResponse = await fetch(KIMI_API_URL, {
-    method: 'POST',
-    headers: {
-      'authorization': `Bearer ${env.KIMI_API_KEY}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: env.KIMI_MODEL || 'kimi-k2.6',
-      messages: buildMessages(context),
-      temperature: 1,
-      max_tokens: 900,
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'setgo_ai_coach_response',
-          strict: true,
-          schema: responseSchema(),
+  const firstAttempt = await callKimi(env, context, true);
+  let kimiJson = firstAttempt.json;
+  if (!firstAttempt.ok) {
+    const retryAttempt = await callKimi(env, context, false);
+    if (!retryAttempt.ok) {
+      return jsonResponse({
+        error: 'Kimi API request failed.',
+        status: retryAttempt.status,
+        detail: retryAttempt.error,
+        firstAttempt: {
+          status: firstAttempt.status,
+          detail: firstAttempt.error,
         },
-      },
-    }),
-  });
-
-  const kimiText = await kimiResponse.text();
-  if (!kimiResponse.ok) {
-    return jsonResponse({
-      error: 'Kimi API request failed.',
-      status: kimiResponse.status,
-      detail: kimiText.slice(0, 1000),
-    }, 502, origin, env);
-  }
-
-  let kimiJson;
-  try {
-    kimiJson = JSON.parse(kimiText);
-  } catch {
-    return jsonResponse({ error: 'Kimi API returned non-JSON response.' }, 502, origin, env);
-  }
-
-  const content = kimiJson?.choices?.[0]?.message?.content;
-  if (typeof content !== 'string') {
-    return jsonResponse({ error: 'Kimi API response did not include message content.' }, 502, origin, env);
+      }, 502, origin, env);
+    }
+    kimiJson = retryAttempt.json;
   }
 
   try {
-    return jsonResponse(JSON.parse(content), 200, origin, env);
+    const content = extractMessageContent(kimiJson);
+    return jsonResponse(parseJsonContent(content), 200, origin, env);
   } catch {
-    return jsonResponse({ error: 'Kimi API returned invalid structured JSON.', raw: content.slice(0, 1000) }, 502, origin, env);
+    const fallbackAttempt = await callKimi(env, context, false);
+    if (!fallbackAttempt.ok) {
+      return jsonResponse({
+        error: 'Kimi API fallback request failed.',
+        status: fallbackAttempt.status,
+        detail: fallbackAttempt.error,
+      }, 502, origin, env);
+    }
+
+    const fallbackContent = extractMessageContent(fallbackAttempt.json);
+    try {
+      return jsonResponse(parseJsonContent(fallbackContent), 200, origin, env);
+    } catch {
+      return jsonResponse({
+        error: 'Kimi API returned invalid structured JSON.',
+        raw: fallbackContent.slice(0, 1000),
+      }, 502, origin, env);
+    }
   }
 }
 
