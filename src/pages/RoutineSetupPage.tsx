@@ -19,6 +19,7 @@ import {
 } from '../domain/exercises';
 import { exerciseCountLabel, getStoredLocale, t } from '../i18n/i18n';
 import { triggerSelectionHaptic } from '../utils/haptics';
+import { formatDateKey } from '../utils/date';
 import {
   activateStoredRoutine,
   activateRoutineTemplate,
@@ -391,7 +392,7 @@ export function RoutineSetupPage({
       setScheduleDirty(false);
       onRoutineSaved();
     }
-    onReviewCalendar(scheduleStartDate);
+    onReviewCalendar(formatDateKey(new Date()));
   }
 
   async function handleCancelWeeklySchedule() {

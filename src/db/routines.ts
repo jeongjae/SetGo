@@ -550,6 +550,26 @@ export async function getNextRoutineDayAfterLatestWorkout(): Promise<RoutineDay 
   return days[(latestIndex + 1) % days.length] ?? days[0];
 }
 
+export async function getNextPlannedRoutineDayAfterDate(
+  date = new Date(),
+  searchDays = 90,
+  getScheduleForDate: (date: Date) => RoutineScheduleForDate | Promise<RoutineScheduleForDate> = getRoutineScheduleForDate,
+): Promise<RoutineDay | undefined> {
+  const start = new Date(date);
+
+  for (let offset = 1; offset <= searchDays; offset += 1) {
+    const candidate = new Date(start);
+    candidate.setDate(start.getDate() + offset);
+    const schedule = await getScheduleForDate(candidate);
+
+    if (schedule.kind === 'routine' && !schedule.isRestDay && schedule.routineDay) {
+      return schedule.routineDay;
+    }
+  }
+
+  return undefined;
+}
+
 export async function getSuggestedCyclePlanItem(
   activeRoutine: Routine,
 ): Promise<{ nextItem: RoutineCyclePlanItem; shouldSkipCardio: boolean }> {
