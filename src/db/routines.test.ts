@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildRoutineDuplicateRecords,
   getCyclePlanItemForDate,
+  getNextPlannedRoutineDayAfterDate,
   getRoutineDayDisplayName,
   getRoutineTemplateName,
   getRoutineTemplateSummary,
@@ -96,6 +97,46 @@ describe('routine templates', () => {
 
     expect(getCyclePlanItemForDate(routine, cycle, '2026-05-02')?.routineDayId).toBe('lower');
     expect(getCyclePlanItemForDate({ startDate: '2026-05-02' }, cycle, '2026-05-02')?.routineDayId).toBe('upper');
+  });
+
+  it('finds the next routine day from the planned calendar after a rest day', async () => {
+    const upperB: RoutineDay = {
+      id: 'upper_b',
+      routineId: 'routine_4day',
+      code: 'upper_b',
+      name: 'Upper B',
+      sequence: 3,
+    };
+    const seenDates: string[] = [];
+
+    const nextRoutineDay = await getNextPlannedRoutineDayAfterDate(
+      new Date('2026-07-01T12:00:00'),
+      7,
+      (date) => {
+        const dateKey = date.toISOString().slice(0, 10);
+        seenDates.push(dateKey);
+
+        if (dateKey === '2026-07-02') {
+          return {
+            kind: 'routine',
+            isRestDay: false,
+            routineDay: upperB,
+            cycleItem: {
+              id: 'cycle_upper_b',
+              routineId: 'routine_4day',
+              order: 4,
+              kind: 'routine',
+              routineDayId: upperB.id,
+            },
+          };
+        }
+
+        return { kind: 'rest', isRestDay: true };
+      },
+    );
+
+    expect(seenDates).toEqual(['2026-07-02']);
+    expect(nextRoutineDay?.id).toBe('upper_b');
   });
 });
 

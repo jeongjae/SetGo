@@ -4,7 +4,7 @@ import { IOSSegmentedControl } from '../components/IosPrimitives';
 import { db } from '../db/db';
 import {
   getActiveRoutineDays,
-  getNextRoutineDayAfterLatestWorkout,
+  getNextPlannedRoutineDayAfterDate,
   getRoutineDayDisplayName,
   getRoutineScheduleForDate,
 } from '../db/routines';
@@ -217,7 +217,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
           db.routines.filter((routineRecord) => routineRecord.isActive).first(),
           getActiveRoutineDays(),
           getRoutineScheduleForDate(),
-          getNextRoutineDayAfterLatestWorkout(),
+          getNextPlannedRoutineDayAfterDate(),
           getTodayWorkout(),
           getRecentWorkoutSummaries(10),
           getWorkoutSummariesForDate(formatDateKey(new Date())),
