@@ -648,25 +648,6 @@ export async function getRoutineScheduleForDate(date = new Date()): Promise<Rout
     return { kind: 'rest', isRestDay: true };
   }
 
-  // --- Dynamic Cycle Queue (Option 2) for TODAY ---
-  const todayKey = formatDateKey(new Date());
-  if (routine && cycleItems.length > 0 && dateKey === todayKey) {
-    const { nextItem } = await getSuggestedCyclePlanItem(routine).catch(() => ({ nextItem: undefined }));
-    if (nextItem) {
-      const routineDay = nextItem.routineDayId
-        ? days.find((day) => day.id === nextItem.routineDayId)
-        : undefined;
-
-      return {
-        cycleItem: nextItem,
-        routineDay,
-        kind: nextItem.kind,
-        isRestDay: nextItem.kind === 'rest' || (nextItem.kind === 'routine' && !routineDay),
-      };
-    }
-  }
-
-  // Fallback to date-based calculation for other dates (like in calendar)
   const cycleItem = getCyclePlanItemForDate(routine, cycleItems, dateKey);
   if (cycleItem) {
     const routineDay = cycleItem.routineDayId
