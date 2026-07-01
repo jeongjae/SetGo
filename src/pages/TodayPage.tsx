@@ -1,4 +1,4 @@
-import { AlertTriangle, Dumbbell, Footprints, Play, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Dumbbell, Footprints, Play, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { IOSSegmentedControl } from '../components/IosPrimitives';
 import { db } from '../db/db';
@@ -21,6 +21,11 @@ import {
   type DailyWorkoutRecommendation,
   type DailyWorkoutRecommendationReason,
 } from '../domain/dailyRecommendation';
+import {
+  loadAiCoachEndpoint,
+  requestAiCoach,
+  type AiCoachResponse,
+} from '../domain/aiCoach';
 import { getExerciseName } from '../domain/exercises';
 import {
   exerciseRecoveryMuscleGroups,
@@ -183,6 +188,9 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
   const [showDeloadToast, setShowDeloadToast] = useState(false);
   const [deloadRecommendation, setDeloadRecommendation] = useState<DeloadRecommendation | undefined>();
   const [weeklyCardioMinutes, setWeeklyCardioMinutes] = useState(0);
+  const [aiCoachStatus, setAiCoachStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [aiCoachResult, setAiCoachResult] = useState<AiCoachResponse | undefined>();
+  const [aiCoachError, setAiCoachError] = useState<string | undefined>();
 
   const CARDIO_WEEKLY_TARGET_MINUTES = 60;
   const cardioProgressPercent = Math.min(100, Math.round((weeklyCardioMinutes / CARDIO_WEEKLY_TARGET_MINUTES) * 100));
@@ -427,6 +435,71 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
     setDeloadRecommendation(undefined);
   }
 
+  async function handleRequestAiCoach() {
+    const endpoint = loadAiCoachEndpoint().trim();
+    if (!endpoint) {
+      setAiCoachStatus('error');
+      setAiCoachError(locale === 'ko'
+        ? '더보기에서 AI 코치 Worker endpoint를 먼저 저장하세요.'
+        : 'Save the AI Coach Worker endpoint in More first.');
+      return;
+    }
+
+    setAiCoachStatus('loading');
+    setAiCoachError(undefined);
+    try {
+      const [sessions, workoutExercises, workoutSets, exercises, cardioRecords] = await Promise.all([
+        db.workoutSessions.toArray(),
+        db.workoutExercises.toArray(),
+        db.workoutSets.toArray(),
+        db.exercises.toArray(),
+        db.cardioRecords.toArray(),
+      ]);
+      const stats = buildStats(sessions, workoutExercises, workoutSets, exercises, locale, cardioRecords, 7);
+      const result = await requestAiCoach(endpoint, {
+        locale,
+        today: formatDateKey(new Date()),
+        activeRoutineName,
+        recommendation: dailyRecommendation ? {
+          label: dailyRecommendation.label,
+          reason: dailyRecommendation.reason,
+          source: dailyRecommendation.source,
+          confidence: dailyRecommendation.confidence,
+        } : undefined,
+        selectedRoutineDay: selectedRoutineDay ? {
+          name: getRoutineDayDisplayName(selectedRoutineDay, locale) ?? selectedRoutineDay.name,
+          intensityPhase: selectedRoutineDay.intensityPhase,
+        } : undefined,
+        plannedExercises: plannedExerciseNames,
+        recoveryWarning,
+        stats: {
+          workoutDays: stats.workoutDays,
+          totalVolumeKg: stats.totalVolumeKg,
+          totalSets: stats.totalSets,
+          hardSets: stats.hardSets,
+          hardSetRatio: stats.hardSetRatio,
+          recovery: {
+            averageRecoveryPercent: stats.recovery.averageRecoveryPercent,
+            readinessStatus: stats.recovery.readinessStatus,
+          },
+          warnings: stats.warnings,
+          analysisComment: stats.analysisComment,
+          nextWeekSuggestions: stats.nextWeekSuggestions,
+        },
+        deloadRecommendation: deloadRecommendation ? {
+          severity: deloadRecommendation.severity,
+          suggestedSetReductionPct: deloadRecommendation.suggestedSetReductionPct,
+          reasons: deloadRecommendation.reasons,
+        } : undefined,
+      });
+      setAiCoachResult(result);
+      setAiCoachStatus('success');
+    } catch (error) {
+      setAiCoachError(error instanceof Error ? error.message : String(error));
+      setAiCoachStatus('error');
+    }
+  }
+
   function handleStartSelectedWorkout() {
     if (matchingInProgressWorkout) {
       onStartWorkout(matchingInProgressWorkout.session.routineDayId, matchingInProgressWorkout.session.id);
@@ -595,6 +668,45 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
                 </div>
               </div>
             ) : null}
+            <div className="mt-2 rounded-xl border border-[#5856D6]/15 bg-[#F4F3FF] px-3 py-2.5">
+              <div className="flex items-start gap-2">
+                <Sparkles aria-hidden="true" size={16} className="mt-0.5 shrink-0 text-[#5856D6]" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-black leading-4 text-[#1C1C1E]">
+                    {locale === 'ko' ? 'Kimi AI 코치' : 'Kimi AI Coach'}
+                  </p>
+                  <p className="mt-1 text-[12px] font-semibold leading-4 text-[#6E6E73]">
+                    {aiCoachResult
+                      ? (locale === 'ko' ? aiCoachResult.summaryKo : aiCoachResult.summaryEn ?? aiCoachResult.summaryKo)
+                      : locale === 'ko'
+                        ? 'SetGo 추천을 바탕으로 오늘 코칭 메모를 생성합니다.'
+                        : 'Generate a coaching note from the SetGo recommendation.'}
+                  </p>
+                  {aiCoachResult?.warnings[0] ? (
+                    <p className="mt-1 text-[11px] font-bold leading-4 text-[#5856D6]">
+                      {locale === 'ko'
+                        ? aiCoachResult.warnings[0].messageKo
+                        : aiCoachResult.warnings[0].messageEn ?? aiCoachResult.warnings[0].messageKo}
+                    </p>
+                  ) : null}
+                  {aiCoachError ? (
+                    <p className="mt-1 text-[11px] font-bold leading-4 text-[#FF3B30]">{aiCoachError}</p>
+                  ) : null}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleRequestAiCoach()}
+                disabled={aiCoachStatus === 'loading'}
+                className="mt-2 min-h-9 w-full rounded-lg bg-[#5856D6] px-2 text-xs font-black text-white transition-all active:scale-95 disabled:opacity-50"
+              >
+                {aiCoachStatus === 'loading'
+                  ? (locale === 'ko' ? '코칭 생성 중...' : 'Generating...')
+                  : aiCoachResult
+                    ? (locale === 'ko' ? '다시 생성' : 'Regenerate')
+                    : (locale === 'ko' ? 'AI 코칭 받기' : 'Get AI coaching')}
+              </button>
+            </div>
             {plannedExerciseNames.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {plannedExerciseNames.slice(0, 4).map((exerciseName) => (
