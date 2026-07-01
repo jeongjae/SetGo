@@ -51,15 +51,26 @@ describe('calculateSuggestedVolume', () => {
     expect(suggested.sets).toBe(2);
   });
 
-  it('reduces 1 set if muscle recovery is low', () => {
+  it('reduces 1 set if muscle recovery is very low', () => {
     const history: WorkoutSet[] = [
       { id: '1', workoutExerciseId: 'e1', setNo: 1, weightKg: 100, reps: 10, isCompleted: true },
       { id: '2', workoutExerciseId: 'e1', setNo: 2, weightKg: 100, reps: 10, isCompleted: true },
       { id: '3', workoutExerciseId: 'e1', setNo: 3, weightKg: 100, reps: 10, isCompleted: true },
     ];
-    const suggested = calculateSuggestedVolume(history, 'hypertrophy', 40, 'hypertrophy');
+    const suggested = calculateSuggestedVolume(history, 'hypertrophy', 39, 'hypertrophy');
     expect(suggested.sets).toBe(2);
-    expect(suggested.note).toContain('Recovery is low');
+    expect(suggested.note).toContain('Recovery is very low');
+  });
+
+  it('does not reduce sets for moderate recovery caution alone', () => {
+    const history: WorkoutSet[] = [
+      { id: '1', workoutExerciseId: 'e1', setNo: 1, weightKg: 100, reps: 10, isCompleted: true },
+      { id: '2', workoutExerciseId: 'e1', setNo: 2, weightKg: 100, reps: 10, isCompleted: true },
+      { id: '3', workoutExerciseId: 'e1', setNo: 3, weightKg: 100, reps: 10, isCompleted: true },
+    ];
+    const suggested = calculateSuggestedVolume(history, 'hypertrophy', 45, 'hypertrophy');
+    expect(suggested.sets).toBe(3);
+    expect(suggested.note).not.toContain('Recovery is very low');
   });
 });
 
