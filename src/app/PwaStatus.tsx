@@ -1,6 +1,7 @@
 import { Download, RefreshCw, WifiOff, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getStoredLocale } from '../i18n/i18n';
+import { createAutomaticBackup } from '../storage/autoBackup';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -62,6 +63,12 @@ export function PwaStatus() {
   }
 
   async function handleUpdate() {
+    try {
+      await createAutomaticBackup('before-update');
+    } catch (error) {
+      console.warn('Failed to create SetGo auto backup before update', error);
+    }
+
     const registration = await navigator.serviceWorker?.getRegistration();
     registration?.waiting?.postMessage({ type: 'SKIP_WAITING' });
   }
