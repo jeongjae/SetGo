@@ -1,4 +1,4 @@
-const CACHE_NAME = 'setgo-shell-v10';
+const CACHE_NAME = 'setgo-shell-v11';
 const BASE_PATH = new URL(self.registration.scope).pathname;
 const APP_SHELL = [BASE_PATH, `${BASE_PATH}index.html`, `${BASE_PATH}manifest.webmanifest`, `${BASE_PATH}icon.svg`];
 const IS_LOCAL_DEV = ['localhost', '127.0.0.1', '::1'].includes(self.location.hostname);
@@ -39,6 +39,12 @@ self.addEventListener('fetch', (event) => {
 
   if (IS_LOCAL_DEV) {
     event.respondWith(fetch(event.request));
+    return;
+  }
+
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.pathname.endsWith('/app-version.json')) {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }));
     return;
   }
 

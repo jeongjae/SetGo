@@ -11,3 +11,4 @@ test-results-setgo*.png
 setgo-backup-*.json
 setgo-settings-*.json
 setgo-exercises-*.csv
+public/app-version.json

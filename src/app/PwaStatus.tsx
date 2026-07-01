@@ -8,6 +8,28 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 };
 
+type AppVersion = {
+  app?: string;
+  builtAt?: string;
+  commit?: string;
+};
+
+const VERSION_STORAGE_KEY = 'setgo-app-version';
+
+function versionId(version: AppVersion | undefined): string | undefined {
+  if (!version?.builtAt && !version?.commit) return undefined;
+  return `${version.commit ?? 'unknown'}:${version.builtAt ?? 'unknown'}`;
+}
+
+async function fetchLatestAppVersion(): Promise<AppVersion | undefined> {
+  const response = await fetch(`${import.meta.env.BASE_URL}app-version.json?ts=${Date.now()}`, {
+    cache: 'no-store',
+  });
+  if (!response.ok) return undefined;
+  const version = await response.json() as AppVersion;
+  return version.app === 'SetGo' ? version : undefined;
+}
+
 export function PwaStatus() {
   const [locale] = useState(() => getStoredLocale());
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
@@ -18,8 +40,33 @@ export function PwaStatus() {
   ));
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function checkVersion() {
+      if (!navigator.onLine) return;
+
+      try {
+        const latest = await fetchLatestAppVersion();
+        const latestId = versionId(latest);
+        if (!latestId || cancelled) return;
+
+        const storedId = window.localStorage.getItem(VERSION_STORAGE_KEY);
+        if (!storedId) {
+          window.localStorage.setItem(VERSION_STORAGE_KEY, latestId);
+          return;
+        }
+
+        if (storedId !== latestId) {
+          window.dispatchEvent(new CustomEvent('setgo:update-ready'));
+        }
+      } catch {
+        // Version polling is best-effort; service worker update events still run.
+      }
+    }
+
     function handleOnline() {
       setIsOnline(true);
+      void checkVersion();
     }
 
     function handleOffline() {
@@ -39,18 +86,34 @@ export function PwaStatus() {
       setInstallPrompt(event as BeforeInstallPromptEvent);
     }
 
+    function handleFocus() {
+      void checkVersion();
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        void checkVersion();
+      }
+    }
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     window.addEventListener('setgo:update-ready', handleUpdateReady);
     window.addEventListener('setgo:controller-changed', handleControllerChanged);
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    void checkVersion();
 
     return () => {
+      cancelled = true;
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('setgo:update-ready', handleUpdateReady);
       window.removeEventListener('setgo:controller-changed', handleControllerChanged);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
@@ -70,7 +133,20 @@ export function PwaStatus() {
     }
 
     const registration = await navigator.serviceWorker?.getRegistration();
-    registration?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+    await registration?.update();
+    if (registration?.waiting) {
+      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      return;
+    }
+
+    try {
+      const latest = await fetchLatestAppVersion();
+      const latestId = versionId(latest);
+      if (latestId) window.localStorage.setItem(VERSION_STORAGE_KEY, latestId);
+    } catch {
+      // Reload still applies freshly fetched assets when service worker events are missed.
+    }
+    window.location.reload();
   }
 
   function dismissInstall() {

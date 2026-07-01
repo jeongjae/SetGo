@@ -2,7 +2,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "node ./scripts/write-app-version.mjs && tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
     "test:e2e": "node ./scripts/run-e2e.mjs",
