@@ -1,8 +1,9 @@
 import { Capacitor } from '@capacitor/core';
-import { Database, FileDown, Info, Languages, Library } from 'lucide-react';
+import { Bot, Database, FileDown, Info, Languages, Library } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { AppView } from '../app/App';
 import { IOSListRow, IOSPageHeader } from '../components/IosPrimitives';
+import { loadAiCoachEndpoint, saveAiCoachEndpoint } from '../domain/aiCoach';
 import { getStoredLocale, saveStoredLocale, t, type AppLocale } from '../i18n/i18n';
 import type { NativeDurabilityProbeResult } from '../storage/nativeDurabilityProbe';
 import { triggerSelectionHaptic } from '../utils/haptics';
@@ -18,6 +19,8 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
   const [nativeProbeStatus, setNativeProbeStatus] = useState<'idle' | 'running' | 'success' | 'failed'>('idle');
   const [nativeProbeResult, setNativeProbeResult] = useState<NativeDurabilityProbeResult | undefined>();
   const [nativeProbeError, setNativeProbeError] = useState<string | undefined>();
+  const [aiCoachEndpoint, setAiCoachEndpoint] = useState(() => loadAiCoachEndpoint());
+  const [aiCoachSaved, setAiCoachSaved] = useState(false);
   const isNativeApp = Capacitor.isNativePlatform();
 
   const [globalGoal, setGlobalGoal] = useState<'hypertrophy' | 'maintenance'>(() => {
@@ -53,6 +56,13 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
     }
     setGlobalGoal(nextGoal);
     triggerSelectionHaptic();
+  }
+
+  function handleSaveAiCoachEndpoint() {
+    saveAiCoachEndpoint(aiCoachEndpoint);
+    setAiCoachSaved(true);
+    triggerSelectionHaptic();
+    window.setTimeout(() => setAiCoachSaved(false), 1600);
   }
 
   async function handleNativeProbe() {
@@ -155,6 +165,37 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="ios-row flex w-full items-start gap-3 bg-white p-3.5 text-left border-b border-black/[0.04]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#5856D6] text-white">
+              <Bot aria-hidden="true" size={17} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold text-[#1C1C1E]">
+                {locale === 'ko' ? 'AI 코치' : 'AI Coach'}
+              </span>
+              <span className="mt-0.5 block text-xs font-semibold text-[#8E8E93]">
+                {locale === 'ko'
+                  ? 'Cloudflare Worker /coach 주소를 저장합니다.'
+                  : 'Save the Cloudflare Worker /coach endpoint.'}
+              </span>
+              <input
+                type="url"
+                inputMode="url"
+                value={aiCoachEndpoint}
+                onChange={(event) => setAiCoachEndpoint(event.target.value)}
+                placeholder="https://setgo-kimi-coach.<subdomain>.workers.dev/coach"
+                className="mt-2 min-h-9 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-xs font-semibold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+              />
+            </span>
+            <button
+              type="button"
+              onClick={handleSaveAiCoachEndpoint}
+              className="min-h-8 shrink-0 rounded-lg bg-[#F2F2F7] px-3 text-xs font-black text-[#1C1C1E]"
+            >
+              {aiCoachSaved ? (locale === 'ko' ? '저장됨' : 'Saved') : t(locale, 'save')}
+            </button>
           </div>
 
           <div className="ios-row flex w-full items-center gap-3 bg-white p-3.5 text-left">

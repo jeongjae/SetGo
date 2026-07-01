@@ -1,0 +1,8 @@
+name = "setgo-kimi-coach"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+[vars]
+KIMI_MODEL = "kimi-k2.6"
+# Set this to your deployed SetGo origin for stricter CORS, for example:
+# ALLOWED_ORIGIN = "https://jeongjae.github.io"
