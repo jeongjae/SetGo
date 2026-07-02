@@ -593,10 +593,9 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             </div>
           </div>
 
-          {/* Glassmorphism Up Next Card */}
-          <div className="pwa-upnext-card rounded-2xl px-4 py-3.5 text-[#1C1C1E] border border-white/50 backdrop-blur-md animate-slide-up">
+          <div className="rounded-2xl border border-[#2EC4B6]/20 bg-[#E8F3F3] px-4 py-3.5 text-sg-label shadow-sm">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-black uppercase tracking-wide text-[#6E6E73]">{t(locale, 'todayRecommendation')}</p>
+              <p className="text-xs font-black uppercase tracking-wide text-sg-brand-strong">{t(locale, 'todayRecommendation')}</p>
               {selectedRoutineDay?.intensityPhase && (
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-black tracking-wide ${
                   selectedRoutineDay.intensityPhase === 'hypertrophy'
@@ -617,12 +616,12 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
                 </span>
               )}
             </div>
-            <p className="mt-2 flex items-center gap-2 text-[1.7rem] font-black leading-none text-[#1C1C1E]">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#2EC4B6]" />
+            <p className="mt-2 flex items-center gap-2 text-[1.7rem] font-black leading-none text-sg-label">
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-sg-brand" />
               {displayedPlanLabel}
             </p>
             {dailyRecommendation ? (
-              <p className="mt-2 text-sm font-semibold leading-5 text-[#6E6E73]">
+              <p className="mt-2 text-sm font-semibold leading-5 text-sg-secondary-label">
                 {dailyRecommendationReasonLabel(dailyRecommendation.reason, locale)}
               </p>
             ) : null}
@@ -668,7 +667,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
                 </div>
               </div>
             ) : null}
-            <div className="mt-2 rounded-xl border border-[#5856D6]/15 bg-[#F4F3FF] px-3 py-2.5">
+            <div className="hidden">
               <div className="flex items-start gap-2">
                 <Sparkles aria-hidden="true" size={16} className="mt-0.5 shrink-0 text-[#5856D6]" />
                 <div className="min-w-0 flex-1">
@@ -710,12 +709,12 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             {plannedExerciseNames.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {plannedExerciseNames.slice(0, 4).map((exerciseName) => (
-                  <span key={exerciseName} className="rounded-full bg-black/5 px-2.5 py-1 text-[11px] font-bold text-[#6E6E73]">
+                  <span key={exerciseName} className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold text-sg-secondary-label">
                     {exerciseName}
                   </span>
                 ))}
                 {plannedExerciseNames.length > 4 ? (
-                  <span className="rounded-full bg-black/5 px-2.5 py-1 text-[11px] font-bold text-[#6E6E73]">
+                  <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold text-sg-secondary-label">
                     +{plannedExerciseNames.length - 4}
                   </span>
                 ) : null}
@@ -724,7 +723,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
 
             {/* Cardio Filler Progress Bar */}
             {cardioProgressPercent < 70 && (
-              <div className="mt-4 border-t border-black/[0.06] pt-3">
+              <div className="hidden">
                 <div className="flex items-center justify-between text-[11px] font-bold text-[#6E6E73]">
                   <span>🏃 {locale === 'ko' ? '주간 유산소 달성도' : 'Weekly Cardio Progress'}</span>
                   <span>{cardioProgressPercent}%</span>
@@ -744,6 +743,66 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             )}
           </div>
 
+          <div className="rounded-xl border border-[#5856D6]/15 bg-[#F4F3FF] px-3 py-2.5">
+            <div className="flex items-start gap-2">
+              <Sparkles aria-hidden="true" size={16} className="mt-0.5 shrink-0 text-sg-ai" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-black leading-4 text-sg-label">
+                  {locale === 'ko' ? 'Kimi AI 코치' : 'Kimi AI Coach'}
+                </p>
+                <p className="mt-1 text-[12px] font-semibold leading-4 text-sg-secondary-label">
+                  {aiCoachResult
+                    ? (locale === 'ko' ? aiCoachResult.summaryKo : aiCoachResult.summaryEn ?? aiCoachResult.summaryKo)
+                    : locale === 'ko'
+                      ? 'SetGo 추천을 바탕으로 오늘 코칭 메모를 생성합니다.'
+                      : 'Generate a coaching note from the SetGo recommendation.'}
+                </p>
+                {aiCoachResult?.warnings[0] ? (
+                  <p className="mt-1 text-[11px] font-bold leading-4 text-sg-ai">
+                    {locale === 'ko'
+                      ? aiCoachResult.warnings[0].messageKo
+                      : aiCoachResult.warnings[0].messageEn ?? aiCoachResult.warnings[0].messageKo}
+                  </p>
+                ) : null}
+                {aiCoachError ? (
+                  <p className="mt-1 text-[11px] font-bold leading-4 text-sg-danger">{aiCoachError}</p>
+                ) : null}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleRequestAiCoach()}
+              disabled={aiCoachStatus === 'loading'}
+              className="mt-2 min-h-9 w-full rounded-lg bg-sg-ai px-2 text-xs font-black text-white transition-all active:scale-95 disabled:opacity-50"
+            >
+              {aiCoachStatus === 'loading'
+                ? (locale === 'ko' ? '코칭 생성 중...' : 'Generating...')
+                : aiCoachResult
+                  ? (locale === 'ko' ? '다시 생성' : 'Regenerate')
+                  : (locale === 'ko' ? 'AI 코칭 받기' : 'Get AI coaching')}
+            </button>
+          </div>
+
+          {cardioProgressPercent < 70 ? (
+            <div className="rounded-xl border border-sg-separator bg-sg-fill px-3 py-2.5">
+              <div className="flex items-center justify-between text-[11px] font-bold text-sg-secondary-label">
+                <span>{locale === 'ko' ? '주간 유산소 달성도' : 'Weekly Cardio Progress'}</span>
+                <span>{cardioProgressPercent}%</span>
+              </div>
+              <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-sg-separator">
+                <div
+                  className="h-full rounded-full bg-sg-cardio transition-all duration-500"
+                  style={{ width: `${cardioProgressPercent}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-[11px] font-semibold leading-normal text-sg-secondary-label">
+                {locale === 'ko'
+                  ? `이번 주 러닝이 ${CARDIO_WEEKLY_TARGET_MINUTES - weeklyCardioMinutes}분 부족합니다. 운동 후 가벼운 러닝을 추가해 보세요.`
+                  : `You need ${CARDIO_WEEKLY_TARGET_MINUTES - weeklyCardioMinutes} more mins of running this week. Add a light run after workout.`}
+              </p>
+            </div>
+          ) : null}
+
           {!activeRoutine ? (
             <p className="text-sm font-semibold leading-5 text-[#6E6E73]">
               {locale === 'ko' ? '루틴은 나중에 만들고, 지금은 바로 기록을 시작할 수 있습니다.' : 'You can start logging now and build a routine later.'}
@@ -759,8 +818,8 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
               }}
               className={`min-h-11 w-full rounded-xl border px-3 text-left text-sm font-bold transition-all active:scale-95 ${
                 selectedRoutineDayId === nextRoutineDay.id
-                  ? 'border-accent-dark bg-accent-dark text-white shadow-sm'
-                  : 'border-[#D1D1D6] bg-white text-[#1C1C1E] hover:bg-[#F2F2F7]'
+                  ? 'border-transparent bg-sg-brand text-white shadow-brand'
+                  : 'border-sg-border bg-sg-surface text-sg-label hover:bg-sg-fill'
               }`}
             >
               {locale === 'ko' ? '추천 다음 루틴' : 'Recommended Next'}: {getRoutineDayDisplayName(nextRoutineDay, locale)}
