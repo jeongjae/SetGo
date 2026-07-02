@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core';
-import { Bot, Database, FileDown, Info, Languages, Library } from 'lucide-react';
+import { Bot, Database, FileDown, Info, Languages, Library, Target } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { AppView } from '../app/App';
 import { IOSListRow, IOSPageHeader } from '../components/IosPrimitives';
@@ -80,16 +80,6 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
     }
   }
 
-  const managementRows = [
-    {
-      view: 'exercises' as AppView,
-      icon: Library,
-      bg: 'bg-[#FF9500]',
-      title: t(locale, 'exerciseLibrary'),
-      detail: locale === 'ko' ? '운동 검색, 추가, 변경' : 'Search, add and edit exercises',
-    },
-  ];
-
   return (
     <section className="ios-page gap-3.5 px-4 pb-4 pt-3.5">
       <IOSPageHeader
@@ -117,39 +107,35 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
         </p>
 
         <div className="ios-group overflow-hidden">
-          {managementRows.map(({ view, icon, bg, title, detail }) => (
-            <IOSListRow
-              key={view}
-              icon={icon}
-              iconClassName={bg}
-              title={title}
-              detail={detail}
-              onClick={() => onNavigate(view)}
-            />
-          ))}
+          <IOSListRow
+            icon={Library}
+            iconClassName="bg-sg-warning"
+            title={t(locale, 'exerciseLibrary')}
+            detail={locale === 'ko' ? '운동 검색, 추가, 변경' : 'Search, add and edit exercises'}
+            onClick={() => onNavigate('exercises')}
+          />
 
           <IOSListRow
             icon={FileDown}
-            iconClassName="bg-[#34C759]"
+            iconClassName="bg-sg-success"
             title={t(locale, 'export')}
             detail={locale === 'ko' ? 'Markdown, JSON 백업, CSV 관리' : 'Markdown, JSON backup, CSV management'}
             onClick={() => onNavigate('export')}
           />
 
-          {/* Global Training Goal */}
-          <div className="ios-row flex w-full items-center gap-3 bg-white p-3.5 text-left border-b border-black/[0.04]">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FF2D55] text-white">
-              <span className="text-sm font-bold">🎯</span>
+          <div className="ios-row flex w-full items-center gap-3 bg-sg-surface p-3.5 text-left">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sg-danger text-white">
+              <Target aria-hidden="true" size={17} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-bold text-[#1C1C1E]">
+              <span className="block text-sm font-bold text-sg-label">
                 {locale === 'ko' ? '훈련 목적 설정' : 'Global Goal'}
               </span>
-              <span className="mt-0.5 block text-xs font-semibold text-[#8E8E93]">
-                {locale === 'ko' ? '근성장(과부하) vs 유지 관리(피로 조절)' : 'Hypertrophy vs Maintenance'}
+              <span className="mt-0.5 block text-xs font-semibold text-sg-tertiary-label">
+                {locale === 'ko' ? '근성장 vs 유지 관리' : 'Hypertrophy vs Maintenance'}
               </span>
             </span>
-            <div className="flex shrink-0 items-center rounded-xl border border-black/5 bg-[#F2F2F7] p-0.5">
+            <div className="flex shrink-0 items-center rounded-xl border border-sg-separator bg-sg-fill p-0.5">
               {(['hypertrophy', 'maintenance'] as const).map((item) => (
                 <button
                   key={item}
@@ -157,8 +143,8 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                   onClick={() => handleGoalChange(item)}
                   className={`min-h-7 rounded-lg px-3 text-xs font-bold transition-all ${
                     globalGoal === item
-                      ? 'bg-white font-black text-[#1C1C1E] shadow-sm'
-                      : 'text-[#6E6E73] hover:text-[#1C1C1E]'
+                      ? 'bg-sg-surface font-black text-sg-label shadow-sm'
+                      : 'text-sg-secondary-label hover:text-sg-label'
                   }`}
                 >
                   {item === 'hypertrophy' ? (locale === 'ko' ? '근성장' : 'Gain') : (locale === 'ko' ? '유지' : 'Keep')}
@@ -167,15 +153,15 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
             </div>
           </div>
 
-          <div className="ios-row flex w-full items-start gap-3 bg-white p-3.5 text-left border-b border-black/[0.04]">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#5856D6] text-white">
+          <div className="ios-row flex w-full items-start gap-3 bg-sg-surface p-3.5 text-left">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sg-ai text-white">
               <Bot aria-hidden="true" size={17} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-bold text-[#1C1C1E]">
+              <span className="block text-sm font-bold text-sg-label">
                 {locale === 'ko' ? 'AI 코치' : 'AI Coach'}
               </span>
-              <span className="mt-0.5 block text-xs font-semibold text-[#8E8E93]">
+              <span className="mt-0.5 block text-xs font-semibold text-sg-tertiary-label">
                 {locale === 'ko'
                   ? 'Cloudflare Worker /coach 주소를 저장합니다.'
                   : 'Save the Cloudflare Worker /coach endpoint.'}
@@ -185,30 +171,30 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                 inputMode="url"
                 value={aiCoachEndpoint}
                 onChange={(event) => setAiCoachEndpoint(event.target.value)}
-                placeholder="https://setgo-kimi-coach.<subdomain>.workers.dev/coach"
-                className="mt-2 min-h-9 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-xs font-semibold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                placeholder="https://...workers.dev/coach"
+                className="mt-2 min-h-9 w-full rounded-xl border border-sg-border bg-sg-surface px-3 text-xs font-semibold text-sg-label outline-none focus:border-sg-brand"
               />
             </span>
             <button
               type="button"
               onClick={handleSaveAiCoachEndpoint}
-              className="min-h-8 shrink-0 rounded-lg bg-[#F2F2F7] px-3 text-xs font-black text-[#1C1C1E]"
+              className="min-h-8 shrink-0 rounded-lg bg-sg-fill px-3 text-xs font-black text-sg-label"
             >
               {aiCoachSaved ? (locale === 'ko' ? '저장됨' : 'Saved') : t(locale, 'save')}
             </button>
           </div>
 
-          <div className="ios-row flex w-full items-center gap-3 bg-white p-3.5 text-left">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#8E8E93] text-white">
+          <div className="ios-row flex w-full items-center gap-3 bg-sg-surface p-3.5 text-left">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sg-tertiary-label text-white">
               <Languages aria-hidden="true" size={17} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-bold text-[#1C1C1E]">{t(locale, 'language')}</span>
-              <span className="mt-0.5 block text-xs font-semibold text-[#8E8E93]">
+              <span className="block text-sm font-bold text-sg-label">{t(locale, 'language')}</span>
+              <span className="mt-0.5 block text-xs font-semibold text-sg-tertiary-label">
                 {locale === 'ko' ? '표시 언어' : 'Display language'}
               </span>
             </span>
-            <div className="flex shrink-0 items-center rounded-xl border border-black/5 bg-[#F2F2F7] p-0.5">
+            <div className="flex shrink-0 items-center rounded-xl border border-sg-separator bg-sg-fill p-0.5">
               {(['ko', 'en'] as AppLocale[]).map((item) => (
                 <button
                   key={item}
@@ -216,8 +202,8 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                   onClick={() => handleLocaleChange(item)}
                   className={`min-h-7 rounded-lg px-3 text-xs font-bold transition-all ${
                     locale === item
-                      ? 'bg-white font-black text-[#1C1C1E] shadow-sm'
-                      : 'text-[#6E6E73] hover:text-[#1C1C1E]'
+                      ? 'bg-sg-surface font-black text-sg-label shadow-sm'
+                      : 'text-sg-secondary-label hover:text-sg-label'
                   }`}
                 >
                   {item === 'ko' ? '한국어' : 'EN'}
@@ -229,15 +215,15 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
 
         {isNativeApp ? (
           <div className="ios-group overflow-hidden">
-            <div className="ios-row flex w-full items-center gap-3 bg-white p-3.5 text-left">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#5856D6] text-white">
+            <div className="ios-row flex w-full items-center gap-3 bg-sg-surface p-3.5 text-left">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sg-ai text-white">
                 <Database aria-hidden="true" size={17} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold text-[#1C1C1E]">
+                <span className="block text-sm font-bold text-sg-label">
                   {locale === 'ko' ? 'Native 저장소 점검' : 'Native Storage Check'}
                 </span>
-                <span className="mt-0.5 block text-xs font-semibold text-[#8E8E93]">
+                <span className="mt-0.5 block text-xs font-semibold text-sg-tertiary-label">
                   {nativeProbeStatus === 'running'
                     ? (locale === 'ko' ? 'SQLite 점검 중...' : 'Checking SQLite...')
                     : nativeProbeStatus === 'success'
@@ -246,20 +232,20 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                         : (locale === 'ko' ? '첫 native 기록 저장 완료' : 'First native record saved'))
                       : nativeProbeStatus === 'failed'
                         ? (locale === 'ko' ? '점검 실패' : 'Check failed')
-                        : (locale === 'ko' ? '별도 DB에 테스트 기록을 저장/조회합니다' : 'Writes and reads an isolated probe DB')}
+                        : (locale === 'ko' ? '별도 DB에 테스트 기록을 저장하고 조회합니다.' : 'Writes and reads an isolated probe DB')}
                 </span>
               </span>
               <button
                 type="button"
                 onClick={() => void handleNativeProbe()}
                 disabled={nativeProbeStatus === 'running'}
-                className="min-h-8 rounded-lg bg-[#F2F2F7] px-3 text-xs font-black text-[#1C1C1E] disabled:opacity-50"
+                className="min-h-8 rounded-lg bg-sg-fill px-3 text-xs font-black text-sg-label disabled:opacity-50"
               >
                 {nativeProbeStatus === 'running' ? (locale === 'ko' ? '확인 중' : 'Checking') : (locale === 'ko' ? '실행' : 'Run')}
               </button>
             </div>
             {nativeProbeResult || nativeProbeError ? (
-              <div className="border-t border-black/[0.04] bg-white px-3.5 py-3 text-xs font-semibold leading-relaxed text-[#6E6E73]">
+              <div className="border-t border-sg-separator bg-sg-surface px-3.5 py-3 text-xs font-semibold leading-relaxed text-sg-secondary-label">
                 {nativeProbeResult ? (
                   <p>
                     {locale === 'ko'
@@ -274,7 +260,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                       : `Previous write: ${nativeProbeResult.previousRun.writtenAt}`}
                   </p>
                 ) : null}
-                {nativeProbeError ? <p className="text-[#FF3B30]">{nativeProbeError}</p> : null}
+                {nativeProbeError ? <p className="text-sg-danger">{nativeProbeError}</p> : null}
               </div>
             ) : null}
           </div>
@@ -291,18 +277,18 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
             aria-modal="true"
             aria-labelledby="storage-info-title"
             aria-describedby="storage-info-description"
-            className="w-full max-w-xs rounded-3xl border border-black/5 bg-white p-5 shadow-2xl animate-fade-in"
+            className="w-full max-w-xs rounded-3xl border border-sg-separator bg-sg-surface p-5 shadow-2xl animate-fade-in"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex flex-col items-center text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F3F3] text-accent-dark shadow-sm">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sg-brand-soft text-sg-brand-strong shadow-sm">
                 <Database aria-hidden="true" size={24} />
               </span>
-              <h2 id="storage-info-title" className="mt-3 text-base font-black text-[#1C1C1E]">
+              <h2 id="storage-info-title" className="mt-3 text-base font-black text-sg-label">
                 {t(locale, 'localData')}
               </h2>
-              <p className="mt-0.5 text-xs font-bold text-accent-dark">IndexedDB</p>
-              <p id="storage-info-description" className="mt-2 text-sm font-semibold leading-relaxed text-[#6E6E73]">
+              <p className="mt-0.5 text-xs font-bold text-sg-brand-strong">IndexedDB</p>
+              <p id="storage-info-description" className="mt-2 text-sm font-semibold leading-relaxed text-sg-secondary-label">
                 {locale === 'ko'
                   ? '저장 데이터는 이 기기에만 보관됩니다. 정기적으로 백업해 주세요.'
                   : 'Your data stays on this device. Create backups regularly.'}

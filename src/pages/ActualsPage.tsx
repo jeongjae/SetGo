@@ -148,7 +148,7 @@ export function actualsStatusLabel(locale: 'ko' | 'en', status: WorkoutStatus, d
 }
 
 export function actualsSessionCardClass(status: WorkoutStatus, dateKey: string, todayKey: string): string {
-  if (status === 'completed') return 'border-[#2EC4B6]/20 bg-[#F2FFFD]';
+  if (status === 'completed') return 'border-[#34C759]/20 bg-[#34C759]/10';
   if (status === 'skipped') return 'border-[#FF3B30]/20 bg-[#FFF2F2]';
   if (status === 'in_progress' && dateKey < todayKey) return 'border-[#FF9500]/20 bg-[#FFF6DF]';
   if (status === 'in_progress') return 'border-[#007AFF]/20 bg-[#F0F7FF]';
@@ -172,15 +172,15 @@ export function actualsDayCellClass({
 }): string {
   let cellStyle = 'bg-white border-transparent text-[#8E8E93] hover:bg-[#F2F2F7]';
   if (isSelected) {
-    cellStyle = 'bg-[#2EC4B6] border-transparent text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] z-10';
+    cellStyle = 'bg-sg-action border-transparent text-white shadow-action z-10';
   } else if (hasCompleted) {
-    cellStyle = 'bg-[#FF9500]/10 border-transparent text-[#FF9500] hover:bg-[#FF9500]/20';
+    cellStyle = 'bg-[#34C759]/10 border-transparent text-sg-success hover:bg-[#34C759]/20';
   } else if (hasInProgress) {
-    cellStyle = 'bg-[#007AFF]/10 border-transparent text-[#007AFF] hover:bg-[#007AFF]/20';
+    cellStyle = 'bg-[#007AFF]/10 border-transparent text-sg-action hover:bg-[#007AFF]/20';
   } else if (hasSkipped) {
-    cellStyle = 'bg-[#FF3B30]/10 border-transparent text-[#FF3B30] hover:bg-[#FF3B30]/20';
+    cellStyle = 'bg-[#FF3B30]/10 border-transparent text-sg-danger hover:bg-[#FF3B30]/20';
   } else if (isToday) {
-    cellStyle = 'bg-[#007AFF]/10 border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF]/20';
+    cellStyle = 'bg-[#007AFF]/10 border-[#007AFF] text-sg-action hover:bg-[#007AFF]/20';
   } else if (isFuture) {
     cellStyle = 'bg-transparent border-transparent text-[#D1D1D6] opacity-40';
   }
