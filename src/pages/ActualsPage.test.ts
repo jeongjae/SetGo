@@ -36,7 +36,7 @@ describe('actuals status label', () => {
 
 describe('actuals session card style', () => {
   it('visually distinguishes completed records from stale drafts', () => {
-    expect(actualsSessionCardClass('completed', '2026-06-04', '2026-06-04')).toContain('border-[#2EC4B6]/20');
+    expect(actualsSessionCardClass('completed', '2026-06-04', '2026-06-04')).toContain('border-[#34C759]/20');
     expect(actualsSessionCardClass('in_progress', '2026-06-02', '2026-06-04')).toContain('bg-[#FFF6DF]');
   });
 });
@@ -127,7 +127,7 @@ describe('actuals session detail label', () => {
 });
 
 describe('actuals day cell style', () => {
-  it('uses the plan calendar selected styling when selected', () => {
+  it('uses action-blue selected styling when selected', () => {
     const className = actualsDayCellClass({
       hasCompleted: true,
       hasInProgress: false,
@@ -137,7 +137,7 @@ describe('actuals day cell style', () => {
       isToday: false,
     });
 
-    expect(className).toContain('bg-[#2EC4B6]');
+    expect(className).toContain('bg-sg-action');
     expect(className).toContain('text-white');
     expect(className).not.toContain('bg-[#FF9500]/10');
   });

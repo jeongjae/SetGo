@@ -450,12 +450,12 @@ export function CalendarPage({
 
             let cellStyle = '';
             if (isSelected) {
-              cellStyle = 'bg-[#2EC4B6] border-transparent text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] z-10';
+              cellStyle = 'bg-sg-action border-transparent text-white shadow-action z-10';
             } else if (isToday) {
               cellStyle = 'bg-[#007AFF]/10 border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF]/20';
             } else if (useActuals) {
               if (hasCompleted) {
-                cellStyle = 'bg-[#FF9500]/10 border-transparent text-[#FF9500] hover:bg-[#FF9500]/20';
+                cellStyle = 'bg-[#34C759]/10 border-transparent text-sg-success hover:bg-[#34C759]/20';
               } else if (hasInProgress) {
                 cellStyle = 'bg-[#007AFF]/10 border-transparent text-[#007AFF] hover:bg-[#007AFF]/20';
               } else if (hasSkipped) {
@@ -475,8 +475,8 @@ export function CalendarPage({
               }
             }
 
-            const borderDashed = (!useActuals && hasOverride && !isSelected && !isToday) ? ' border-dashed border-[#2EC4B6]' : '';
-            const dayTextColor = isSelected ? 'text-white' : isToday ? 'text-[#007AFF]' : 'text-[#1C1C1E]';
+            const borderDashed = (!useActuals && hasOverride && !isSelected && !isToday) ? ' border-dashed border-sg-brand' : '';
+            const dayTextColor = isSelected ? 'text-white' : isToday ? 'text-sg-action' : 'text-[#1C1C1E]';
 
             return (
               <button
@@ -638,4 +638,3 @@ export function CalendarPage({
     </section>
   );
 }
-
