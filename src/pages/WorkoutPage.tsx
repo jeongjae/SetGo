@@ -764,7 +764,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
       : 'pb-36';
 
   return (
-    <section className={`viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col overflow-hidden px-3.5 text-[#1C1C1E] ${isKeyboardOpen ? 'py-2' : 'py-3'}`}>
+    <section className={`viewport-locked ios-screen mx-auto flex max-w-md select-none flex-col overflow-hidden px-3.5 text-sg-label ${isKeyboardOpen ? 'py-2' : 'py-3'}`}>
       <WorkoutHeader
         locale={locale}
         isKeyboardOpen={isKeyboardOpen}
@@ -799,11 +799,11 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
         {isCompletedEditMode ? (
           <section className="shrink-0 ios-card p-3 border-[#2EC4B6]/20 bg-[#2EC4B6]/5 shadow-sm animate-fade-in">
-            <p className="text-sm font-bold text-[#159A91] flex items-center gap-1.5">
+            <p className="text-sm font-bold text-sg-brand-strong flex items-center gap-1.5">
               <span className="inline-block w-2 h-2 rounded-full bg-[#2EC4B6] animate-pulse"></span>
               {locale === 'ko' ? '\uC644\uB8CC\uD55C \uC6B4\uB3D9 \uAE30\uB85D \uD3B8\uC9D1 \uC911' : 'Editing a finished workout'}
             </p>
-            <p className="mt-1 text-xs font-bold text-[#159A91]">
+            <p className="mt-1 text-xs font-bold text-sg-brand-strong">
               {locale === 'ko'
                 ? isHistoricalEditMode
                   ? '\uC218\uC815 \uB0B4\uC6A9\uC740 \uC800\uC7A5 \uD6C4 \uD1B5\uACC4\uC640 \uB0B4\uBCF4\uB0B4\uAE30\uC5D0 \uBC18\uC601\uB429\uB2C8\uB2E4.'
@@ -827,7 +827,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               aria-label="Historical workout routine"
               value={historyRoutineId}
               onChange={(event) => void handleHistoryRoutineChange(event.target.value)}
-              className="min-h-10 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+              className="min-h-10 w-full rounded-xl border border-sg-border bg-sg-surface px-3 text-sm font-bold text-sg-label outline-none focus:border-sg-brand"
             >
               <option value="">{t(locale, 'freeWorkout')}</option>
               {savedRoutines.map((routine) => (
@@ -839,7 +839,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
                 aria-label="Historical workout routine day"
                 value={historyRoutineDayId}
                 onChange={(event) => setHistoryRoutineDayId(event.target.value)}
-                className="min-h-10 w-full rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                className="min-h-10 w-full rounded-xl border border-sg-border bg-sg-surface px-3 text-sm font-bold text-sg-label outline-none focus:border-sg-brand"
               >
                 {historyRoutineDays.map((day) => (
                   <option key={day.id} value={day.id}>{getRoutineDayDisplayName(day, locale) ?? day.name}</option>
@@ -851,8 +851,8 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
 
         {/* Session memo */}
         <section className="shrink-0 ios-card px-3 py-2.5">
-          <label className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 text-xs font-bold text-[#1C1C1E]">
-            <span className="shrink-0 rounded-md border border-violet-500/20 bg-[#5856D6]/10 px-2.5 py-1 text-[#5856D6] font-bold">
+          <label className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 text-xs font-bold text-sg-label">
+            <span className="shrink-0 rounded-md border border-violet-500/20 bg-[#5856D6]/10 px-2.5 py-1 text-sg-ai font-bold">
               {locale === 'ko' ? '\uC138\uC158 \uBA54\uBAA8' : 'Session Memo'}
             </span>
             <input
@@ -860,7 +860,7 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
               type="text"
               defaultValue={workout?.session.memo ?? ''}
               onBlur={(event) => void handleUpdateSessionMemo(event.target.value)}
-              className="h-8 min-w-0 rounded-md border border-[#D1D1D6] bg-white px-2.5 text-sm font-medium text-[#1C1C1E] outline-none transition-all placeholder:text-[#8E8E93] focus:border-[#2EC4B6]"
+              className="h-8 min-w-0 rounded-md border border-sg-border bg-sg-surface px-2.5 text-sm font-medium text-sg-label outline-none transition-all placeholder:text-sg-tertiary-label focus:border-sg-brand"
               placeholder={locale === 'ko' ? '\uCEE8\uB514\uC158, \uD2B9\uC774\uC0AC\uD56D, \uC624\uB298 \uBAA9\uD45C \uB4F1' : 'Energy, notes, today goals'}
             />
           </label>
@@ -869,16 +869,16 @@ export function WorkoutPage({ mode = 'active', sessionId, onBack, onCompleted, o
         {/* Empty state placeholder when there are no exercises and no running records */}
         {logs.length === 0 && cardioRecords.length === 0 ? (
           <section className="flex flex-col items-center justify-center p-6 text-center ios-card gap-4 my-auto shrink-0 py-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F3F3] text-accent-dark shadow-sm">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sg-brand-soft text-sg-brand-strong shadow-sm">
               <Dumbbell size={28} />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-black text-[#1C1C1E]">
-                {locale === 'ko' ? '오늘의 운동을 기록해보세요' : 'Build Your Workout Today'}
+              <h3 className="text-base font-black text-sg-label">
+                {locale === 'ko' ? '\uC624\uB298\uC758 \uC6B4\uB3D9\uC744 \uAE30\uB85D\uD574\uBCF4\uC138\uC694' : 'Build Your Workout Today'}
               </h3>
-              <p className="text-xs font-bold text-[#6E6E73] max-w-[280px] leading-snug">
+              <p className="text-xs font-bold text-sg-secondary-label max-w-[280px] leading-snug">
                 {locale === 'ko'
-                  ? '아직 추가된 운동이 없습니다. 아래 버튼이나 하단바를 사용하여 운동/러닝 기록을 추가하세요.'
+                  ? '\uC544\uC9C1 \uCD94\uAC00\uB41C \uC6B4\uB3D9\uC774 \uC5C6\uC2B5\uB2C8\uB2E4. \uC544\uB798 \uBC84\uD2BC\uC774\uB098 \uD558\uB2E8\uBC14\uB97C \uC0AC\uC6A9\uD574 \uC6B4\uB3D9/\uB7EC\uB2DD \uAE30\uB85D\uC744 \uCD94\uAC00\uD558\uC138\uC694.'
                   : 'No exercises added yet. Use the buttons below or the footer to add exercise or running logs.'}
               </p>
             </div>
