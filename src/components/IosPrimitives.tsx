@@ -31,7 +31,7 @@ type IOSListRowProps = {
 
 export function IOSListRow({
   icon: Icon,
-  iconClassName = 'bg-[#8E8E93]',
+  iconClassName = 'bg-sg-tertiary-label',
   title,
   detail,
   onClick,
@@ -42,22 +42,22 @@ export function IOSListRow({
         <Icon aria-hidden="true" size={17} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-bold text-[#1C1C1E]">{title}</span>
-        {detail ? <span className="mt-0.5 block text-xs font-semibold text-[#8E8E93]">{detail}</span> : null}
+        <span className="block text-sm font-bold text-sg-label">{title}</span>
+        {detail ? <span className="mt-0.5 block text-xs font-semibold text-sg-tertiary-label">{detail}</span> : null}
       </span>
-      {onClick ? <ChevronRight aria-hidden="true" size={16} className="text-[#C7C7CC]" /> : null}
+      {onClick ? <ChevronRight aria-hidden="true" size={16} className="text-sg-quaternary-label" /> : null}
     </>
   );
 
   if (!onClick) {
-    return <div className="ios-row flex w-full items-center gap-3 bg-white p-3.5 text-left">{content}</div>;
+    return <div className="ios-row flex w-full items-center gap-3 bg-sg-surface p-3.5 text-left">{content}</div>;
   }
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="ios-row flex w-full items-center gap-3 bg-white p-3.5 text-left transition-all active:bg-[#F2F2F7]"
+      className="ios-row flex w-full items-center gap-3 bg-sg-surface p-3.5 text-left transition-all active:bg-sg-fill"
     >
       {content}
     </button>
