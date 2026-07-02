@@ -894,33 +894,40 @@ export function RoutineSetupPage({
         {/* 주간 계획 */}
         {setupTab === 'schedule' && (
           <section className="ios-card shrink-0 space-y-2.5 p-3">
-            <p className="text-xs font-bold uppercase text-[#8E8E93]">{workoutCycleLabel}</p>
-            <div className="rounded-xl border border-black/5 bg-[#F2F2F7] px-3 py-2">
-              <p className="text-xs font-extrabold uppercase text-[#8E8E93]">{t(locale, 'activeRoutine')}</p>
-              <h2 className="mt-0.5 text-sm font-black text-[#1C1C1E]">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
-              <p className="mt-1 text-xs font-medium leading-normal text-[#6E6E73]">{t(locale, 'routinePlanFor')}</p>
+            <p className="text-xs font-bold uppercase text-sg-tertiary-label">{workoutCycleLabel}</p>
+            <div className="rounded-xl border border-sg-separator bg-sg-fill px-3 py-2">
+              <p className="text-xs font-extrabold uppercase text-sg-tertiary-label">{t(locale, 'activeRoutine')}</p>
+              <h2 className="mt-0.5 text-sm font-black text-sg-label">{activeRoutineName ?? t(locale, 'noActiveRoutine')}</h2>
+              <p className="mt-1 text-xs font-medium leading-normal text-sg-secondary-label">{t(locale, 'routinePlanFor')}</p>
             </div>
-            <div className="flex items-center justify-start gap-2">
-              <label htmlFor="routine-schedule-start" className="text-xs font-bold text-[#6E6E73]">
-                {locale === 'ko' ? '시작일' : 'Start date'}
-              </label>
-              <input
-                id="routine-schedule-start"
-                type="date"
-                value={scheduleStartDate}
-                onChange={(event) => {
-                  setScheduleStartDate(event.target.value);
-                  setScheduleDirty(true);
-                }}
-                className="min-h-9 w-[12.25rem] max-w-[72%] rounded-xl border border-[#D1D1D6] bg-white px-3 text-sm font-semibold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
-              />
+            <div className="rounded-xl border border-sg-separator bg-sg-fill px-3 py-2.5">
+              <div className="flex items-center justify-start gap-2">
+                <label htmlFor="routine-schedule-start" className="text-xs font-bold text-sg-secondary-label">
+                  {locale === 'ko' ? '시작일' : 'Start date'}
+                </label>
+                <input
+                  id="routine-schedule-start"
+                  type="date"
+                  value={scheduleStartDate}
+                  onChange={(event) => {
+                    setScheduleStartDate(event.target.value);
+                    setScheduleDirty(true);
+                  }}
+                  className="min-h-9 w-[12.25rem] max-w-[72%] rounded-xl border border-sg-border bg-sg-surface px-3 text-sm font-semibold text-sg-label outline-none focus:border-sg-brand"
+                />
+              </div>
+              <p className="mt-2 text-[11px] font-semibold leading-4 text-sg-secondary-label">
+                {locale === 'ko'
+                  ? '시작일은 반복 사이클의 기준일입니다. 캘린더 확인은 오늘 날짜부터 보여줍니다.'
+                  : 'Start date anchors the repeating cycle. Calendar review opens at today.'}
+              </p>
             </div>
             {cyclePlan.length === 0 ? (
               <button
                 type="button"
                 onClick={handleStartCyclePlan}
                 disabled={!activeRoutine}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2EC4B6] px-3 text-sm font-black text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] transition-all active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
+                className="ios-button-brand flex min-h-12 w-full items-center justify-center gap-2 px-3 text-sm"
               >
                 <Plus aria-hidden="true" size={16} />
                 <span>{locale === 'ko' ? '운동사이클 정하기' : 'Set workout cycle'}</span>
@@ -928,13 +935,13 @@ export function RoutineSetupPage({
             ) : (
               <div className="space-y-1.5">
                 {cyclePlan.map((item, index) => (
-                  <div key={`${item.id ?? 'new'}_${index}`} className="grid grid-cols-[1.5rem_1fr_2rem_2rem_2rem] items-center gap-1 rounded-xl border border-black/5 bg-[#F2F2F7] p-1.5">
-                    <span className="text-center text-xs font-black text-[#159A91]">{index + 1}</span>
+                  <div key={`${item.id ?? 'new'}_${index}`} className="grid grid-cols-[1.5rem_1fr_2rem_2rem_2rem] items-center gap-1 rounded-xl border border-sg-separator bg-sg-fill p-1.5">
+                    <span className="text-center text-xs font-black text-sg-brand-strong">{index + 1}</span>
                     <select
                       aria-label={`Cycle item ${index + 1}`}
                       value={item.kind === 'routine' ? `routine:${item.routineDayId ?? ''}` : item.kind}
                       onChange={(event) => handleCycleItemChange(index, event.target.value)}
-                      className="min-h-8 min-w-0 cursor-pointer rounded-lg border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                      className="min-h-8 min-w-0 cursor-pointer rounded-lg border border-sg-border bg-sg-surface px-2 text-xs font-bold text-sg-label outline-none focus:border-sg-brand"
                     >
                       {dayPlans.map((dayPlan) => (
                         <option key={dayPlan.routineDay.id} value={`routine:${dayPlan.routineDay.id}`}>
@@ -948,19 +955,19 @@ export function RoutineSetupPage({
                       type="button"
                       onClick={() => handleMoveCycleItem(index, -1)}
                       disabled={index === 0}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/5 bg-white text-[#1C1C1E] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-sg-separator bg-sg-surface text-sg-label shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                       aria-label="Move cycle item up"
                     >
-                      <ArrowUp aria-hidden="true" size={13} className="text-[#1C1C1E]" />
+                      <ArrowUp aria-hidden="true" size={13} className="text-sg-label" />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleMoveCycleItem(index, 1)}
                       disabled={index === cyclePlan.length - 1}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/5 bg-white text-[#1C1C1E] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-sg-separator bg-sg-surface text-sg-label shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                       aria-label="Move cycle item down"
                     >
-                      <ArrowDown aria-hidden="true" size={13} className="text-[#1C1C1E]" />
+                      <ArrowDown aria-hidden="true" size={13} className="text-sg-label" />
                     </button>
                     <button
                       type="button"
@@ -973,25 +980,25 @@ export function RoutineSetupPage({
                   </div>
                 ))}
                 <div className="grid grid-cols-3 gap-1.5">
-                  <button type="button" onClick={() => handleAddCycleItem('routine')} className="min-h-9 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
+                  <button type="button" onClick={() => handleAddCycleItem('routine')} className="ios-button-secondary min-h-9 text-xs">
                     {locale === 'ko' ? '운동 추가' : 'Workout'}
                   </button>
-                  <button type="button" onClick={() => handleAddCycleItem('running')} className="min-h-9 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
+                  <button type="button" onClick={() => handleAddCycleItem('running')} className="ios-button-secondary min-h-9 text-xs">
                     {locale === 'ko' ? '러닝 추가' : 'Running'}
                   </button>
-                  <button type="button" onClick={() => handleAddCycleItem('rest')} className="min-h-9 rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] transition-all active:scale-95">
+                  <button type="button" onClick={() => handleAddCycleItem('rest')} className="ios-button-secondary min-h-9 text-xs">
                     {locale === 'ko' ? '휴식 추가' : 'Rest'}
                   </button>
                 </div>
               </div>
             )}
-            {scheduleStatus ? <p className="rounded-xl bg-accent-soft px-3 py-2 text-xs font-bold text-accent-dark border border-[#2EC4B6]/20">{scheduleStatus}</p> : null}
-            <div className="grid grid-cols-3 gap-1.5 border-t border-[#E5E5EA] pt-2">
+            {scheduleStatus ? <p className="rounded-xl border border-sg-separator bg-sg-brand-soft px-3 py-2 text-xs font-bold text-sg-brand-strong">{scheduleStatus}</p> : null}
+            <div className="grid grid-cols-3 gap-1.5 border-t border-sg-separator pt-2">
               <button
                 type="button"
                 onClick={() => void handleReviewCycleCalendar()}
                 disabled={!activeRoutine || !scheduleStartDate || cyclePlan.length === 0}
-                className="flex min-h-10 items-center justify-center gap-1 rounded-xl border border-[#2EC4B6]/20 bg-white px-2 text-xs font-bold text-[#159A91] shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                className="flex min-h-10 items-center justify-center gap-1 rounded-xl border border-[#007AFF]/20 bg-sg-surface px-2 text-xs font-bold text-sg-action shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
               >
                 <CalendarDays aria-hidden="true" size={15} />
                 <span>{locale === 'ko' ? '캘린더 확인' : 'Calendar'}</span>
@@ -999,7 +1006,7 @@ export function RoutineSetupPage({
               <button
                 type="button"
                 onClick={() => void handleCancelWeeklySchedule()}
-                className="flex min-h-10 items-center justify-center rounded-xl border border-black/5 bg-white text-xs font-bold text-[#1C1C1E] shadow-sm transition-all active:scale-95"
+                className="ios-button-secondary flex min-h-10 items-center justify-center text-xs"
               >
                 {locale === 'ko' ? '취소' : 'Cancel'}
               </button>
@@ -1007,7 +1014,7 @@ export function RoutineSetupPage({
                 type="button"
                 onClick={() => void handleSaveWeeklySchedule()}
                 disabled={!activeRoutine || !scheduleDirty || !scheduleStartDate || cyclePlan.length === 0}
-                className="flex min-h-10 items-center justify-center rounded-xl bg-[#2EC4B6] text-xs font-black text-white shadow-[0_8px_18px_rgba(46,196,182,0.22)] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                className="ios-button-brand flex min-h-10 items-center justify-center text-xs"
               >
                 {t(locale, 'save')}
               </button>
