@@ -43,7 +43,7 @@ import { getStoredLocale } from '../i18n/i18n';
 
 function Badge({ status, locale }: { status: LoadStatus; locale: Locale }) {
   const labels = {
-    ko: { low: '부족', normal: '적정', high: '과다', caution: '주의' },
+    ko: { low: '\uBD80\uC871', normal: '\uC801\uC815', high: '\uACFC\uB2E4', caution: '\uC8FC\uC758' },
     en: { low: 'Low', normal: 'Good', high: 'High', caution: 'Caution' },
   };
   const className = status === 'normal'
@@ -109,15 +109,15 @@ function RecoveryDashboardPanel({ recovery, locale }: { recovery: RecoverySnapsh
   const fatiguedGroups = recovery.mostFatiguedGroups.filter((group) => group.recoveryPercent < 60);
   const recommendation = locale === 'ko'
     ? fatiguedGroups.length > 0
-      ? `${fatiguedGroups.slice(0, 2).map((group) => recoveryLabels.ko[group.group]).join(', ')} 회복을 우선하세요.`
-      : '계획한 운동을 유지하거나 소폭 진행해도 됩니다.'
+      ? `${fatiguedGroups.slice(0, 2).map((group) => recoveryLabels.ko[group.group]).join(', ')} \uD68C\uBCF5\uC744 \uC6B0\uC120\uD558\uC138\uC694.`
+      : '\uACC4\uD68D\uD55C \uC6B4\uB3D9\uC744 \uC720\uC9C0\uD558\uAC70\uB098 \uAC00\uBCCD\uAC8C \uC9C4\uD589\uD574\uB3C4 \uB429\uB2C8\uB2E4.'
     : recovery.recommendation;
 
   return (
     <section className="ios-card p-3">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '회복 대시보드' : 'Recovery dashboard'}</h2>
+          <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '\uD68C\uBCF5 \uB300\uC2DC\uBCF4\uB4DC' : 'Recovery dashboard'}</h2>
           <p className="mt-0.5 truncate text-[11px] font-bold text-[#8E8E93]">
             {recommendation}
           </p>
@@ -131,7 +131,7 @@ function RecoveryDashboardPanel({ recovery, locale }: { recovery: RecoverySnapsh
             onClick={() => setShowDetails(!showDetails)}
             className="rounded-lg bg-[#007AFF]/10 hover:bg-[#007AFF]/15 text-[#007AFF] px-2.5 py-1 text-[11px] font-black transition-all active:scale-95 whitespace-nowrap"
           >
-            {showDetails ? (locale === 'ko' ? '접기' : '자세히') : (locale === 'ko' ? '자세히' : 'Details')}
+            {showDetails ? (locale === 'ko' ? '\uC811\uAE30' : 'Close') : (locale === 'ko' ? '\uC790\uC138\uD788' : 'Details')}
           </button>
         </div>
       </div>
@@ -166,7 +166,7 @@ function WeeklyLoadStrip({ weeks, locale }: { weeks: WeekStat[]; locale: Locale 
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-black text-[#1C1C1E]">
-            {locale === 'ko' ? `${weeks.length}주 부하` : `${weeks.length}-week load`}
+            {locale === 'ko' ? `${weeks.length}\uC8FC \uBD80\uD558` : `${weeks.length}-week load`}
           </h2>
           <p className="mt-0.5 text-[11px] font-bold text-[#8E8E93]">
             {latest ? `${latest.label} ${formatKg(latest.volumeKg)}` : '0kg'}
@@ -200,7 +200,7 @@ function DailyLoadRail({ days, locale }: { days: DailyTrendStat[]; locale: Local
   return (
     <section className="ios-card p-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '일별 부하' : 'Daily load'}</h2>
+        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '\uC77C\uC77C \uBD80\uD558' : 'Daily load'}</h2>
         <div className="flex items-center gap-2 text-[10px] font-black uppercase text-[#8E8E93]">
           <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#34C759]" />kg</span>
           <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#007AFF]" />km</span>
@@ -249,15 +249,15 @@ function MuscleBalancePanel({ muscles, locale }: { muscles: MuscleStat[]; locale
   return (
     <section className="ios-card p-3">
       <div className="flex items-center justify-between gap-3 mb-2">
-        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '부위 밸런스' : 'Muscle balance'}</h2>
+        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '\uBD80\uC704 \uBC38\uB7F0\uC2A4' : 'Muscle balance'}</h2>
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-[11px] font-bold text-[#8E8E93] mr-1">{locale === 'ko' ? '목표 대비 세트' : 'sets vs target'}</span>
+          <span className="text-[11px] font-bold text-[#8E8E93] mr-1">{locale === 'ko' ? '\uBAA9\uD45C \uB300\uBE44 \uC138\uD2B8' : 'sets vs target'}</span>
           <button
             type="button"
             onClick={() => setShowBars(!showBars)}
             className="rounded-lg bg-[#007AFF]/10 hover:bg-[#007AFF]/15 text-[#007AFF] px-2.5 py-1 text-[11px] font-black transition-all active:scale-95 whitespace-nowrap"
           >
-            {showBars ? (locale === 'ko' ? '접기' : '자세히') : (locale === 'ko' ? '자세히' : 'Details')}
+            {showBars ? (locale === 'ko' ? '\uC811\uAE30' : 'Close') : (locale === 'ko' ? '\uC790\uC138\uD788' : 'Details')}
           </button>
         </div>
       </div>
@@ -304,7 +304,7 @@ function ActionPanel({ stats, locale }: { stats: StatsView; locale: Locale }) {
     <section className="ios-card p-3">
       <div className="flex items-center gap-2">
         <AlertTriangle aria-hidden="true" size={16} className={stats.warnings.length > 0 ? 'text-[#FF3B30]' : 'text-[#34C759]'} />
-        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '다음 액션' : 'Next actions'}</h2>
+        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '\uB2E4\uC74C \uC561\uC158' : 'Next actions'}</h2>
       </div>
       <div className="mt-2 grid gap-1.5">
         {stats.nextWeekSuggestions.map((suggestion) => (
@@ -359,13 +359,13 @@ function DailyTrendChart({ days, locale }: { days: DailyTrendStat[]; locale: Loc
         })}
       </div>
       <div className="flex items-center gap-3 px-1 text-[11px] font-bold uppercase text-[#8E8E93]">
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#34C759]" />{locale === 'ko' ? '근력 kg' : 'Strength kg'}</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#007AFF]" />{locale === 'ko' ? '러닝 km' : 'Running km'}</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#34C759]" />{locale === 'ko' ? '\uADFC\uB825 kg' : 'Strength kg'}</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#007AFF]" />{locale === 'ko' ? '\uB7EC\uB2DD km' : 'Running km'}</span>
       </div>
       <div className="grid gap-1.5">
         {activeDays.length === 0 ? (
           <p className="rounded-xl border border-black/5 bg-[#F2F2F7] px-3 py-2 text-xs font-semibold text-[#8E8E93]">
-            {locale === 'ko' ? '최근 2주간 기록된 운동이 없습니다.' : 'No workouts logged in the last two weeks.'}
+            {locale === 'ko' ? '\uCD5C\uADFC 2\uC8FC\uAC04 \uAE30\uB85D\uB41C \uC6B4\uB3D9\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.' : 'No workouts logged in the last two weeks.'}
           </p>
         ) : activeDays.slice(-7).map((day) => (
           <p key={day.date} className="rounded-xl border border-black/5 bg-[#F2F2F7] px-3 py-2 text-xs font-semibold leading-relaxed text-[#6E6E73]">
@@ -373,8 +373,8 @@ function DailyTrendChart({ days, locale }: { days: DailyTrendStat[]; locale: Loc
             {day.items.map((item) => (
               item.distanceKm > 0
                 ? `${item.label} ${item.distanceKm.toFixed(1)}km`
-                : `${item.label} ${Math.round(item.volumeKg).toLocaleString()}kg/${item.sets}${locale === 'ko' ? '세트' : ' sets'}`
-            )).join(' · ')}
+                : `${item.label} ${Math.round(item.volumeKg).toLocaleString()}kg/${item.sets}${locale === 'ko' ? '\uC138\uD2B8' : ' sets'}`
+            )).join(' \u00B7 ')}
           </p>
         ))}
       </div>
@@ -578,12 +578,12 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
           />
 
           <p className="px-1 pt-1 text-xs font-black uppercase tracking-wide text-[#8E8E93]">
-            {locale === 'ko' ? '상세 분석' : 'Details'}
+            {locale === 'ko' ? '\uC0C1\uC138 \uBD84\uC11D' : 'Details'}
           </p>
 
           <DetailSection
-            title={locale === 'ko' ? '추이 상세' : 'Trend details'}
-            summary={locale === 'ko' ? '세트와 운동일수 차트' : 'Sets and workout-day charts'}
+            title={locale === 'ko' ? '\uCD94\uC774 \uC0C1\uC138' : 'Trend details'}
+            summary={locale === 'ko' ? '\uC138\uD2B8\uC640 \uC6B4\uB3D9\uC77C\uC218 \uCC28\uD2B8' : 'Sets and workout-day charts'}
           >
             <div className="space-y-4">
               <div>
@@ -599,7 +599,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
 
           <DetailSection
             title={c.muscleAnalysis}
-            summary={locale === 'ko' ? `${activeMuscleCount}개 부위 기록 / 총 ${stats.muscleStats.length}개 부위` : `${activeMuscleCount} active of ${stats.muscleStats.length} groups`}
+            summary={locale === 'ko' ? `${activeMuscleCount}\uAC1C \uBD80\uC704 \uAE30\uB85D / \uCD1D ${stats.muscleStats.length}\uAC1C \uBD80\uC704` : `${activeMuscleCount} active of ${stats.muscleStats.length} groups`}
           >
             <div className="grid gap-2.5">
               {stats.muscleStats.map((muscle) => (
@@ -650,7 +650,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
 
           <DetailSection
             title={c.performance}
-            summary={locale === 'ko' ? `${stats.performances.length}개 운동 기록` : `${stats.performances.length} tracked exercises`}
+            summary={locale === 'ko' ? `${stats.performances.length}\uAC1C \uC6B4\uB3D9 \uAE30\uB85D` : `${stats.performances.length} tracked exercises`}
           >
             <div className="grid gap-2.5">
               {stats.performances.length === 0 ? (
@@ -672,7 +672,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
                       </div>
                       {performance.chartHistory && performance.chartHistory.length > 0 ? (
                         <div className="border-t border-[#E5E5EA] pt-3">
-                          <p className="text-xs font-bold uppercase text-[#8E8E93] mb-1.5">{locale === 'ko' ? '성과 추이 (1RM & 볼륨)' : 'Performance Trend (1RM & Vol)'}</p>
+                          <p className="text-xs font-bold uppercase text-[#8E8E93] mb-1.5">{locale === 'ko' ? '\uC131\uACFC \uCD94\uC774 (1RM & \uBCFC\uB968)' : 'Performance Trend (1RM & Vol)'}</p>
                           <StaticLineChart data={performance.chartHistory} locale={locale} />
                         </div>
                       ) : null}
@@ -686,8 +686,8 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
                       className="mt-2 w-full rounded-xl border border-black/5 bg-[#F2F2F7] py-2.5 text-xs font-bold text-accent-dark transition-all hover:bg-[#E5E5EA] active:scale-98"
                     >
                       {showAllPerformances
-                        ? (locale === 'ko' ? '간략히 보기' : 'Show Less')
-                        : (locale === 'ko' ? `더보기 (${stats.performances.length - 10}개 추가)` : `Show More (${stats.performances.length - 10} more)`)}
+                        ? (locale === 'ko' ? '\uAC04\uB7B5\uD788 \uBCF4\uAE30' : 'Show Less')
+                        : (locale === 'ko' ? `\uB354\uBCF4\uAE30 (${stats.performances.length - 10}\uAC1C \uCD94\uAC00)` : `Show More (${stats.performances.length - 10} more)`)}
                     </button>
                   )}
                 </>
