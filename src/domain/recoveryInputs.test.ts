@@ -50,8 +50,27 @@ describe('buildRecoveryInputs', () => {
     const inputs = buildRecoveryInputs(dataset);
     expect(inputs).toHaveLength(1);
     expect(inputs[0].muscleGroups).toContain('chest');
-    expect(inputs[0].load).toBe(500);
+    expect(inputs[0].load).toBeGreaterThan(80);
+    expect(inputs[0].load).toBeLessThan(120);
     expect(inputs[0].isHard).toBe(true);
+  });
+
+  it('normalizes heavy lower-body tonnage before recovery scoring', () => {
+    const dataset: RecoveryDataset = {
+      sessions: [session('s1', '2026-06-20', 'completed')],
+      workoutExercises: [workoutExercise('we1', 's1', 'squat')],
+      sets: Array.from({ length: 12 }, (_, index) => set(`set${index + 1}`, 'we1', 180, 10, { isHard: true, rir: index < 2 ? 1 : 2 })),
+      cardio: [],
+      exercises: [exercise('squat', 'legs')],
+    };
+
+    const snapshot = buildRecoverySnapshot(buildRecoveryInputs(dataset), {
+      asOf: new Date('2026-06-24T12:00:00.000Z'),
+    });
+
+    const legs = snapshot.groups.find((group) => group.group === 'legs');
+    expect(legs?.recoveryPercent).toBeGreaterThanOrEqual(60);
+    expect(legs?.status).not.toBe('fatigued');
   });
 
   it('ignores sessions that are not completed', () => {
@@ -95,9 +114,9 @@ describe('recoveryWarningGroups', () => {
     const snapshot = buildRecoverySnapshot(
       [
         // Heavy recent legs work keeps legs fatigued.
-        { date: '2026-06-24', completedAt: '2026-06-24T12:00:00.000Z', muscleGroups: ['legs'], load: 60000, isHard: true },
+        { date: '2026-06-24', completedAt: '2026-06-24T12:00:00.000Z', muscleGroups: ['legs'], load: 1200, isHard: true },
         // Light chest work stays recovered (above threshold).
-        { date: '2026-06-24', completedAt: '2026-06-24T12:00:00.000Z', muscleGroups: ['chest'], load: 800 },
+        { date: '2026-06-24', completedAt: '2026-06-24T12:00:00.000Z', muscleGroups: ['chest'], load: 250 },
       ],
       { asOf },
     );

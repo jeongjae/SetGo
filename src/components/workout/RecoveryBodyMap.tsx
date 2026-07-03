@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { RecoverySnapshot, RecoveryMuscleGroup } from '../../domain/recovery';
+import bodyMapHumanUrl from '../../assets/body-map-human-v2.png';
+import type { RecoveryMuscleGroup, RecoverySnapshot, RecoveryStatus } from '../../domain/recovery';
 import { recoveryGroupLabel } from '../../domain/recoveryInputs';
 
 type RecoveryBodyMapProps = {
@@ -7,247 +8,167 @@ type RecoveryBodyMapProps = {
   locale: 'ko' | 'en';
 };
 
-export function RecoveryBodyMap({ recovery, locale }: RecoveryBodyMapProps) {
-  const [activeGroup, setActiveGroup] = useState<RecoveryMuscleGroup | null>(null);
+type BodyMapGroup = Exclude<RecoveryMuscleGroup, 'cardio'>;
 
-  // Helper to get recovery details of a specific muscle group
-  const getMuscleStat = (group: RecoveryMuscleGroup) => {
-    return recovery.groups.find((g) => g.group === group) || {
+type BodyMarker = {
+  group: BodyMapGroup;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
+
+const bodyMarkers: BodyMarker[] = [
+  { group: 'shoulder', x: 18.4, y: 31, w: 7.2, h: 5.4 },
+  { group: 'shoulder', x: 38.8, y: 31, w: 7.2, h: 5.4 },
+  { group: 'shoulder', x: 61.7, y: 31, w: 7.2, h: 5.4 },
+  { group: 'shoulder', x: 82.1, y: 31, w: 7.2, h: 5.4 },
+  { group: 'chest', x: 28.6, y: 35, w: 13.4, h: 7 },
+  { group: 'back', x: 71.6, y: 40, w: 13.8, h: 17.5 },
+  { group: 'core', x: 28.7, y: 45, w: 10, h: 12 },
+  { group: 'core', x: 71.6, y: 51, w: 11.5, h: 7.5 },
+  { group: 'biceps', x: 16.1, y: 40, w: 5.1, h: 11.5 },
+  { group: 'biceps', x: 41.5, y: 40, w: 5.1, h: 11.5 },
+  { group: 'triceps', x: 59.2, y: 40, w: 5.1, h: 11.5 },
+  { group: 'triceps', x: 84.1, y: 40, w: 5.1, h: 11.5 },
+  { group: 'legs', x: 23.5, y: 63.2, w: 6.5, h: 18.8 },
+  { group: 'legs', x: 33.7, y: 63.2, w: 6.5, h: 18.8 },
+  { group: 'legs', x: 66.7, y: 63.2, w: 6.5, h: 18.8 },
+  { group: 'legs', x: 76.5, y: 63.2, w: 6.5, h: 18.8 },
+];
+
+const bodyGroups: BodyMapGroup[] = ['chest', 'back', 'legs', 'shoulder', 'biceps', 'triceps', 'core'];
+
+function recoveryColor(status: RecoveryStatus): string {
+  if (status === 'ready') return '#34C759';
+  if (status === 'moderate') return '#FF9500';
+  return '#FF3B30';
+}
+
+function recoveryToneClass(status: RecoveryStatus): string {
+  if (status === 'ready') return 'bg-[#34C759]/15 text-[#1F7A3A]';
+  if (status === 'moderate') return 'bg-[#FF9500]/15 text-[#8A4B00]';
+  return 'bg-[#FF3B30]/15 text-[#B42318]';
+}
+
+export function RecoveryBodyMap({ recovery, locale }: RecoveryBodyMapProps) {
+  const [activeGroup, setActiveGroup] = useState<BodyMapGroup | null>(null);
+
+  const getMuscleStat = (group: BodyMapGroup) => {
+    return recovery.groups.find((item) => item.group === group) ?? {
       group,
+      rawLoad: 0,
+      adjustedLoad: 0,
+      decayedLoad: 0,
+      fatigueScore: 0,
       recoveryPercent: 100,
       status: 'ready' as const,
     };
   };
 
-  // Map recovery status to fill colors (Apple/iOS style harmonized colors)
-  const getMuscleColor = (group: RecoveryMuscleGroup) => {
-    const stat = getMuscleStat(group);
-    if (stat.recoveryPercent >= 75) return '#34C759'; // Ready (Green)
-    if (stat.recoveryPercent >= 50) return '#FF9500'; // Moderate (Orange)
-    return '#FF3B30'; // Fatigued (Red)
-  };
-
-  const handleMuscleClick = (group: RecoveryMuscleGroup) => {
-    setActiveGroup((prev) => (prev === group ? null : group));
-  };
-
   const selectedStat = activeGroup ? getMuscleStat(activeGroup) : null;
+  const weakestGroup = bodyGroups
+    .map((group) => getMuscleStat(group))
+    .sort((a, b) => a.recoveryPercent - b.recoveryPercent)[0];
 
   return (
-    <div className="relative flex flex-col items-center rounded-2xl border border-black/5 bg-white p-3.5 shadow-sm">
+    <div className="relative flex flex-col rounded-2xl border border-black/5 bg-white p-3.5 shadow-sm">
       <div className="flex w-full items-center justify-between border-b border-[#F2F2F7] pb-2">
-        <h2 className="text-sm font-black text-[#1C1C1E]">{locale === 'ko' ? '대화형 근육 회복도' : 'Interactive Recovery'}</h2>
+        <h2 className="text-sm font-black text-[#1C1C1E]">
+          {locale === 'ko' ? '대화형 근육 회복도' : 'Interactive Recovery'}
+        </h2>
         <span className="text-[10px] font-black uppercase text-[#8E8E93]">
-          {locale === 'ko' ? '부위를 터치하여 확인하세요' : 'Tap muscle to inspect'}
+          {locale === 'ko' ? '부위를 터치하여 확인' : 'Tap a region'}
         </span>
       </div>
 
-      {/* SVG Container holding Front and Back body outlines */}
-      <div className="relative mt-2.5 flex h-60 w-full items-center justify-center overflow-hidden">
-        <svg viewBox="0 0 240 220" className="h-full w-auto select-none">
-          <defs>
-            <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodOpacity="0.1" />
-            </filter>
-          </defs>
+      <div className="relative mx-auto mt-2.5 aspect-square h-auto max-h-[19rem] w-full overflow-hidden rounded-xl bg-[#F2F2F7]">
+        <img
+          src={bodyMapHumanUrl}
+          alt={locale === 'ko' ? '앞면과 뒷면 인체 회복도' : 'Front and back recovery body map'}
+          className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain drop-shadow-[0_8px_18px_rgba(60,60,67,0.16)]"
+          draggable={false}
+        />
 
-          {/* BACKGROUND CONTOUR SILHOUETTES */}
-          {/* Front Silhouette background contour */}
-          <path d="M 60,15 C 65,15 67,23 68,26 C 73,26 88,29 93,37 C 95,40 94,49 93,65 C 92,72 90,82 89,95 C 87,112 80,123 79,132 C 79,152 79,178 77,208 C 76,211 73,212 71,212 C 68,212 67,208 67,192 C 67,175 64,152 60,140 C 56,152 53,175 53,192 C 53,208 52,212 49,212 C 47,212 44,211 43,208 C 41,178 41,152 41,132 C 40,123 33,112 31,95 C 30,82 28,72 27,65 C 26,49 25,40 27,37 C 32,29 47,26 52,26 C 53,23 55,15 60,15 Z" fill="#E5E5EA" />
-          
-          {/* Back Silhouette background contour */}
-          <path d="M 180,15 C 185,15 187,23 188,26 C 193,26 208,29 213,37 C 215,40 214,49 213,65 C 212,72 210,82 209,95 C 207,112 200,123 199,132 C 199,152 199,178 197,208 C 196,211 193,212 191,212 C 188,212 187,208 187,192 C 187,175 184,152 180,140 C 176,152 173,175 173,192 C 173,208 172,212 169,212 C 167,212 164,211 163,208 C 161,178 161,152 161,132 C 160,123 153,112 151,95 C 150,82 148,72 147,65 C 146,49 145,40 147,37 C 152,29 167,26 172,26 C 173,23 175,15 180,15 Z" fill="#E5E5EA" />
+        {bodyMarkers.map((marker, index) => {
+          const stat = getMuscleStat(marker.group);
+          const color = recoveryColor(stat.status);
+          const isActive = activeGroup === marker.group;
+          const label = recoveryGroupLabel(marker.group, locale);
 
-          {/* FRONT VIEW MUSCLES (Center X = 60) */}
-          <g filter="url(#shadow)" className="cursor-pointer">
-            {/* Front Head - Dummy interactive placeholder */}
-            <circle cx="60" cy="23" r="10" fill="#D1D1D6" />
-
-            {/* Shoulder - Front Left */}
-            <rect
-              x="29" y="38" width="11" height="15" rx="5"
-              fill={getMuscleColor('shoulder')}
-              onClick={() => handleMuscleClick('shoulder')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95 origin-center"
-            />
-            {/* Shoulder - Front Right */}
-            <rect
-              x="80" y="38" width="11" height="15" rx="5"
-              fill={getMuscleColor('shoulder')}
-              onClick={() => handleMuscleClick('shoulder')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95 origin-center"
-            />
-
-            {/* Chest - Left */}
-            <path
-              d="M 43,44 L 59,44 L 59,62 L 44,60 Z"
-              fill={getMuscleColor('chest')}
-              onClick={() => handleMuscleClick('chest')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-            {/* Chest - Right */}
-            <path
-              d="M 61,44 L 77,44 L 76,60 L 61,62 Z"
-              fill={getMuscleColor('chest')}
-              onClick={() => handleMuscleClick('chest')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-
-            {/* Biceps - Left */}
-            <rect
-              x="26" y="56" width="9" height="20" rx="4"
-              fill={getMuscleColor('biceps')}
-              onClick={() => handleMuscleClick('biceps')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-            {/* Biceps - Right */}
-            <rect
-              x="85" y="56" width="9" height="20" rx="4"
-              fill={getMuscleColor('biceps')}
-              onClick={() => handleMuscleClick('biceps')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-
-            {/* Core / Abs */}
-            <rect
-              x="46" y="65" width="28" height="38" rx="4"
-              fill={getMuscleColor('core')}
-              onClick={() => handleMuscleClick('core')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-
-            {/* Legs (Quads) - Left */}
-            <rect
-              x="43" y="108" width="12" height="42" rx="6"
-              fill={getMuscleColor('legs')}
-              onClick={() => handleMuscleClick('legs')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-            {/* Legs (Quads) - Right */}
-            <rect
-              x="65" y="108" width="12" height="42" rx="6"
-              fill={getMuscleColor('legs')}
-              onClick={() => handleMuscleClick('legs')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-          </g>
-
-          {/* BACK VIEW MUSCLES (Center X = 180) */}
-          <g filter="url(#shadow)" className="cursor-pointer">
-            {/* Back Head - Dummy */}
-            <circle cx="180" cy="23" r="10" fill="#D1D1D6" />
-
-            {/* Shoulder - Back Left */}
-            <rect
-              x="149" y="38" width="11" height="15" rx="5"
-              fill={getMuscleColor('shoulder')}
-              onClick={() => handleMuscleClick('shoulder')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-            {/* Shoulder - Back Right */}
-            <rect
-              x="200" y="38" width="11" height="15" rx="5"
-              fill={getMuscleColor('shoulder')}
-              onClick={() => handleMuscleClick('shoulder')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-
-            {/* Triceps - Left */}
-            <rect
-              x="146" y="56" width="9" height="20" rx="4"
-              fill={getMuscleColor('triceps')}
-              onClick={() => handleMuscleClick('triceps')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-            {/* Triceps - Right */}
-            <rect
-              x="205" y="56" width="9" height="20" rx="4"
-              fill={getMuscleColor('triceps')}
-              onClick={() => handleMuscleClick('triceps')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-
-            {/* Back / Lats */}
-            <path
-              d="M 163,44 L 197,44 L 193,82 L 167,82 Z"
-              fill={getMuscleColor('back')}
-              onClick={() => handleMuscleClick('back')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-
-            {/* Lower Back / Glutes (Represented via core mapping on backside) */}
-            <rect
-              x="166" y="85" width="28" height="18" rx="3"
-              fill={getMuscleColor('core')}
-              onClick={() => handleMuscleClick('core')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-
-            {/* Legs (Hamstrings/Calves) - Left */}
-            <rect
-              x="163" y="108" width="12" height="42" rx="6"
-              fill={getMuscleColor('legs')}
-              onClick={() => handleMuscleClick('legs')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-            {/* Legs (Hamstrings/Calves) - Right */}
-            <rect
-              x="185" y="108" width="12" height="42" rx="6"
-              fill={getMuscleColor('legs')}
-              onClick={() => handleMuscleClick('legs')}
-              className="transition-all duration-300 hover:brightness-95 active:scale-95"
-            />
-          </g>
-
-          {/* Interactive labels for indicators */}
-          <text x="60" y="218" textAnchor="middle" fill="#8E8E93" fontSize="9" fontWeight="bold">FRONT</text>
-          <text x="180" y="218" textAnchor="middle" fill="#8E8E93" fontSize="9" fontWeight="bold">BACK</text>
-        </svg>
-
-        {/* Dynamic Tooltip overlay on tap */}
-        {selectedStat && (
-          <div className="absolute bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-black/5 bg-[#1C1C1E] px-3.5 py-2 text-white shadow-lg animate-fade-in">
-            <span className="text-xs font-black">
-              {recoveryGroupLabel(selectedStat.group, locale)}:
-            </span>
-            <span
-              className="font-mono text-xs font-black"
-              style={{
-                color:
-                  selectedStat.recoveryPercent >= 75
-                    ? '#30D158'
-                    : selectedStat.recoveryPercent >= 50
-                    ? '#FF9F0A'
-                    : '#FF453A',
-              }}
-            >
-              {selectedStat.recoveryPercent}% {locale === 'ko' ? '회복됨' : 'recovered'}
-            </span>
+          return (
             <button
+              key={`${marker.group}-${index}`}
               type="button"
-              onClick={() => setActiveGroup(null)}
-              className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[10px] font-black leading-none hover:bg-white/30"
-              aria-label="Close tooltip"
-            >
-              ✕
-            </button>
+              aria-pressed={isActive}
+              aria-label={`${label} ${stat.recoveryPercent}%`}
+              onClick={() => setActiveGroup((current) => (current === marker.group ? null : marker.group))}
+              className="absolute rounded-full border transition duration-150 hover:scale-105 active:scale-95"
+              style={{
+                left: `${marker.x - marker.w / 2}%`,
+                top: `${marker.y - marker.h / 2}%`,
+                width: `${marker.w}%`,
+                height: `${marker.h}%`,
+                backgroundColor: `${color}${isActive ? '66' : '38'}`,
+                borderColor: `${color}${isActive ? 'F2' : '99'}`,
+                boxShadow: isActive ? `0 0 0 4px ${color}22, inset 0 0 0 1px rgba(255,255,255,0.72)` : 'inset 0 0 0 1px rgba(255,255,255,0.5)',
+              }}
+            />
+          );
+        })}
+
+        <div className="pointer-events-none absolute bottom-2.5 left-[28.8%] -translate-x-1/2 rounded-full bg-white/85 px-2 py-1 text-[9px] font-black text-[#6E6E73] shadow-sm">
+          FRONT
+        </div>
+        <div className="pointer-events-none absolute bottom-2.5 left-[72.5%] -translate-x-1/2 rounded-full bg-white/85 px-2 py-1 text-[9px] font-black text-[#6E6E73] shadow-sm">
+          BACK
+        </div>
+      </div>
+
+      <div className="mt-3 min-h-[3.2rem] rounded-xl bg-[#F9F9FB] px-3 py-2.5">
+        {selectedStat ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-xs font-black text-[#1C1C1E]">
+                {recoveryGroupLabel(selectedStat.group, locale)}
+              </p>
+              <p className="mt-0.5 text-[11px] font-bold text-[#6E6E73]">
+                {locale === 'ko' ? '남은 피로를 반영한 추정치' : 'Estimated from recent training stimulus'}
+              </p>
+            </div>
+            <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-black tabular-nums ${recoveryToneClass(selectedStat.status)}`}>
+              {selectedStat.recoveryPercent}%
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-xs font-black text-[#1C1C1E]">
+                {locale === 'ko' ? '가장 낮은 회복 부위' : 'Lowest recovery'}
+              </p>
+              <p className="mt-0.5 truncate text-[11px] font-bold text-[#6E6E73]">
+                {recoveryGroupLabel(weakestGroup.group, locale)}
+              </p>
+            </div>
+            <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-black tabular-nums ${recoveryToneClass(weakestGroup.status)}`}>
+              {weakestGroup.recoveryPercent}%
+            </span>
           </div>
         )}
       </div>
 
-      {/* Legend guide */}
-      <div className="mt-3 flex items-center justify-center gap-4 border-t border-[#F2F2F7] pt-2.5 text-[10px] font-extrabold uppercase text-[#6E6E73] w-full">
+      <div className="mt-3 flex items-center justify-center gap-3 border-t border-[#F2F2F7] pt-2.5 text-[10px] font-extrabold text-[#6E6E73]">
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-[#34C759]" />
-          {locale === 'ko' ? '좋음 (75%+)' : 'Ready'}
+          {locale === 'ko' ? '좋음 75%+' : 'Ready 75%+'}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-[#FF9500]" />
-          {locale === 'ko' ? '보통 (50%+)' : 'Moderate'}
+          {locale === 'ko' ? '보통 50%+' : 'Moderate 50%+'}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-[#FF3B30]" />
-          {locale === 'ko' ? '피로 (<50%)' : 'Fatigued'}
+          {locale === 'ko' ? '피로 50% 미만' : 'Fatigued <50%'}
         </span>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRecoverySnapshot, calculateDecayedLoad } from './recovery';
+import { buildRecoverySnapshot, calculateDecayedLoad, type RecoveryMuscleGroup } from './recovery';
 
 describe('recovery model', () => {
   it('decays fatigue as time passes', () => {
@@ -16,10 +16,10 @@ describe('recovery model', () => {
   it('applies hard-set fatigue above normal work', () => {
     const asOf = new Date('2026-06-24T12:00:00.000Z');
     const normal = buildRecoverySnapshot([
-      { date: '2026-06-24', completedAt: asOf.toISOString(), muscleGroups: ['chest'], load: 1000 },
+      { date: '2026-06-24', completedAt: asOf.toISOString(), muscleGroups: ['chest'], load: 300 },
     ], { asOf });
     const hard = buildRecoverySnapshot([
-      { date: '2026-06-24', completedAt: asOf.toISOString(), muscleGroups: ['chest'], load: 1000, isHard: true },
+      { date: '2026-06-24', completedAt: asOf.toISOString(), muscleGroups: ['chest'], load: 300, isHard: true },
     ], { asOf });
 
     expect(hard.groups.find((group) => group.group === 'chest')?.fatigueScore)
@@ -29,10 +29,10 @@ describe('recovery model', () => {
   it('discounts warmup sets so they do not suppress readiness like work sets', () => {
     const asOf = new Date('2026-06-24T12:00:00.000Z');
     const warmup = buildRecoverySnapshot([
-      { date: '2026-06-24', completedAt: asOf.toISOString(), muscleGroups: ['legs'], load: 4000, isWarmup: true },
+      { date: '2026-06-24', completedAt: asOf.toISOString(), muscleGroups: ['legs'], load: 500, isWarmup: true },
     ], { asOf });
     const work = buildRecoverySnapshot([
-      { date: '2026-06-24', completedAt: asOf.toISOString(), muscleGroups: ['legs'], load: 4000 },
+      { date: '2026-06-24', completedAt: asOf.toISOString(), muscleGroups: ['legs'], load: 500 },
     ], { asOf });
 
     expect(warmup.groups.find((group) => group.group === 'legs')?.recoveryPercent)
@@ -47,6 +47,24 @@ describe('recovery model', () => {
 
     expect(snapshot.groups.find((group) => group.group === 'back')?.rawLoad).toBe(1000);
     expect(snapshot.groups.find((group) => group.group === 'biceps')?.rawLoad).toBe(1000);
+  });
+
+  it('lets a normal heavy lower-body day recover above the fatigue threshold after four days', () => {
+    const asOf = new Date('2026-06-28T12:00:00.000Z');
+    const inputs = Array.from({ length: 12 }, (_, index) => ({
+      date: '2026-06-24',
+      completedAt: '2026-06-24T12:00:00.000Z',
+      muscleGroups: ['legs'] as RecoveryMuscleGroup[],
+      load: 110,
+      isHard: true,
+      effortMultiplier: index < 2 ? 1.08 : 1,
+    }));
+
+    const snapshot = buildRecoverySnapshot(inputs, { asOf });
+    const legs = snapshot.groups.find((group) => group.group === 'legs');
+
+    expect(legs?.recoveryPercent).toBeGreaterThanOrEqual(60);
+    expect(legs?.status).not.toBe('fatigued');
   });
 
   it('returns ready fallback values when no data exists', () => {

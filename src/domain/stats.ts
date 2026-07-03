@@ -1,8 +1,18 @@
-import { getExerciseCategories, getExerciseName, isWarmupOnlyExercise } from './exercises';
+import { getExerciseCategories, getExerciseName } from './exercises';
 import { buildRecoverySnapshot, type RecoveryMuscleGroup, type RecoverySnapshot, type RecoveryStatus } from './recovery';
+import {
+  cardioRecoveryLoad,
+  isHardSet,
+  isWarmupSet,
+  recoveryEffortMultiplier,
+  setVolume,
+  strengthSetRecoveryLoad,
+} from './recoveryLoad';
 import { t, tf } from '../i18n/i18n';
 import { formatDateKey } from '../utils/date';
 import type { CardioRecord, ExerciseMaster, WorkoutExercise, WorkoutSession, WorkoutSet } from '../types';
+
+export { isHardSet, setVolume };
 
 export type Locale = 'ko' | 'en';
 export type MuscleGroup = Exclude<RecoveryMuscleGroup, 'cardio'>;
@@ -188,17 +198,8 @@ export function pctChange(current: number, previous: number): number | undefined
   return ((current - previous) / previous) * 100;
 }
 
-export function setVolume(set: WorkoutSet): number {
-  return set.isCompleted ? set.weightKg * set.reps : 0;
-}
-
 export function estimatedOneRm(set: WorkoutSet): number {
   return set.weightKg * (1 + set.reps / 30);
-}
-
-export function isHardSet(set: WorkoutSet, exercise: ExerciseMaster): boolean {
-  const isWarmup = set.type ? set.type === 'warmup' : set.isWarmup;
-  return set.isCompleted && !isWarmup && !isWarmupOnlyExercise(exercise) && set.isHard === true;
 }
 
 function normalizedHardSetCount(
@@ -517,8 +518,7 @@ export function buildStats(
   const isWarmupSetForStats = (set: WorkoutSet) => {
     const workoutExercise = workoutExerciseById.get(set.workoutExerciseId);
     const exercise = workoutExercise ? exerciseById.get(workoutExercise.exerciseId) : undefined;
-    const isWarmup = set.type ? set.type === 'warmup' : set.isWarmup;
-    return Boolean(isWarmup) || isWarmupOnlyExercise(exercise);
+    return isWarmupSet(set, exercise);
   };
   const currentPeriodTrainingSets = currentPeriodSets.filter((set) => !isWarmupSetForStats(set));
   const hardSets = normalizedHardSetCount(currentPeriodSets, workoutExerciseById, exerciseById);
@@ -706,22 +706,21 @@ export function buildStats(
         date: session.date,
         completedAt,
         muscleGroups: groups,
-        load: setVolume(set),
+        load: strengthSetRecoveryLoad(set),
         isHard: isHardSet(set, exercise),
         isWarmup: isWarmupSetForStats(set),
+        effortMultiplier: recoveryEffortMultiplier(set),
       }));
   });
   const cardioRecoveryInputs = completedSessions.flatMap((session) => (
     (cardioBySessionId.get(session.id) ?? [])
       .filter((record) => record.isDraft !== true)
       .map((record) => {
-        const distanceLoad = (record.distanceKm ?? 0) * 650;
-        const durationLoad = (record.durationSeconds ?? 0) / 60 * 45;
         return {
           date: session.date,
           completedAt: record.endedAt ?? record.startedAt,
           muscleGroups: ['cardio'] as RecoveryMuscleGroup[],
-          load: Math.max(distanceLoad, durationLoad),
+          load: cardioRecoveryLoad(record),
         };
       })
   ));

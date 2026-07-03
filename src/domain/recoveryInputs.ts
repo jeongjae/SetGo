@@ -1,5 +1,13 @@
 import { db } from '../db/db';
-import { getExerciseCategories, isWarmupOnlyExercise } from './exercises';
+import { getExerciseCategories } from './exercises';
+import {
+  cardioRecoveryLoad,
+  isHardSet,
+  isWarmupSet,
+  recoveryEffortMultiplier,
+  setVolume,
+  strengthSetRecoveryLoad,
+} from './recoveryLoad';
 import {
   buildRecoverySnapshot,
   type RecoveryGroupStat,
@@ -16,25 +24,13 @@ import type {
   WorkoutSet,
 } from '../types';
 
+export { isHardSet, isWarmupSet, setVolume };
+
 // Strength muscle groups exclude cardio, mirroring the stats pipeline.
 export type StrengthMuscleGroup = Exclude<RecoveryMuscleGroup, 'cardio'>;
 
 // The helpers below mirror the recovery load logic used by StatsPage so the
 // Today recovery warning and the Insights dashboard stay in sync.
-export function setVolume(set: WorkoutSet): number {
-  return set.isCompleted ? set.weightKg * set.reps : 0;
-}
-
-export function isHardSet(set: WorkoutSet, exercise: ExerciseMaster): boolean {
-  const isWarmup = set.type ? set.type === 'warmup' : set.isWarmup;
-  return set.isCompleted && !isWarmup && !isWarmupOnlyExercise(exercise) && set.isHard === true;
-}
-
-export function isWarmupSet(set: WorkoutSet, exercise?: ExerciseMaster): boolean {
-  const isWarmup = set.type ? set.type === 'warmup' : set.isWarmup;
-  return Boolean(isWarmup) || isWarmupOnlyExercise(exercise);
-}
-
 export function exerciseMuscleGroups(exercise: ExerciseMaster): StrengthMuscleGroup[] {
   const categories = getExerciseCategories(exercise);
   const mapped = categories
@@ -105,9 +101,10 @@ export function buildRecoveryInputs(dataset: RecoveryDataset): RecoveryLoadInput
         date: session.date,
         completedAt,
         muscleGroups: groups,
-        load: setVolume(set),
+        load: strengthSetRecoveryLoad(set),
         isHard: isHardSet(set, exercise),
         isWarmup: isWarmupSet(set, exercise),
+        effortMultiplier: recoveryEffortMultiplier(set),
       }));
   });
 
@@ -122,13 +119,11 @@ export function buildRecoveryInputs(dataset: RecoveryDataset): RecoveryLoadInput
     .flatMap((session) => (cardioBySessionId.get(session.id) ?? [])
       .filter((record) => record.isDraft !== true)
       .map((record) => {
-        const distanceLoad = (record.distanceKm ?? 0) * 650;
-        const durationLoad = (record.durationSeconds ?? 0) / 60 * 45;
         return {
           date: session.date,
           completedAt: record.endedAt ?? record.startedAt,
           muscleGroups: ['cardio'] as RecoveryMuscleGroup[],
-          load: Math.max(distanceLoad, durationLoad),
+          load: cardioRecoveryLoad(record),
         };
       }));
 

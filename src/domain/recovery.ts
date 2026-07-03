@@ -16,10 +16,13 @@ export type RecoveryLoadInput = {
   date: string;
   completedAt?: string;
   muscleGroups: RecoveryMuscleGroup[];
+  // Fatigue stimulus units. Strength sets should be normalized before they
+  // enter this model so heavy lower-body tonnage does not dominate recovery.
   load: number;
   isHard?: boolean;
   isWarmup?: boolean;
   isPr?: boolean;
+  effortMultiplier?: number;
 };
 
 export type RecoveryGroupStat = {
@@ -50,17 +53,17 @@ export type RecoveryOptions = {
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_DAILY_DECAY = 0.4;
+const DEFAULT_DAILY_DECAY = 0.28;
 
 const defaultGroupCapacity: Record<RecoveryMuscleGroup, number> = {
-  chest: 3600,
-  back: 4600,
-  legs: 7200,
-  shoulder: 2600,
-  biceps: 1800,
-  triceps: 1800,
-  core: 1600,
-  cardio: 5200,
+  chest: 1100,
+  back: 1200,
+  legs: 1300,
+  shoulder: 800,
+  biceps: 700,
+  triceps: 700,
+  core: 650,
+  cardio: 1100,
 };
 
 function clamp(value: number, min: number, max: number): number {
@@ -76,9 +79,10 @@ function parseCompletedAt(input: RecoveryLoadInput): Date {
 
 function loadMultiplier(input: RecoveryLoadInput): number {
   const warmupMultiplier = input.isWarmup ? 0.25 : 1;
-  const hardMultiplier = input.isHard ? 1.25 : 1;
-  const prMultiplier = input.isPr ? 1.15 : 1;
-  return warmupMultiplier * hardMultiplier * prMultiplier;
+  const hardMultiplier = input.isHard ? 1.2 : 1;
+  const prMultiplier = input.isPr ? 1.1 : 1;
+  const effortMultiplier = input.effortMultiplier ?? 1;
+  return warmupMultiplier * hardMultiplier * prMultiplier * effortMultiplier;
 }
 
 function statusForRecovery(recoveryPercent: number): RecoveryStatus {

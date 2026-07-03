@@ -290,16 +290,17 @@ describe('stats builder', () => {
       status: 'completed',
       totalVolumeKg: 7200,
     }];
-    const sets: WorkoutSet[] = [{
-      id: 'recovery_set_1',
+    const sets: WorkoutSet[] = Array.from({ length: 8 }, (_, index) => ({
+      id: `recovery_set_${index + 1}`,
       workoutExerciseId: 'session_recovery_squat',
-      setNo: 1,
+      setNo: index + 1,
       weightKg: 180,
-      reps: 40,
+      reps: 10,
+      rir: index < 2 ? 1 : 2,
       isCompleted: true,
       isWarmup: false,
       isHard: true,
-    }];
+    }));
 
     const stats = buildStats(
       [session],
