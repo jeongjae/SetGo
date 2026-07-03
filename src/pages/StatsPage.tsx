@@ -496,6 +496,9 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
     || stats.dailyTrend.some((day) => day.strengthVolumeKg > 0 || day.cardioDistanceKm > 0)
     || stats.weeks.some((week) => week.volumeKg > 0 || week.sets > 0 || week.workoutDays > 0);
   const activeMuscleCount = stats.muscleStats.filter((muscle) => muscle.sets > 0).length;
+  const isBodyMapDebug =
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('bodyMapDebug');
+  const debugRecovery = useMemo(() => buildRecoverySnapshot([]), []);
 
   return (
     <section className="ios-page">
@@ -520,15 +523,19 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
 
       {!hasData ? (
         <div className="inner-scroll min-h-0 w-full flex flex-col items-center justify-center p-2">
-          <section className="flex w-full flex-col items-center space-y-3 ios-card p-5 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F3F3] text-accent-dark">
-              <BarChart3 aria-hidden="true" size={24} />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-base font-black text-[#1C1C1E] tracking-wide">{c.emptyTitle}</h2>
-              <p className="text-xs leading-relaxed text-[#6E6E73] font-semibold max-w-xs">{c.emptyBody}</p>
-            </div>
-          </section>
+          {isBodyMapDebug ? (
+            <RecoveryBodyMap recovery={debugRecovery} locale={locale} />
+          ) : (
+            <section className="flex w-full flex-col items-center space-y-3 ios-card p-5 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F3F3] text-accent-dark">
+                <BarChart3 aria-hidden="true" size={24} />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-base font-black text-[#1C1C1E] tracking-wide">{c.emptyTitle}</h2>
+                <p className="text-xs leading-relaxed text-[#6E6E73] font-semibold max-w-xs">{c.emptyBody}</p>
+              </div>
+            </section>
+          )}
         </div>
       ) : (
         <div className="inner-scroll min-h-0 space-y-2 pr-0.5">
