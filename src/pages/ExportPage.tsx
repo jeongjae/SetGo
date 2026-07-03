@@ -153,6 +153,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
   } | undefined>();
   const [isPersisted, setIsPersisted] = useState(false);
   const [showPersistenceInfo, setShowPersistenceInfo] = useState(false);
+  const [showAdvancedExportTools, setShowAdvancedExportTools] = useState(false);
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => (
     typeof localStorage === 'undefined' ? null : localStorage.getItem('setgo-last-full-backup-at')
   ));
@@ -250,7 +251,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
         preview,
         rawData: parsedBackup,
         filename: file.name,
-        isSettings: false,
+        isSettings: preview.kind === 'settings',
       });
       setRestoreStatus('idle');
     } catch (error) {
@@ -664,7 +665,9 @@ export function ExportPage({ onBack }: ExportPageProps) {
               </button>
             </div>
           </div>
-          <h2 className="text-base font-black text-[#1C1C1E]">{t(locale, 'backupRestore')}</h2>
+          <h2 className="text-base font-black text-[#1C1C1E]">
+            {locale === 'ko' ? '전체 백업 / 복원' : 'Full Backup / Restore'}
+          </h2>
           <p className="text-sm font-semibold leading-relaxed text-[#6E6E73]">
             {backupSummary ?? (
               locale === 'ko'
@@ -711,7 +714,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
               className="ios-button-secondary flex min-h-12 items-center justify-center gap-2 px-3 text-xs"
             >
               <Download aria-hidden="true" size={15} />
-              <span>{backupStatus === 'downloaded' ? t(locale, 'downloaded') : t(locale, 'backupJson')}</span>
+              <span>{backupStatus === 'downloaded' ? t(locale, 'downloaded') : locale === 'ko' ? '전체 백업' : 'Full Backup'}</span>
             </button>
             <label className="ios-button-secondary flex min-h-12 cursor-pointer items-center justify-center gap-2 px-3 text-xs">
               <Upload aria-hidden="true" size={15} />
@@ -722,7 +725,7 @@ export function ExportPage({ onBack }: ExportPageProps) {
                   ? t(locale, 'restoreCancelled')
                   : restoreStatus === 'failed'
                   ? t(locale, 'restoreFailed')
-                  : t(locale, 'restoreJson')}
+                  : locale === 'ko' ? '전체 복원' : 'Full Restore'}
               </span>
               <input
                 aria-label="Restore SetGo JSON backup"
@@ -819,6 +822,19 @@ export function ExportPage({ onBack }: ExportPageProps) {
           ) : null}
         </section>
 
+        <button
+          type="button"
+          onClick={() => setShowAdvancedExportTools((current) => !current)}
+          className="ios-button-secondary flex min-h-11 w-full items-center justify-center px-3 text-xs"
+          aria-expanded={showAdvancedExportTools}
+        >
+          {showAdvancedExportTools
+            ? locale === 'ko' ? '부분 내보내기/가져오기 접기' : 'Hide Partial Tools'
+            : locale === 'ko' ? '부분 내보내기/가져오기 보기' : 'Show Partial Tools'}
+        </button>
+
+        {showAdvancedExportTools ? (
+          <>
         <section className="space-y-3 ios-card p-3.5">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-[#8E8E93]">
@@ -978,6 +994,8 @@ export function ExportPage({ onBack }: ExportPageProps) {
             </label>
           </div>
         </section>
+          </>
+        ) : null}
 
         <pre className="min-h-72 overflow-auto whitespace-pre-wrap rounded-2xl border border-black/5 bg-white p-4 text-xs leading-relaxed font-mono text-[#1C1C1E] shadow-inner">
           {markdown || t(locale, 'noMarkdown')}

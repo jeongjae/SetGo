@@ -7,6 +7,7 @@ export type ExerciseCategory =
   | 'biceps'
   | 'triceps'
   | 'legs'
+  | 'core'
   | 'cardio'
   | 'bodyweight'
   | 'mobility';

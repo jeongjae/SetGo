@@ -10,6 +10,7 @@ const exerciseCategories: ExerciseCategory[] = [
   'biceps',
   'triceps',
   'legs',
+  'core',
   'cardio',
   'bodyweight',
   'mobility',

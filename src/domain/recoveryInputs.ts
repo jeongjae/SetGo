@@ -42,6 +42,7 @@ export function exerciseMuscleGroups(exercise: ExerciseMaster): StrengthMuscleGr
         || category === 'shoulder'
         || category === 'biceps'
         || category === 'triceps'
+        || category === 'core'
       ) {
         return category;
       }

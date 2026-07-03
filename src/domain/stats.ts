@@ -229,7 +229,7 @@ export function toMuscleGroups(exercise: ExerciseMaster): MuscleGroup[] {
   const categories = getExerciseCategories(exercise);
   const mapped = categories
     .map((category): MuscleGroup | undefined => {
-      if (category === 'chest' || category === 'back' || category === 'legs' || category === 'shoulder' || category === 'biceps' || category === 'triceps') {
+      if (category === 'chest' || category === 'back' || category === 'legs' || category === 'shoulder' || category === 'biceps' || category === 'triceps' || category === 'core') {
         return category;
       }
       return undefined;

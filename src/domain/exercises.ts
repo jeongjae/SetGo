@@ -7,6 +7,7 @@ export const exerciseCategoryOptions: Array<{ label: string; labelKo: string; va
   { label: 'Biceps', labelKo: '이두', value: 'biceps' },
   { label: 'Triceps', labelKo: '삼두', value: 'triceps' },
   { label: 'Legs', labelKo: '하체', value: 'legs' },
+  { label: 'Core', labelKo: '코어', value: 'core' },
   { label: 'Cardio', labelKo: '유산소', value: 'cardio' },
   { label: 'Bodyweight', labelKo: '맨손', value: 'bodyweight' },
   { label: 'Mobility', labelKo: '가동성', value: 'mobility' },
@@ -39,7 +40,7 @@ export function inferExerciseProgressionStyle(
   if (exercise.progressionStyle) return exercise.progressionStyle;
 
   const categories = exercise.categoryTags?.length ? exercise.categoryTags : [exercise.category];
-  if (categories.includes('bodyweight') || categories.includes('mobility') || categories.includes('cardio')) return 'bodyweight';
+  if (categories.includes('bodyweight') || categories.includes('mobility') || categories.includes('cardio') || categories.includes('core')) return 'bodyweight';
   if (categories.includes('biceps') || categories.includes('triceps') || categories.includes('shoulder')) return 'isolation';
   return 'compound';
 }
