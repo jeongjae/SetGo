@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import bodyMapHumanUrl from '../../assets/body-map-human-v2.png';
 import type { RecoveryMuscleGroup, RecoverySnapshot, RecoveryStatus } from '../../domain/recovery';
 import { recoveryGroupLabel } from '../../domain/recoveryInputs';
@@ -19,23 +19,23 @@ type BodyMarker = {
 };
 
 const bodyMarkers: BodyMarker[] = [
-  { group: 'shoulder', x: 28.4, y: 17.9, w: 5.4, h: 4.1 },
-  { group: 'shoulder', x: 38.2, y: 17.9, w: 5.4, h: 4.1 },
-  { group: 'shoulder', x: 62.1, y: 17.9, w: 5.4, h: 4.1 },
-  { group: 'shoulder', x: 71.1, y: 17.9, w: 5.4, h: 4.1 },
-  { group: 'chest', x: 33.3, y: 22.7, w: 11.6, h: 9.1 },
-  { group: 'back', x: 66.9, y: 21.9, w: 12.6, h: 15.3 },
-  { group: 'back', x: 67.1, y: 30, w: 6.5, h: 8.9 },
-  { group: 'core', x: 33.6, y: 35, w: 7.2, h: 13.8 },
-  { group: 'core', x: 67.2, y: 37.3, w: 8.2, h: 5.1 },
-  { group: 'biceps', x: 25.6, y: 26.2, w: 3.8, h: 8.8 },
-  { group: 'biceps', x: 41.3, y: 26.4, w: 3.8, h: 8.9 },
-  { group: 'triceps', x: 59.3, y: 27.2, w: 3.8, h: 9.6 },
-  { group: 'triceps', x: 74.7, y: 27.5, w: 3.8, h: 10.6 },
-  { group: 'legs', x: 29.5, y: 55, w: 5.2, h: 15.6 },
-  { group: 'legs', x: 37.2, y: 54.9, w: 5.2, h: 15.6 },
-  { group: 'legs', x: 63.2, y: 56.6, w: 5.2, h: 16.6 },
-  { group: 'legs', x: 70.6, y: 56.9, w: 5.2, h: 16.7 },
+  { group: 'shoulder', x: 21.7, y: 19.5, w: 7.7, h: 4.1 },
+  { group: 'shoulder', x: 34.5, y: 19.5, w: 7.6, h: 4.5 },
+  { group: 'shoulder', x: 67, y: 19, w: 8, h: 4.1 },
+  { group: 'shoulder', x: 77.7, y: 19, w: 8, h: 4.1 },
+  { group: 'chest', x: 28.2, y: 24, w: 17.4, h: 9.8 },
+  { group: 'back', x: 72, y: 23.4, w: 17.9, h: 9.2 },
+  { group: 'back', x: 72.4, y: 29.7, w: 11.9, h: 7.9 },
+  { group: 'core', x: 28.4, y: 35.4, w: 11, h: 15.9 },
+  { group: 'core', x: 72.2, y: 36.8, w: 10.6, h: 8.4 },
+  { group: 'biceps', x: 18.2, y: 27.1, w: 3.8, h: 8.8 },
+  { group: 'biceps', x: 38.1, y: 26.9, w: 3.8, h: 8.9 },
+  { group: 'triceps', x: 61.9, y: 28, w: 3.8, h: 9.6 },
+  { group: 'triceps', x: 82.3, y: 28.2, w: 3.8, h: 10.6 },
+  { group: 'legs', x: 23.7, y: 55, w: 5.9, h: 15.6 },
+  { group: 'legs', x: 32.9, y: 54.9, w: 5.8, h: 15.6 },
+  { group: 'legs', x: 66.9, y: 55.9, w: 5.2, h: 14.1 },
+  { group: 'legs', x: 76.6, y: 55.9, w: 5.2, h: 14.1 },
 ];
 
 const bodyGroups: BodyMapGroup[] = ['chest', 'back', 'legs', 'shoulder', 'biceps', 'triceps', 'core'];
@@ -54,6 +54,30 @@ function recoveryToneClass(status: RecoveryStatus): string {
 
 export function RecoveryBodyMap({ recovery, locale }: RecoveryBodyMapProps) {
   const [activeGroup, setActiveGroup] = useState<BodyMapGroup | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [mapSize, setMapSize] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const updateMapSize = () => {
+      const root = rootRef.current;
+      if (!root) return;
+      const availableWidth = root.getBoundingClientRect().width - 28;
+      const maxSize = 304;
+      setMapSize(Math.max(240, Math.min(availableWidth, maxSize)));
+    };
+
+    updateMapSize();
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateMapSize);
+    if (rootRef.current && resizeObserver) resizeObserver.observe(rootRef.current);
+    window.addEventListener('resize', updateMapSize);
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', updateMapSize);
+    };
+  }, []);
 
   const getMuscleStat = (group: BodyMapGroup) => {
     return recovery.groups.find((item) => item.group === group) ?? {
@@ -73,7 +97,10 @@ export function RecoveryBodyMap({ recovery, locale }: RecoveryBodyMapProps) {
     .sort((a, b) => a.recoveryPercent - b.recoveryPercent)[0];
 
   return (
-    <div className="relative flex flex-col rounded-2xl border border-black/5 bg-white p-3.5 shadow-sm">
+    <div
+      ref={rootRef}
+      className="relative flex flex-col rounded-2xl border border-black/5 bg-white p-3.5 shadow-sm"
+    >
       <div className="flex w-full items-center justify-between border-b border-[#F2F2F7] pb-2">
         <h2 className="text-sm font-black text-[#1C1C1E]">
           {locale === 'ko' ? '대화형 근육 회복도' : 'Interactive Recovery'}
@@ -83,7 +110,14 @@ export function RecoveryBodyMap({ recovery, locale }: RecoveryBodyMapProps) {
         </span>
       </div>
 
-      <div className="relative mx-auto mt-2.5 aspect-square h-auto max-h-[19rem] w-full overflow-hidden rounded-xl bg-[#F2F2F7]">
+      <div
+        className="relative mx-auto mt-2.5 overflow-hidden rounded-xl bg-[#F2F2F7]"
+        style={{
+          width: mapSize ? `${mapSize}px` : 'min(100%, 19rem)',
+          height: mapSize ? `${mapSize}px` : 'min(calc(100vw - 3rem), 19rem)',
+          flexShrink: 0,
+        }}
+      >
         <img
           src={bodyMapHumanUrl}
           alt={locale === 'ko' ? '앞면과 뒷면 인체 회복도' : 'Front and back recovery body map'}
