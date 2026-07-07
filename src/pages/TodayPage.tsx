@@ -725,7 +725,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
             {cardioProgressPercent < 70 && (
               <div className="hidden">
                 <div className="flex items-center justify-between text-[11px] font-bold text-[#6E6E73]">
-                  <span>🏃 {locale === 'ko' ? '주간 유산소 달성도' : 'Weekly Cardio Progress'}</span>
+                  <span>{locale === 'ko' ? '주간 유산소 달성률' : 'Weekly Cardio Progress'}</span>
                   <span>{cardioProgressPercent}%</span>
                 </div>
                 <div className="mt-1.5 h-2 w-full rounded-full bg-[#E5E5EA] overflow-hidden">
@@ -736,7 +736,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
                 </div>
                 <p className="mt-1.5 text-[11px] font-semibold leading-normal text-[#159A91]">
                   {locale === 'ko'
-                    ? `이번 주 러닝이 ${CARDIO_WEEKLY_TARGET_MINUTES - weeklyCardioMinutes}분 부족합니다. 운동 후 가벼운 러닝을 추가해 보세요!`
+                    ? `이번 주 유산소가 ${CARDIO_WEEKLY_TARGET_MINUTES - weeklyCardioMinutes}분 부족합니다. 운동 후 가벼운 유산소를 추가해 보세요.`
                     : `You need ${CARDIO_WEEKLY_TARGET_MINUTES - weeklyCardioMinutes} more mins of running this week. Add a light run after workout!`}
                 </p>
               </div>

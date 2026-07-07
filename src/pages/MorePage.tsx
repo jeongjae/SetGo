@@ -88,7 +88,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
         action={(
           <button
             type="button"
-            aria-label={locale === 'ko' ? '데이터 저장 정보' : 'Data storage information'}
+            aria-label={locale === 'ko' ? '데이터 저장소 정보' : 'Data storage information'}
             aria-haspopup="dialog"
             aria-expanded={showStorageInfo}
             onClick={() => setShowStorageInfo(true)}

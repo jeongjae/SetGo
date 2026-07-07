@@ -21,7 +21,7 @@ test('renders the mobile Today screen without framework errors', async ({ page }
     await page.goto('/');
 
     await expect(page).toHaveTitle('SetGo');
-    await expect(page.getByText('SetGo')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'SetGo' })).toBeVisible();
     const nav = page.getByRole('navigation', { name: 'Primary navigation' });
     await expect(nav.getByRole('button')).toHaveCount(5);
     await expect(page.getByText(/Internal server error|Failed to fetch|Something went wrong/)).toHaveCount(0);
