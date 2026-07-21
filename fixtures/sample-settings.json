@@ -1,0 +1,16 @@
+{
+  "app": "SetGo",
+  "kind": "settings-export",
+  "version": 1,
+  "exportedAt": "2026-01-01T00:00:00.000Z",
+  "settings": { "locale": "ko" },
+  "data": {
+    "exercises": [{ "id": "sample_press", "nameKo": "샘플 프레스", "nameEn": "Sample Press" }],
+    "routines": [{ "id": "sample_routine", "name": "Sample Routine" }],
+    "routineDays": [],
+    "weeklySchedules": [],
+    "routineCyclePlanItems": [],
+    "calendarPlanOverrides": [],
+    "routineExercisePlans": []
+  }
+}

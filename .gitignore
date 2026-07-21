@@ -12,3 +12,7 @@ setgo-backup-*.json
 setgo-settings-*.json
 setgo-exercises-*.csv
 public/app-version.json
+
+# Personal data exports (migration Phase 1 #5) — never track
+setgo-exercises-*.csv
+setgo-settings-*.json

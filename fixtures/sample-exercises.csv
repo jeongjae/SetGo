@@ -1,0 +1,3 @@
+id,nameKo,nameEn,categoryTags,stageTags,description,icon,isActive
+sample_press,샘플 프레스,Sample Press,chest,main,Synthetic fixture row for tests — not real user data,dumbbell,true
+sample_row,샘플 로우,Sample Row,back,main,Synthetic fixture row for tests — not real user data,barbell,true
