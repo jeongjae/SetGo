@@ -141,7 +141,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                   key={item}
                   type="button"
                   onClick={() => handleGoalChange(item)}
-                  className={`min-h-7 rounded-lg px-3 text-xs font-bold transition-all ${
+                  className={`min-h-11 rounded-lg px-3 text-xs font-bold transition-all ${
                     globalGoal === item
                       ? 'bg-sg-surface font-black text-sg-label shadow-sm'
                       : 'text-sg-secondary-label hover:text-sg-label'
@@ -178,7 +178,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
             <button
               type="button"
               onClick={handleSaveAiCoachEndpoint}
-              className="min-h-8 shrink-0 rounded-lg bg-sg-fill px-3 text-xs font-black text-sg-label"
+              className="min-h-11 shrink-0 rounded-lg bg-sg-fill px-3 text-xs font-black text-sg-label"
             >
               {aiCoachSaved ? (locale === 'ko' ? '저장됨' : 'Saved') : t(locale, 'save')}
             </button>
@@ -200,7 +200,7 @@ export function MorePage({ onNavigate, onLocaleChanged }: MorePageProps) {
                   key={item}
                   type="button"
                   onClick={() => handleLocaleChange(item)}
-                  className={`min-h-7 rounded-lg px-3 text-xs font-bold transition-all ${
+                  className={`min-h-11 rounded-lg px-3 text-xs font-bold transition-all ${
                     locale === item
                       ? 'bg-sg-surface font-black text-sg-label shadow-sm'
                       : 'text-sg-secondary-label hover:text-sg-label'
