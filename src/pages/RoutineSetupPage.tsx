@@ -677,7 +677,7 @@ export function RoutineSetupPage({
               key={value}
               type="button"
               onClick={() => setSetupTab(value)}
-              className={`min-h-9 rounded-lg px-1.5 text-xs font-black transition-all active:scale-95 ${
+              className={`min-h-11 rounded-lg px-1.5 text-xs font-black transition-all active:scale-95 ${
                 setupTab === value
                   ? 'bg-white text-[#1C1C1E] shadow-sm'
                   : 'text-[#6E6E73] hover:text-[#1C1C1E]'
@@ -756,7 +756,7 @@ export function RoutineSetupPage({
                         key={dayPlan.routineDay.id}
                         type="button"
                         onClick={() => setSelectedDayId(dayPlan.routineDay.id)}
-                        className={`min-h-9 shrink-0 rounded-full border px-3.5 text-xs font-black transition-all active:scale-95 ${
+                        className={`min-h-11 shrink-0 rounded-full border px-3.5 text-xs font-black transition-all active:scale-95 ${
                           selectedDay?.routineDay.id === dayPlan.routineDay.id
                             ? 'border-transparent bg-[#2EC4B6] text-white shadow-sm'
                             : 'border-[#D1D1D6] bg-white text-[#6E6E73] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
@@ -823,7 +823,7 @@ export function RoutineSetupPage({
                   type="button"
                   onClick={() => setShowRoutineRename((current) => !current)}
                   disabled={!activeRoutine}
-                  className="min-h-9 rounded-xl border border-black/5 bg-[#F2F2F7] px-1 text-[11px] font-bold text-[#1C1C1E] transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+                  className="min-h-11 rounded-xl border border-black/5 bg-[#F2F2F7] px-1 text-[11px] font-bold text-[#1C1C1E] transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-40"
                 >
                   {locale === 'ko' ? '이름' : 'Rename'}
                 </button>
@@ -831,7 +831,7 @@ export function RoutineSetupPage({
                   type="button"
                   onClick={() => void handleDuplicateActiveRoutine()}
                   disabled={!activeRoutine}
-                  className="flex min-h-9 items-center justify-center gap-0.5 rounded-xl border border-[#2EC4B6]/20 bg-[#2EC4B6]/10 px-1 text-[11px] font-black text-[#159A91] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                  className="flex min-h-11 items-center justify-center gap-0.5 rounded-xl border border-[#2EC4B6]/20 bg-[#2EC4B6]/10 px-1 text-[11px] font-black text-[#159A91] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   <Copy aria-hidden="true" size={11} />
                   <span>{locale === 'ko' ? '복제' : 'Copy'}</span>
@@ -840,7 +840,7 @@ export function RoutineSetupPage({
                   type="button"
                   onClick={() => void handleDeleteActiveRoutine()}
                   disabled={!activeRoutine}
-                  className="flex min-h-9 items-center justify-center gap-0.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-1 text-[11px] font-black text-rose-600 transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                  className="flex min-h-11 items-center justify-center gap-0.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-1 text-[11px] font-black text-rose-600 transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   <Trash2 aria-hidden="true" size={11} />
                   <span>{locale === 'ko' ? '삭제' : 'Delete'}</span>
@@ -850,7 +850,7 @@ export function RoutineSetupPage({
                 type="button"
                 aria-expanded={showRoutineCreator}
                 onClick={() => setShowRoutineCreator((current) => !current)}
-                className="flex min-h-10 w-full items-center justify-between rounded-xl border border-black/5 bg-[#F2F2F7] px-3 text-sm font-bold text-[#1C1C1E] transition-all active:scale-[0.98]"
+                className="flex min-h-11 w-full items-center justify-between rounded-xl border border-black/5 bg-[#F2F2F7] px-3 text-sm font-bold text-[#1C1C1E] transition-all active:scale-[0.98]"
               >
                 <span>{locale === 'ko' ? '새 루틴 만들기' : 'Create new routine'}</span>
                 <span className="text-[#159A91]">{showRoutineCreator ? '-' : '+'}</span>
