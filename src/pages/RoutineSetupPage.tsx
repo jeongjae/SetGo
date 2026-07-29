@@ -714,7 +714,7 @@ export function RoutineSetupPage({
                     aria-label={locale === 'ko' ? '활성 루틴 선택' : 'Select active routine'}
                     value={activeRoutine?.id ?? ''}
                     onChange={(event) => void handleSelectStoredRoutine(event.target.value)}
-                    className="min-h-9 max-w-[8rem] shrink-0 rounded-xl border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                    className="min-h-11 max-w-[8rem] shrink-0 rounded-xl border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                   >
                     {savedRoutines.map((routine) => (
                       <option key={routine.id} value={routine.id}>{routine.name}</option>
@@ -998,7 +998,7 @@ export function RoutineSetupPage({
                 type="button"
                 onClick={() => void handleReviewCycleCalendar()}
                 disabled={!activeRoutine || !scheduleStartDate || cyclePlan.length === 0}
-                className="flex min-h-10 items-center justify-center gap-1 rounded-xl border border-[#007AFF]/20 bg-sg-surface px-2 text-xs font-bold text-sg-action shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                className="flex min-h-11 items-center justify-center gap-1 rounded-xl border border-[#007AFF]/20 bg-sg-surface px-2 text-xs font-bold text-sg-action shadow-sm transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
               >
                 <CalendarDays aria-hidden="true" size={15} />
                 <span>{locale === 'ko' ? '캘린더 확인' : 'Calendar'}</span>
@@ -1006,7 +1006,7 @@ export function RoutineSetupPage({
               <button
                 type="button"
                 onClick={() => void handleCancelWeeklySchedule()}
-                className="ios-button-secondary flex min-h-10 items-center justify-center text-xs"
+                className="ios-button-secondary flex min-h-11 items-center justify-center text-xs"
               >
                 {locale === 'ko' ? '취소' : 'Cancel'}
               </button>
@@ -1014,7 +1014,7 @@ export function RoutineSetupPage({
                 type="button"
                 onClick={() => void handleSaveWeeklySchedule()}
                 disabled={!activeRoutine || !scheduleDirty || !scheduleStartDate || cyclePlan.length === 0}
-                className="ios-button-brand flex min-h-10 items-center justify-center text-xs"
+                className="ios-button-brand flex min-h-11 items-center justify-center text-xs"
               >
                 {t(locale, 'save')}
               </button>
@@ -1041,7 +1041,7 @@ export function RoutineSetupPage({
                   key={value}
                   type="button"
                   onClick={() => void handleExerciseLibraryModeChange(value)}
-                  className={`min-h-9 rounded-lg text-sm font-bold transition-all ${exerciseLibraryMode === value ? 'bg-white text-[#1C1C1E] shadow-sm' : 'text-[#6E6E73] hover:text-[#1C1C1E]'}`}
+                  className={`min-h-11 rounded-lg text-sm font-bold transition-all ${exerciseLibraryMode === value ? 'bg-white text-[#1C1C1E] shadow-sm' : 'text-[#6E6E73] hover:text-[#1C1C1E]'}`}
                 >
                   {label}
                 </button>
@@ -1051,7 +1051,7 @@ export function RoutineSetupPage({
             {/* Exercise search */}
             {exerciseLibraryMode === 'browse' ? (
               <div className="grid grid-cols-[minmax(0,1fr)_7.25rem_4.5rem] items-center gap-1.5">
-                <div className="flex min-h-9 items-center gap-2 rounded-xl border border-[#D1D1D6] bg-white px-2.5 py-1.5 focus-within:border-[#2EC4B6]">
+                <div className="flex min-h-11 items-center gap-2 rounded-xl border border-[#D1D1D6] bg-white px-2.5 py-1.5 focus-within:border-[#2EC4B6]">
                   <Search aria-hidden="true" size={15} className="shrink-0 text-[#6E6E73]" />
                   <input
                     aria-label="Search exercise library"
@@ -1067,7 +1067,7 @@ export function RoutineSetupPage({
                     aria-label="Exercise category filter"
                     value={exerciseCategoryFilter}
                     onChange={(event) => setExerciseCategoryFilter(event.target.value as ExerciseCategory | 'all')}
-                    className="min-h-9 min-w-0 rounded-xl border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
+                    className="min-h-11 min-w-0 rounded-xl border border-[#D1D1D6] bg-white px-2 text-xs font-bold text-[#1C1C1E] outline-none focus:border-[#2EC4B6]"
                   >
                     {exerciseCategories.map((category) => (
                       <option key={category.value} value={category.value}>
@@ -1078,7 +1078,7 @@ export function RoutineSetupPage({
                   <button
                     type="button"
                     onClick={() => setShowHiddenExercises((current) => !current)}
-                    className="ios-button-secondary min-h-9 overflow-hidden px-1.5 text-[10px] font-bold leading-tight"
+                    className="ios-button-secondary min-h-11 overflow-hidden px-1.5 text-[10px] font-bold leading-tight"
                   >
                     {showHiddenExercises ? (locale === 'ko' ? '사용 중' : 'Active') : (locale === 'ko' ? '숨긴 운동' : 'Hidden')}
                   </button>
@@ -1354,7 +1354,7 @@ export function RoutineSetupPage({
                 <button
                   type="button"
                   onClick={() => void handleRevertRoutineChanges()}
-                  className="ios-button-secondary flex h-9 items-center justify-center gap-1.5 px-2.5 text-xs font-bold"
+                  className="ios-button-secondary flex min-h-11 items-center justify-center gap-1.5 px-2.5 text-xs font-bold"
                 >
                   <RotateCcw aria-hidden="true" size={12} />
                   <span>{locale === 'ko' ? '취소' : 'Cancel'}</span>
@@ -1362,7 +1362,7 @@ export function RoutineSetupPage({
                 <button
                   type="button"
                   onClick={() => void handleSaveRoutineChanges()}
-                  className="ios-button-primary flex h-9 items-center justify-center px-3 text-xs font-bold"
+                  className="ios-button-primary flex min-h-11 items-center justify-center px-3 text-xs font-bold"
                 >
                   {t(locale, 'save')}
                 </button>
@@ -1389,7 +1389,7 @@ export function RoutineSetupPage({
                   <button
                     type="button"
                     onClick={() => setShowDaySettingsModal(true)}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#6E6E73] shadow-sm transition-all hover:bg-[#F2F2F7] active:scale-95"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#D1D1D6] bg-white text-[#6E6E73] shadow-sm transition-all hover:bg-[#F2F2F7] active:scale-95"
                     aria-label={locale === 'ko' ? '하루 설정 편집' : 'Edit day settings'}
                   >
                     <span className="text-sm">⚙️</span>
@@ -1402,7 +1402,7 @@ export function RoutineSetupPage({
                       ));
                       resetRoutineAddFinderState();
                     }}
-                    className="ios-button-primary flex h-9 w-9 shrink-0 items-center justify-center"
+                    className="ios-button-primary flex h-11 w-11 shrink-0 items-center justify-center"
                     aria-label={`Add exercise to ${selectedDay.routineDay.name}`}
                   >
                     <Plus aria-hidden="true" size={18} />
@@ -1451,7 +1451,7 @@ export function RoutineSetupPage({
                               type="button"
                               onClick={() => void handleMovePlan(plan.id, -1)}
                               disabled={planIndex === 0}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:pointer-events-none disabled:opacity-30 active:scale-95"
+                              className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:pointer-events-none disabled:opacity-30 active:scale-95"
                               aria-label={`Move ${getExerciseName(exercise, locale)} up`}
                             >
                               <ArrowUp aria-hidden="true" size={13} />
@@ -1460,7 +1460,7 @@ export function RoutineSetupPage({
                               type="button"
                               onClick={() => void handleMovePlan(plan.id, 1)}
                               disabled={planIndex === selectedDay.plans.length - 1}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:pointer-events-none disabled:opacity-30 active:scale-95"
+                              className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#D1D1D6] bg-white text-[#1C1C1E] transition-all hover:bg-[#F2F2F7] disabled:pointer-events-none disabled:opacity-30 active:scale-95"
                               aria-label={`Move ${getExerciseName(exercise, locale)} down`}
                             >
                               <ArrowDown aria-hidden="true" size={13} />
@@ -1468,7 +1468,7 @@ export function RoutineSetupPage({
                             <button
                               type="button"
                               onClick={() => void handleDeletePlan(plan.id)}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFECEC] text-rose-600 transition-all active:scale-95"
+                              className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#FFECEC] text-rose-600 transition-all active:scale-95"
                               aria-label={`Remove ${getExerciseName(exercise, locale)} from ${selectedDay.routineDay.name}`}
                             >
                               <Trash2 aria-hidden="true" size={13} />
