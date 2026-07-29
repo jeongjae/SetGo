@@ -29,4 +29,12 @@ describe('MorePage touch targets', () => {
       expect(buttonClassByLabel(markup, label), label).toContain('min-h-11');
     }
   });
+
+  it('keeps the EN language control at least 44px wide', () => {
+    const markup = renderToStaticMarkup(
+      <MorePage onNavigate={() => undefined} onLocaleChanged={() => undefined} />,
+    );
+
+    expect(buttonClassByLabel(markup, 'EN')).toContain('min-w-11');
+  });
 });

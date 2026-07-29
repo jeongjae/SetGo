@@ -394,7 +394,7 @@ export function ActualsPage({
             <button
               type="button"
               onClick={onOpenStats}
-              className="ios-button-secondary flex min-h-9 items-center gap-1.5 px-2.5 text-xs"
+              className="ios-button-secondary flex min-h-11 items-center gap-1.5 px-2.5 text-xs"
             >
               <BarChart3 aria-hidden="true" size={14} />
               <span>{t(locale, 'viewAnalysis')}</span>
@@ -430,7 +430,7 @@ export function ActualsPage({
                 setAddMenuMode('kind');
               }}
               disabled={!canEditSelectedDate}
-              className="ios-button-primary flex min-h-9 items-center gap-1.5 px-2.5 text-xs disabled:opacity-40 disabled:pointer-events-none"
+              className="ios-button-primary flex min-h-11 items-center gap-1.5 px-2.5 text-xs disabled:opacity-40 disabled:pointer-events-none"
             >
               <Plus aria-hidden="true" size={14} />
               <span>{locale === 'ko' ? '\uC6B4\uB3D9 \uCD94\uAC00' : 'Add workout'}</span>

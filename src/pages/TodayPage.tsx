@@ -697,7 +697,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
                 type="button"
                 onClick={() => void handleRequestAiCoach()}
                 disabled={aiCoachStatus === 'loading'}
-                className="mt-2 min-h-9 w-full rounded-lg bg-[#5856D6] px-2 text-xs font-black text-white transition-all active:scale-95 disabled:opacity-50"
+                className="mt-2 min-h-11 w-full rounded-lg bg-[#5856D6] px-2 text-xs font-black text-white transition-all active:scale-95 disabled:opacity-50"
               >
                 {aiCoachStatus === 'loading'
                   ? (locale === 'ko' ? '코칭 생성 중...' : 'Generating...')
@@ -773,7 +773,7 @@ export function TodayPage({ refreshKey, onStartWorkout }: TodayPageProps) {
               type="button"
               onClick={() => void handleRequestAiCoach()}
               disabled={aiCoachStatus === 'loading'}
-              className="mt-2 min-h-9 w-full rounded-lg bg-sg-ai px-2 text-xs font-black text-white transition-all active:scale-95 disabled:opacity-50"
+              className="mt-2 min-h-11 w-full rounded-lg bg-sg-ai px-2 text-xs font-black text-white transition-all active:scale-95 disabled:opacity-50"
             >
               {aiCoachStatus === 'loading'
                 ? (locale === 'ko' ? '코칭 생성 중...' : 'Generating...')

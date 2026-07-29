@@ -507,7 +507,7 @@ export function StatsPage({ onOpenActuals, recordModeControl }: StatsPageProps) 
             <button
               type="button"
               onClick={onOpenActuals}
-              className="ios-button-secondary flex min-h-9 items-center gap-1.5 px-2.5 text-xs"
+              className="ios-button-secondary flex min-h-11 items-center gap-1.5 px-2.5 text-xs"
             >
               <CalendarRange aria-hidden="true" size={14} />
               <span>{t(locale, 'actualsCalendar')}</span>
