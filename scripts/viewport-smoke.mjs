@@ -1,12 +1,14 @@
 // Boots the production preview-equivalent dev server and walks the five primary
-// tabs at the three target iPhone widths, asserting no horizontal overflow and no
-// console/page errors. Run with: node ./scripts/viewport-smoke.mjs
+// tabs at the three target iPhone widths, asserting no horizontal overflow,
+// undersized visible buttons, or console/page errors.
+// Run with: node ./scripts/viewport-smoke.mjs
 import { spawn } from 'node:child_process';
 import { chromium } from '@playwright/test';
 
 const port = 4185;
 const host = '127.0.0.1';
 const url = `http://${host}:${port}`;
+const minimumButtonHeightPx = 44;
 
 // width x height for 375/390/427-class iPhone viewports.
 const viewports = [
@@ -40,6 +42,62 @@ async function checkOverflow(page) {
   });
 }
 
+async function visibleContentButtonCount(page) {
+  return page.evaluate(() => {
+    const primaryNav = document.querySelector('nav[aria-label="Primary navigation"]');
+    return Array.from(document.querySelectorAll('button'))
+      .filter((button) => !primaryNav?.contains(button) && button.checkVisibility())
+      .length;
+  });
+}
+
+async function waitForVisibleButtonsToSettle(page, timeoutMs = 5_000) {
+  const startedAt = Date.now();
+  let previousCount = -1;
+  let stableSamples = 0;
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const count = await visibleContentButtonCount(page);
+    if (count > 0 && count === previousCount) {
+      stableSamples += 1;
+      if (stableSamples >= 5) return;
+    } else {
+      stableSamples = 0;
+    }
+    previousCount = count;
+    await page.waitForTimeout(100);
+  }
+
+  throw new Error('Timed out waiting for visible tab buttons to settle');
+}
+
+async function checkVisibleButtonHeights(page) {
+  return page.evaluate((minimumHeightPx) => {
+    const visibleButtons = Array.from(document.querySelectorAll('button'))
+      .filter((button) => button.checkVisibility({
+        checkOpacity: true,
+        checkVisibilityCSS: true,
+      }));
+
+    return {
+      count: visibleButtons.length,
+      violations: visibleButtons
+        .map((button, index) => {
+          const height = button.getBoundingClientRect().height;
+          const textLabel = button.textContent?.trim();
+          const label = (
+            button.getAttribute('aria-label')
+            || textLabel
+            || button.getAttribute('title')
+            || `button#${index + 1}`
+          ).trim().replace(/\s+/g, ' ').slice(0, 80);
+          return { height, label };
+        })
+        .filter(({ height }) => height < minimumHeightPx),
+    };
+  }, minimumButtonHeightPx);
+}
+
 async function run() {
   const browser = await chromium.launch();
   const failures = [];
@@ -60,21 +118,37 @@ async function run() {
 
     await page.goto(url);
     const nav = page.getByRole('navigation', { name: 'Primary navigation' });
-    const tabCount = await nav.getByRole('button').count();
+    const tabs = nav.getByRole('button');
+    const tabCount = await tabs.count();
+    const tabLabels = await tabs.allTextContents();
+    let checkedButtonCount = 0;
 
     for (let index = 0; index < tabCount; index += 1) {
-      await nav.getByRole('button').nth(index).click();
-      await page.waitForTimeout(250);
+      const tabLabel = tabLabels[index]?.trim() || `tab#${index}`;
+      await tabs.nth(index).click();
+      await waitForVisibleButtonsToSettle(page);
       const overflow = await checkOverflow(page);
       if (overflow > 1) {
-        failures.push(`${viewport.label} tab#${index}: horizontal overflow ${overflow}px`);
+        failures.push(`${viewport.label} ${tabLabel}: horizontal overflow ${overflow}px`);
+      }
+
+      const buttonHeights = await checkVisibleButtonHeights(page);
+      checkedButtonCount += buttonHeights.count;
+      for (const { height, label } of buttonHeights.violations) {
+        failures.push(
+          `${viewport.label} ${tabLabel}: visible button "${label}" height `
+          + `${height.toFixed(2)}px < ${minimumButtonHeightPx}px`,
+        );
       }
     }
 
     if (errors.length > 0) {
       failures.push(`${viewport.label}: console/page errors -> ${errors.join(' | ')}`);
     }
-    console.log(`  ok ${viewport.label}: ${tabCount} tabs, overflow<=1px, errors=${errors.length}`);
+    console.log(
+      `  checked ${viewport.label}: ${tabCount} tabs, ${checkedButtonCount} visible buttons, `
+      + `height>=${minimumButtonHeightPx}px, overflow<=1px, errors=${errors.length}`,
+    );
     await context.close();
   }
 
