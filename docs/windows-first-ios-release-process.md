@@ -1,5 +1,7 @@
 # SetGo Windows-First iOS Release Process
 
+> GitHub Actions를 이용해 원격 Mac 화면 접속 없이 TestFlight를 갱신하려면 [GitHub Actions TestFlight 안내](github-actions-testflight.md)를 따른다. 아래 문서는 별도로 임대한 Mac에서 Xcode를 직접 조작하는 대체 경로다.
+
 ## 목적
 
 SetGo는 Windows PC에서 대부분의 개발, 테스트, PWA 배포, iOS 호환성 검증을 끝내고, 클라우드 Mac은 마지막 iOS 서명, Xcode 실행 확인, Archive, TestFlight 업로드에만 짧게 사용한다.

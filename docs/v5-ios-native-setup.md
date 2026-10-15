@@ -38,6 +38,8 @@ Then select a simulator or connected iPhone in Xcode and run the app.
 
 ## Windows-Only Development Path
 
+For signed iPhone builds and TestFlight uploads without renting or remotely controlling a Mac, use the manual `iOS TestFlight Release` workflow. See [GitHub Actions TestFlight setup](github-actions-testflight.md) for Windows signing preparation and required repository secrets. GitHub provides the macOS runner; the existing simulator check remains separate.
+
 When the developer only has a Windows PC, use this split:
 
 ```text

@@ -7,6 +7,15 @@ test-results-setgo*.png
 .env
 .DS_Store
 
+# Apple signing material stays local or in GitHub Actions secrets.
+.ios-signing/
+*.p12
+*.p8
+*.mobileprovision
+*.certSigningRequest
+*.key
+__pycache__/
+
 # Local SetGo export and backup artifacts
 setgo-backup-*.json
 setgo-settings-*.json
