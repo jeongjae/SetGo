@@ -66,6 +66,8 @@ jobs:
       - run: npm ci
       - run: npm run test -- --run
       - run: python3 -m unittest discover -s scripts/tests -p 'test_ios_release.py'
+      - name: Validate production native asset paths under GitHub Actions
+        run: npm run build:native
 
   release:
     name: Archive and upload to TestFlight

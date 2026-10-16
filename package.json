@@ -3,11 +3,12 @@
   "scripts": {
     "dev": "vite",
     "build": "node ./scripts/write-app-version.mjs && tsc && vite build",
+    "build:native": "npm run build -- --base / && node ./scripts/check-native-assets.mjs dist",
     "preview": "vite preview",
     "test": "vitest",
     "test:e2e": "node ./scripts/run-e2e.mjs",
     "test:viewport": "node ./scripts/viewport-smoke.mjs",
-    "native:sync": "npm run build && cap sync ios",
+    "native:sync": "npm run build:native && cap sync ios && node ./scripts/check-native-assets.mjs ios/App/App/public",
     "native:open": "cap open ios"
   },
   "dependencies": {

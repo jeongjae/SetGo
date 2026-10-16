@@ -135,6 +135,8 @@ Workflow는 입력과 보안 설정을 먼저 확인하고 테스트를 실행�
 
 Mac 작업은 `macos-15` 이미지에 설치된 **Xcode 26.3**을 `DEVELOPER_DIR`로 명시해 사용한다. 이미지의 기본 Xcode 16.4를 그대로 사용하지 않는다. 설치 버전이나 Apple SDK 제출 기준이 바뀌면 이 경로를 함께 갱신한다.
 
+네이티브 빌드는 `npm run build:native`로 Vite base를 `/`로 고정한다. 일반 웹 빌드의 GitHub Pages 경로 `/SetGo/`를 앱에 포함하면 실행 파일을 찾지 못해 흰 화면이 발생한다. `native:sync`는 복사 전후 파일 경로를 검사하며, `iOS Native Check`는 시뮬레이터에서 앱을 실행하고 첫 화면과 하단 메뉴가 실제로 표시되는지 확인한다.
+
 현재 앱은 SQLite 암호화를 사용하지 않으며 별도 암호화 기능을 구현하지 않는다. `ios/App/App/Info.plist`에 `ITSAppUsesNonExemptEncryption=false`를 포함해 기존 빌드와 같은 수출 규정 면제 정보를 제출한다. 따라서 Developer 권한 키로 업로드한 뒤 별도 API 수정 권한 없이 TestFlight 처리를 진행할 수 있다. 앱에 암호화 기능을 추가하면 이 선언도 실제 기능에 맞춰 검토해야 한다.
 
 기존 **iOS Native Check**는 시뮬레이터 검증 작업으로 계속 사용한다. 그 작업의 성공은 TestFlight 업로드 성공을 뜻하지 않는다.

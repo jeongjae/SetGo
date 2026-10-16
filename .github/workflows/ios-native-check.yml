@@ -17,6 +17,8 @@ on:
       - 'tsconfig.json'
       - 'index.html'
       - 'public/**'
+      - 'scripts/check-native-assets.mjs'
+      - 'scripts/check-ios-startup.swift'
   workflow_dispatch:
 
 permissions:
@@ -26,6 +28,9 @@ jobs:
   simulator-build:
     name: Build iOS Simulator App
     runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,6 +47,27 @@ jobs:
       - name: Sync Capacitor iOS project
         run: npm run native:sync
 
+      - name: Select an available iPhone simulator
+        run: |
+          xcrun simctl list devices available --json > "$RUNNER_TEMP/setgo-simulators.json"
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          devices = json.loads((Path(os.environ['RUNNER_TEMP']) / 'setgo-simulators.json').read_text())['devices']
+          candidates = []
+          for runtime, values in devices.items():
+              version = re.search(r'iOS-(\d+)-(\d+)', runtime)
+              if not version:
+                  continue
+              for device in values:
+                  if device['name'] == 'iPhone 16' and device.get('isAvailable'):
+                      candidates.append((tuple(map(int, version.groups())), device['udid']))
+          if not candidates:
+              raise SystemExit('No available iPhone 16 simulator.')
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              output.write(f'SETGO_SIMULATOR_ID={max(candidates)[1]}\n')
+          PY
+
       - name: Build unsigned simulator app
         run: |
           set -o pipefail
@@ -51,10 +77,35 @@ jobs:
             -scheme App \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination "platform=iOS Simulator,id=$SETGO_SIMULATOR_ID" \
             -derivedDataPath build/ios-derived-data \
             CODE_SIGNING_ALLOWED=NO \
             build | tee build/ios-simulator-build.log
+
+      - name: Launch SetGo and verify the first screen
+        run: |
+          set -euo pipefail
+          mkdir -p build/artifacts
+          xcrun simctl boot "$SETGO_SIMULATOR_ID"
+          xcrun simctl bootstatus "$SETGO_SIMULATOR_ID" -b
+          xcrun simctl install "$SETGO_SIMULATOR_ID" build/ios-derived-data/Build/Products/Debug-iphonesimulator/App.app
+          xcrun simctl launch "$SETGO_SIMULATOR_ID" app.setgo.mobile
+          sleep 15
+          xcrun simctl io "$SETGO_SIMULATOR_ID" screenshot build/artifacts/SetGo-startup.png
+          xcrun simctl spawn "$SETGO_SIMULATOR_ID" log show --last 2m --style compact \
+            --predicate 'process == "App"' > build/ios-startup.log
+          swift scripts/check-ios-startup.swift build/artifacts/SetGo-startup.png
+
+      - name: Upload iPhone startup screenshot
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: SetGo-startup
+          path: |
+            build/artifacts/SetGo-startup.png
+            build/ios-startup.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Package simulator app artifact
         run: |
