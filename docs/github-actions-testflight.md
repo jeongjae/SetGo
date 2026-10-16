@@ -133,6 +133,8 @@ gh run list --repo jeongjae/SetGo --workflow ios-testflight.yml --limit 3
 
 Workflow는 입력과 보안 설정을 먼저 확인하고 테스트를 실행한다. 이후 Mac에서 웹 빌드와 Capacitor sync, 프로파일/인증서 검증, Release Archive, App Store Connect 업로드를 진행한다. 서명 정보는 임시 키체인에서 사용하고 마지막에 삭제한다. 수동 실행만 지원하며, 코드 push만으로 TestFlight에 업로드하지 않는다.
 
+Mac 작업은 `macos-15` 이미지에 설치된 **Xcode 26.3**을 `DEVELOPER_DIR`로 명시해 사용한다. 이미지의 기본 Xcode 16.4를 그대로 사용하지 않는다. 설치 버전이나 Apple SDK 제출 기준이 바뀌면 이 경로를 함께 갱신한다.
+
 기존 **iOS Native Check**는 시뮬레이터 검증 작업으로 계속 사용한다. 그 작업의 성공은 TestFlight 업로드 성공을 뜻하지 않는다.
 
 ## 8. iPhone에서 다시 사용

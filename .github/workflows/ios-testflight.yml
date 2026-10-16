@@ -72,6 +72,9 @@ jobs:
     needs: preflight
     runs-on: macos-15
     timeout-minutes: 45
+    env:
+      # macos-15 still defaults to Xcode 16.4; App Store uploads need the iOS 26 SDK.
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
         with:
@@ -84,6 +87,10 @@ jobs:
       - name: Check Xcode
         run: |
           set -euo pipefail
+          if [[ ! -d "$DEVELOPER_DIR" ]]; then
+            echo '::error::Xcode 26.3 is missing from this runner. Update DEVELOPER_DIR to an installed stable Xcode 26+.'
+            exit 1
+          fi
           xcodebuild -version
           major="$(xcodebuild -version | head -n 1 | awk '{print $2}' | cut -d. -f1)"
           if (( major < 26 )); then
