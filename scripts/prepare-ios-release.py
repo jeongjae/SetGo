@@ -34,7 +34,10 @@ def validate_profile(profile, identities, now=None):
         raise ValueError('Invalid Apple Team ID in provisioning profile.')
     if entitlements.get('com.apple.developer.team-identifier') != team:
         raise ValueError('Provisioning profile team identifiers do not match.')
-    profile_uuid = str(UUID(profile['UUID'])).upper()
+    # Xcode's profile lookup must use the UUID exactly as Apple issued it.
+    profile_uuid = profile['UUID']
+    if str(UUID(profile_uuid)).lower() != profile_uuid.lower():
+        raise ValueError('Provisioning profile UUID must use the canonical dashed format.')
     certificate = next((hashlib.sha1(der).hexdigest().upper()
                         for der in profile['DeveloperCertificates']
                         if hashlib.sha1(der).hexdigest().upper() in identities

@@ -207,7 +207,8 @@ jobs:
                   uuid = plistlib.loads(profile.read_bytes())['UUID']
                   # Only remove a profile installed under its validated UUID filename.
                   import uuid as uuid_module
-                  uuid = str(uuid_module.UUID(uuid)).upper()
+                  if str(uuid_module.UUID(uuid)).lower() != uuid.lower():
+                      raise ValueError('Invalid profile UUID filename')
                   for location in ['Library/MobileDevice/Provisioning Profiles', 'Library/Developer/Xcode/UserData/Provisioning Profiles']:
                       (Path.home() / location / f'{uuid}.mobileprovision').unlink(missing_ok=True)
               except (ValueError, KeyError, plistlib.InvalidFileException):

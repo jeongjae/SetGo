@@ -78,7 +78,7 @@ Development, Ad Hoc, Enterprise 프로파일은 TestFlight용으로 사용할 �
 [App Store Connect](https://appstoreconnect.apple.com/) → `Users and Access → Integrations → App Store Connect API → Team Keys`로 이동한다.
 
 1. 필요하면 Account Holder가 API 접근을 먼저 요청한다.
-2. 키를 생성한다. 이름은 `SetGo GitHub Actions`, Access는 **App Manager**로 지정한다. 앱 업로드가 가능한 팀 키를 사용한다.
+2. 키를 생성한다. 이름은 `SetGo GitHub Actions`, Access는 **Developer**로 지정하면 현재 빌드 업로드에 충분하다. 테스터 배포 관리까지 API로 수행할 때는 해당 작업의 역할 요건에 맞춘다. 앱 업로드가 가능한 팀 키를 사용한다.
 3. **Key ID**와 **Issuer ID**를 확인한다.
 4. `.p8` 파일을 다운로드해 보관한다. 개인 키는 한 번만 다운로드할 수 있다.
 

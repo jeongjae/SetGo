@@ -41,8 +41,20 @@ class SigningValidationTest(unittest.TestCase):
     def test_accepts_matching_distribution_identity(self):
         team, profile_uuid, certificate = self.validate()
         self.assertEqual(team, 'ABCDEFGHIJ')
-        self.assertEqual(profile_uuid, self.profile['UUID'].upper())
+        self.assertEqual(profile_uuid, self.profile['UUID'])
         self.assertEqual(certificate, self.fingerprint)
+
+    def test_preserves_apple_uuid_case_for_xcode_lookup(self):
+        for profile_uuid in ['14596463-8483-4bdd-8813-92153207dc6f',
+                             '14596463-8483-4BDD-8813-92153207DC6F']:
+            with self.subTest(profile_uuid=profile_uuid):
+                self.profile['UUID'] = profile_uuid
+                self.assertEqual(self.validate()[1], profile_uuid)
+
+    def test_rejects_noncanonical_profile_uuid_filename(self):
+        self.profile['UUID'] = '{12345678-1234-1234-1234-123456789abc}'
+        with self.assertRaisesRegex(ValueError, 'canonical dashed'):
+            self.validate()
 
     def test_accepts_legacy_app_id_prefix_separate_from_team(self):
         self.profile['ApplicationIdentifierPrefix'] = ['LEGACYPREF']
