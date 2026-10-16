@@ -36,6 +36,14 @@ Git for Windows에 포함된 OpenSSL을 자동으로 사용한다.
 
 이 폴더는 Git에서 제외된다. 파일 내용이나 비밀번호를 채팅에 붙여넣지 않는다.
 
+직접 비밀번호를 입력하지 않고 이 Windows 계정에서 준비하려면 아래 방식도 사용할 수 있다. 이메일 없는 CSR과 무작위 비밀번호를 생성하며, 비밀번호는 Windows 사용자 보호(DPAPI)로 암호화해 `.ios-signing/password.dpapi`에 저장한다. 평문 비밀번호를 출력하지 않는다.
+
+```powershell
+.\scripts\ios-signing.ps1 -Action request -GeneratePassword
+```
+
+이 방식을 선택했다면 이후 `package`, `register` 명령에도 **`-UseSavedPassword`**를 추가한다. 같은 Windows PC와 사용자 계정에서 실행해야 하며, `.ios-signing` 폴더를 유지한다. 다른 PC에서 사용하는 별도 `.p12`에는 이 옵션을 사용하지 않는다. 기존 키, 요청, 저장된 비밀번호는 덮어쓰지 않는다.
+
 ## 3. Apple Distribution 인증서와 .p12 만들기
 
 Windows 브라우저에서 [Apple Developer Certificates](https://developer.apple.com/account/resources/certificates/list)를 연다.

@@ -10,7 +10,9 @@ param(
     [string]$ApiKeyId,
     [string]$IssuerId,
     [string]$Repository = 'jeongjae/SetGo',
-    [string]$OpenSSLPath
+    [string]$OpenSSLPath,
+    [switch]$GeneratePassword,
+    [switch]$UseSavedPassword
 )
 
 $ErrorActionPreference = 'Stop'
@@ -19,6 +21,14 @@ $signingDirectory = Join-Path (Split-Path $PSScriptRoot -Parent) '.ios-signing'
 $privateKey = Join-Path $signingDirectory 'distribution.key'
 $requestPath = Join-Path $signingDirectory 'distribution.certSigningRequest'
 $defaultP12 = Join-Path $signingDirectory 'distribution.p12'
+$savedPasswordPath = Join-Path $signingDirectory 'password.dpapi'
+
+if ($GeneratePassword -and ($Action -ne 'request' -or $UseSavedPassword)) {
+    throw '-GeneratePassword is only supported for request and cannot be combined with -UseSavedPassword.'
+}
+if ($UseSavedPassword -and $Action -eq 'request') {
+    throw '-UseSavedPassword is for package or register. Keep the existing request and private key.'
+}
 
 function Find-OpenSSL {
     if ($OpenSSLPath) {
@@ -35,7 +45,29 @@ function Read-SigningPassword {
     if (Test-Path Env:SETGO_SIGNING_PASSWORD) {
         throw 'SETGO_SIGNING_PASSWORD is already set. Clear it before using this helper.'
     }
-    $secret = Read-Host 'Signing password (hidden; keep it for the next steps)' -AsSecureString
+    if ($GeneratePassword) {
+        if (Test-Path -LiteralPath $savedPasswordPath) {
+            throw 'A saved signing password already exists. It will not be overwritten.'
+        }
+        # Windows DPAPI binds this saved password to the current Windows user/machine.
+        $randomBytes = New-Object byte[] 32
+        $random = [Security.Cryptography.RandomNumberGenerator]::Create()
+        try { $random.GetBytes($randomBytes) } finally { $random.Dispose() }
+        $secret = ConvertTo-SecureString ([Convert]::ToBase64String($randomBytes)) -AsPlainText -Force
+        try {
+            $protected = ConvertFrom-SecureString -SecureString $secret
+            [IO.File]::WriteAllText($savedPasswordPath, $protected)
+        }
+        catch { $secret.Dispose(); throw }
+        finally { [Array]::Clear($randomBytes, 0, $randomBytes.Length) }
+    }
+    elseif ($UseSavedPassword) {
+        Assert-File $savedPasswordPath 'Windows-protected signing password'
+        $secret = ConvertTo-SecureString ([IO.File]::ReadAllText($savedPasswordPath).Trim())
+    }
+    else {
+        $secret = Read-Host 'Signing password (hidden; keep it for the next steps)' -AsSecureString
+    }
     $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret)
     try {
         $env:SETGO_SIGNING_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer)
@@ -87,10 +119,12 @@ $openssl = Find-OpenSSL
 
 switch ($Action) {
     'request' {
-        if (-not $EmailAddress) { $EmailAddress = Read-Host 'Apple Developer email address' }
-        if ($EmailAddress -notmatch '^[^/\s@]+@[^/\s@]+\.[^/\s@]+$') {
+        if (-not $EmailAddress -and -not $GeneratePassword) { $EmailAddress = Read-Host 'Apple Developer email address' }
+        if ($EmailAddress -and $EmailAddress -notmatch '^[^/\s@]+@[^/\s@]+\.[^/\s@]+$') {
             throw 'Enter a valid email address without slashes.'
         }
+        $subject = '/CN=SetGo GitHub Actions'
+        if ($EmailAddress) { $subject += "/emailAddress=$EmailAddress" }
         if ((Test-Path -LiteralPath $privateKey) -or (Test-Path -LiteralPath $requestPath)) {
             throw 'A signing key or request already exists in .ios-signing. Keep the existing key; this helper will not overwrite it.'
         }
@@ -101,12 +135,17 @@ switch ($Action) {
                 -pass env:SETGO_SIGNING_PASSWORD -out $privateKey
             if ($LASTEXITCODE -ne 0) { throw 'Private key generation failed.' }
             & $openssl req -new -sha256 -key $privateKey -passin env:SETGO_SIGNING_PASSWORD `
-                -out $requestPath -subj "/CN=SetGo GitHub Actions/emailAddress=$EmailAddress"
+                -out $requestPath -subj $subject
             if ($LASTEXITCODE -ne 0) { throw 'Certificate request generation failed.' }
         }
         finally { Remove-Item Env:SETGO_SIGNING_PASSWORD -ErrorAction SilentlyContinue }
         Write-Host "Upload this request to Apple Developer: $requestPath"
-        Write-Host 'Keep distribution.key and its password. See docs/github-actions-testflight.md for the next steps.'
+        if ($GeneratePassword) {
+            Write-Host 'Password saved with Windows user protection in .ios-signing/password.dpapi. Use -UseSavedPassword for package and register on this Windows account.'
+        }
+        else {
+            Write-Host 'Keep distribution.key and its password. See docs/github-actions-testflight.md for the next steps.'
+        }
     }
     'package' {
         Assert-File $privateKey 'Signing private key'
